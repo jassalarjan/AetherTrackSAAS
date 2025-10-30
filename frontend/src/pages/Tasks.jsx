@@ -219,9 +219,9 @@ const Tasks = () => {
 
   return (
     <div className="min-h-screen bg-gray-50" data-testid="tasks-page">
-      <Navbar />
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="flex">
+        <Navbar />
+        <div className="flex-1 p-8">
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <div>
@@ -350,6 +350,7 @@ const Tasks = () => {
             <p className="text-gray-500 text-lg">No tasks found. Create your first task!</p>
           </div>
         )}
+        </div>
       </div>
 
       {/* Create Task Modal */}
