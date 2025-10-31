@@ -1,24 +1,30 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { useSearchParams } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import api from '../api/axios';
-import { Plus, X, Edit2, Trash2, MessageSquare, Clock } from 'lucide-react';
+import { Plus, X, Edit2, Trash2, MessageSquare, Clock, UserCheck } from 'lucide-react';
 
 const Tasks = () => {
   const { user, socket } = useAuth();
+  const { currentTheme, currentColorScheme } = useTheme();
   const [searchParams, setSearchParams] = useSearchParams();
   const [tasks, setTasks] = useState([]);
   const [filteredTasks, setFilteredTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
+  const [editingTask, setEditingTask] = useState(null);
+  const [selectedTeamMembers, setSelectedTeamMembers] = useState([]);
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
   const [filters, setFilters] = useState({
     status: '',
     priority: '',
+    showMyTasksOnly: false,
   });
   const [formData, setFormData] = useState({
     title: '',
@@ -26,13 +32,17 @@ const Tasks = () => {
     priority: 'medium',
     status: 'todo',
     due_date: '',
+    team_id: '',
+    assigned_to: [],
   });
   const [users, setUsers] = useState([]);
+  const [teams, setTeams] = useState([]);
 
   useEffect(() => {
     fetchTasks();
     if (['admin', 'hr', 'team_lead'].includes(user?.role)) {
       fetchUsers();
+      fetchTeams();
     }
     
     // Check if we should open create modal
@@ -85,6 +95,15 @@ const Tasks = () => {
     }
   };
 
+  const fetchTeams = async () => {
+    try {
+      const response = await api.get('/teams');
+      setTeams(response.data.teams);
+    } catch (error) {
+      console.error('Error fetching teams:', error);
+    }
+  };
+
   const applyFilters = () => {
     let filtered = [...tasks];
 
@@ -94,6 +113,17 @@ const Tasks = () => {
 
     if (filters.priority) {
       filtered = filtered.filter((t) => t.priority === filters.priority);
+    }
+
+    // Filter to show only tasks assigned to current user
+    if (filters.showMyTasksOnly) {
+      filtered = filtered.filter((t) => {
+        if (!t.assigned_to) return false;
+        const assignedIds = Array.isArray(t.assigned_to) 
+          ? t.assigned_to.map(u => typeof u === 'object' ? u._id : u)
+          : [typeof t.assigned_to === 'object' ? t.assigned_to._id : t.assigned_to];
+        return assignedIds.includes(user?._id);
+      });
     }
 
     setFilteredTasks(filtered);
@@ -110,6 +140,8 @@ const Tasks = () => {
         priority: 'medium',
         status: 'todo',
         due_date: '',
+        team_id: '',
+        assigned_to: [],
       });
       fetchTasks();
     } catch (error) {
@@ -126,9 +158,70 @@ const Tasks = () => {
         const response = await api.get(`/tasks/${taskId}`);
         setSelectedTask(response.data.task);
       }
+      if (editingTask?._id === taskId) {
+        const response = await api.get(`/tasks/${taskId}`);
+        setEditingTask(response.data.task);
+      }
     } catch (error) {
       console.error('Error updating task:', error);
       alert(error.response?.data?.message || 'Failed to update task');
+    }
+  };
+
+  const openEditModal = (task) => {
+    setEditingTask({
+      ...task,
+      assigned_to: task.assigned_to ? (Array.isArray(task.assigned_to) ? task.assigned_to.map(u => u._id) : [task.assigned_to._id]) : [],
+      team_id: task.team_id?._id || task.team_id || '',
+    });
+    setSelectedTeamMembers(task.team_id?.members || []);
+    setShowEditModal(true);
+  };
+
+  const handleEditTask = async (e) => {
+    e.preventDefault();
+    try {
+      const updates = {
+        title: editingTask.title,
+        description: editingTask.description,
+        priority: editingTask.priority,
+        status: editingTask.status,
+        due_date: editingTask.due_date,
+        team_id: editingTask.team_id,
+        assigned_to: editingTask.assigned_to,
+      };
+
+      await api.patch(`/tasks/${editingTask._id}`, updates);
+      setShowEditModal(false);
+      setEditingTask(null);
+      setSelectedTeamMembers([]);
+      fetchTasks();
+    } catch (error) {
+      console.error('Error updating task:', error);
+      alert(error.response?.data?.message || 'Failed to update task');
+    }
+  };
+
+  const handleTeamChange = (teamId) => {
+    const selectedTeam = teams.find(team => team._id === teamId);
+    setSelectedTeamMembers(selectedTeam ? selectedTeam.members : []);
+    setEditingTask({ ...editingTask, team_id: teamId, assigned_to: [] });
+  };
+
+  const handleMemberToggle = (memberId) => {
+    const currentAssigned = editingTask.assigned_to || [];
+    const isSelected = currentAssigned.includes(memberId);
+
+    if (isSelected) {
+      setEditingTask({
+        ...editingTask,
+        assigned_to: currentAssigned.filter(id => id !== memberId)
+      });
+    } else {
+      setEditingTask({
+        ...editingTask,
+        assigned_to: [...currentAssigned, memberId]
+      });
     }
   };
 
@@ -208,7 +301,7 @@ const Tasks = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className={`min-h-screen ${currentTheme.background}`}>
         <Navbar />
         <div className="flex items-center justify-center h-screen">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
@@ -218,15 +311,15 @@ const Tasks = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50" data-testid="tasks-page">
+    <div className={`min-h-screen ${currentTheme.background}`} data-testid="tasks-page">
       <div className="flex">
         <Navbar />
         <div className="flex-1 p-8">
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Tasks</h1>
-            <p className="text-gray-600 mt-2">Manage and track your tasks</p>
+            <h1 className={`text-3xl font-bold ${currentTheme.text}`}>Tasks</h1>
+            <p className={`${currentTheme.textSecondary} mt-2`}>Manage and track your tasks</p>
           </div>
           <button
             onClick={() => setShowCreateModal(true)}
@@ -239,10 +332,10 @@ const Tasks = () => {
         </div>
 
         {/* Filters */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className={`${currentTheme.surface} rounded-lg shadow-md p-6 mb-6`}>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className={`block text-sm font-medium ${currentTheme.text} mb-2`}>
                 Status
               </label>
               <select
@@ -260,7 +353,7 @@ const Tasks = () => {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className={`block text-sm font-medium ${currentTheme.text} mb-2`}>
                 Priority
               </label>
               <select
@@ -276,6 +369,23 @@ const Tasks = () => {
                 <option value="urgent">Urgent</option>
               </select>
             </div>
+            <div>
+              <label className={`block text-sm font-medium ${currentTheme.text} mb-2`}>
+                Assignment
+              </label>
+              <button
+                onClick={() => setFilters({ ...filters, showMyTasksOnly: !filters.showMyTasksOnly })}
+                className={`w-full px-4 py-2 rounded-md font-medium transition-colors flex items-center justify-center space-x-2 ${
+                  filters.showMyTasksOnly
+                    ? 'bg-blue-600 text-white hover:bg-blue-700'
+                    : `${currentTheme.surface} border-2 ${currentTheme.border} ${currentTheme.text} hover:bg-gray-50 dark:hover:bg-gray-700`
+                }`}
+                data-testid="filter-my-tasks"
+              >
+                <UserCheck className="w-4 h-4" />
+                <span>{filters.showMyTasksOnly ? 'My Tasks Only' : 'All Tasks'}</span>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -284,18 +394,18 @@ const Tasks = () => {
           {filteredTasks.map((task) => (
             <div
               key={task._id}
-              className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow cursor-pointer"
+              className={`${currentTheme.surface} rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow cursor-pointer`}
               onClick={() => viewTaskDetails(task)}
               data-testid="task-card"
             >
               <div className="flex justify-between items-start mb-4">
-                <h3 className="font-semibold text-lg text-gray-900 flex-1">{task.title}</h3>
+                <h3 className={`font-semibold text-lg ${currentTheme.text} flex-1`}>{task.title}</h3>
                 <div className="flex space-x-2">
                   {canEditTask(task) && (
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        // Handle edit
+                        openEditModal(task);
                       }}
                       className="text-blue-600 hover:text-blue-800"
                       data-testid="edit-task-btn"
@@ -318,7 +428,7 @@ const Tasks = () => {
                 </div>
               </div>
 
-              <p className="text-sm text-gray-600 mb-4 line-clamp-2">{task.description}</p>
+              <div className={`text-sm ${currentTheme.textSecondary} mb-4 line-clamp-2`}>{task.description}</div>
 
               <div className="flex flex-wrap gap-2 mb-4">
                 <span className={`text-xs px-2 py-1 rounded-full ${getStatusColor(task.status)}`}>
@@ -329,39 +439,215 @@ const Tasks = () => {
                 </span>
               </div>
 
-              {task.assigned_to && (
-                <div className="text-sm text-gray-600 mb-2">
-                  <span className="font-medium">Assigned to:</span> {task.assigned_to.full_name}
-                </div>
-              )}
+              <div className="space-y-2 mb-4">
+                {task.assigned_to && task.assigned_to.length > 0 && (
+                  <div className={`text-sm ${currentTheme.textSecondary}`}>
+                    <span className="font-medium">👥 Assigned:</span> {task.assigned_to.map(u => u.full_name).join(', ')}
+                  </div>
+                )}
 
-              {task.due_date && (
-                <div className="flex items-center text-sm text-gray-500">
-                  <Clock className="w-4 h-4 mr-1" />
-                  <span>Due: {new Date(task.due_date).toLocaleDateString()}</span>
+                {task.team_id && (
+                  <div className={`text-sm ${currentTheme.textSecondary}`}>
+                    <span className="font-medium">🏢 Team:</span> {task.team_id.name}
+                  </div>
+                )}
+
+                {task.due_date && (
+                  <div className={`flex items-center text-sm ${currentTheme.textMuted}`}>
+                    <Clock className="w-4 h-4 mr-1" />
+                    <span className={`font-medium ${new Date(task.due_date) < new Date() ? 'text-red-600' : 'text-orange-600'}`}>
+                      Due: {new Date(task.due_date).toLocaleDateString()}
+                    </span>
+                  </div>
+                )}
+
+                <div className={`text-xs ${currentTheme.textMuted}`}>
+                  Created: {new Date(task.created_at).toLocaleDateString()}
                 </div>
-              )}
+              </div>
             </div>
           ))}
         </div>
 
         {filteredTasks.length === 0 && (
           <div className="text-center py-12">
-            <p className="text-gray-500 text-lg">No tasks found. Create your first task!</p>
+            <p className={`${currentTheme.textMuted} text-lg`}>No tasks found. Create your first task!</p>
           </div>
         )}
         </div>
       </div>
 
+      {/* Edit Task Modal */}
+      {showEditModal && editingTask && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" data-testid="edit-task-modal">
+          <div className={`${currentTheme.surface} rounded-lg p-8 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto`}>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className={`text-2xl font-bold ${currentTheme.text}`}>Edit Task</h2>
+              <button
+                onClick={() => {
+                  setShowEditModal(false);
+                  setEditingTask(null);
+                }}
+                className={`${currentTheme.textSecondary} hover:${currentTheme.text}`}
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <form onSubmit={handleEditTask} className="space-y-4">
+              <div>
+                <label className={`block text-sm font-medium ${currentTheme.text} mb-2`}>
+                  Title *
+                </label>
+                <input
+                  type="text"
+                  value={editingTask.title}
+                  onChange={(e) => setEditingTask({ ...editingTask, title: e.target.value })}
+                  className="input"
+                  required
+                  data-testid="edit-task-title-input"
+                />
+              </div>
+
+              <div>
+                <label className={`block text-sm font-medium ${currentTheme.text} mb-2`}>
+                  Description
+                </label>
+                <textarea
+                  value={editingTask.description}
+                  onChange={(e) => setEditingTask({ ...editingTask, description: e.target.value })}
+                  className="input"
+                  rows="4"
+                  data-testid="edit-task-description-input"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className={`block text-sm font-medium ${currentTheme.text} mb-2`}>
+                    Priority
+                  </label>
+                  <select
+                    value={editingTask.priority}
+                    onChange={(e) => setEditingTask({ ...editingTask, priority: e.target.value })}
+                    className="input"
+                    data-testid="edit-task-priority-select"
+                  >
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                    <option value="urgent">Urgent</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className={`block text-sm font-medium ${currentTheme.text} mb-2`}>
+                    Status
+                  </label>
+                  <select
+                    value={editingTask.status}
+                    onChange={(e) => setEditingTask({ ...editingTask, status: e.target.value })}
+                    className="input"
+                    data-testid="edit-task-status-select"
+                  >
+                    <option value="todo">To Do</option>
+                    <option value="in_progress">In Progress</option>
+                    <option value="review">Review</option>
+                    <option value="done">Done</option>
+                    <option value="archived">Archived</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className={`block text-sm font-medium ${currentTheme.text} mb-2`}>
+                  Due Date
+                </label>
+                <input
+                  type="date"
+                  value={editingTask.due_date ? new Date(editingTask.due_date).toISOString().split('T')[0] : ''}
+                  onChange={(e) => setEditingTask({ ...editingTask, due_date: e.target.value })}
+                  className="input"
+                  data-testid="edit-task-due-date-input"
+                />
+              </div>
+
+              {['admin', 'hr', 'team_lead'].includes(user?.role) && (
+                <>
+                  <div>
+                    <label className={`block text-sm font-medium ${currentTheme.text} mb-2`}>
+                      Select Team
+                    </label>
+                    <select
+                      value={editingTask.team_id || ''}
+                      onChange={(e) => handleTeamChange(e.target.value)}
+                      className="input"
+                      data-testid="edit-task-team-select"
+                    >
+                      <option value="">No Team</option>
+                      {teams.map((team) => (
+                        <option key={team._id} value={team._id}>
+                          {team.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {editingTask.team_id && selectedTeamMembers.length > 0 && (
+                    <div>
+                      <label className={`block text-sm font-medium ${currentTheme.text} mb-2`}>
+                        Assign Team Members
+                      </label>
+                      <div className="space-y-2 max-h-40 overflow-y-auto border rounded-lg p-3">
+                        {selectedTeamMembers.map((member) => (
+                          <label key={member._id} className="flex items-center space-x-2">
+                            <input
+                              type="checkbox"
+                              checked={editingTask.assigned_to.includes(member._id)}
+                              onChange={() => handleMemberToggle(member._id)}
+                              className="rounded"
+                            />
+                            <span className="text-sm">
+                              {member.full_name} ({member.role})
+                              {member._id === user?.id && <span className="text-blue-600 font-medium"> (You)</span>}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+
+              <div className="flex justify-end space-x-4 pt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowEditModal(false);
+                    setEditingTask(null);
+                  }}
+                  className="btn btn-secondary"
+                >
+                  Cancel
+                </button>
+                <button type="submit" className="btn btn-primary" data-testid="submit-edit-task">
+                  Update Task
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Create Task Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" data-testid="create-task-modal">
-          <div className="bg-white rounded-lg p-8 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+          <div className={`${currentTheme.surface} rounded-lg p-8 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto`}>
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold">Create New Task</h2>
+              <h2 className={`text-2xl font-bold ${currentTheme.text}`}>Create New Task</h2>
               <button
                 onClick={() => setShowCreateModal(false)}
-                className="text-gray-500 hover:text-gray-700"
+                className={`${currentTheme.textSecondary} hover:${currentTheme.text}`}
               >
                 <X className="w-6 h-6" />
               </button>
@@ -369,7 +655,7 @@ const Tasks = () => {
 
             <form onSubmit={handleCreateTask} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className={`block text-sm font-medium ${currentTheme.text} mb-2`}>
                   Title *
                 </label>
                 <input
@@ -383,7 +669,7 @@ const Tasks = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className={`block text-sm font-medium ${currentTheme.text} mb-2`}>
                   Description
                 </label>
                 <textarea
@@ -397,7 +683,7 @@ const Tasks = () => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className={`block text-sm font-medium ${currentTheme.text} mb-2`}>
                     Priority
                   </label>
                   <select
@@ -414,7 +700,7 @@ const Tasks = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className={`block text-sm font-medium ${currentTheme.text} mb-2`}>
                     Status
                   </label>
                   <select
@@ -432,7 +718,7 @@ const Tasks = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className={`block text-sm font-medium ${currentTheme.text} mb-2`}>
                   Due Date
                 </label>
                 <input
@@ -443,6 +729,73 @@ const Tasks = () => {
                   data-testid="task-due-date-input"
                 />
               </div>
+
+              {['admin', 'hr', 'team_lead'].includes(user?.role) && (
+                <>
+                  <div>
+                    <label className={`block text-sm font-medium ${currentTheme.text} mb-2`}>
+                      Select Team
+                    </label>
+                    <select
+                      value={formData.team_id}
+                      onChange={(e) => {
+                        const teamId = e.target.value;
+                        const selectedTeam = teams.find(team => team._id === teamId);
+                        setSelectedTeamMembers(selectedTeam ? selectedTeam.members : []);
+                        setFormData({ ...formData, team_id: teamId, assigned_to: [] });
+                      }}
+                      className="input"
+                      data-testid="task-team-select"
+                    >
+                      <option value="">No Team</option>
+                      {teams.map((team) => (
+                        <option key={team._id} value={team._id}>
+                          {team.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {formData.team_id && selectedTeamMembers.length > 0 && (
+                    <div>
+                      <label className={`block text-sm font-medium ${currentTheme.text} mb-2`}>
+                        Assign Team Members
+                      </label>
+                      <div className="space-y-2 max-h-40 overflow-y-auto border rounded-lg p-3">
+                        {selectedTeamMembers.map((member) => (
+                          <label key={member._id} className="flex items-center space-x-2">
+                            <input
+                              type="checkbox"
+                              checked={formData.assigned_to.includes(member._id)}
+                              onChange={() => {
+                                const currentAssigned = formData.assigned_to;
+                                const isSelected = currentAssigned.includes(member._id);
+
+                                if (isSelected) {
+                                  setFormData({
+                                    ...formData,
+                                    assigned_to: currentAssigned.filter(id => id !== member._id)
+                                  });
+                                } else {
+                                  setFormData({
+                                    ...formData,
+                                    assigned_to: [...currentAssigned, member._id]
+                                  });
+                                }
+                              }}
+                              className="rounded"
+                            />
+                            <span className="text-sm">
+                              {member.full_name} ({member.role})
+                              {member._id === user?.id && <span className="text-blue-600 font-medium"> (You)</span>}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
 
               <div className="flex justify-end space-x-4 pt-4">
                 <button
@@ -464,12 +817,12 @@ const Tasks = () => {
       {/* Task Detail Modal */}
       {showDetailModal && selectedTask && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" data-testid="task-detail-modal">
-          <div className="bg-white rounded-lg p-8 max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+          <div className={`${currentTheme.surface} rounded-lg p-8 max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto`}>
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold">{selectedTask.title}</h2>
+              <h2 className={`text-2xl font-bold ${currentTheme.text}`}>{selectedTask.title}</h2>
               <button
                 onClick={() => setShowDetailModal(false)}
-                className="text-gray-500 hover:text-gray-700"
+                className={`${currentTheme.textSecondary} hover:${currentTheme.text}`}
               >
                 <X className="w-6 h-6" />
               </button>
@@ -477,12 +830,12 @@ const Tasks = () => {
 
             <div className="space-y-6">
               <div>
-                <p className="text-gray-700">{selectedTask.description}</p>
+                <p className={`${currentTheme.textSecondary}`}>{selectedTask.description}</p>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className={`block text-sm font-medium ${currentTheme.text} mb-2`}>
                     Status
                   </label>
                   {canEditTask(selectedTask) ? (
@@ -506,7 +859,7 @@ const Tasks = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className={`block text-sm font-medium ${currentTheme.text} mb-2`}>
                     Priority
                   </label>
                   <span className={`inline-block px-3 py-1 rounded-full ${getPriorityColor(selectedTask.priority)}`}>
@@ -515,38 +868,82 @@ const Tasks = () => {
                 </div>
               </div>
 
-              <div>
-                <p className="text-sm text-gray-600">
-                  <span className="font-medium">Created by:</span> {selectedTask.created_by.full_name}
-                </p>
-                {selectedTask.assigned_to && (
-                  <p className="text-sm text-gray-600">
-                    <span className="font-medium">Assigned to:</span> {selectedTask.assigned_to.full_name}
-                  </p>
+              <div className="space-y-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <p className={`text-sm ${currentTheme.textSecondary}`}>
+                      <span className="font-medium">👤 Created by:</span> {selectedTask.created_by?.full_name || 'Unknown'}
+                    </p>
+                    {selectedTask.team_id && (
+                      <p className={`text-sm ${currentTheme.textSecondary}`}>
+                        <span className="font-medium">🏢 Team:</span> {selectedTask.team_id.name}
+                      </p>
+                    )}
+                  </div>
+                  <div>
+                    {selectedTask.assigned_to && selectedTask.assigned_to.length > 0 && (
+                      <p className={`text-sm ${currentTheme.textSecondary}`}>
+                        <span className="font-medium">👥 Assigned to:</span>
+                        <div className="mt-1">
+                          {selectedTask.assigned_to.map((user, index) => (
+                            <span key={user._id} className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full mr-1 mb-1">
+                              {user.full_name}
+                            </span>
+                          ))}
+                        </div>
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <p className={`text-sm ${currentTheme.textSecondary}`}>
+                      <span className="font-medium">📅 Created:</span> {new Date(selectedTask.created_at).toLocaleString()}
+                    </p>
+                  </div>
+                  <div>
+                    {selectedTask.due_date && (
+                      <p className={`text-sm ${currentTheme.textSecondary}`}>
+                        <span className="font-medium">⏰ Due:</span>
+                        <span className={`font-medium ${new Date(selectedTask.due_date) < new Date() ? 'text-red-600' : 'text-orange-600'}`}>
+                          {new Date(selectedTask.due_date).toLocaleString()}
+                        </span>
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {selectedTask.updated_at !== selectedTask.created_at && (
+                  <div>
+                    <p className={`text-sm ${currentTheme.textSecondary}`}>
+                      <span className="font-medium">🔄 Last updated:</span> {new Date(selectedTask.updated_at).toLocaleString()}
+                    </p>
+                  </div>
                 )}
               </div>
 
               {/* Comments Section */}
-              <div className="border-t pt-6">
-                <h3 className="text-lg font-semibold mb-4 flex items-center">
+              <div className={`${currentTheme.border} border-t pt-6`}>
+                <h3 className={`text-lg font-semibold mb-4 flex items-center ${currentTheme.text}`}>
                   <MessageSquare className="w-5 h-5 mr-2" />
                   Comments
                 </h3>
 
                 <div className="space-y-4 mb-4 max-h-60 overflow-y-auto">
                   {comments.map((comment) => (
-                    <div key={comment._id} className="bg-gray-50 rounded-lg p-4" data-testid="comment-item">
+                    <div key={comment._id} className={`${currentTheme.surfaceSecondary} rounded-lg p-4`} data-testid="comment-item">
                       <div className="flex justify-between items-start mb-2">
-                        <span className="font-medium text-sm">{comment.author_id.full_name}</span>
-                        <span className="text-xs text-gray-500">
+                        <span className={`font-medium text-sm ${currentTheme.text}`}>{comment.author_id?.full_name || 'Unknown'}</span>
+                        <span className={`text-xs ${currentTheme.textMuted}`}>
                           {new Date(comment.created_at).toLocaleString()}
                         </span>
                       </div>
-                      <p className="text-sm text-gray-700">{comment.content}</p>
+                      <p className={`text-sm ${currentTheme.textSecondary}`}>{comment.content}</p>
                     </div>
                   ))}
                   {comments.length === 0 && (
-                    <p className="text-gray-500 text-sm">No comments yet</p>
+                    <p className={`${currentTheme.textMuted} text-sm`}>No comments yet</p>
                   )}
                 </div>
 

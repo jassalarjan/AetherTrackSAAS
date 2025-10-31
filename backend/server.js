@@ -3,6 +3,8 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import cookieParser from 'cookie-parser';
 import connectDB from './config/db.js';
 
@@ -14,8 +16,10 @@ import taskRoutes from './routes/tasks.js';
 import commentRoutes from './routes/comments.js';
 import notificationRoutes from './routes/notifications.js';
 
-// Load environment variables
-dotenv.config();
+// Load environment variables (ensure we read backend/.env even if CWD is project root)
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+dotenv.config({ path: path.join(__dirname, '.env') });
 
 // Initialize Express app
 const app = express();

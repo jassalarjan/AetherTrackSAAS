@@ -2,10 +2,12 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import Navbar from '../components/Navbar';
 import api from '../api/axios';
-import { Plus, X, Users, UserPlus, UserMinus } from 'lucide-react';
+import { Plus, X, Users, UserPlus, UserMinus, Trash2, Pin, GripVertical } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
 
 const Teams = () => {
   const { user } = useAuth();
+  const { currentTheme, currentColorScheme } = useTheme();
   const [teams, setTeams] = useState([]);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -18,6 +20,7 @@ const Teams = () => {
     lead_id: '',
   });
   const [selectedUserId, setSelectedUserId] = useState('');
+  const [draggedTeam, setDraggedTeam] = useState(null);
 
   useEffect(() => {
     fetchTeams();
@@ -84,12 +87,83 @@ const Teams = () => {
     }
   };
 
+  const handleDeleteTeam = async (teamId, teamName) => {
+    if (!confirm(`Are you sure you want to delete team "${teamName}"? All members will be unassigned from this team.`)) {
+      return;
+    }
+
+    try {
+      await api.delete(`/teams/${teamId}`);
+      fetchTeams();
+      alert('Team deleted successfully');
+    } catch (error) {
+      console.error('Error deleting team:', error);
+      alert(error.response?.data?.message || 'Failed to delete team');
+    }
+  };
+
+  const handleTogglePin = async (teamId) => {
+    try {
+      await api.patch(`/teams/${teamId}/pin`);
+      fetchTeams();
+    } catch (error) {
+      console.error('Error toggling pin:', error);
+      alert(error.response?.data?.message || 'Failed to toggle pin');
+    }
+  };
+
+  const handleDragStart = (e, team) => {
+    setDraggedTeam(team);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDrop = async (e, targetTeam) => {
+    e.preventDefault();
+    
+    if (!draggedTeam || draggedTeam._id === targetTeam._id) {
+      setDraggedTeam(null);
+      return;
+    }
+
+    // Reorder teams array
+    const updatedTeams = [...teams];
+    const draggedIndex = updatedTeams.findIndex(t => t._id === draggedTeam._id);
+    const targetIndex = updatedTeams.findIndex(t => t._id === targetTeam._id);
+
+    updatedTeams.splice(draggedIndex, 1);
+    updatedTeams.splice(targetIndex, 0, draggedTeam);
+
+    // Update local state immediately for smooth UX
+    setTeams(updatedTeams);
+
+    // Send new order to backend
+    try {
+      const teamOrder = updatedTeams.map((team, index) => ({
+        id: team._id,
+        priority: updatedTeams.length - index
+      }));
+      
+      await api.post('/teams/reorder', { teamOrder });
+    } catch (error) {
+      console.error('Error reordering teams:', error);
+      // Revert on error
+      fetchTeams();
+    }
+
+    setDraggedTeam(null);
+  };
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className={`min-h-screen ${currentTheme.background}`}>
         <Navbar />
         <div className="flex items-center justify-center h-screen">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          <div className={`animate-spin rounded-full h-12 w-12 border-b-2 ${currentColorScheme.primary}`}></div>
         </div>
       </div>
     );
@@ -97,11 +171,11 @@ const Teams = () => {
 
   if (!['admin', 'hr', 'team_lead'].includes(user?.role)) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className={`min-h-screen ${currentTheme.background}`}>
         <Navbar />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center">
-            <p className="text-xl text-gray-600">You don't have permission to access this page.</p>
+            <p className={`text-xl ${currentTheme.textSecondary}`}>You don't have permission to access this page.</p>
           </div>
         </div>
       </div>
@@ -109,19 +183,19 @@ const Teams = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50" data-testid="teams-page">
+    <div className={`min-h-screen ${currentTheme.background}`} data-testid="teams-page">
       <div className="flex">
         <Navbar />
         <div className="flex-1 p-8">
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Teams</h1>
-            <p className="text-gray-600 mt-2">Manage your teams and members</p>
+            <h1 className={`text-3xl font-bold ${currentTheme.text}`}>Teams</h1>
+            <p className={`${currentTheme.textSecondary} mt-2`}>Manage your teams and members</p>
           </div>
           {['admin', 'hr'].includes(user?.role) && (
             <button
               onClick={() => setShowCreateModal(true)}
-              className="btn btn-primary flex items-center space-x-2"
+              className={`btn ${currentColorScheme.primary} text-white ${currentColorScheme.primaryHover} flex items-center space-x-2`}
               data-testid="create-team-btn"
             >
               <Plus className="w-5 h-5" />
@@ -134,40 +208,84 @@ const Teams = () => {
           {teams.map((team) => (
             <div
               key={team._id}
-              className="bg-white rounded-lg shadow-md p-6"
+              draggable={['admin', 'hr'].includes(user?.role)}
+              onDragStart={(e) => handleDragStart(e, team)}
+              onDragOver={handleDragOver}
+              onDrop={(e) => handleDrop(e, team)}
+              className={`${currentTheme.surface} rounded-lg shadow-md p-6 relative ${
+                draggedTeam?._id === team._id ? 'opacity-50' : ''
+              } ${['admin', 'hr'].includes(user?.role) ? 'cursor-move' : ''}`}
               data-testid="team-card"
             >
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xl font-semibold text-gray-900">{team.name}</h3>
-                <Users className="w-6 h-6 text-blue-600" />
+              {/* Pin Indicator */}
+              {team.pinned && (
+                <div className="absolute top-2 left-2">
+                  <Pin className="w-5 h-5 text-yellow-500 fill-yellow-500" />
+                </div>
+              )}
+
+              {/* Drag Handle for Admin/HR */}
+              {['admin', 'hr'].includes(user?.role) && (
+                <div className="absolute top-2 right-2">
+                  <GripVertical className={`w-5 h-5 ${currentTheme.textMuted}`} />
+                </div>
+              )}
+
+              <div className="flex items-center justify-between mb-4 mt-4">
+                <h3 className={`text-xl font-semibold ${currentTheme.text}`}>{team.name}</h3>
+                <div className="flex items-center space-x-2">
+                  <Users className="w-6 h-6 text-blue-600" />
+                  {['admin', 'hr'].includes(user?.role) && (
+                    <>
+                      <button
+                        onClick={() => handleTogglePin(team._id)}
+                        className={`${
+                          team.pinned ? 'text-yellow-500' : currentTheme.textSecondary
+                        } hover:text-yellow-600 p-1 transition-colors`}
+                        title={team.pinned ? 'Unpin Team' : 'Pin Team'}
+                        data-testid="pin-team-btn"
+                      >
+                        <Pin className={`w-5 h-5 ${team.pinned ? 'fill-yellow-500' : ''}`} />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteTeam(team._id, team.name)}
+                        className="text-red-600 hover:text-red-800 p-1"
+                        title="Delete Team"
+                        data-testid="delete-team-btn"
+                      >
+                        <Trash2 className="w-5 h-5" />
+                      </button>
+                    </>
+                  )}
+                </div>
               </div>
 
               <div className="space-y-2 mb-4">
                 <div className="text-sm">
-                  <span className="font-medium text-gray-700">HR:</span>
-                  <span className="text-gray-600 ml-2">{team.hr_id?.full_name}</span>
+                  <span className={`font-medium ${currentTheme.text}`}>HR:</span>
+                  <span className={`${currentTheme.textSecondary} ml-2`}>{team.hr_id?.full_name}</span>
                 </div>
                 <div className="text-sm">
-                  <span className="font-medium text-gray-700">Team Lead:</span>
-                  <span className="text-gray-600 ml-2">{team.lead_id?.full_name}</span>
+                  <span className={`font-medium ${currentTheme.text}`}>Team Lead:</span>
+                  <span className={`${currentTheme.textSecondary} ml-2`}>{team.lead_id?.full_name}</span>
                 </div>
                 <div className="text-sm">
-                  <span className="font-medium text-gray-700">Members:</span>
-                  <span className="text-gray-600 ml-2">{team.members?.length || 0}</span>
+                  <span className={`font-medium ${currentTheme.text}`}>Members:</span>
+                  <span className={`${currentTheme.textSecondary} ml-2`}>{team.members?.length || 0}</span>
                 </div>
               </div>
 
               <div className="border-t pt-4">
-                <h4 className="text-sm font-medium text-gray-700 mb-2">Team Members</h4>
+                <h4 className={`text-sm font-medium ${currentTheme.text} mb-2`}>Team Members</h4>
                 <div className="space-y-2 max-h-40 overflow-y-auto">
                   {team.members && team.members.length > 0 ? (
                     team.members.map((member) => (
                       <div
                         key={member._id}
-                        className="flex justify-between items-center bg-gray-50 rounded p-2"
+                        className={`flex justify-between items-center ${currentTheme.surfaceSecondary} rounded p-2`}
                         data-testid="team-member"
                       >
-                        <span className="text-sm">{member.full_name}</span>
+                        <span className={`text-sm ${currentTheme.text}`}>{member.full_name}</span>
                         {['admin', 'hr'].includes(user?.role) && (
                           <button
                             onClick={() => handleRemoveMember(team._id, member._id)}
@@ -180,7 +298,7 @@ const Teams = () => {
                       </div>
                     ))
                   ) : (
-                    <p className="text-sm text-gray-500">No members yet</p>
+                    <p className={`text-sm ${currentTheme.textMuted}`}>No members yet</p>
                   )}
                 </div>
               </div>
@@ -204,7 +322,7 @@ const Teams = () => {
 
         {teams.length === 0 && (
           <div className="text-center py-12">
-            <p className="text-gray-500 text-lg">No teams yet. Create your first team!</p>
+            <p className={`${currentTheme.textMuted} text-lg`}>No teams yet. Create your first team!</p>
           </div>
         )}
         </div>
@@ -213,12 +331,12 @@ const Teams = () => {
       {/* Create Team Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" data-testid="create-team-modal">
-          <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4">
+          <div className={`${currentTheme.surface} rounded-lg p-8 max-w-md w-full mx-4`}>
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold">Create New Team</h2>
+              <h2 className={`text-2xl font-bold ${currentTheme.text}`}>Create New Team</h2>
               <button
                 onClick={() => setShowCreateModal(false)}
-                className="text-gray-500 hover:text-gray-700"
+                className={`${currentTheme.textMuted} hover:${currentTheme.text}`}
               >
                 <X className="w-6 h-6" />
               </button>
@@ -226,7 +344,7 @@ const Teams = () => {
 
             <form onSubmit={handleCreateTeam} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className={`block text-sm font-medium ${currentTheme.text} mb-2`}>
                   Team Name *
                 </label>
                 <input
@@ -240,7 +358,7 @@ const Teams = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className={`block text-sm font-medium ${currentTheme.text} mb-2`}>
                   HR *
                 </label>
                 <select
@@ -262,7 +380,7 @@ const Teams = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className={`block text-sm font-medium ${currentTheme.text} mb-2`}>
                   Team Lead *
                 </label>
                 <select
@@ -303,12 +421,12 @@ const Teams = () => {
       {/* Add Member Modal */}
       {showAddMemberModal && selectedTeam && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" data-testid="add-member-modal">
-          <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4">
+          <div className={`${currentTheme.surface} rounded-lg p-8 max-w-md w-full mx-4`}>
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold">Add Member to {selectedTeam.name}</h2>
+              <h2 className={`text-2xl font-bold ${currentTheme.text}`}>Add Member to {selectedTeam.name}</h2>
               <button
                 onClick={() => setShowAddMemberModal(false)}
-                className="text-gray-500 hover:text-gray-700"
+                className={`${currentTheme.textMuted} hover:${currentTheme.text}`}
               >
                 <X className="w-6 h-6" />
               </button>
@@ -316,7 +434,7 @@ const Teams = () => {
 
             <form onSubmit={handleAddMember} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className={`block text-sm font-medium ${currentTheme.text} mb-2`}>
                   Select User *
                 </label>
                 <select
