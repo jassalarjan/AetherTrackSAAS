@@ -11,12 +11,33 @@ router.post('/', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
   try {
     const { name, hr_id, lead_id, members } = req.body;
 
+    // Special validation for "Admin" team - only admins allowed
+    const isAdminTeam = name && name.toLowerCase() === 'admin';
+    
+    if (isAdminTeam) {
+      // Admin team should not have HR assigned
+      return res.status(400).json({ 
+        message: 'Admin team is reserved for super users only. Please use a different team name or create teams without HR designation for admin users.',
+        hint: 'Admin users do not need to be part of a team structure'
+      });
+    }
+
     // Verify HR and Lead exist
     const hr = await User.findById(hr_id);
     const lead = await User.findById(lead_id);
 
     if (!hr || !lead) {
       return res.status(400).json({ message: 'HR or Team Lead not found' });
+    }
+
+    // Validate that HR user has HR role
+    if (hr.role !== 'hr' && hr.role !== 'admin') {
+      return res.status(400).json({ message: 'Selected HR user must have HR or Admin role' });
+    }
+
+    // Validate that Lead has appropriate role
+    if (!['team_lead', 'admin'].includes(lead.role)) {
+      return res.status(400).json({ message: 'Selected team lead must have Team Lead or Admin role' });
     }
 
     const team = new Team({
@@ -65,7 +86,7 @@ router.get('/', authenticate, checkRole(['admin', 'hr', 'team_lead']), async (re
       .populate('hr_id', 'full_name email')
       .populate('lead_id', 'full_name email')
       .populate('members', 'full_name email role')
-      .sort({ created_at: -1 });
+      .sort({ pinned: -1, priority: -1, created_at: -1 }); // Pinned first, then by priority, then by creation date
 
     res.json({ teams, count: teams.length });
   } catch (error) {
@@ -99,12 +120,26 @@ router.patch('/:id', authenticate, checkRole(['admin', 'hr']), async (req, res) 
     const { name, lead_id } = req.body;
     const updates = {};
 
+    // Check if trying to rename to "Admin"
+    if (name && name.toLowerCase() === 'admin') {
+      return res.status(400).json({ 
+        message: 'Admin team name is reserved for super users only',
+        hint: 'Please choose a different team name'
+      });
+    }
+
     if (name) updates.name = name;
     if (lead_id) {
       const lead = await User.findById(lead_id);
       if (!lead) {
         return res.status(400).json({ message: 'Team lead not found' });
       }
+      
+      // Validate lead role
+      if (!['team_lead', 'admin'].includes(lead.role)) {
+        return res.status(400).json({ message: 'Selected user must have Team Lead or Admin role' });
+      }
+      
       updates.lead_id = lead_id;
     }
 
@@ -121,6 +156,95 @@ router.patch('/:id', authenticate, checkRole(['admin', 'hr']), async (req, res) 
     res.json({ message: 'Team updated', team });
   } catch (error) {
     console.error('Update team error:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// Toggle team pin status (Admin & HR only)
+router.patch('/:id/pin', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const team = await Team.findById(id);
+    if (!team) {
+      return res.status(404).json({ message: 'Team not found' });
+    }
+
+    // Toggle pinned status
+    team.pinned = !team.pinned;
+    
+    // If pinning, set priority higher than all other teams
+    if (team.pinned) {
+      const maxPriority = await Team.findOne().sort({ priority: -1 }).select('priority');
+      team.priority = maxPriority ? maxPriority.priority + 1 : 1;
+    }
+
+    await team.save();
+
+    const updatedTeam = await Team.findById(id)
+      .populate('hr_id', 'full_name email')
+      .populate('lead_id', 'full_name email')
+      .populate('members', 'full_name email role');
+
+    res.json({ 
+      message: team.pinned ? 'Team pinned' : 'Team unpinned', 
+      team: updatedTeam 
+    });
+  } catch (error) {
+    console.error('Toggle pin error:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// Update team priority (Admin & HR only)
+router.patch('/:id/priority', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { priority } = req.body;
+
+    if (typeof priority !== 'number') {
+      return res.status(400).json({ message: 'Priority must be a number' });
+    }
+
+    const team = await Team.findByIdAndUpdate(
+      id,
+      { priority },
+      { new: true }
+    ).populate('hr_id lead_id members');
+
+    if (!team) {
+      return res.status(404).json({ message: 'Team not found' });
+    }
+
+    res.json({ message: 'Team priority updated', team });
+  } catch (error) {
+    console.error('Update priority error:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// Reorder teams (Admin & HR only)
+router.post('/reorder', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
+  try {
+    const { teamOrder } = req.body; // Array of { id, priority }
+
+    if (!Array.isArray(teamOrder)) {
+      return res.status(400).json({ message: 'teamOrder must be an array' });
+    }
+
+    // Update priorities in bulk
+    const bulkOps = teamOrder.map((item, index) => ({
+      updateOne: {
+        filter: { _id: item.id },
+        update: { priority: teamOrder.length - index }
+      }
+    }));
+
+    await Team.bulkWrite(bulkOps);
+
+    res.json({ message: 'Teams reordered successfully' });
+  } catch (error) {
+    console.error('Reorder teams error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
@@ -163,7 +287,8 @@ router.post('/:id/members', authenticate, checkRole(['admin', 'hr']), async (req
   }
 });
 
-// Remove member from team (HR only)
+// Remove member from team (Admin & HR only)
+// This route MUST come before DELETE /:id to avoid route conflict
 router.delete('/:id/members/:userId', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
   try {
     const { id, userId } = req.params;
@@ -186,6 +311,43 @@ router.delete('/:id/members/:userId', authenticate, checkRole(['admin', 'hr']), 
     res.json({ message: 'Member removed from team', team: updatedTeam });
   } catch (error) {
     console.error('Remove member error:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// Delete team (Admin & HR only)
+// This route MUST come after DELETE /:id/members/:userId to avoid route conflict
+router.delete('/:id', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const team = await Team.findById(id);
+    if (!team) {
+      return res.status(404).json({ message: 'Team not found' });
+    }
+
+    // Get team name for response
+    const teamName = team.name;
+
+    // Remove team reference from all users in this team
+    await User.updateMany(
+      { team_id: id },
+      { $set: { team_id: null, updated_at: new Date() } }
+    );
+
+    // Delete the team
+    await Team.findByIdAndDelete(id);
+
+    res.json({ 
+      message: 'Team deleted successfully',
+      team: { 
+        id: id, 
+        name: teamName,
+        usersAffected: team.members.length + 1 // members + lead
+      }
+    });
+  } catch (error) {
+    console.error('Delete team error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });

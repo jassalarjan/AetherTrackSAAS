@@ -1,16 +1,20 @@
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Bell, LogOut, User, LayoutDashboard, CheckSquare, Users } from 'lucide-react';
+import { Bell, LogOut, User, LayoutDashboard, CheckSquare, Users, UserCog, Kanban, Menu, X, ChevronLeft, ChevronRight, BarChart3, Settings } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import api from '../api/axios';
 
 const Navbar = () => {
   const { user, logout } = useAuth();
+  const { currentTheme, currentColorScheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   useEffect(() => {
     fetchNotifications();
@@ -23,6 +27,10 @@ const Navbar = () => {
       setUnreadCount(response.data.unreadCount);
     } catch (error) {
       console.error('Error fetching notifications:', error);
+      // Don't show error for unauthorized - user might not be logged in yet
+      if (error.response?.status !== 401) {
+        console.error('Error fetching notifications:', error);
+      }
     }
   };
 
@@ -65,28 +73,99 @@ const Navbar = () => {
       roles: ['admin', 'hr', 'team_lead', 'member'],
     },
     {
+      name: 'Kanban',
+      href: '/kanban',
+      icon: Kanban,
+      roles: ['admin', 'hr', 'team_lead', 'member'],
+    },
+    {
+      name: 'Analytics',
+      href: '/analytics',
+      icon: BarChart3,
+      roles: ['admin', 'hr', 'team_lead', 'member'],
+    },
+    {
       name: 'Teams',
       href: '/teams',
       icon: Users,
       roles: ['admin', 'hr', 'team_lead'],
     },
+    {
+      name: 'User Management',
+      href: '/users',
+      icon: UserCog,
+      roles: ['admin', 'hr'],
+    },
+    {
+      name: 'Settings',
+      href: '/settings',
+      icon: Settings,
+      roles: ['admin', 'hr', 'team_lead', 'member'],
+    },
   ];
 
   const isActive = (href) => {
-    return location.pathname === href;
+    return location.pathname === href || (href === '/dashboard' && location.pathname === '/');
   };
 
+  // Derive a border color class from the primary bg class (e.g., bg-blue-600 -> border-blue-600)
+  const primaryBorderClass = currentColorScheme.primary?.startsWith('bg-')
+    ? currentColorScheme.primary.replace('bg-', 'border-')
+    : 'border-blue-600';
+
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className={`flex h-screen ${currentTheme.background}`}>
+      {/* Mobile Menu Button */}
+      <div className="md:hidden fixed top-4 left-4 z-50">
+        <button
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          className="bg-white p-2 rounded-lg shadow-lg border"
+        >
+          {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+        </button>
+      </div>
+
+      {/* Mobile Overlay */}
+      {isMobileMenuOpen && (
+        <div
+          className="md:hidden fixed inset-0 bg-black bg-opacity-50 z-40"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <div className="w-64 bg-white shadow-lg border-r">
+      <div className={`${
+        isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
+      } ${
+        isCollapsed ? 'md:w-16' : 'md:w-64'
+      } md:translate-x-0 fixed md:fixed inset-y-0 left-0 z-50 ${currentTheme.surface} shadow-lg border-r ${currentTheme.border} transition-all duration-300 ease-in-out md:h-screen md:flex-shrink-0`}>
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="flex items-center justify-center h-16 px-4 border-b">
-            <Link to="/dashboard" className="flex items-center space-x-2">
-              <LayoutDashboard className="w-8 h-8 text-blue-600" />
-              <span className="text-xl font-bold text-gray-900">TaskFlow</span>
+          <div className={`flex items-center justify-center h-16 px-4 border-b ${currentTheme.border} relative`}>
+            <Link
+              to="/dashboard"
+              className="flex items-center space-x-2"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              <img 
+                src="/logo.png" 
+                alt="TaskFlow Logo" 
+                className="w-8 h-8 object-contain"
+              />
+              {!isCollapsed && <span className={`text-xl font-bold ${currentTheme.text}`}>TaskFlow</span>}
             </Link>
+
+            {/* Collapse Toggle Button */}
+            <button
+              onClick={() => setIsCollapsed(!isCollapsed)}
+              className={`hidden md:block absolute right-2 top-1/2 transform -translate-y-1/2 p-1 rounded-lg ${currentTheme.hover} transition-colors`}
+            >
+              {isCollapsed ? (
+                <ChevronRight className={`w-5 h-5 ${currentTheme.textSecondary}`} />
+              ) : (
+                <ChevronLeft className={`w-5 h-5 ${currentTheme.textSecondary}`} />
+              )}
+            </button>
           </div>
 
           {/* Navigation */}
@@ -99,106 +178,127 @@ const Navbar = () => {
                   <Link
                     key={item.name}
                     to={item.href}
-                    className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${
+                    className={`w-full flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${
                       isActive(item.href)
-                        ? 'bg-blue-50 text-blue-700 border-r-4 border-blue-700'
-                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                    }`}
+                        ? `${currentColorScheme.primaryLight} ${currentColorScheme.primaryText} border-r-4 ${primaryBorderClass}`
+                        : `${currentTheme.textSecondary} ${currentTheme.hover} hover:${currentTheme.text}`
+                    } ${isCollapsed ? 'justify-center px-2' : ''}`}
                     data-testid={`nav-${item.name.toLowerCase()}`}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    title={isCollapsed ? item.name : ''}
                   >
-                    <Icon className={`w-5 h-5 mr-3 transition-colors ${
-                      isActive(item.href) ? 'text-blue-700' : 'text-gray-400'
+                    <Icon className={`w-5 h-5 ${isCollapsed ? '' : 'mr-3'} transition-colors ${
+                      isActive(item.href) ? currentColorScheme.primaryText : currentTheme.textMuted
                     }`} />
-                    {item.name}
+                    {!isCollapsed && <span>{item.name}</span>}
                   </Link>
                 );
               })}
           </nav>
 
           {/* User Info & Actions */}
-          <div className="border-t p-4">
-            <div className="flex items-center space-x-3 mb-4">
-              <div className="flex-1">
-                <p className="text-sm font-medium text-gray-900" data-testid="user-name">{user?.full_name}</p>
-                <span
-                  className={`text-xs px-2 py-1 rounded-full ${getRoleBadge(user?.role)}`}
-                  data-testid="user-role"
-                >
-                  {user?.role?.replace('_', ' ')}
-                </span>
+          <div className={`border-t ${currentTheme.border} p-4`}>
+            {!isCollapsed && (
+              <div className="flex items-center space-x-3 mb-4">
+                <div className="flex-1">
+                  <p className={`text-sm font-medium ${currentTheme.text}`} data-testid="user-name">{user?.full_name}</p>
+                  <span
+                    className={`text-xs px-2 py-1 rounded-full ${getRoleBadge(user?.role)}`}
+                    data-testid="user-role"
+                  >
+                    {user?.role?.replace('_', ' ')}
+                  </span>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Notifications */}
-            <div className="relative mb-4">
-              <button
-                onClick={() => {
-                  setShowNotifications(!showNotifications);
-                  if (!showNotifications) markAsRead();
-                }}
-                className="w-full flex items-center px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
-                data-testid="notification-button"
-              >
-                <Bell className="w-5 h-5 mr-3" />
-                <span>Notifications</span>
-                {unreadCount > 0 && (
-                  <span className="ml-auto bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center" data-testid="notification-count">
-                    {unreadCount}
-                  </span>
-                )}
-              </button>
+            {!isCollapsed && (
+              <div className="relative mb-4">
+                <button
+                  onClick={() => {
+                    setShowNotifications(!showNotifications);
+                    if (!showNotifications) markAsRead();
+                  }}
+                  className={`w-full flex items-center px-4 py-2 text-sm ${currentTheme.textSecondary} ${currentTheme.hover} rounded-lg transition-colors`}
+                  data-testid="notification-button"
+                >
+                  <Bell className="w-5 h-5 mr-3" />
+                  <span>Notifications</span>
+                  {unreadCount > 0 && (
+                    <span className="ml-auto bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center" data-testid="notification-count">
+                      {unreadCount}
+                    </span>
+                  )}
+                </button>
 
-              {showNotifications && (
-                <div className="absolute bottom-full left-0 mb-2 w-full bg-white rounded-lg shadow-xl border z-50" data-testid="notification-dropdown">
-                  <div className="p-4 border-b">
-                    <h3 className="font-semibold">Notifications</h3>
+                {showNotifications && (
+                  <div className={`absolute bottom-full left-0 mb-2 w-full ${currentTheme.surface} rounded-lg shadow-xl ${currentTheme.border} z-50`} data-testid="notification-dropdown">
+                    <div className={`p-4 border-b ${currentTheme.border}`}>
+                      <h3 className={`font-semibold ${currentTheme.text}`}>Notifications</h3>
+                    </div>
+                    <div className="max-h-96 overflow-y-auto">
+                      {notifications.length > 0 ? (
+                        notifications.map((notif) => (
+                          <div
+                            key={notif._id}
+                            className={`p-4 border-b ${currentTheme.hover} ${
+                              !notif.read_at ? currentColorScheme.primaryLight : ''
+                            }`}
+                            data-testid="notification-item"
+                          >
+                            <p className={`text-sm font-medium ${currentTheme.text}`}>{notif.type.replace('_', ' ')}</p>
+                            <p className={`text-xs ${currentTheme.textSecondary} mt-1`}>
+                              {notif.payload.task_title || notif.payload.message}
+                            </p>
+                            <p className={`text-xs ${currentTheme.textMuted} mt-1`}>
+                              {new Date(notif.created_at).toLocaleString()}
+                            </p>
+                          </div>
+                        ))
+                      ) : (
+                        <div className={`p-4 text-center ${currentTheme.textMuted}`}>No notifications</div>
+                      )}
+                    </div>
                   </div>
-                  <div className="max-h-96 overflow-y-auto">
-                    {notifications.length > 0 ? (
-                      notifications.map((notif) => (
-                        <div
-                          key={notif._id}
-                          className={`p-4 border-b hover:bg-gray-50 ${
-                            !notif.read_at ? 'bg-blue-50' : ''
-                          }`}
-                          data-testid="notification-item"
-                        >
-                          <p className="text-sm font-medium">{notif.type.replace('_', ' ')}</p>
-                          <p className="text-xs text-gray-600 mt-1">
-                            {notif.payload.task_title || notif.payload.message}
-                          </p>
-                          <p className="text-xs text-gray-400 mt-1">
-                            {new Date(notif.created_at).toLocaleString()}
-                          </p>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="p-4 text-center text-gray-500">No notifications</div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
+            )}
 
             {/* Logout */}
-            <button
-              onClick={handleLogout}
-              className="w-full flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-              data-testid="logout-button"
-            >
-              <LogOut className="w-5 h-5 mr-3" />
-              <span>Logout</span>
-            </button>
+            {!isCollapsed && (
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                data-testid="logout-button"
+              >
+                <LogOut className="w-5 h-5 mr-3" />
+                <span>Logout</span>
+              </button>
+            )}
+
+            {/* Collapsed Logout Icon */}
+            {isCollapsed && (
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center justify-center px-2 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                data-testid="logout-button-collapsed"
+                title="Logout"
+              >
+                <LogOut className="w-5 h-5" />
+              </button>
+            )}
           </div>
         </div>
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className={`flex-1 flex flex-col overflow-hidden ${isCollapsed ? 'md:ml-16' : 'md:ml-64'}`}>
         <main className="flex-1 overflow-y-auto">
           {/* Content will be rendered here by the router */}
         </main>
       </div>
+
     </div>
   );
 };

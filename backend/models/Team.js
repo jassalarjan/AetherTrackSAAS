@@ -4,7 +4,14 @@ const teamSchema = new mongoose.Schema({
   name: {
     type: String,
     required: [true, 'Team name is required'],
-    trim: true
+    trim: true,
+    validate: {
+      validator: function(value) {
+        // Prevent creating team named "Admin"
+        return value.toLowerCase() !== 'admin';
+      },
+      message: 'Team name "Admin" is reserved for super users only'
+    }
   },
   hr_id: {
     type: mongoose.Schema.Types.ObjectId,
@@ -20,6 +27,14 @@ const teamSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   }],
+  pinned: {
+    type: Boolean,
+    default: false
+  },
+  priority: {
+    type: Number,
+    default: 0
+  },
   created_at: {
     type: Date,
     default: Date.now

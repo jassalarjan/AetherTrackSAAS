@@ -3,6 +3,7 @@ import { authenticate } from '../middleware/auth.js';
 import { checkRole } from '../middleware/roleCheck.js';
 import Task from '../models/Task.js';
 import Notification from '../models/Notification.js';
+import User from '../models/User.js';
 
 const router = express.Router();
 
@@ -12,6 +13,7 @@ router.post('/', authenticate, async (req, res) => {
     const { title, description, priority, assigned_to, team_id, due_date } = req.body;
 
     // Members can only create tasks for themselves
+    // Admins and HR can assign to anyone
     if (req.user.role === 'member') {
       if (assigned_to && assigned_to !== req.user._id.toString()) {
         return res.status(403).json({ message: 'Members can only create tasks for themselves' });
@@ -23,31 +25,41 @@ router.post('/', authenticate, async (req, res) => {
       description,
       priority,
       created_by: req.user._id,
-      assigned_to: assigned_to || req.user._id,
+      assigned_to: assigned_to && assigned_to.length > 0 ? assigned_to : [req.user._id],
       team_id: team_id || req.user.team_id,
       due_date
     });
 
     await task.save();
 
-    // Create notification if assigned to someone else
-    if (assigned_to && assigned_to !== req.user._id.toString()) {
-      await Notification.create({
-        user_id: assigned_to,
-        type: 'task_assigned',
-        payload: {
-          task_id: task._id,
-          task_title: task.title,
-          assigned_by: req.user.full_name
-        }
-      });
-
-      // Emit socket event
-      if (req.app.get('io')) {
-        req.app.get('io').to(assigned_to).emit('notification:new', {
+    // Create notifications if assigned to users
+    if (assigned_to && assigned_to.length > 0) {
+      const notifications = assigned_to
+        .filter(userId => userId.toString() !== req.user._id.toString())
+        .map(userId => ({
+          user_id: userId,
           type: 'task_assigned',
-          message: `New task assigned: ${task.title}`
-        });
+          payload: {
+            task_id: task._id,
+            task_title: task.title,
+            assigned_by: req.user.full_name
+          }
+        }));
+
+      if (notifications.length > 0) {
+        await Notification.insertMany(notifications);
+
+        // Emit socket events
+        if (req.app.get('io')) {
+          assigned_to
+            .filter(userId => userId.toString() !== req.user._id.toString())
+            .forEach(userId => {
+              req.app.get('io').to(userId.toString()).emit('notification:new', {
+                type: 'task_assigned',
+                message: `New task assigned: ${task.title}`
+              });
+            });
+        }
       }
     }
 
@@ -120,8 +132,9 @@ router.get('/:id', authenticate, async (req, res) => {
 
     // Check permissions
     if (req.user.role === 'member') {
-      if (task.created_by._id.toString() !== req.user._id.toString() &&
-          task.assigned_to?._id.toString() !== req.user._id.toString()) {
+      const isCreator = task.created_by._id.toString() === req.user._id.toString();
+      const isAssigned = task.assigned_to?.some(userId => userId.toString() === req.user._id.toString());
+      if (!isCreator && !isAssigned) {
         return res.status(403).json({ message: 'Access denied' });
       }
     }
@@ -144,7 +157,7 @@ router.patch('/:id', authenticate, async (req, res) => {
 
     // Check permissions
     const isCreator = task.created_by.toString() === req.user._id.toString();
-    const isAssigned = task.assigned_to?.toString() === req.user._id.toString();
+    const isAssigned = task.assigned_to?.some(userId => userId.toString() === req.user._id.toString());
     const canEdit = ['admin', 'hr', 'team_lead'].includes(req.user.role) || isCreator || isAssigned;
 
     if (!canEdit) {
@@ -171,9 +184,9 @@ router.patch('/:id', authenticate, async (req, res) => {
     await task.save();
 
     // Create notification for status change
-    if (status && status !== oldStatus && task.assigned_to) {
-      await Notification.create({
-        user_id: task.assigned_to,
+    if (status && status !== oldStatus && task.assigned_to && task.assigned_to.length > 0) {
+      const notifications = task.assigned_to.map(userId => ({
+        user_id: userId,
         type: 'status_changed',
         payload: {
           task_id: task._id,
@@ -181,7 +194,37 @@ router.patch('/:id', authenticate, async (req, res) => {
           old_status: oldStatus,
           new_status: status
         }
-      });
+      }));
+
+      await Notification.insertMany(notifications);
+    }
+
+    // Create notification for reassignment
+    if (assigned_to && Array.isArray(assigned_to)) {
+      // Find newly assigned users (not previously assigned)
+      const oldAssignedIds = task.assigned_to ? task.assigned_to.map(id => id.toString()) : [];
+      const newAssignedIds = assigned_to.map(id => id.toString());
+      const newlyAssigned = newAssignedIds.filter(id => !oldAssignedIds.includes(id) && id !== req.user._id.toString());
+
+      if (newlyAssigned.length > 0) {
+        // Validate that all assigned users exist
+        const assignedUsers = await User.find({ _id: { $in: newlyAssigned } });
+        if (assignedUsers.length !== newlyAssigned.length) {
+          return res.status(400).json({ message: 'One or more assigned users not found' });
+        }
+
+        const notifications = newlyAssigned.map(userId => ({
+          user_id: userId,
+          type: 'task_assigned',
+          payload: {
+            task_id: task._id,
+            task_title: task.title,
+            assigned_by: req.user.full_name
+          }
+        }));
+
+        await Notification.insertMany(notifications);
+      }
     }
 
     const updatedTask = await Task.findById(task._id)
