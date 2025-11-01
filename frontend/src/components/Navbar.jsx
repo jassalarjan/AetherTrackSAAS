@@ -175,7 +175,7 @@ const Navbar = () => {
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 px-4 py-6 space-y-2">
+          <nav className="flex-1 overflow-y-auto px-4 py-6 space-y-2 smooth-scroll">
             {navigationItems
               .filter(item => item.roles.includes(user?.role))
               .map((item) => {
@@ -203,7 +203,7 @@ const Navbar = () => {
           </nav>
 
           {/* User Info & Actions */}
-          <div className={`border-t ${currentTheme.border} p-3 space-y-3`}>
+          <div className={`border-t ${currentTheme.border} p-3 space-y-3 flex-shrink-0`}>
             {!isCollapsed && (
               <div className={`relative p-3 rounded-xl ${currentTheme.surfaceSecondary} border ${currentTheme.border} transition-all hover:shadow-md group`}>
                 <div className="flex items-center space-x-3">
@@ -259,7 +259,7 @@ const Navbar = () => {
                     <div className={`p-4 border-b ${currentTheme.border} ${currentColorScheme.primaryLight}`}>
                       <h3 className={`font-bold ${currentTheme.text}`}>Notifications</h3>
                     </div>
-                    <div className="max-h-96 overflow-y-auto">
+                    <div className="max-h-96 overflow-y-auto smooth-scroll">
                       {notifications.length > 0 ? (
                         notifications.map((notif) => (
                           <div
