@@ -23,14 +23,28 @@ const Teams = () => {
   const [draggedTeam, setDraggedTeam] = useState(null);
 
   useEffect(() => {
-    fetchTeams();
-    fetchUsers();
-  }, []);
+    if (user?.id) {
+      fetchTeams();
+      // Only fetch users for admin and HR (team leads don't need all users)
+      if (['admin', 'hr'].includes(user?.role)) {
+        fetchUsers();
+      }
+    }
+  }, [user?.id, user?.role]);
 
   const fetchTeams = async () => {
     try {
       const response = await api.get('/teams');
-      setTeams(response.data.teams);
+      let fetchedTeams = response.data.teams;
+      
+      // Filter teams for team leads - show only their team(s)
+      if (user?.role === 'team_lead') {
+        fetchedTeams = fetchedTeams.filter(team => 
+          team.lead_id?._id === user?.id || team.lead_id === user?.id
+        );
+      }
+      
+      setTeams(fetchedTeams);
       setLoading(false);
     } catch (error) {
       console.error('Error fetching teams:', error);
@@ -189,8 +203,14 @@ const Teams = () => {
         <div className="flex-1 p-8">
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className={`text-3xl font-bold ${currentTheme.text}`}>Teams</h1>
-            <p className={`${currentTheme.textSecondary} mt-2`}>Manage your teams and members</p>
+            <h1 className={`text-3xl font-bold ${currentTheme.text}`}>
+              {user?.role === 'team_lead' ? 'My Team' : 'Teams'}
+            </h1>
+            <p className={`${currentTheme.textSecondary} mt-2`}>
+              {user?.role === 'team_lead' 
+                ? 'Manage your team and members' 
+                : 'Manage your teams and members'}
+            </p>
           </div>
           {['admin', 'hr'].includes(user?.role) && (
             <button
@@ -204,8 +224,21 @@ const Teams = () => {
           )}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {teams.map((team) => (
+        {teams.length === 0 ? (
+          <div className={`${currentTheme.surface} rounded-lg shadow-md p-12 text-center`}>
+            <Users className={`w-16 h-16 mx-auto ${currentTheme.textMuted} mb-4`} />
+            <h3 className={`text-xl font-semibold ${currentTheme.text} mb-2`}>
+              {user?.role === 'team_lead' ? 'No Team Assigned' : 'No Teams Yet'}
+            </h3>
+            <p className={`${currentTheme.textSecondary}`}>
+              {user?.role === 'team_lead' 
+                ? 'You are not currently assigned as a team lead. Please contact an administrator.'
+                : 'Get started by creating your first team.'}
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {teams.map((team) => (
             <div
               key={team._id}
               draggable={['admin', 'hr'].includes(user?.role)}
@@ -319,11 +352,6 @@ const Teams = () => {
             </div>
           ))}
         </div>
-
-        {teams.length === 0 && (
-          <div className="text-center py-12">
-            <p className={`${currentTheme.textMuted} text-lg`}>No teams yet. Create your first team!</p>
-          </div>
         )}
         </div>
       </div>
