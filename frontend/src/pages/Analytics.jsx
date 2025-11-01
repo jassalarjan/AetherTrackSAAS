@@ -53,6 +53,13 @@ const Analytics = () => {
     applyFilters();
   }, [tasks, filters]);
 
+  // Recalculate analytics data whenever filtered tasks change
+  useEffect(() => {
+    if (filteredTasks.length >= 0) {
+      processAnalyticsData(filteredTasks);
+    }
+  }, [filteredTasks]);
+
   const fetchTasks = async () => {
     try {
       const response = await api.get('/tasks');
@@ -430,9 +437,25 @@ const Analytics = () => {
 
           {/* Filters */}
           <div className={`${currentTheme.surface} rounded-lg shadow-md p-6 mb-8`}>
-            <div className="flex items-center space-x-2 mb-4">
-              <Filter className={`w-5 h-5 ${currentTheme.textSecondary}`} />
-              <h2 className={`text-xl font-semibold ${currentTheme.text}`}>Filters</h2>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center space-x-2">
+                <Filter className={`w-5 h-5 ${currentTheme.textSecondary}`} />
+                <h2 className={`text-xl font-semibold ${currentTheme.text}`}>Filters</h2>
+              </div>
+              <button
+                onClick={() => setFilters({
+                  status: '',
+                  priority: '',
+                  team: '',
+                  user: '',
+                  dateRange: 'all',
+                  customStartDate: '',
+                  customEndDate: '',
+                })}
+                className="btn bg-gray-600 text-white hover:bg-gray-700 text-sm px-4 py-2"
+              >
+                Reset Filters
+              </button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
               <div>
@@ -578,6 +601,68 @@ const Analytics = () => {
             </div>
           </div>
 
+          {/* Filtered Tasks Table - Shows prominently BEFORE charts */}
+          <div className={`${currentTheme.surface} rounded-lg shadow-md mb-8`}>
+            <div className={`p-6 border-b ${currentTheme.border}`}>
+              <h2 className={`text-xl font-semibold ${currentTheme.text}`}>
+                {filters.status || filters.priority || filters.team || filters.user || filters.dateRange !== 'all' 
+                  ? `Filtered Tasks (${filteredTasks.length})` 
+                  : `All Tasks (${filteredTasks.length})`}
+              </h2>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className={`${currentTheme.surfaceSecondary}`}>
+                  <tr>
+                    <th className={`px-6 py-3 text-left text-xs font-medium ${currentTheme.textSecondary} uppercase tracking-wider`}>Task</th>
+                    <th className={`px-6 py-3 text-left text-xs font-medium ${currentTheme.textSecondary} uppercase tracking-wider`}>Status</th>
+                    <th className={`px-6 py-3 text-left text-xs font-medium ${currentTheme.textSecondary} uppercase tracking-wider`}>Priority</th>
+                    <th className={`px-6 py-3 text-left text-xs font-medium ${currentTheme.textSecondary} uppercase tracking-wider`}>Assigned To</th>
+                    <th className={`px-6 py-3 text-left text-xs font-medium ${currentTheme.textSecondary} uppercase tracking-wider`}>Due Date</th>
+                    <th className={`px-6 py-3 text-left text-xs font-medium ${currentTheme.textSecondary} uppercase tracking-wider`}>Overdue</th>
+                  </tr>
+                </thead>
+                <tbody className={`divide-y ${currentTheme.border}`}>
+                  {filteredTasks.map((task) => {
+                    const isOverdue = task.due_date && new Date(task.due_date) < new Date() && task.status !== 'done';
+                    return (
+                      <tr key={task._id} className={isOverdue ? 'bg-red-50' : ''}>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className={`text-sm font-medium ${currentTheme.text}`}>{task.title}</div>
+                          <div className={`text-sm ${currentTheme.textMuted} truncate max-w-xs`}>{task.description}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusChartColor(task.status) === '#6b7280' ? 'bg-gray-100 text-gray-800' : getStatusChartColor(task.status) === '#3b82f6' ? 'bg-blue-100 text-blue-800' : getStatusChartColor(task.status) === '#f59e0b' ? 'bg-yellow-100 text-yellow-800' : getStatusChartColor(task.status) === '#10b981' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                            {task.status.replace('_', ' ')}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full`} style={{ backgroundColor: getPriorityColor(task.priority) + '20', color: getPriorityColor(task.priority) }}>
+                            {task.priority}
+                          </span>
+                        </td>
+                        <td className={`px-6 py-4 whitespace-nowrap text-sm ${currentTheme.textSecondary}`}>
+                          {task.assigned_to && task.assigned_to.length > 0
+                            ? task.assigned_to.map(user => user.full_name).join(', ')
+                            : 'Unassigned'
+                          }
+                        </td>
+                        <td className={`px-6 py-4 whitespace-nowrap text-sm ${currentTheme.textSecondary}`}>
+                          {task.due_date ? new Date(task.due_date).toLocaleDateString() : 'No due date'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {isOverdue && (
+                            <AlertTriangle className="w-5 h-5 text-red-500" />
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
           {/* Charts */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
             {/* Status Distribution */}
@@ -665,64 +750,6 @@ const Analytics = () => {
                 <Bar dataKey="overdue" fill="#ef4444" name="Overdue" />
               </BarChart>
             </ResponsiveContainer>
-          </div>
-
-          {/* Filtered Tasks Table */}
-          <div className={`${currentTheme.surface} rounded-lg shadow-md`}>
-            <div className={`p-6 border-b ${currentTheme.border}`}>
-              <h2 className={`text-xl font-semibold ${currentTheme.text}`}>Filtered Tasks ({filteredTasks.length})</h2>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className={`${currentTheme.surfaceSecondary}`}>
-                  <tr>
-                    <th className={`px-6 py-3 text-left text-xs font-medium ${currentTheme.textSecondary} uppercase tracking-wider`}>Task</th>
-                    <th className={`px-6 py-3 text-left text-xs font-medium ${currentTheme.textSecondary} uppercase tracking-wider`}>Status</th>
-                    <th className={`px-6 py-3 text-left text-xs font-medium ${currentTheme.textSecondary} uppercase tracking-wider`}>Priority</th>
-                    <th className={`px-6 py-3 text-left text-xs font-medium ${currentTheme.textSecondary} uppercase tracking-wider`}>Assigned To</th>
-                    <th className={`px-6 py-3 text-left text-xs font-medium ${currentTheme.textSecondary} uppercase tracking-wider`}>Due Date</th>
-                    <th className={`px-6 py-3 text-left text-xs font-medium ${currentTheme.textSecondary} uppercase tracking-wider`}>Overdue</th>
-                  </tr>
-                </thead>
-                <tbody className={`divide-y ${currentTheme.border}`}>
-                  {filteredTasks.map((task) => {
-                    const isOverdue = task.due_date && new Date(task.due_date) < new Date() && task.status !== 'done';
-                    return (
-                      <tr key={task._id} className={isOverdue ? 'bg-red-50' : ''}>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className={`text-sm font-medium ${currentTheme.text}`}>{task.title}</div>
-                          <div className={`text-sm ${currentTheme.textMuted} truncate max-w-xs`}>{task.description}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusChartColor(task.status) === '#6b7280' ? 'bg-gray-100 text-gray-800' : getStatusChartColor(task.status) === '#3b82f6' ? 'bg-blue-100 text-blue-800' : getStatusChartColor(task.status) === '#f59e0b' ? 'bg-yellow-100 text-yellow-800' : getStatusChartColor(task.status) === '#10b981' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                            {task.status.replace('_', ' ')}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full`} style={{ backgroundColor: getPriorityColor(task.priority) + '20', color: getPriorityColor(task.priority) }}>
-                            {task.priority}
-                          </span>
-                        </td>
-                        <td className={`px-6 py-4 whitespace-nowrap text-sm ${currentTheme.textSecondary}`}>
-                          {task.assigned_to && task.assigned_to.length > 0
-                            ? task.assigned_to.map(user => user.full_name).join(', ')
-                            : 'Unassigned'
-                          }
-                        </td>
-                        <td className={`px-6 py-4 whitespace-nowrap text-sm ${currentTheme.textSecondary}`}>
-                          {task.due_date ? new Date(task.due_date).toLocaleDateString() : 'No due date'}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          {isOverdue && (
-                            <AlertTriangle className="w-5 h-5 text-red-500" />
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
           </div>
         </div>
       </div>

@@ -137,35 +137,41 @@ const Navbar = () => {
       <div className={`${
         isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
       } ${
-        isCollapsed ? 'md:w-16' : 'md:w-64'
+        isCollapsed ? 'md:w-20' : 'md:w-64'
       } md:translate-x-0 fixed md:fixed inset-y-0 left-0 z-50 ${currentTheme.surface} shadow-lg border-r ${currentTheme.border} transition-all duration-300 ease-in-out md:h-screen md:flex-shrink-0`}>
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className={`flex items-center justify-center h-16 px-4 border-b ${currentTheme.border} relative`}>
+          <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'} h-20 px-2 border-b ${currentTheme.border} relative`}>
             <Link
               to="/dashboard"
-              className="flex items-center space-x-2"
+              className={`flex items-center ${isCollapsed ? 'justify-center' : 'space-x-3'}`}
               onClick={() => setIsMobileMenuOpen(false)}
             >
               <img 
                 src="/logo.png" 
                 alt="TaskFlow Logo" 
-                className="w-8 h-8 object-contain"
+                className={`${isCollapsed ? 'w-10 h-10' : 'w-12 h-12'} object-contain transition-all`}
               />
-              {!isCollapsed && <span className={`text-xl font-bold ${currentTheme.text}`}>TaskFlow</span>}
+              {!isCollapsed && <span className={`text-2xl font-bold ${currentTheme.text}`}>TaskFlow</span>}
             </Link>
 
             {/* Collapse Toggle Button */}
-            <button
-              onClick={() => setIsCollapsed(!isCollapsed)}
-              className={`hidden md:block absolute right-2 top-1/2 transform -translate-y-1/2 p-1 rounded-lg ${currentTheme.hover} transition-colors`}
-            >
-              {isCollapsed ? (
-                <ChevronRight className={`w-5 h-5 ${currentTheme.textSecondary}`} />
-              ) : (
+            {!isCollapsed && (
+              <button
+                onClick={() => setIsCollapsed(!isCollapsed)}
+                className={`hidden md:block p-1 rounded-lg ${currentTheme.hover} transition-colors`}
+              >
                 <ChevronLeft className={`w-5 h-5 ${currentTheme.textSecondary}`} />
-              )}
-            </button>
+              </button>
+            )}
+            {isCollapsed && (
+              <button
+                onClick={() => setIsCollapsed(!isCollapsed)}
+                className={`hidden md:block absolute -right-3 top-1/2 transform -translate-y-1/2 p-1 rounded-full ${currentTheme.surface} border ${currentTheme.border} shadow-md ${currentTheme.hover} transition-colors`}
+              >
+                <ChevronRight className={`w-4 h-4 ${currentTheme.textSecondary}`} />
+              </button>
+            )}
           </div>
 
           {/* Navigation */}
@@ -293,7 +299,7 @@ const Navbar = () => {
       </div>
 
       {/* Main Content Area */}
-      <div className={`flex-1 flex flex-col overflow-hidden ${isCollapsed ? 'md:ml-16' : 'md:ml-64'}`}>
+      <div className={`flex-1 flex flex-col overflow-hidden ${isCollapsed ? 'md:ml-20' : 'md:ml-64'}`}>
         <main className="flex-1 overflow-y-auto">
           {/* Content will be rendered here by the router */}
         </main>
