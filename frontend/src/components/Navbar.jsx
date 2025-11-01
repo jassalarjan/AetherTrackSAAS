@@ -203,45 +203,61 @@ const Navbar = () => {
           </nav>
 
           {/* User Info & Actions */}
-          <div className={`border-t ${currentTheme.border} p-4`}>
+          <div className={`border-t ${currentTheme.border} p-3 space-y-3`}>
             {!isCollapsed && (
-              <div className="flex items-center space-x-3 mb-4">
-                <div className="flex-1">
-                  <p className={`text-sm font-medium ${currentTheme.text}`} data-testid="user-name">{user?.full_name}</p>
-                  <span
-                    className={`text-xs px-2 py-1 rounded-full ${getRoleBadge(user?.role)}`}
-                    data-testid="user-role"
-                  >
-                    {user?.role?.replace('_', ' ')}
-                  </span>
+              <div className={`relative p-3 rounded-xl ${currentTheme.surfaceSecondary} border ${currentTheme.border} transition-all hover:shadow-md group`}>
+                <div className="flex items-center space-x-3">
+                  {/* Avatar with gradient ring */}
+                  <div className={`relative flex-shrink-0`}>
+                    <div className={`absolute inset-0 rounded-full ${currentColorScheme.primary} opacity-20 blur-sm group-hover:opacity-30 transition-opacity`}></div>
+                    <div className={`relative w-10 h-10 rounded-full ${currentColorScheme.primaryLight} flex items-center justify-center border-2 ${primaryBorderClass} shadow-lg`}>
+                      <User className={`w-5 h-5 ${currentColorScheme.primaryText}`} />
+                    </div>
+                  </div>
+                  
+                  {/* User Details */}
+                  <div className="flex-1 min-w-0">
+                    <p className={`text-sm font-bold ${currentTheme.text} truncate leading-tight`} data-testid="user-name">
+                      {user?.full_name}
+                    </p>
+                    <div className="mt-1.5">
+                      <span
+                        className={`inline-flex items-center text-xs px-2 py-0.5 rounded-full font-medium ${getRoleBadge(user?.role)} shadow-sm`}
+                        data-testid="user-role"
+                      >
+                        <span className="w-1.5 h-1.5 rounded-full mr-1.5 bg-current opacity-60"></span>
+                        {user?.role?.replace('_', ' ').toUpperCase()}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
 
             {/* Notifications */}
             {!isCollapsed && (
-              <div className="relative mb-4">
+              <div className="relative">
                 <button
                   onClick={() => {
                     setShowNotifications(!showNotifications);
                     if (!showNotifications) markAsRead();
                   }}
-                  className={`w-full flex items-center px-4 py-2 text-sm ${currentTheme.textSecondary} ${currentTheme.hover} rounded-lg transition-colors`}
+                  className={`w-full flex items-center px-3 py-2 text-sm font-medium ${currentTheme.textSecondary} ${currentTheme.hover} rounded-lg transition-all hover:shadow-sm border ${currentTheme.border}`}
                   data-testid="notification-button"
                 >
-                  <Bell className="w-5 h-5 mr-3" />
+                  <Bell className="w-4 h-4 mr-2" />
                   <span>Notifications</span>
                   {unreadCount > 0 && (
-                    <span className="ml-auto bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center" data-testid="notification-count">
+                    <span className="ml-auto bg-gradient-to-r from-red-500 to-red-600 text-white text-xs rounded-full min-w-[18px] h-[18px] flex items-center justify-center font-bold px-1.5 shadow-md animate-pulse" data-testid="notification-count">
                       {unreadCount}
                     </span>
                   )}
                 </button>
 
                 {showNotifications && (
-                  <div className={`absolute bottom-full left-0 mb-2 w-full ${currentTheme.surface} rounded-lg shadow-xl ${currentTheme.border} z-50`} data-testid="notification-dropdown">
-                    <div className={`p-4 border-b ${currentTheme.border}`}>
-                      <h3 className={`font-semibold ${currentTheme.text}`}>Notifications</h3>
+                  <div className={`absolute bottom-full left-0 mb-2 w-full ${currentTheme.surface} rounded-xl shadow-2xl border-2 ${currentTheme.border} z-50 overflow-hidden`} data-testid="notification-dropdown">
+                    <div className={`p-4 border-b ${currentTheme.border} ${currentColorScheme.primaryLight}`}>
+                      <h3 className={`font-bold ${currentTheme.text}`}>Notifications</h3>
                     </div>
                     <div className="max-h-96 overflow-y-auto">
                       {notifications.length > 0 ? (
@@ -275,24 +291,39 @@ const Navbar = () => {
             {!isCollapsed && (
               <button
                 onClick={handleLogout}
-                className="w-full flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                className="w-full flex items-center px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all hover:shadow-sm border border-red-200 dark:border-red-800/30"
                 data-testid="logout-button"
               >
-                <LogOut className="w-5 h-5 mr-3" />
+                <LogOut className="w-4 h-4 mr-2" />
                 <span>Logout</span>
               </button>
             )}
 
             {/* Collapsed Logout Icon */}
             {isCollapsed && (
-              <button
-                onClick={handleLogout}
-                className="w-full flex items-center justify-center px-2 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                data-testid="logout-button-collapsed"
-                title="Logout"
-              >
-                <LogOut className="w-5 h-5" />
-              </button>
+              <>
+                {/* Collapsed User Avatar */}
+                <div className="mb-2 flex justify-center">
+                  <div className={`relative group`}>
+                    <div className={`absolute inset-0 rounded-full ${currentColorScheme.primary} opacity-20 blur-sm group-hover:opacity-40 transition-opacity`}></div>
+                    <div 
+                      className={`relative w-9 h-9 rounded-full ${currentColorScheme.primaryLight} flex items-center justify-center border-2 ${primaryBorderClass} shadow-md cursor-pointer hover:shadow-lg transition-all`}
+                      title={`${user?.full_name} - ${user?.role?.replace('_', ' ')}`}
+                    >
+                      <User className={`w-4 h-4 ${currentColorScheme.primaryText}`} />
+                    </div>
+                  </div>
+                </div>
+                
+                <button
+                  onClick={handleLogout}
+                  className="w-full flex items-center justify-center px-2 py-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                  data-testid="logout-button-collapsed"
+                  title="Logout"
+                >
+                  <LogOut className="w-5 h-5" />
+                </button>
+              </>
             )}
           </div>
         </div>

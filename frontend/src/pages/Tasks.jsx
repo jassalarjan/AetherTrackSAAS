@@ -94,12 +94,22 @@ const Tasks = () => {
         const assignedIds = Array.isArray(t.assigned_to) 
           ? t.assigned_to.map(u => typeof u === 'object' ? u._id : u)
           : [typeof t.assigned_to === 'object' ? t.assigned_to._id : t.assigned_to];
-        return assignedIds.includes(user?.id);
+        
+        const isAssignedToUser = assignedIds.includes(user?.id);
+        
+        // For members, also check if task belongs to their team
+        if (user?.role === 'member') {
+          const belongsToUserTeam = user.team_id && t.team_id && 
+            (t.team_id._id === user.team_id || t.team_id === user.team_id);
+          return isAssignedToUser && belongsToUserTeam;
+        }
+        
+        return isAssignedToUser;
       });
     }
 
     setFilteredTasks(filtered);
-  }, [tasks, filters, user?.id]);
+  }, [tasks, filters, user?.id, user?.role, user?.team_id]);
 
   const fetchTasks = async () => {
     try {
@@ -117,7 +127,11 @@ const Tasks = () => {
       const response = await api.get('/users');
       setUsers(response.data.users);
     } catch (error) {
-      console.error('Error fetching users:', error);
+      if (error.response?.status === 403) {
+        console.log('No permission to view all users');
+      } else {
+        console.error('Error fetching users:', error);
+      }
     }
   };
 
@@ -216,7 +230,26 @@ const Tasks = () => {
 
   const handleTeamChange = (teamId) => {
     const selectedTeam = teams.find(team => team._id === teamId);
-    setSelectedTeamMembers(selectedTeam ? selectedTeam.members : []);
+    let members = selectedTeam ? selectedTeam.members : [];
+    
+    // Ensure team lead is always included in the assignable members
+    if (selectedTeam && user?.role === 'team_lead') {
+      const teamLeadAlreadyIncluded = members.some(member => member._id === user?.id);
+      if (!teamLeadAlreadyIncluded && selectedTeam.lead_id?._id === user?.id) {
+        // Add the team lead to the members list
+        members = [
+          ...members,
+          {
+            _id: user.id,
+            full_name: user.full_name || user.username || user.email,
+            role: user.role,
+            email: user.email
+          }
+        ];
+      }
+    }
+    
+    setSelectedTeamMembers(members);
     setEditingTask({ ...editingTask, team_id: teamId, assigned_to: [] });
   };
 
@@ -778,7 +811,26 @@ const Tasks = () => {
                       onChange={(e) => {
                         const teamId = e.target.value;
                         const selectedTeam = teams.find(team => team._id === teamId);
-                        setSelectedTeamMembers(selectedTeam ? selectedTeam.members : []);
+                        let members = selectedTeam ? selectedTeam.members : [];
+                        
+                        // Ensure team lead is always included in the assignable members
+                        if (selectedTeam && user?.role === 'team_lead') {
+                          const teamLeadAlreadyIncluded = members.some(member => member._id === user?.id);
+                          if (!teamLeadAlreadyIncluded && selectedTeam.lead_id?._id === user?.id) {
+                            // Add the team lead to the members list
+                            members = [
+                              ...members,
+                              {
+                                _id: user.id,
+                                full_name: user.full_name || user.username || user.email,
+                                role: user.role,
+                                email: user.email
+                              }
+                            ];
+                          }
+                        }
+                        
+                        setSelectedTeamMembers(members);
                         setFormData({ ...formData, team_id: teamId, assigned_to: [] });
                       }}
                       className="input"
@@ -919,7 +971,7 @@ const Tasks = () => {
                   </div>
                   <div>
                     {selectedTask.assigned_to && selectedTask.assigned_to.length > 0 && (
-                      <p className={`text-sm ${currentTheme.textSecondary}`}>
+                      <div className={`text-sm ${currentTheme.textSecondary}`}>
                         <span className="font-medium">👥 Assigned to:</span>
                         <div className="mt-1">
                           {selectedTask.assigned_to.map((user, index) => (
@@ -928,7 +980,7 @@ const Tasks = () => {
                             </span>
                           ))}
                         </div>
-                      </p>
+                      </div>
                     )}
                   </div>
                 </div>

@@ -61,16 +61,44 @@ const Dashboard = () => {
 
   // Memoized functions must be defined before useEffect hooks that use them
   const fetchTeams = useCallback(async () => {
+    // Only fetch teams if user has permission
+    if (!['admin', 'hr', 'team_lead'].includes(user?.role)) {
+      return;
+    }
+    
     try {
       const response = await api.get('/teams');
       setTeams(response.data.teams || []);
     } catch (error) {
-      console.error('Error fetching teams:', error);
+      if (error.response?.status === 403) {
+        console.log('No permission to view teams');
+      } else if (error.response?.status === 401) {
+        console.error('Authentication required. Please log in again.');
+      } else {
+        console.error('Error fetching teams:', error);
+      }
     }
-  }, []);
+  }, [user?.role]);
 
   const applyFilters = useCallback(() => {
     let filtered = [...allTasks];
+
+    // For members, only show tasks assigned to them AND under their team
+    if (user?.role === 'member') {
+      filtered = filtered.filter(task => {
+        // Check if task is assigned to the member
+        const isAssignedToUser = task.assigned_to && task.assigned_to.some(assignedUser => 
+          assignedUser._id === user.id || assignedUser === user.id
+        );
+        
+        // Check if task belongs to member's team
+        const belongsToUserTeam = user.team_id && task.team_id && 
+          (task.team_id._id === user.team_id || task.team_id === user.team_id);
+        
+        // Task must be both assigned to user AND in their team
+        return isAssignedToUser && belongsToUserTeam;
+      });
+    }
 
     // Date range filter
     if (filters.dateRange !== 'all') {
@@ -119,7 +147,7 @@ const Dashboard = () => {
 
     setFilteredTasks(filtered);
     updateDetailedStats(filtered);
-  }, [allTasks, filters]);
+  }, [allTasks, filters, user?.id, user?.role, user?.team_id]);
 
   const fetchDashboardData = useCallback(async () => {
     try {
@@ -256,7 +284,12 @@ const Dashboard = () => {
       setRecentTasks(tasks.slice(0, 5));
       setLoading(false);
     } catch (error) {
-      console.error('Error fetching dashboard data:', error);
+      if (error.response?.status === 401) {
+        console.error('Authentication failed. Please log in again.');
+        // Token might be expired, the axios interceptor will handle redirect
+      } else {
+        console.error('Error fetching dashboard data:', error);
+      }
       setLoading(false);
     }
   }, [user.id]);
@@ -512,63 +545,68 @@ const Dashboard = () => {
                   <span>Manage Teams</span>
                 </Link>
               )}
-              <button
-                onClick={handleExportExcel}
-                className="btn bg-green-600 text-white hover:bg-green-700 flex items-center space-x-2 shadow-md transition-all"
-                data-testid="export-excel-button"
-                title="Export comprehensive Excel report with multiple sheets"
-              >
-                <FileSpreadsheet className="w-5 h-5" />
-                <span>Export Excel</span>
-              </button>
-              <div className="relative">
-                <button
-                  onClick={() => setShowReportOptions(!showReportOptions)}
-                  className="btn bg-red-600 text-white hover:bg-red-700 flex items-center space-x-2 shadow-md transition-all"
-                  data-testid="generate-pdf-button"
-                  title="Export PDF report with charts and tables"
-                >
-                  <FileText className="w-5 h-5" />
-                  <span>Export PDF</span>
-                  <Calendar className="w-4 h-4" />
-                </button>
-                
-                {showReportOptions && (
-                  <div className="absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 z-10">
-                    <div className="py-1" role="menu">
-                      <div className="px-4 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Report Period</div>
-                      <button
-                        onClick={() => { setReportPeriod('daily'); handleExportPDF(); }}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                        role="menuitem"
-                      >
-                        📅 Daily Report (Today)
-                      </button>
-                      <button
-                        onClick={() => { setReportPeriod('weekly'); handleExportPDF(); }}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                        role="menuitem"
-                      >
-                        📊 Weekly Report (Last 7 Days)
-                      </button>
-                      <button
-                        onClick={() => { setReportPeriod('monthly'); handleExportPDF(); }}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                        role="menuitem"
-                      >
-                        📈 Monthly Report (This Month)
-                      </button>
-                      <button
-                        onClick={() => { setReportPeriod('all'); handleExportPDF(); }}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                        role="menuitem"
-                      >
-                        📑 Complete Report (All Time)
-                      </button>
-                    </div>
+              {/* Export buttons - Only visible to admin and hr */}
+              {['admin', 'hr'].includes(user?.role) && (
+                <>
+                  <button
+                    onClick={handleExportExcel}
+                    className="btn bg-green-600 text-white hover:bg-green-700 flex items-center space-x-2 shadow-md transition-all"
+                    data-testid="export-excel-button"
+                    title="Export comprehensive Excel report with multiple sheets"
+                  >
+                    <FileSpreadsheet className="w-5 h-5" />
+                    <span>Export Excel</span>
+                  </button>
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowReportOptions(!showReportOptions)}
+                      className="btn bg-red-600 text-white hover:bg-red-700 flex items-center space-x-2 shadow-md transition-all"
+                      data-testid="generate-pdf-button"
+                      title="Export PDF report with charts and tables"
+                    >
+                      <FileText className="w-5 h-5" />
+                      <span>Export PDF</span>
+                      <Calendar className="w-4 h-4" />
+                    </button>
+                    
+                    {showReportOptions && (
+                      <div className="absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 z-10">
+                        <div className="py-1" role="menu">
+                          <div className="px-4 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">Report Period</div>
+                          <button
+                            onClick={() => { setReportPeriod('daily'); handleExportPDF(); }}
+                            className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                            role="menuitem"
+                          >
+                            📅 Daily Report (Today)
+                          </button>
+                          <button
+                            onClick={() => { setReportPeriod('weekly'); handleExportPDF(); }}
+                            className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                            role="menuitem"
+                          >
+                            📊 Weekly Report (Last 7 Days)
+                          </button>
+                          <button
+                            onClick={() => { setReportPeriod('monthly'); handleExportPDF(); }}
+                            className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                            role="menuitem"
+                          >
+                            📈 Monthly Report (This Month)
+                          </button>
+                          <button
+                            onClick={() => { setReportPeriod('all'); handleExportPDF(); }}
+                            className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                            role="menuitem"
+                          >
+                            📑 Complete Report (All Time)
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
+                </>
+              )}
             </div>
           </div>
 
@@ -594,21 +632,24 @@ const Dashboard = () => {
               </button>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              <div>
-                <label className={`block text-sm font-medium ${currentTheme.text} mb-1`}>Date Range</label>
-                <select
-                  value={filters.dateRange}
-                  onChange={(e) => setFilters({...filters, dateRange: e.target.value})}
-                  className={`w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 ${currentTheme.border} focus:ring-blue-500`}
-                >
-                  <option value="all">All Time</option>
-                  <option value="today">Today</option>
-                  <option value="week">Last 7 Days</option>
-                  <option value="month">This Month</option>
-                  <option value="custom">Custom Range</option>
-                </select>
-              </div>
+            <div className={`grid grid-cols-1 md:grid-cols-2 ${user?.role === 'member' ? 'lg:grid-cols-2' : 'lg:grid-cols-4'} gap-4`}>
+              {/* Date Range filter - Hidden for members */}
+              {user?.role !== 'member' && (
+                <div>
+                  <label className={`block text-sm font-medium ${currentTheme.text} mb-1`}>Date Range</label>
+                  <select
+                    value={filters.dateRange}
+                    onChange={(e) => setFilters({...filters, dateRange: e.target.value})}
+                    className={`w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 ${currentTheme.border} focus:ring-blue-500`}
+                  >
+                    <option value="all">All Time</option>
+                    <option value="today">Today</option>
+                    <option value="week">Last 7 Days</option>
+                    <option value="month">This Month</option>
+                    <option value="custom">Custom Range</option>
+                  </select>
+                </div>
+              )}
 
               <div>
                 <label className={`block text-sm font-medium ${currentTheme.text} mb-1`}>Status</label>
@@ -776,123 +817,133 @@ const Dashboard = () => {
             </div>
           </div>
 
-          {/* Tasks by Team - Numerical Stats */}
-          <div className={`${currentTheme.surface} rounded-lg shadow-md p-6 mb-8 transition-colors`}>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className={`text-lg font-semibold ${currentTheme.text}`}>Tasks by Team</h3>
-              <span className={`text-sm ${currentTheme.textSecondary}`}>
-                {teams.length} {teams.length === 1 ? 'Team' : 'Teams'}
-              </span>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-              {getTeamTaskCounts().map((team) => (
-                <div 
-                  key={team.id} 
-                  className={`flex items-center justify-between p-3 rounded-lg transition-all ${
-                    team.count > 0 
-                      ? 'bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border border-green-200 dark:border-green-800' 
-                      : 'bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700'
-                  }`}
-                >
-                  <div className="flex items-center space-x-2 flex-1 min-w-0">
-                    <div className={`w-2 h-2 rounded-full flex-shrink-0 ${team.count > 0 ? 'bg-green-500' : 'bg-gray-400'}`}></div>
-                    <span className={`${currentTheme.text} text-sm font-medium truncate`} title={team.name}>
-                      {team.name}
+          {/* Tasks by Team - Numerical Stats - Only for admin and hr */}
+          {['admin', 'hr'].includes(user?.role) && (
+            <div className={`${currentTheme.surface} rounded-lg shadow-md p-6 mb-8 transition-colors`}>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className={`text-lg font-semibold ${currentTheme.text}`}>Tasks by Team</h3>
+                <span className={`text-sm ${currentTheme.textSecondary}`}>
+                  {teams.length} {teams.length === 1 ? 'Team' : 'Teams'}
+                </span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                {getTeamTaskCounts().map((team) => (
+                  <div 
+                    key={team.id} 
+                    className={`flex items-center justify-between p-3 rounded-lg transition-all ${
+                      team.count > 0 
+                        ? 'bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border border-green-200 dark:border-green-800' 
+                        : 'bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700'
+                    }`}
+                  >
+                    <div className="flex items-center space-x-2 flex-1 min-w-0">
+                      <div className={`w-2 h-2 rounded-full flex-shrink-0 ${team.count > 0 ? 'bg-green-500' : 'bg-gray-400'}`}></div>
+                      <span className={`${currentTheme.text} text-sm font-medium truncate`} title={team.name}>
+                        {team.name}
+                      </span>
+                    </div>
+                    <span className={`text-xl font-bold ml-2 flex-shrink-0 ${team.count > 0 ? 'text-green-600 dark:text-green-400' : currentTheme.textMuted}`}>
+                      {team.count}
                     </span>
                   </div>
-                  <span className={`text-xl font-bold ml-2 flex-shrink-0 ${team.count > 0 ? 'text-green-600 dark:text-green-400' : currentTheme.textMuted}`}>
-                    {team.count}
-                  </span>
+                ))}
+                {teams.length === 0 && (
+                  <div className="col-span-full text-center py-8">
+                    <p className={currentTheme.textSecondary}>No teams found</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Charts Section - Hidden for members, minimal for team leads */}
+          {user?.role !== 'member' && (
+            <>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                {/* Task Status Distribution */}
+                <div className={`${currentTheme.surface} rounded-lg shadow-md p-6 transition-colors`}>
+                  <h3 className={`text-lg font-semibold mb-4 ${currentTheme.text}`}>Task Status Distribution</h3>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <PieChart>
+                      <Pie
+                        data={chartData.statusDistribution}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                        outerRadius={80}
+                        fill="#8884d8"
+                        dataKey="value"
+                      >
+                        {chartData.statusDistribution.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
                 </div>
-              ))}
-              {teams.length === 0 && (
-                <div className="col-span-full text-center py-8">
-                  <p className={currentTheme.textSecondary}>No teams found</p>
+
+                {/* Priority Distribution */}
+                <div className={`${currentTheme.surface} rounded-lg shadow-md p-6 transition-colors`}>
+                  <h3 className={`text-lg font-semibold mb-4 ${currentTheme.text}`}>Task Priority Distribution</h3>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={chartData.priorityDistribution}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" />
+                      <YAxis />
+                      <Tooltip />
+                      <Bar dataKey="value" fill="#8884d8" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* Tasks by Team - Only for admin and hr */}
+                {['admin', 'hr'].includes(user?.role) && (
+                  <div className={`${currentTheme.surface} rounded-lg shadow-md p-6 transition-colors`}>
+                    <h3 className={`text-lg font-semibold mb-4 ${currentTheme.text}`}>Tasks by Team</h3>
+                    {analyticsData.teamDistribution && analyticsData.teamDistribution.length > 0 ? (
+                      <ResponsiveContainer width="100%" height={300}>
+                        <BarChart data={analyticsData.teamDistribution}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis 
+                            dataKey="name" 
+                            angle={-45}
+                            textAnchor="end"
+                            height={100}
+                            interval={0}
+                          />
+                          <YAxis />
+                          <Tooltip />
+                          <Bar dataKey="value" fill="#10b981" name="Tasks" />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <p className={`text-center py-8 ${currentTheme.textSecondary}`}>No team data available</p>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Progress Over Time - Only for admin and hr */}
+              {['admin', 'hr'].includes(user?.role) && (
+                <div className={`${currentTheme.surface} rounded-lg shadow-md p-6 mb-8 transition-colors`}>
+                  <h3 className={`text-lg font-semibold mb-4 ${currentTheme.text}`}>Task Progress Over Time (Last 7 Days)</h3>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <LineChart data={chartData.progressOverTime}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="date" />
+                      <YAxis />
+                      <Tooltip />
+                      <Legend />
+                      <Line type="monotone" dataKey="created" stroke="#8884d8" name="Created" />
+                      <Line type="monotone" dataKey="completed" stroke="#82ca9d" name="Completed" />
+                    </LineChart>
+                  </ResponsiveContainer>
                 </div>
               )}
-            </div>
-          </div>
-
-          {/* Charts Section */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-            {/* Task Status Distribution */}
-            <div className={`${currentTheme.surface} rounded-lg shadow-md p-6 transition-colors`}>
-              <h3 className={`text-lg font-semibold mb-4 ${currentTheme.text}`}>Task Status Distribution</h3>
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={chartData.statusDistribution}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {chartData.statusDistribution.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-
-            {/* Priority Distribution */}
-            <div className={`${currentTheme.surface} rounded-lg shadow-md p-6 transition-colors`}>
-              <h3 className={`text-lg font-semibold mb-4 ${currentTheme.text}`}>Task Priority Distribution</h3>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={chartData.priorityDistribution}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="value" fill="#8884d8" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-
-            {/* Tasks by Team */}
-            <div className={`${currentTheme.surface} rounded-lg shadow-md p-6 transition-colors`}>
-              <h3 className={`text-lg font-semibold mb-4 ${currentTheme.text}`}>Tasks by Team</h3>
-              {analyticsData.teamDistribution && analyticsData.teamDistribution.length > 0 ? (
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={analyticsData.teamDistribution}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis 
-                      dataKey="name" 
-                      angle={-45}
-                      textAnchor="end"
-                      height={100}
-                      interval={0}
-                    />
-                    <YAxis />
-                    <Tooltip />
-                    <Bar dataKey="value" fill="#10b981" name="Tasks" />
-                  </BarChart>
-                </ResponsiveContainer>
-              ) : (
-                <p className={`text-center py-8 ${currentTheme.textSecondary}`}>No team data available</p>
-              )}
-            </div>
-          </div>
-
-          {/* Progress Over Time */}
-          <div className={`${currentTheme.surface} rounded-lg shadow-md p-6 mb-8 transition-colors`}>
-            <h3 className={`text-lg font-semibold mb-4 ${currentTheme.text}`}>Task Progress Over Time (Last 7 Days)</h3>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={chartData.progressOverTime}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Line type="monotone" dataKey="created" stroke="#8884d8" name="Created" />
-                <Line type="monotone" dataKey="completed" stroke="#82ca9d" name="Completed" />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
+            </>
+          )}
 
           {/* Overdue Tasks Section */}
           {overdueTasks.length > 0 && (

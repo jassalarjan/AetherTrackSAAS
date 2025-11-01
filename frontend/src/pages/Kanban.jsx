@@ -90,7 +90,11 @@ const Kanban = () => {
       const response = await api.get('/users');
       setUsers(response.data.users);
     } catch (error) {
-      console.error('Error fetching users:', error);
+      if (error.response?.status === 403) {
+        console.log('No permission to view all users');
+      } else {
+        console.error('Error fetching users:', error);
+      }
     }
   };
 
@@ -99,7 +103,11 @@ const Kanban = () => {
       const response = await api.get('/teams');
       setTeams(response.data.teams);
     } catch (error) {
-      console.error('Error fetching teams:', error);
+      if (error.response?.status === 403) {
+        console.log('No permission to view teams');
+      } else {
+        console.error('Error fetching teams:', error);
+      }
     }
   };
 
@@ -211,7 +219,26 @@ const Kanban = () => {
 
   const handleTeamChange = (teamId) => {
     const selectedTeam = teams.find(team => team._id === teamId);
-    setSelectedTeamMembers(selectedTeam ? selectedTeam.members : []);
+    let members = selectedTeam ? selectedTeam.members : [];
+    
+    // Ensure team lead is always included in the assignable members
+    if (selectedTeam && user?.role === 'team_lead') {
+      const teamLeadAlreadyIncluded = members.some(member => member._id === user?.id);
+      if (!teamLeadAlreadyIncluded && selectedTeam.lead_id?._id === user?.id) {
+        // Add the team lead to the members list
+        members = [
+          ...members,
+          {
+            _id: user.id,
+            full_name: user.full_name || user.username || user.email,
+            role: user.role,
+            email: user.email
+          }
+        ];
+      }
+    }
+    
+    setSelectedTeamMembers(members);
     setFormData({ ...formData, team_id: teamId, assigned_to: [] });
   };
 
@@ -242,7 +269,17 @@ const Kanban = () => {
         const assignedIds = Array.isArray(t.assigned_to) 
           ? t.assigned_to.map(u => typeof u === 'object' ? u._id : u)
           : [typeof t.assigned_to === 'object' ? t.assigned_to._id : t.assigned_to];
-        return assignedIds.includes(user?.id);
+        
+        const isAssignedToUser = assignedIds.includes(user?.id);
+        
+        // For members, also check if task belongs to their team
+        if (user?.role === 'member') {
+          const belongsToUserTeam = user.team_id && t.team_id && 
+            (t.team_id._id === user.team_id || t.team_id === user.team_id);
+          return isAssignedToUser && belongsToUserTeam;
+        }
+        
+        return isAssignedToUser;
       });
     }
 
