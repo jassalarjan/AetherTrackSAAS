@@ -604,17 +604,24 @@ ${appUrl}
       `.trim()
     };
 
-    // Send email synchronously to catch and report errors
+    // Send email without blocking - return immediately
     console.log('📧 Sending credential email to:', email);
-    const result = await sendEmailSync(transporter, mailOptions);
     
-    if (result.success) {
-      console.log('✅ Credential email sent successfully to:', email);
-    } else {
-      console.error('❌ Failed to send credential email to:', email, result);
-    }
+    // Send email in background
+    transporter.sendMail(mailOptions)
+      .then(info => {
+        console.log('✅ Credential email sent successfully to:', email);
+        console.log('   Message ID:', info.messageId);
+        console.log('   Response:', info.response);
+      })
+      .catch(error => {
+        console.error('❌ Failed to send credential email to:', email);
+        console.error('   Error:', error.message);
+        console.error('   Code:', error.code);
+      });
     
-    return result;
+    // Return immediately without waiting
+    return { success: true, status: 'queued', message: 'Email queued for sending' };
   } catch (error) {
     console.error('❌ Error in sendCredentialEmail:', error);
     return { success: false, status: 'error', error: error.message };
