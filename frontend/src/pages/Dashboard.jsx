@@ -3,7 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import Navbar from '../components/Navbar';
 import api from '../api/axios';
-import { Plus, Users, CheckSquare, TrendingUp, Clock, FileSpreadsheet, FileText, AlertTriangle, Calendar, Filter, X } from 'lucide-react';
+import { Plus, Users, CheckSquare, TrendingUp, Clock, FileSpreadsheet, FileText, AlertTriangle, Calendar, Filter, X, Download, Smartphone, X as CloseIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
 import { generateExcelReport } from '../utils/reportGenerator';
@@ -58,6 +58,9 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [reportPeriod, setReportPeriod] = useState('all'); // 'daily', 'weekly', 'monthly', 'all'
   const [showReportOptions, setShowReportOptions] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [showInstallBanner, setShowInstallBanner] = useState(false);
+  const [isInstalled, setIsInstalled] = useState(false);
 
   // Memoized functions must be defined before useEffect hooks that use them
   const fetchTeams = useCallback(async () => {
@@ -79,6 +82,123 @@ const Dashboard = () => {
       }
     }
   }, [user?.role]);
+
+  // PWA Install Handler
+  useEffect(() => {
+    // Check if app is already installed
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+      setIsInstalled(true);
+      console.log('✅ App is running in standalone mode (already installed)');
+      return;
+    }
+
+    // Listen for the beforeinstallprompt event
+    const handleBeforeInstallPrompt = (e) => {
+      console.log('✅ beforeinstallprompt event fired - PWA is installable!');
+      // Prevent the mini-infobar from appearing on mobile
+      e.preventDefault();
+      // Stash the event so it can be triggered later
+      setDeferredPrompt(e);
+      // Show install banner
+      setShowInstallBanner(true);
+    };
+
+    // Listen for successful installation
+    const handleAppInstalled = () => {
+      console.log('✅ App installed successfully!');
+      setIsInstalled(true);
+      setShowInstallBanner(false);
+      setDeferredPrompt(null);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('appinstalled', handleAppInstalled);
+
+    // Debug: Check current state
+    console.log('PWA Install Handler initialized');
+    console.log('Browser:', navigator.userAgent);
+    console.log('Display mode:', window.matchMedia('(display-mode: standalone)').matches ? 'standalone' : 'browser');
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', handleAppInstalled);
+    };
+  }, []);
+
+  const handleInstallClick = async () => {
+    console.log('Install button clicked');
+    console.log('deferredPrompt available:', !!deferredPrompt);
+    
+    if (!deferredPrompt) {
+      // If no install prompt available, show comprehensive instructions
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+      const isChrome = /Chrome/.test(navigator.userAgent);
+      const isEdge = /Edg/.test(navigator.userAgent);
+      
+      console.log('Browser detection:', { isIOS, isSafari, isChrome, isEdge });
+      
+      let instructions = '';
+      
+      if (isIOS || isSafari) {
+        instructions = `📱 Install TaskFlow on iOS/Safari:\n\n` +
+          `1. Tap the Share button (□↑) at the bottom of Safari\n` +
+          `2. Scroll down and tap "Add to Home Screen"\n` +
+          `3. Tap "Add" in the top right to confirm\n\n` +
+          `The TaskFlow icon will appear on your home screen!`;
+      } else if (isChrome || isEdge) {
+        instructions = `⚠️ PWA Installation Not Ready\n\n` +
+          `The app cannot be installed yet because:\n\n` +
+          `• PWA icons need to be generated\n` +
+          `• Service worker may not be fully registered\n` +
+          `• Site needs to be on HTTPS in production\n\n` +
+          `For Chrome/Edge installation:\n` +
+          `1. Look for the install icon (⊕) in the address bar\n` +
+          `2. Click it to install TaskFlow\n` +
+          `3. Or open Menu → Install TaskFlow\n\n` +
+          `⚙️ Admin: Generate icons first (see PWA_ICON_SETUP.md)`;
+      } else {
+        instructions = `⚠️ Browser Not Supported\n\n` +
+          `Your browser doesn't support PWA installation.\n\n` +
+          `Please use one of these browsers:\n` +
+          `✅ Google Chrome\n` +
+          `✅ Microsoft Edge\n` +
+          `✅ Opera\n` +
+          `✅ Samsung Internet\n\n` +
+          `Firefox has limited PWA support.`;
+      }
+      
+      alert(instructions);
+      return;
+    }
+
+    try {
+      // Show the install prompt
+      console.log('Showing install prompt...');
+      deferredPrompt.prompt();
+
+      // Wait for the user to respond to the prompt
+      const { outcome } = await deferredPrompt.userChoice;
+      console.log('User choice:', outcome);
+
+      if (outcome === 'accepted') {
+        console.log('✅ User accepted the install prompt');
+        // Show success message
+        setTimeout(() => {
+          alert('🎉 TaskFlow has been installed!\n\nYou can now access it from your home screen or desktop.\n\nLook for the TaskFlow icon on your device.');
+        }, 1000);
+      } else {
+        console.log('ℹ️ User dismissed the install prompt');
+      }
+
+      // Clear the deferredPrompt for next time
+      setDeferredPrompt(null);
+      setShowInstallBanner(false);
+    } catch (error) {
+      console.error('Error during installation:', error);
+      alert('❌ Installation Error\n\nSomething went wrong. Please try:\n1. Refreshing the page\n2. Using Chrome or Edge browser\n3. Checking browser console for errors');
+    }
+  };
 
   const applyFilters = useCallback(() => {
     let filtered = [...allTasks];
@@ -470,6 +590,85 @@ const Dashboard = () => {
             <p className={`${currentTheme.textSecondary} mt-2 transition-colors`}>Here's what's happening with your tasks today.</p>
           </div>
 
+          {/* PWA Install Banner */}
+          {showInstallBanner && !isInstalled && (
+            <div className={`${currentTheme.surface} border-2 ${currentColorScheme.primary.replace('bg-', 'border-')} rounded-lg shadow-lg p-6 mb-8 relative animate-fade-in`}>
+              <button
+                onClick={() => setShowInstallBanner(false)}
+                className={`absolute top-4 right-4 ${currentTheme.textSecondary} hover:${currentTheme.text} transition-colors`}
+                aria-label="Close banner"
+              >
+                <CloseIcon className="w-5 h-5" />
+              </button>
+              
+              <div className="flex items-start space-x-4">
+                <div className={`${currentColorScheme.primary} p-3 rounded-lg`}>
+                  <Smartphone className="w-8 h-8 text-white" />
+                </div>
+                
+                <div className="flex-1">
+                  <h3 className={`text-xl font-bold ${currentTheme.text} mb-2`}>
+                    Install TaskFlow App
+                  </h3>
+                  <p className={`${currentTheme.textSecondary} mb-4`}>
+                    Get the full app experience! Install TaskFlow on your device for:
+                  </p>
+                  
+                  <ul className={`${currentTheme.textSecondary} space-y-2 mb-4 ml-4`}>
+                    <li className="flex items-center space-x-2">
+                      <CheckSquare className="w-4 h-4 text-green-500" />
+                      <span>Quick access from your home screen</span>
+                    </li>
+                    <li className="flex items-center space-x-2">
+                      <CheckSquare className="w-4 h-4 text-green-500" />
+                      <span>Works offline with cached data</span>
+                    </li>
+                    <li className="flex items-center space-x-2">
+                      <CheckSquare className="w-4 h-4 text-green-500" />
+                      <span>Faster loading and better performance</span>
+                    </li>
+                    <li className="flex items-center space-x-2">
+                      <CheckSquare className="w-4 h-4 text-green-500" />
+                      <span>Native app-like experience</span>
+                    </li>
+                  </ul>
+                  
+                  <div className="flex flex-wrap gap-3">
+                    <button
+                      onClick={handleInstallClick}
+                      className={`${currentColorScheme.primary} text-white px-6 py-3 rounded-lg font-semibold hover:opacity-90 transition-all flex items-center space-x-2 shadow-lg`}
+                    >
+                      <Download className="w-5 h-5" />
+                      <span>Install Now</span>
+                    </button>
+                    
+                    <button
+                      onClick={() => setShowInstallBanner(false)}
+                      className={`${currentTheme.surface} ${currentTheme.border} border ${currentTheme.text} px-6 py-3 rounded-lg font-semibold hover:opacity-80 transition-all`}
+                    >
+                      Maybe Later
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Already Installed Message */}
+          {isInstalled && (
+            <div className={`${currentTheme.surface} border-2 border-green-500 rounded-lg shadow-lg p-4 mb-8 flex items-center space-x-3`}>
+              <CheckSquare className="w-6 h-6 text-green-500" />
+              <div>
+                <p className={`font-semibold ${currentTheme.text}`}>
+                  TaskFlow App Installed!
+                </p>
+                <p className={`text-sm ${currentTheme.textSecondary}`}>
+                  You're using the installed version. Enjoy the full app experience!
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Stats Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
             <div className={`${currentTheme.surface} rounded-lg shadow-md p-6 transition-colors`}>
@@ -551,6 +750,27 @@ const Dashboard = () => {
                   <Users className="w-5 h-5" />
                   <span>Manage Teams</span>
                 </Link>
+              )}
+              
+              {/* PWA Install Button - Always Visible */}
+              {!isInstalled && (
+                <button
+                  onClick={handleInstallClick}
+                  className={`btn ${deferredPrompt ? currentColorScheme.primary : 'bg-gray-400'} text-white hover:opacity-90 flex items-center space-x-2`}
+                  data-testid="install-app-button"
+                  title={deferredPrompt ? 'Install TaskFlow as an app' : 'Click for installation instructions'}
+                >
+                  <Download className="w-5 h-5" />
+                  <span>{deferredPrompt ? 'Install App' : 'Install Instructions'}</span>
+                </button>
+              )}
+              
+              {/* Installed Indicator */}
+              {isInstalled && (
+                <div className="btn bg-green-600 text-white flex items-center space-x-2 cursor-default">
+                  <CheckSquare className="w-5 h-5" />
+                  <span>App Installed ✓</span>
+                </div>
               )}
               {/* Export buttons - Only visible to admin and hr */}
               {['admin', 'hr'].includes(user?.role) && (
