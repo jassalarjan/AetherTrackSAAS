@@ -1,10 +1,8 @@
 import pkg from 'nodemailer';
 const { createTransport } = pkg;
 
-// Create reusable transporter with optimized settings for production
+// Create reusable transporter - Simple configuration that works
 const createTransporter = () => {
-  const isProduction = process.env.NODE_ENV === 'production';
-  
   const config = {
     host: process.env.EMAIL_HOST,
     port: parseInt(process.env.EMAIL_PORT) || 587,
@@ -13,36 +11,25 @@ const createTransporter = () => {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASSWORD,
     },
-    // Disable pooling in production to avoid connection issues
-    pool: false, // Changed from true - single connection per email
-    // Increase timeouts for production environments
-    connectionTimeout: isProduction ? 60000 : 30000, // 60 seconds in production
-    greetingTimeout: isProduction ? 30000 : 20000,   // 30 seconds in production
-    socketTimeout: isProduction ? 60000 : 30000,     // 60 seconds in production
-    // Optimized TLS settings for Gmail
+    // Simple, reliable settings
+    pool: true,
+    maxConnections: 5,
+    maxMessages: 10,
+    // Standard timeouts
+    connectionTimeout: 5000,  // 5 seconds
+    greetingTimeout: 5000,    // 5 seconds  
+    socketTimeout: 10000,     // 10 seconds
+    // Simple TLS config
     tls: {
-      rejectUnauthorized: true, // Changed to true for better security
-      minVersion: 'TLSv1.2',
-      ciphers: 'HIGH:!aNULL:!MD5:!RC4'
-    },
-    // Enable debug logging
-    debug: true, // Always enable for troubleshooting
-    logger: true, // Always enable for troubleshooting
-    // Important: Allow self-signed certificates if needed
-    requireTLS: true
+      rejectUnauthorized: false
+    }
   };
 
   console.log('📧 Creating transporter with config:', {
     host: config.host,
     port: config.port,
     secure: config.secure,
-    user: config.auth.user,
-    pool: config.pool,
-    timeouts: {
-      connection: config.connectionTimeout,
-      greeting: config.greetingTimeout,
-      socket: config.socketTimeout
-    }
+    user: config.auth.user
   });
 
   return createTransport(config);
@@ -62,68 +49,18 @@ const sendEmailAsync = (transporter, mailOptions) => {
 
   console.log('📧 Queueing email to:', mailOptions.to);
   console.log('   Subject:', mailOptions.subject);
-  console.log('   Environment:', process.env.NODE_ENV || 'development');
-  console.log('   Email Config:', {
-    host: process.env.EMAIL_HOST,
-    port: process.env.EMAIL_PORT || 587,
-    secure: process.env.EMAIL_SECURE === 'true',
-    from: mailOptions.from.address,
-    user: process.env.EMAIL_USER
-  });
 
-  // Send email in background without blocking with proper cleanup
+  // Send email in background without blocking
   transporter.sendMail(mailOptions)
     .then(info => {
-      console.log('✅✅✅ Email sent successfully! ✅✅✅');
+      console.log('✅ Email sent successfully!');
       console.log('   Message ID:', info.messageId);
-      console.log('   To:', mailOptions.to);
-      console.log('   Subject:', mailOptions.subject);
       console.log('   Response:', info.response);
-      console.log('   Accepted:', info.accepted);
-      console.log('   Rejected:', info.rejected);
-      
-      // Close transporter after sending
-      setTimeout(() => {
-        try {
-          transporter.close();
-          console.log('   📪 Email connection closed');
-        } catch (e) {
-          console.warn('   ⚠️ Error closing connection:', e.message);
-        }
-      }, 2000); // Wait 2 seconds before closing
     })
     .catch(error => {
-      console.error('❌❌❌ CRITICAL: Email sending FAILED! ❌❌❌');
-      console.error('   To:', mailOptions.to);
-      console.error('   Subject:', mailOptions.subject);
-      console.error('   Error Message:', error.message);
-      console.error('   Error Code:', error.code);
-      console.error('   Command:', error.command);
-      console.error('   Response:', error.response);
-      console.error('   Response Code:', error.responseCode);
-      
-      // Log full error in all environments for email issues
-      console.error('   Full Error Stack:', error.stack);
-      
-      // Specific error handling
-      if (error.code === 'EAUTH') {
-        console.error('   ⚠️  AUTHENTICATION FAILED - Check EMAIL_USER and EMAIL_PASSWORD');
-      } else if (error.code === 'ESOCKET' || error.code === 'ETIMEDOUT') {
-        console.error('   ⚠️  CONNECTION TIMEOUT - This is common on some hosting platforms');
-        console.error('   💡 Try using port 465 with secure=true, or check hosting platform firewall');
-      } else if (error.code === 'ECONNECTION') {
-        console.error('   ⚠️  Cannot connect to SMTP server - Check network/firewall');
-      }
-      
-      // Always try to close connection on error
-      setTimeout(() => {
-        try {
-          transporter.close();
-          console.log('   📪 Email connection closed (after error)');
-        } catch (e) {
-          // Ignore close errors
-        }
-      }, 1000);
+      console.error('❌ Email sending failed!');
+      console.error('   Error:', error.message);
+      console.error('   Code:', error.code);
     });
   
   // Return immediately without waiting
@@ -636,53 +573,18 @@ ${appUrl}
 
     // Send email without blocking - return immediately
     console.log('📧 Sending credential email to:', email);
-    console.log('   This happens in background - API responds immediately');
     
-    // Send email in background with proper connection handling
+    // Send email in background
     transporter.sendMail(mailOptions)
       .then(info => {
-        console.log('✅✅✅ Credential email DELIVERED successfully! ✅✅✅');
+        console.log('✅ Credential email sent successfully!');
         console.log('   To:', email);
         console.log('   Message ID:', info.messageId);
-        console.log('   Response:', info.response);
-        console.log('   Status: Email sent to Gmail and accepted');
-        
-        // Close transporter connection
-        setTimeout(() => {
-          try {
-            transporter.close();
-            console.log('   📪 Email connection closed successfully');
-          } catch (e) {
-            console.warn('   ⚠️ Error closing connection:', e.message);
-          }
-        }, 2000); // Wait 2 seconds before closing
       })
       .catch(error => {
-        // Check if it's just a timeout but email was likely sent
-        if (error.code === 'ETIMEDOUT' || error.code === 'ESOCKET') {
-          console.warn('⚠️⚠️⚠️ Email connection timeout ⚠️⚠️⚠️');
-          console.warn('   To:', email);
-          console.warn('   Error:', error.message);
-          console.warn('   📧 Email MAY have been sent - Gmail often accepts emails before timeout');
-          console.warn('   💡 This is normal on some hosting platforms (Render, Heroku, etc.)');
-          console.warn('   ✅ User account was created successfully regardless');
-        } else {
-          console.error('❌❌❌ Credential email FAILED ❌❌❌');
-          console.error('   To:', email);
-          console.error('   Error:', error.message);
-          console.error('   Code:', error.code);
-          console.error('   Note: User was still created successfully');
-        }
-        
-        // Always try to close connection
-        setTimeout(() => {
-          try {
-            transporter.close();
-            console.log('   📪 Email connection closed (after error)');
-          } catch (e) {
-            // Ignore close errors
-          }
-        }, 1000);
+        console.error('❌ Failed to send credential email');
+        console.error('   To:', email);
+        console.error('   Error:', error.message);
       });
     
     // Return immediately without waiting
