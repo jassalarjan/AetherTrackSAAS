@@ -16,6 +16,9 @@ import taskRoutes from './routes/tasks.js';
 import commentRoutes from './routes/comments.js';
 import notificationRoutes from './routes/notifications.js';
 
+// Import scheduler
+import { initializeScheduler } from './utils/scheduler.js';
+
 // Load environment variables (ensure we read backend/.env even if CWD is project root)
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -35,6 +38,9 @@ const io = new Server(httpServer, {
 
 // Connect to MongoDB
 connectDB();
+
+// Initialize scheduler for automated tasks
+initializeScheduler();
 
 // Middleware
 app.use(cors({

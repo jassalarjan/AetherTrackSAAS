@@ -638,7 +638,457 @@ TaskFlow Team
   }
 };
 
+// HTML Email Template for Overdue Task Reminder
+const getOverdueTaskEmailTemplate = (fullName, tasks, appUrl) => {
+  const taskRows = tasks.map(task => `
+    <tr style="border-bottom: 1px solid #e2e8f0;">
+      <td style="padding: 12px; font-weight: 600; color: #2d3748;">${task.title}</td>
+      <td style="padding: 12px; color: #718096;">
+        <span style="background: ${getPriorityColor(task.priority)}; color: white; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 600;">
+          ${task.priority.toUpperCase()}
+        </span>
+      </td>
+      <td style="padding: 12px; color: #e53e3e; font-weight: 600;">${task.daysOverdue} day${task.daysOverdue > 1 ? 's' : ''}</td>
+      <td style="padding: 12px; color: #718096;">${new Date(task.due_date).toLocaleDateString()}</td>
+    </tr>
+  `).join('');
+
+  return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Overdue Tasks Reminder</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      line-height: 1.6;
+      color: #1a1a1a;
+      background: linear-gradient(135deg, #f56565 0%, #c53030 100%);
+      margin: 0;
+      padding: 0;
+    }
+    .email-wrapper {
+      padding: 40px 20px;
+    }
+    .container {
+      max-width: 650px;
+      margin: 0 auto;
+      background: #ffffff;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+    .header {
+      background: linear-gradient(135deg, #f56565 0%, #c53030 100%);
+      padding: 40px 30px;
+      text-align: center;
+      color: white;
+    }
+    .logo-circle {
+      width: 80px;
+      height: 80px;
+      background: white;
+      border-radius: 50%;
+      margin: 0 auto 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    }
+    .logo-circle img {
+      width: 50px;
+      height: 50px;
+      display: block;
+      margin: 0 auto;
+    }
+    .content {
+      padding: 40px 30px;
+    }
+    .alert-box {
+      background: #fff5f5;
+      border-left: 4px solid #e53e3e;
+      padding: 15px;
+      margin: 20px 0;
+      border-radius: 4px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+    }
+    th {
+      background: #f7fafc;
+      padding: 12px;
+      text-align: left;
+      font-weight: 600;
+      color: #2d3748;
+      border-bottom: 2px solid #e2e8f0;
+    }
+    .btn {
+      display: inline-block;
+      padding: 14px 32px;
+      background: linear-gradient(135deg, #f56565 0%, #c53030 100%);
+      color: white;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: 600;
+      margin: 20px 0;
+      box-shadow: 0 4px 15px rgba(245, 101, 101, 0.3);
+    }
+    .footer {
+      background: #f7fafc;
+      padding: 30px;
+      text-align: center;
+      color: #718096;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="email-wrapper">
+    <div class="container">
+      <div class="header">
+        <div class="logo-circle">
+          <img src="https://taskflow-nine-phi.vercel.app/logo.png" alt="TaskFlow Logo" />
+        </div>
+        <h1 style="margin: 0; font-size: 28px;">⚠️ Overdue Tasks Alert</h1>
+        <p style="margin: 10px 0 0 0; opacity: 0.9;">You have ${tasks.length} overdue task${tasks.length > 1 ? 's' : ''} requiring immediate attention</p>
+      </div>
+
+      <div class="content">
+        <p style="font-size: 16px; color: #2d3748;">Hi <strong>${fullName}</strong>,</p>
+        
+        <div class="alert-box">
+          <p style="margin: 0; color: #c53030; font-weight: 600;">⏰ The following tasks are overdue and need your immediate attention:</p>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Task</th>
+              <th>Priority</th>
+              <th>Overdue By</th>
+              <th>Due Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${taskRows}
+          </tbody>
+        </table>
+
+        <p style="font-size: 16px; color: #4a5568;">Please review and update these tasks as soon as possible to keep your projects on track. 🎯</p>
+
+        <div style="text-align: center;">
+          <a href="${appUrl}/tasks" class="btn">View My Tasks</a>
+        </div>
+
+        <p style="font-size: 14px; color: #718096; margin-top: 30px;">
+          <strong>💡 Tip:</strong> Set realistic deadlines and update task progress regularly to avoid overdue tasks.
+        </p>
+      </div>
+
+      <div class="footer">
+        <img src="https://taskflow-nine-phi.vercel.app/logo.png" alt="TaskFlow" style="width: 30px; height: 30px; margin-bottom: 10px;" />
+        <p><strong>TaskFlow</strong></p>
+        <p>Collaborative Task Management System</p>
+        <p style="margin-top: 20px; font-size: 12px; opacity: 0.8;">This is an automated reminder. Please do not reply.</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+  `;
+};
+
+// Helper function for priority colors in email
+const getPriorityColor = (priority) => {
+  const colors = {
+    low: '#48bb78',
+    medium: '#ed8936',
+    high: '#f56565',
+    urgent: '#c53030'
+  };
+  return colors[priority.toLowerCase()] || '#718096';
+};
+
+// Send overdue task reminder email
+export const sendOverdueTaskReminder = async (fullName, email, tasks) => {
+  try {
+    const transporter = createTransporter();
+    const appUrl = process.env.NODE_ENV === 'production' 
+      ? 'https://taskflow-nine-phi.vercel.app'
+      : (process.env.CLIENT_URL || 'http://localhost:3000');
+
+    const mailOptions = {
+      from: {
+        name: 'TaskFlow Reminders',
+        address: process.env.EMAIL_USER
+      },
+      to: email,
+      subject: `⚠️ You have ${tasks.length} overdue task${tasks.length > 1 ? 's' : ''} - Action Required`,
+      html: getOverdueTaskEmailTemplate(fullName, tasks, appUrl),
+      text: `
+Overdue Tasks Reminder
+
+Hi ${fullName},
+
+You have ${tasks.length} overdue task${tasks.length > 1 ? 's' : ''} requiring immediate attention:
+
+${tasks.map((task, i) => `${i + 1}. ${task.title}
+   Priority: ${task.priority.toUpperCase()}
+   Overdue by: ${task.daysOverdue} day${task.daysOverdue > 1 ? 's' : ''}
+   Due Date: ${new Date(task.due_date).toLocaleDateString()}
+`).join('\n')}
+
+Please login to TaskFlow to review and update these tasks: ${appUrl}/tasks
+
+Best regards,
+TaskFlow Team
+      `.trim()
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log(`✅ Overdue reminder email sent to ${email}:`, info.messageId);
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error(`❌ Error sending overdue reminder email to ${email}:`, error);
+    return { success: false, error: error.message };
+  }
+};
+
+// HTML Email Template for Weekly Report
+const getWeeklyReportEmailTemplate = (adminName, reportData, appUrl) => {
+  return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weekly TaskFlow Report</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      line-height: 1.6;
+      color: #1a1a1a;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      margin: 0;
+      padding: 0;
+    }
+    .email-wrapper {
+      padding: 40px 20px;
+    }
+    .container {
+      max-width: 650px;
+      margin: 0 auto;
+      background: #ffffff;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 40px 30px;
+      text-align: center;
+      color: white;
+    }
+    .logo-circle {
+      width: 80px;
+      height: 80px;
+      background: white;
+      border-radius: 50%;
+      margin: 0 auto 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    }
+    .logo-circle img {
+      width: 50px;
+      height: 50px;
+      display: block;
+      margin: 0 auto;
+    }
+    .content {
+      padding: 40px 30px;
+    }
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+      margin: 25px 0;
+    }
+    .stat-card {
+      background: #f7fafc;
+      border-radius: 8px;
+      padding: 20px;
+      text-align: center;
+      border-left: 4px solid #667eea;
+    }
+    .stat-card.warning {
+      border-left-color: #ed8936;
+    }
+    .stat-card.danger {
+      border-left-color: #f56565;
+    }
+    .stat-card.success {
+      border-left-color: #48bb78;
+    }
+    .stat-number {
+      font-size: 32px;
+      font-weight: 700;
+      color: #2d3748;
+      margin: 5px 0;
+    }
+    .stat-label {
+      color: #718096;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .btn {
+      display: inline-block;
+      padding: 14px 32px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: 600;
+      margin: 20px 0;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+    .footer {
+      background: #f7fafc;
+      padding: 30px;
+      text-align: center;
+      color: #718096;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="email-wrapper">
+    <div class="container">
+      <div class="header">
+        <div class="logo-circle">
+          <img src="https://taskflow-nine-phi.vercel.app/logo.png" alt="TaskFlow Logo" />
+        </div>
+        <h1 style="margin: 0; font-size: 28px;">📊 Weekly Report</h1>
+        <p style="margin: 10px 0 0 0; opacity: 0.9;">${reportData.weekRange}</p>
+      </div>
+
+      <div class="content">
+        <p style="font-size: 16px; color: #2d3748;">Hi <strong>${adminName}</strong>,</p>
+        
+        <p style="font-size: 16px; color: #4a5568;">Here's your weekly TaskFlow summary:</p>
+
+        <div class="stat-grid">
+          <div class="stat-card">
+            <div class="stat-label">Total Tasks</div>
+            <div class="stat-number">${reportData.totalTasks}</div>
+          </div>
+          <div class="stat-card success">
+            <div class="stat-label">Completed</div>
+            <div class="stat-number">${reportData.completedTasks}</div>
+          </div>
+          <div class="stat-card warning">
+            <div class="stat-label">In Progress</div>
+            <div class="stat-number">${reportData.inProgressTasks}</div>
+          </div>
+          <div class="stat-card danger">
+            <div class="stat-label">Overdue</div>
+            <div class="stat-number">${reportData.overdueTasks}</div>
+          </div>
+        </div>
+
+        <div style="background: #edf2f7; border-radius: 8px; padding: 20px; margin: 25px 0;">
+          <p style="margin: 0 0 10px 0; font-weight: 600; color: #2d3748;">📈 Key Metrics:</p>
+          <p style="margin: 5px 0; color: #4a5568;">• Completion Rate: <strong>${reportData.completionRate}%</strong></p>
+          <p style="margin: 5px 0; color: #4a5568;">• Active Teams: <strong>${reportData.activeTeams}</strong></p>
+          <p style="margin: 5px 0; color: #4a5568;">• Active Users: <strong>${reportData.activeUsers}</strong></p>
+        </div>
+
+        <p style="font-size: 16px; color: #4a5568;">📎 Detailed reports (Excel & PDF) are attached to this email.</p>
+
+        <div style="text-align: center;">
+          <a href="${appUrl}/analytics" class="btn">View Full Analytics</a>
+        </div>
+
+        <p style="font-size: 14px; color: #718096; margin-top: 30px; font-style: italic;">
+          This automated report is sent every Monday at 8:00 AM to help you stay on top of your team's progress. 📅
+        </p>
+      </div>
+
+      <div class="footer">
+        <img src="https://taskflow-nine-phi.vercel.app/logo.png" alt="TaskFlow" style="width: 30px; height: 30px; margin-bottom: 10px;" />
+        <p><strong>TaskFlow</strong></p>
+        <p>Collaborative Task Management System</p>
+        <p style="margin-top: 20px; font-size: 12px; opacity: 0.8;">This is an automated report. Please do not reply.</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+  `;
+};
+
+// Send weekly report email with attachments
+export const sendWeeklyReport = async (adminName, email, reportData, attachments) => {
+  try {
+    const transporter = createTransporter();
+    const appUrl = process.env.NODE_ENV === 'production' 
+      ? 'https://taskflow-nine-phi.vercel.app'
+      : (process.env.CLIENT_URL || 'http://localhost:3000');
+
+    const mailOptions = {
+      from: {
+        name: 'TaskFlow Reports',
+        address: process.env.EMAIL_USER
+      },
+      to: email,
+      subject: `📊 Weekly TaskFlow Report - ${reportData.weekRange}`,
+      html: getWeeklyReportEmailTemplate(adminName, reportData, appUrl),
+      text: `
+Weekly TaskFlow Report
+${reportData.weekRange}
+
+Hi ${adminName},
+
+Here's your weekly TaskFlow summary:
+
+STATISTICS:
+• Total Tasks: ${reportData.totalTasks}
+• Completed: ${reportData.completedTasks}
+• In Progress: ${reportData.inProgressTasks}
+• Overdue: ${reportData.overdueTasks}
+• Completion Rate: ${reportData.completionRate}%
+• Active Teams: ${reportData.activeTeams}
+• Active Users: ${reportData.activeUsers}
+
+Detailed reports (Excel & PDF) are attached to this email.
+
+View full analytics: ${appUrl}/analytics
+
+Best regards,
+TaskFlow Team
+      `.trim(),
+      attachments: attachments
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log(`✅ Weekly report email sent to ${email}:`, info.messageId);
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error(`❌ Error sending weekly report email to ${email}:`, error);
+    return { success: false, error: error.message };
+  }
+};
+
 export default {
   sendCredentialEmail,
-  sendPasswordResetEmail
+  sendPasswordResetEmail,
+  sendOverdueTaskReminder,
+  sendWeeklyReport
 };
+
+
