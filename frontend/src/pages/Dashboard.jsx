@@ -463,7 +463,7 @@ const Dashboard = () => {
     <div className={`min-h-screen ${currentTheme.background} transition-colors`} data-testid="dashboard">
       <div className="flex">
         <Navbar />
-        <div className="flex-1 p-8">
+        <div className="flex-1 p-4 sm:p-6 lg:p-8">
           {/* Header */}
           <div className="mb-8">
             <h1 className={`text-3xl font-bold ${currentTheme.text} transition-colors`}>Welcome back, {user?.full_name}!</h1>

@@ -444,7 +444,7 @@ const Analytics = () => {
     <div className={`min-h-screen ${currentTheme.background}`}>
       <div className="flex">
         <Navbar />
-        <div id="analytics-content" className="flex-1 p-8">
+        <div id="analytics-content" className="flex-1 p-4 sm:p-6 lg:p-8">
           {/* Header */}
           <div className="mb-8">
             <div className="flex justify-between items-center">

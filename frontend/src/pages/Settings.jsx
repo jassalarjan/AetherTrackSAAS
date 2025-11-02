@@ -57,7 +57,7 @@ const Settings = () => {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
       <div className="flex">
         <Navbar />
-        <div className="flex-1 p-8">
+        <div className="flex-1 p-4 sm:p-6 lg:p-8">
           {/* Header */}
           <div className="mb-8">
             <div className="flex items-center space-x-3">

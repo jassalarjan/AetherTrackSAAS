@@ -205,7 +205,7 @@ const Teams = () => {
     <div className={`min-h-screen ${currentTheme.background}`} data-testid="teams-page">
       <div className="flex">
         <Navbar />
-        <div className="flex-1 p-8">
+        <div className="flex-1 p-4 sm:p-6 lg:p-8">
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className={`text-3xl font-bold ${currentTheme.text}`}>
