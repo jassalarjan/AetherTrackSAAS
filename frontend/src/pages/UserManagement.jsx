@@ -192,7 +192,7 @@ export default function UserManagement() {
     <div className={`min-h-screen ${currentTheme.background}`}>
       <div className="flex">
         <Navbar />
-        <div className="flex-1 py-8">
+        <div className="flex-1 p-4 sm:p-6 lg:p-8">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             {/* Header */}
             <div className="mb-8">

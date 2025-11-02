@@ -330,7 +330,7 @@ const Kanban = () => {
   return (
     <div className="min-h-screen flex" data-testid="kanban-page">
       <Navbar />
-      <div className={`flex-1 p-8 ${currentTheme.background}`}>
+      <div className={`flex-1 p-4 sm:p-6 lg:p-8 ${currentTheme.background}`}>
           {/* Header */}
           <div className="flex justify-between items-center mb-8">
             <div>

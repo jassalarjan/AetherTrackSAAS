@@ -389,7 +389,7 @@ const Tasks = () => {
     <div className={`min-h-screen ${currentTheme.background}`} data-testid="tasks-page">
       <div className="flex">
         <Navbar />
-        <div className="flex-1 p-8">
+        <div className="flex-1 p-4 sm:p-6 lg:p-8">
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <div>
