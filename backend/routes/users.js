@@ -157,11 +157,15 @@ router.post('/', authenticate, checkRole(['admin', 'hr']), validateUserCreation,
 
     await user.save();
 
+    console.log('📧 Attempting to send credential email to:', email);
+
     // Send credential email
     const emailResult = await sendCredentialEmail(full_name, email, password);
     
     if (!emailResult.success) {
       console.warn('⚠️ User created but email failed to send:', emailResult.error);
+    } else {
+      console.log('✅ Email sent successfully to:', email);
     }
 
     const userResponse = await User.findById(user._id)

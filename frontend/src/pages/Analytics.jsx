@@ -708,8 +708,8 @@ const Analytics = () => {
                     key={team.id} 
                     className={`flex items-center justify-between p-3 rounded-lg transition-all ${
                       team.count > 0 
-                        ? 'bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border border-green-200 dark:border-green-800' 
-                        : 'bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700'
+                        ? 'bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-2 border-green-300 dark:border-green-800' 
+                        : 'bg-gray-50 dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-700'
                     }`}
                   >
                     <div className="flex items-center space-x-2 flex-1 min-w-0">

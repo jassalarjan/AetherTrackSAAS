@@ -327,11 +327,11 @@ const Tasks = () => {
 
   const getStatusBorderColor = (status) => {
     const colors = {
-      todo: 'border-gray-400',
-      in_progress: 'border-blue-400',
-      review: 'border-yellow-400',
-      done: 'border-green-400',
-      archived: 'border-red-400',
+      todo: 'border-gray-500',
+      in_progress: 'border-blue-500',
+      review: 'border-yellow-500',
+      done: 'border-green-500',
+      archived: 'border-red-500',
     };
     return colors[status] || colors.todo;
   };

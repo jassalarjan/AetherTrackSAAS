@@ -35,10 +35,10 @@ const Kanban = () => {
   const [dragOverColumn, setDragOverColumn] = useState(null);
 
   const columns = [
-    { id: 'todo', title: 'To Do', color: 'bg-gray-100', borderColor: 'border-gray-400', accentColor: 'bg-gray-500' },
-    { id: 'in_progress', title: 'In Progress', color: 'bg-blue-100', borderColor: 'border-blue-400', accentColor: 'bg-blue-500' },
-    { id: 'review', title: 'Review', color: 'bg-yellow-100', borderColor: 'border-yellow-400', accentColor: 'bg-yellow-500' },
-    { id: 'done', title: 'Done', color: 'bg-green-100', borderColor: 'border-green-400', accentColor: 'bg-green-500' },
+    { id: 'todo', title: 'To Do', color: 'bg-gray-100', borderColor: 'border-gray-500', accentColor: 'bg-gray-500' },
+    { id: 'in_progress', title: 'In Progress', color: 'bg-blue-100', borderColor: 'border-blue-500', accentColor: 'bg-blue-500' },
+    { id: 'review', title: 'Review', color: 'bg-yellow-100', borderColor: 'border-yellow-500', accentColor: 'bg-yellow-500' },
+    { id: 'done', title: 'Done', color: 'bg-green-100', borderColor: 'border-green-500', accentColor: 'bg-green-500' },
   ];
 
   useEffect(() => {
