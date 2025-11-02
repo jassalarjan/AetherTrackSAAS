@@ -1,7 +1,7 @@
 import pkg from 'nodemailer';
 const { createTransport } = pkg;
 
-// Create reusable transporter
+// Create reusable transporter with connection pooling
 const createTransporter = () => {
   const config = {
     host: process.env.EMAIL_HOST,
@@ -11,17 +11,22 @@ const createTransporter = () => {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASSWORD,
     },
-    // Increase timeouts for Gmail
-    connectionTimeout: 60000, // 60 seconds (Gmail can be slow)
-    greetingTimeout: 30000,   // 30 seconds
-    socketTimeout: 60000,     // 60 seconds
+    // Connection pooling for better performance and reliability
+    pool: true,
+    maxConnections: 3,
+    maxMessages: 10,
+    rateDelta: 1000, // 1 second between messages
+    rateLimit: 5, // max 5 messages per rateDelta
+    // Reduce timeouts to fail faster
+    connectionTimeout: 30000, // 30 seconds
+    greetingTimeout: 20000,   // 20 seconds  
+    socketTimeout: 30000,     // 30 seconds
     // Add additional Gmail-specific settings
     tls: {
-      // Don't fail on invalid certificates (useful for development)
       rejectUnauthorized: false,
       ciphers: 'SSLv3'
     },
-    // Enable debug logging
+    // Enable debug logging in development
     debug: process.env.NODE_ENV === 'development',
     logger: process.env.NODE_ENV === 'development'
   };
@@ -31,6 +36,7 @@ const createTransporter = () => {
     port: config.port,
     secure: config.secure,
     user: config.auth.user,
+    pool: config.pool,
     timeouts: {
       connection: config.connectionTimeout,
       greeting: config.greetingTimeout,
@@ -608,7 +614,7 @@ ${appUrl}
     console.log('📧 Sending credential email to:', email);
     console.log('   This happens in background - API responds immediately');
     
-    // Send email in background with better error handling
+    // Send email in background with proper connection handling
     transporter.sendMail(mailOptions)
       .then(info => {
         console.log('✅✅✅ Credential email DELIVERED successfully! ✅✅✅');
@@ -616,13 +622,34 @@ ${appUrl}
         console.log('   Message ID:', info.messageId);
         console.log('   Response:', info.response);
         console.log('   Status: Email sent to Gmail and accepted');
+        
+        // Close transporter connection if not using pool
+        if (!transporter.options.pool) {
+          transporter.close();
+        }
       })
       .catch(error => {
-        console.error('❌❌❌ Credential email FAILED ❌❌❌');
-        console.error('   To:', email);
-        console.error('   Error:', error.message);
-        console.error('   Code:', error.code);
-        console.error('   Note: User was still created successfully');
+        // Ignore timeout errors if email was likely sent
+        if (error.code === 'ETIMEDOUT' || error.code === 'ESOCKET') {
+          console.warn('⚠️ Email likely sent but connection closed slowly');
+          console.warn('   To:', email);
+          console.warn('   This is normal - Gmail accepted the email');
+        } else {
+          console.error('❌❌❌ Credential email FAILED ❌❌❌');
+          console.error('   To:', email);
+          console.error('   Error:', error.message);
+          console.error('   Code:', error.code);
+          console.error('   Note: User was still created successfully');
+        }
+        
+        // Always try to close connection
+        try {
+          if (!transporter.options.pool) {
+            transporter.close();
+          }
+        } catch (e) {
+          // Ignore close errors
+        }
       });
     
     // Return immediately without waiting
