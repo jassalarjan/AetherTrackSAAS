@@ -35,31 +35,96 @@ const sendEmailAsync = (transporter, mailOptions) => {
   }
 
   console.log('📧 Queueing email to:', mailOptions.to);
+  console.log('   Subject:', mailOptions.subject);
   console.log('   Environment:', process.env.NODE_ENV || 'development');
   console.log('   Email Config:', {
     host: process.env.EMAIL_HOST,
     port: process.env.EMAIL_PORT || 587,
-    from: mailOptions.from.address
+    secure: process.env.EMAIL_SECURE === 'true',
+    from: mailOptions.from.address,
+    user: process.env.EMAIL_USER
   });
 
   // Send email in background without blocking
   transporter.sendMail(mailOptions)
     .then(info => {
-      console.log('✅ Email sent successfully:', info.messageId, 'to:', mailOptions.to);
+      console.log('✅✅✅ Email sent successfully! ✅✅✅');
+      console.log('   Message ID:', info.messageId);
+      console.log('   To:', mailOptions.to);
+      console.log('   Subject:', mailOptions.subject);
+      console.log('   Response:', info.response);
     })
     .catch(error => {
-      console.error('❌ Error sending email to:', mailOptions.to);
-      console.error('   Error:', error.message);
-      console.error('   Code:', error.code);
+      console.error('❌❌❌ CRITICAL: Email sending FAILED! ❌❌❌');
+      console.error('   To:', mailOptions.to);
+      console.error('   Subject:', mailOptions.subject);
+      console.error('   Error Message:', error.message);
+      console.error('   Error Code:', error.code);
       console.error('   Command:', error.command);
-      // Log full error in development for debugging
-      if (process.env.NODE_ENV === 'development') {
-        console.error('   Full Error:', error);
+      console.error('   Response:', error.response);
+      console.error('   Response Code:', error.responseCode);
+      
+      // Log full error in all environments for email issues
+      console.error('   Full Error Stack:', error.stack);
+      
+      // Specific error handling
+      if (error.code === 'EAUTH') {
+        console.error('   ⚠️  AUTHENTICATION FAILED - Check EMAIL_USER and EMAIL_PASSWORD');
+      } else if (error.code === 'ESOCKET' || error.code === 'ETIMEDOUT') {
+        console.error('   ⚠️  CONNECTION FAILED - Check EMAIL_HOST and EMAIL_PORT');
+      } else if (error.code === 'ECONNECTION') {
+        console.error('   ⚠️  Cannot connect to SMTP server - Check network/firewall');
       }
     });
   
   // Return immediately without waiting
   return { success: true, status: 'queued', message: 'Email is being sent in background' };
+};
+
+// Helper to send email synchronously (wait for result)
+// Use this for testing or when you need to know if email actually sent
+const sendEmailSync = async (transporter, mailOptions) => {
+  // Validate environment variables
+  if (!process.env.EMAIL_HOST || !process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
+    const error = {
+      success: false,
+      status: 'error',
+      message: 'Email service not configured',
+      details: {
+        EMAIL_HOST: process.env.EMAIL_HOST || 'NOT SET',
+        EMAIL_USER: process.env.EMAIL_USER || 'NOT SET',
+        EMAIL_PASSWORD: process.env.EMAIL_PASSWORD ? 'SET' : 'NOT SET'
+      }
+    };
+    console.error('❌ Email configuration missing:', error);
+    return error;
+  }
+
+  console.log('📧 Sending email synchronously to:', mailOptions.to);
+  
+  try {
+    const info = await transporter.sendMail(mailOptions);
+    console.log('✅ Email sent successfully:', info.messageId);
+    return {
+      success: true,
+      status: 'sent',
+      messageId: info.messageId,
+      response: info.response
+    };
+  } catch (error) {
+    console.error('❌ Email sending failed:', error.message);
+    return {
+      success: false,
+      status: 'failed',
+      error: error.message,
+      code: error.code,
+      details: {
+        responseCode: error.responseCode,
+        response: error.response,
+        command: error.command
+      }
+    };
+  }
 };
 
 // HTML Email Template for New User Credentials
@@ -497,15 +562,20 @@ ${appUrl}
       `.trim()
     };
 
-    // Send email asynchronously (fire-and-forget for faster response)
-    sendEmailAsync(transporter, mailOptions);
+    // Send email synchronously to catch and report errors
+    console.log('📧 Sending credential email to:', email);
+    const result = await sendEmailSync(transporter, mailOptions);
     
-    // Return immediately without waiting for email to be sent
-    console.log('📧 Credential email queued for:', email);
-    return { success: true, status: 'queued', message: 'Email is being sent' };
+    if (result.success) {
+      console.log('✅ Credential email sent successfully to:', email);
+    } else {
+      console.error('❌ Failed to send credential email to:', email, result);
+    }
+    
+    return result;
   } catch (error) {
-    console.error('❌ Error preparing credential email:', error);
-    return { success: false, error: error.message };
+    console.error('❌ Error in sendCredentialEmail:', error);
+    return { success: false, status: 'error', error: error.message };
   }
 };
 

@@ -108,6 +108,52 @@ app.get('/api/test-email-config', (req, res) => {
   });
 });
 
+// Test email sending (actually send a test email)
+app.post('/api/test-email-send', async (req, res) => {
+  try {
+    const { email } = req.body;
+    
+    if (!email) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Email address is required in request body' 
+      });
+    }
+
+    // Import email service dynamically
+    const { sendCredentialEmail } = await import('./utils/emailService.js');
+    
+    console.log('🧪 Testing email send to:', email);
+    
+    // Try to send email synchronously with timeout
+    const result = await Promise.race([
+      sendCredentialEmail('Test User', email, 'TestPassword123'),
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Email sending timeout (30s)')), 30000)
+      )
+    ]);
+    
+    console.log('🧪 Email test result:', result);
+    
+    res.json({
+      success: result.success,
+      message: result.success ? 'Test email sent successfully!' : 'Failed to send test email',
+      details: result
+    });
+  } catch (error) {
+    console.error('🧪 Email test error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Email test failed',
+      error: error.message,
+      details: {
+        code: error.code,
+        command: error.command
+      }
+    });
+  }
+});
+
 // 404 handler
 app.use((req, res) => {
   res.status(404).json({ message: 'Route not found' });
