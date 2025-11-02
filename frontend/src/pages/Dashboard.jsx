@@ -379,11 +379,11 @@ const Dashboard = () => {
 
   const getStatusBorderColor = (status) => {
     const colors = {
-      todo: 'border-gray-400',
-      in_progress: 'border-blue-400',
-      review: 'border-yellow-400',
-      done: 'border-green-400',
-      archived: 'border-red-400',
+      todo: 'border-gray-500',
+      in_progress: 'border-blue-500',
+      review: 'border-yellow-500',
+      done: 'border-green-500',
+      archived: 'border-red-500',
     };
     return colors[status] || colors.todo;
   };
@@ -839,8 +839,8 @@ const Dashboard = () => {
                     key={team.id} 
                     className={`flex items-center justify-between p-3 rounded-lg transition-all ${
                       team.count > 0 
-                        ? 'bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border border-green-200 dark:border-green-800' 
-                        : 'bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700'
+                        ? 'bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-2 border-green-300 dark:border-green-800' 
+                        : 'bg-gray-50 dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-700'
                     }`}
                   >
                     <div className="flex items-center space-x-2 flex-1 min-w-0">
@@ -954,14 +954,14 @@ const Dashboard = () => {
 
           {/* Overdue Tasks Section */}
           {overdueTasks.length > 0 && (
-            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 mb-8 transition-colors">
+            <div className="bg-red-50 dark:bg-red-900/20 border-2 border-red-300 dark:border-red-800 rounded-lg p-6 mb-8 transition-colors">
               <div className="flex items-center space-x-2 mb-4">
                 <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
                 <h2 className="text-xl font-semibold text-red-800 dark:text-red-200">Overdue Tasks ({overdueTasks.length})</h2>
               </div>
               <div className="space-y-3">
                 {overdueTasks.map((task) => (
-                  <div key={task._id} className={`${currentTheme.surface} rounded-lg p-4 border border-red-200 dark:border-red-700 transition-colors`}>
+                  <div key={task._id} className={`${currentTheme.surface} rounded-lg p-4 border-2 border-red-300 dark:border-red-700 transition-colors`}>
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <h3 className={`font-semibold ${currentTheme.text}`}>{task.title}</h3>

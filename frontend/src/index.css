@@ -96,6 +96,24 @@ body {
   background: rgba(107, 114, 128, 0.7);
 }
 
+/* Enhanced borders for light mode - more vivid */
+.bg-white, [class*="bg-white"] {
+  border-color: rgb(209, 213, 219) !important; /* gray-300 */
+}
+
+.shadow-md {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* Card borders in light mode */
+body:not(.dark) .rounded-lg {
+  border-width: 1px;
+}
+
+body:not(.dark) .shadow-md {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(0, 0, 0, 0.05);
+}
+
 /* Custom Loading Animations */
 @keyframes spin-fast {
   to {
