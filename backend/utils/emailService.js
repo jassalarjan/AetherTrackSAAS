@@ -3,23 +3,42 @@ const { createTransport } = pkg;
 
 // Create reusable transporter
 const createTransporter = () => {
-  return createTransport({
+  const config = {
     host: process.env.EMAIL_HOST,
-    port: process.env.EMAIL_PORT || 587,
+    port: parseInt(process.env.EMAIL_PORT) || 587,
     secure: process.env.EMAIL_SECURE === 'true', // true for 465, false for other ports
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASSWORD,
     },
-    // Add connection pooling for better performance
-    pool: true,
-    maxConnections: 5,
-    maxMessages: 100,
-    // Reduce timeout for faster failure detection
-    connectionTimeout: 10000, // 10 seconds
-    greetingTimeout: 10000,
-    socketTimeout: 30000, // 30 seconds
+    // Increase timeouts for Gmail
+    connectionTimeout: 60000, // 60 seconds (Gmail can be slow)
+    greetingTimeout: 30000,   // 30 seconds
+    socketTimeout: 60000,     // 60 seconds
+    // Add additional Gmail-specific settings
+    tls: {
+      // Don't fail on invalid certificates (useful for development)
+      rejectUnauthorized: false,
+      ciphers: 'SSLv3'
+    },
+    // Enable debug logging
+    debug: process.env.NODE_ENV === 'development',
+    logger: process.env.NODE_ENV === 'development'
+  };
+
+  console.log('📧 Creating transporter with config:', {
+    host: config.host,
+    port: config.port,
+    secure: config.secure,
+    user: config.auth.user,
+    timeouts: {
+      connection: config.connectionTimeout,
+      greeting: config.greetingTimeout,
+      socket: config.socketTimeout
+    }
   });
+
+  return createTransport(config);
 };
 
 // Helper to send email asynchronously (fire-and-forget)
@@ -103,6 +122,13 @@ const sendEmailSync = async (transporter, mailOptions) => {
   console.log('📧 Sending email synchronously to:', mailOptions.to);
   
   try {
+    // First, verify connection to SMTP server
+    console.log('🔍 Verifying SMTP connection...');
+    await transporter.verify();
+    console.log('✅ SMTP connection verified successfully');
+    
+    // Now send the email
+    console.log('📤 Sending email...');
     const info = await transporter.sendMail(mailOptions);
     console.log('✅ Email sent successfully:', info.messageId);
     return {
@@ -112,11 +138,24 @@ const sendEmailSync = async (transporter, mailOptions) => {
       response: info.response
     };
   } catch (error) {
-    console.error('❌ Email sending failed:', error.message);
+    console.error('❌ Email operation failed:', error.message);
+    console.error('   Error Code:', error.code);
+    console.error('   Command:', error.command);
+    
+    // Provide helpful error messages
+    let helpfulMessage = error.message;
+    if (error.code === 'ETIMEDOUT' || error.code === 'ESOCKET') {
+      helpfulMessage = 'Connection timeout - Check your internet connection, firewall settings, or try using port 465 with secure=true';
+    } else if (error.code === 'EAUTH') {
+      helpfulMessage = 'Authentication failed - Verify your email and app password are correct';
+    } else if (error.code === 'ECONNECTION') {
+      helpfulMessage = 'Cannot connect to SMTP server - Check EMAIL_HOST and EMAIL_PORT settings';
+    }
+    
     return {
       success: false,
       status: 'failed',
-      error: error.message,
+      error: helpfulMessage,
       code: error.code,
       details: {
         responseCode: error.responseCode,
