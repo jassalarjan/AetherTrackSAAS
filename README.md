@@ -12,7 +12,16 @@ A comprehensive, role-based task management system built with **Node.js**, **Exp
 - **Team Management** - Organize users into teams with dedicated leads
 - **User Management** - Admin and HR can manage users and roles
 - **Notifications** - Real-time notifications for task assignments and updates
+- **Automated Email System** - Welcome emails with credentials for new users
+- **📊 Automated Reminders** - Daily overdue task email reminders
+- **📈 Weekly Reports** - Automated Excel & PDF reports to admins
 - **Responsive UI** - Built with TailwindCSS
+
+### Automation Features (NEW! 🎉)
+- **Daily Overdue Reminders**: Automatic email notifications at 9:00 AM for users with overdue tasks
+- **Weekly Reports**: Excel and PDF reports sent to admins every Monday at 8:00 AM
+- **Beautiful Email Templates**: Professional HTML emails with TaskFlow branding
+- See [AUTOMATION_GUIDE.md](./AUTOMATION_GUIDE.md) for details
 
 ### Role Capabilities
 
