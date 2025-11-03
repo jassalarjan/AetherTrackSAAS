@@ -13,10 +13,15 @@ router.post('/', authenticate, async (req, res) => {
     const { title, description, priority, assigned_to, team_id, due_date } = req.body;
 
     // Members can only create tasks for themselves
-    // Admins and HR can assign to anyone
+    // Admins, HR, and Team Leads can assign to anyone
     if (req.user.role === 'member') {
-      if (assigned_to && assigned_to !== req.user._id.toString()) {
-        return res.status(403).json({ message: 'Members can only create tasks for themselves' });
+      // If assigned_to is provided and is an array, check if member is trying to assign to others
+      if (assigned_to && Array.isArray(assigned_to) && assigned_to.length > 0) {
+        // Check if trying to assign to someone other than themselves
+        const assigningToOthers = assigned_to.some(userId => userId !== req.user._id.toString());
+        if (assigningToOthers) {
+          return res.status(403).json({ message: 'Members can only create tasks for themselves' });
+        }
       }
     }
 
