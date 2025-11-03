@@ -11,6 +11,8 @@ export default defineConfig(({ mode }) => {
       VitePWA({
         registerType: 'autoUpdate',
         includeAssets: ['logo.png', 'icons/*.png'],
+        injectRegister: 'auto',
+        strategies: 'generateSW',
         manifest: {
           name: 'TaskFlow - Task Management System',
           short_name: 'TaskFlow',

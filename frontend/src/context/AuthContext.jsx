@@ -1,6 +1,7 @@
 import { createContext, useState, useContext, useEffect } from 'react';
 import api from '../api/axios';
 import { io } from 'socket.io-client';
+import notificationService from '../utils/notificationService';
 
 const AuthContext = createContext(null);
 
@@ -26,10 +27,17 @@ export const AuthProvider = ({ children }) => {
     const newSocket = io(SOCKET_URL);
     
     newSocket.on('connect', () => {
-      console.log('Socket connected');
+      console.log('✅ Socket connected:', newSocket.id);
       newSocket.emit('join', userId);
     });
 
+    newSocket.on('disconnect', () => {
+      console.log('❌ Socket disconnected');
+    });
+
+    // Note: Actual notification listeners are set up in useNotifications hook
+    // to avoid duplicate event handlers
+    
     setSocket(newSocket);
   };
 

@@ -79,6 +79,7 @@
       "icons": [{ "src": "/icons/pwa-192x192.png", "sizes": "192x192" }]
     }
   ],
+  "permissions": ["notifications"],
   "related_applications": [],
   "prefer_related_applications": false,
   "display_override": ["standalone", "fullscreen", "minimal-ui"],
