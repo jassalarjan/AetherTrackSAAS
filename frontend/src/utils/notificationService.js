@@ -29,7 +29,6 @@ class NotificationService {
    */
   async requestPermission() {
     if (!this.isSupported) {
-      console.warn('Notifications are not supported in this browser');
       return 'unsupported';
     }
 
@@ -38,7 +37,6 @@ class NotificationService {
       this.permission = permission;
       
       if (permission === 'granted') {
-        console.log('✅ Notification permission granted');
         // Show a welcome notification
         this.showNotification('Notifications Enabled', {
           body: 'You will now receive updates about your tasks',
@@ -46,8 +44,6 @@ class NotificationService {
           badge: '/icons/pwa-64x64.png',
           tag: 'welcome',
         });
-      } else if (permission === 'denied') {
-        console.warn('❌ Notification permission denied');
       }
       
       return permission;
@@ -64,12 +60,10 @@ class NotificationService {
    */
   async showNotification(title, options = {}) {
     if (!this.isSupported) {
-      console.warn('Notifications not supported');
       return null;
     }
 
     if (Notification.permission !== 'granted') {
-      console.warn('Notification permission not granted');
       return null;
     }
 
@@ -89,14 +83,10 @@ class NotificationService {
       if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
         try {
           const registration = await navigator.serviceWorker.ready;
-          console.log('Using service worker for notification');
           return await registration.showNotification(title, notificationOptions);
         } catch (swError) {
-          console.warn('Service worker notification failed, using fallback:', swError);
           // Fall through to direct notification
         }
-      } else {
-        console.log('Service worker not available, using direct notification API');
       }
       
       // Fallback to direct Notification API

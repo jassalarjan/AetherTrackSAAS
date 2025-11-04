@@ -96,7 +96,7 @@ const Kanban = () => {
       setUsers(response.data.users);
     } catch (error) {
       if (error.response?.status === 403) {
-        console.log('No permission to view all users');
+        // No permission to view all users
       } else {
         console.error('Error fetching users:', error);
       }
@@ -109,7 +109,7 @@ const Kanban = () => {
       setTeams(response.data.teams);
     } catch (error) {
       if (error.response?.status === 403) {
-        console.log('No permission to view teams');
+        // No permission to view teams
       } else {
         console.error('Error fetching teams:', error);
       }

@@ -74,7 +74,7 @@ const Dashboard = () => {
       setTeams(response.data.teams || []);
     } catch (error) {
       if (error.response?.status === 403) {
-        console.log('No permission to view teams');
+        // No permission to view teams - silent handling
       } else if (error.response?.status === 401) {
         console.error('Authentication required. Please log in again.');
       } else {
@@ -98,13 +98,11 @@ const Dashboard = () => {
       setShowInstallBanner(false);
       // Ensure the flag is set
       localStorage.setItem('pwa-installed', 'true');
-      console.log('✅ App is already installed (standalone mode or previous installation detected)');
       return;
     }
 
     // Listen for the beforeinstallprompt event
     const handleBeforeInstallPrompt = (e) => {
-      console.log('✅ beforeinstallprompt event fired - PWA is installable!');
       // Prevent the mini-infobar from appearing on mobile
       e.preventDefault();
       // Stash the event so it can be triggered later
@@ -117,7 +115,6 @@ const Dashboard = () => {
 
     // Listen for successful installation
     const handleAppInstalled = () => {
-      console.log('✅ App installed successfully!');
       setIsInstalled(true);
       setShowInstallBanner(false);
       setDeferredPrompt(null);
@@ -128,12 +125,6 @@ const Dashboard = () => {
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     window.addEventListener('appinstalled', handleAppInstalled);
 
-    // Debug: Check current state
-    console.log('PWA Install Handler initialized');
-    console.log('Browser:', navigator.userAgent);
-    console.log('Display mode:', isStandalone ? 'standalone' : 'browser');
-    console.log('Was previously installed:', wasInstalled);
-
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
       window.removeEventListener('appinstalled', handleAppInstalled);
@@ -141,10 +132,6 @@ const Dashboard = () => {
   }, []);
 
   const handleInstallClick = async () => {
-    console.log('Install button clicked');
-    console.log('isInstalled:', isInstalled);
-    console.log('deferredPrompt available:', !!deferredPrompt);
-    
     // Check if already installed
     if (isInstalled || localStorage.getItem('pwa-installed') === 'true') {
       alert('✅ TaskFlow is Already Installed!\n\nThe app has been installed on your device.\n\nYou can:\n• Find it on your home screen/desktop\n• Launch it like a native app\n• Access it offline\n\n🎉 You\'re all set!');
@@ -157,8 +144,6 @@ const Dashboard = () => {
       const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
       const isChrome = /Chrome/.test(navigator.userAgent);
       const isEdge = /Edg/.test(navigator.userAgent);
-      
-      console.log('Browser detection:', { isIOS, isSafari, isChrome, isEdge });
       
       let instructions = '';
       
@@ -194,15 +179,12 @@ const Dashboard = () => {
 
     try {
       // Show the install prompt
-      console.log('Showing install prompt...');
       deferredPrompt.prompt();
 
       // Wait for the user to respond to the prompt
       const { outcome } = await deferredPrompt.userChoice;
-      console.log('User choice:', outcome);
 
       if (outcome === 'accepted') {
-        console.log('✅ User accepted the install prompt');
         // Mark as installed
         setIsInstalled(true);
         localStorage.setItem('pwa-installed', 'true');
@@ -210,8 +192,6 @@ const Dashboard = () => {
         setTimeout(() => {
           alert('🎉 TaskFlow has been installed!\n\nYou can now access it from your home screen or desktop.\n\nLook for the TaskFlow icon on your device.');
         }, 1000);
-      } else {
-        console.log('ℹ️ User dismissed the install prompt');
       }
 
       // Clear the deferredPrompt for next time

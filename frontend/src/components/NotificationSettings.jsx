@@ -39,21 +39,7 @@ const NotificationSettings = () => {
   };
 
   const testNotification = async () => {
-    console.log('==== TESTING NOTIFICATION ====');
-    console.log('1. Notification supported:', notificationService.isNotificationSupported());
-    console.log('2. Permission status:', notificationService.getPermissionStatus());
-    console.log('3. Service worker registered:', 'serviceWorker' in navigator);
-    
-    if ('serviceWorker' in navigator) {
-      const registration = await navigator.serviceWorker.getRegistration();
-      console.log('4. Service worker registration:', registration ? 'Yes' : 'No');
-      if (registration) {
-        console.log('5. Service worker state:', registration.active?.state);
-      }
-    }
-    
     try {
-      console.log('6. Attempting to show notification...');
       await notificationService.showNotification('🎉 Test Notification', {
         body: 'If you can see this, notifications are working perfectly!',
         icon: '/icons/pwa-192x192.png',
@@ -62,13 +48,11 @@ const NotificationSettings = () => {
         requireInteraction: false,
         vibrate: [200, 100, 200],
       });
-      console.log('✅ Test notification sent successfully');
       alert('✅ Test notification sent! Check your desktop/device for the notification.');
     } catch (error) {
       console.error('❌ Error showing test notification:', error);
       alert(`❌ Error showing notification:\n${error.message}\n\nCheck browser console for details.`);
     }
-    console.log('==== TEST COMPLETE ====');
   };
 
   if (!isSupported) {

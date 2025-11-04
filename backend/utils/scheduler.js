@@ -7,11 +7,8 @@ import { generateExcelReport, generatePDFReport, isTaskOverdue, calculateDaysUnt
 
 // Initialize all scheduled jobs
 export const initializeScheduler = () => {
-  console.log('🕐 Initializing task scheduler...');
-
   // Daily Overdue Task Reminders - Every day at 9:00 AM
   cron.schedule('0 9 * * *', async () => {
-    console.log('⏰ Running daily overdue task reminder job...');
     await sendOverdueReminders();
   }, {
     scheduled: true,
@@ -20,24 +17,16 @@ export const initializeScheduler = () => {
 
   // Weekly Reports - Every Monday at 8:00 AM
   cron.schedule('0 8 * * 1', async () => {
-    console.log('📊 Running weekly report generation job...');
     await sendWeeklyReports();
   }, {
     scheduled: true,
     timezone: "Asia/Karachi" // Adjust to your timezone
   });
-
-  console.log('✅ Scheduler initialized successfully!');
-  console.log('📅 Scheduled jobs:');
-  console.log('   - Overdue reminders: Daily at 9:00 AM');
-  console.log('   - Weekly reports: Every Monday at 8:00 AM');
 };
 
 // Send overdue task reminders to users
 const sendOverdueReminders = async () => {
   try {
-    console.log('🔍 Checking for overdue tasks...');
-    
     // Get all tasks that are overdue
     const tasks = await Task.find({
       due_date: { $lt: new Date() },
@@ -47,11 +36,8 @@ const sendOverdueReminders = async () => {
     .populate('team_id', 'name');
 
     if (tasks.length === 0) {
-      console.log('✅ No overdue tasks found!');
       return;
     }
-
-    console.log(`📧 Found ${tasks.length} overdue tasks. Sending reminders...`);
 
     // Group tasks by user
     const userTasksMap = new Map();

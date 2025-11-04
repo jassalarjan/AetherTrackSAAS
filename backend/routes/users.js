@@ -178,8 +178,6 @@ router.post('/', authenticate, checkRole(['admin', 'hr']), validateUserCreation,
 
     await user.save();
 
-    console.log('📧 Queuing credential email for:', email);
-
     // Send credential email with timeout (non-blocking)
     // Don't wait more than 10 seconds for email
     const emailPromise = Promise.race([
@@ -197,11 +195,7 @@ router.post('/', authenticate, checkRole(['admin', 'hr']), validateUserCreation,
     let emailSent = false;
     emailPromise
       .then((emailResult) => {
-        if (emailResult.success) {
-          console.log('✅ Email sent successfully to:', email);
-        } else {
-          console.warn('⚠️ Email failed to send:', emailResult.error);
-        }
+        // Email result handled silently
       })
       .catch((error) => {
         console.error('❌ Email error:', error.message);
@@ -363,11 +357,7 @@ router.patch('/:id/password', authenticate, checkRole(['admin', 'hr']), async (r
     // Send password reset email (non-blocking, fire and forget)
     sendPasswordResetEmail(user.full_name, user.email, password)
       .then((emailResult) => {
-        if (emailResult.success) {
-          console.log('✅ Password reset email sent to:', user.email);
-        } else {
-          console.warn('⚠️ Password reset email failed:', emailResult.error);
-        }
+        // Email result handled silently
       })
       .catch((error) => {
         console.error('❌ Password reset email error:', error.message);

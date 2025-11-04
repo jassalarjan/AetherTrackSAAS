@@ -27,12 +27,11 @@ export const AuthProvider = ({ children }) => {
     const newSocket = io(SOCKET_URL);
     
     newSocket.on('connect', () => {
-      console.log('✅ Socket connected:', newSocket.id);
       newSocket.emit('join', userId);
     });
 
     newSocket.on('disconnect', () => {
-      console.log('❌ Socket disconnected');
+      // Socket disconnected
     });
 
     // Note: Actual notification listeners are set up in useNotifications hook

@@ -25,13 +25,6 @@ const createTransporter = () => {
     }
   };
 
-  console.log('📧 Creating transporter with config:', {
-    host: config.host,
-    port: config.port,
-    secure: config.secure,
-    user: config.auth.user
-  });
-
   return createTransport(config);
 };
 
@@ -47,15 +40,10 @@ const sendEmailAsync = (transporter, mailOptions) => {
     return { success: false, status: 'error', message: 'Email service not configured' };
   }
 
-  console.log('📧 Queueing email to:', mailOptions.to);
-  console.log('   Subject:', mailOptions.subject);
-
   // Send email in background without blocking
   transporter.sendMail(mailOptions)
     .then(info => {
-      console.log('✅ Email sent successfully!');
-      console.log('   Message ID:', info.messageId);
-      console.log('   Response:', info.response);
+      // Email sent successfully
     })
     .catch(error => {
       console.error('❌ Email sending failed!');
@@ -86,21 +74,15 @@ const sendEmailSync = async (transporter, mailOptions) => {
     return error;
   }
 
-  console.log('📧 Sending email synchronously to:', mailOptions.to);
-  
   try {
     // Skip verify in production to avoid hanging
     // Only verify in development/testing
     if (process.env.NODE_ENV === 'development') {
-      console.log('🔍 Verifying SMTP connection (dev mode)...');
       await transporter.verify();
-      console.log('✅ SMTP connection verified successfully');
     }
     
     // Now send the email
-    console.log('📤 Sending email...');
     const info = await transporter.sendMail(mailOptions);
-    console.log('✅ Email sent successfully:', info.messageId);
     return {
       success: true,
       status: 'sent',
@@ -571,15 +553,10 @@ ${appUrl}
       `.trim()
     };
 
-    // Send email without blocking - return immediately
-    console.log('📧 Sending credential email to:', email);
-    
     // Send email in background
     transporter.sendMail(mailOptions)
       .then(info => {
-        console.log('✅ Credential email sent successfully!');
-        console.log('   To:', email);
-        console.log('   Message ID:', info.messageId);
+        // Email sent successfully
       })
       .catch(error => {
         console.error('❌ Failed to send credential email');
@@ -768,7 +745,6 @@ TaskFlow Team
 
     // Send email asynchronously without blocking
     sendEmailAsync(transporter, mailOptions);
-    console.log('📧 Password reset email queued for:', email);
     return { success: true, status: 'queued', message: 'Password reset email is being sent' };
   } catch (error) {
     console.error('❌ Error queuing password reset email:', error);
@@ -989,7 +965,6 @@ TaskFlow Team
 
     // Send email asynchronously without blocking
     sendEmailAsync(transporter, mailOptions);
-    console.log(`📧 Overdue reminder email queued for: ${email}`);
     return { success: true, status: 'queued', message: 'Overdue reminder email is being sent' };
   } catch (error) {
     console.error(`❌ Error queuing overdue reminder email to ${email}:`, error);
@@ -1216,7 +1191,6 @@ TaskFlow Team
 
     // Send email asynchronously without blocking
     sendEmailAsync(transporter, mailOptions);
-    console.log(`📧 Weekly report email queued for: ${email}`);
     return { success: true, status: 'queued', message: 'Weekly report email is being sent' };
   } catch (error) {
     console.error(`❌ Error queuing weekly report email to ${email}:`, error);
