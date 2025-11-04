@@ -15,11 +15,6 @@ api.interceptors.request.use(
     const token = localStorage.getItem('accessToken');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
-    } else {
-      // Only warn if not trying to login/register
-      if (!config.url.includes('/auth/login') && !config.url.includes('/auth/register')) {
-        console.warn('⚠️ No access token found. You may need to log in.');
-      }
     }
     return config;
   },
@@ -79,11 +74,8 @@ api.interceptors.response.use(
       }
     }
 
-    // Handle 403 Forbidden errors with helpful message
-    if (error.response?.status === 403) {
-      console.warn('⚠️ Access denied. You don\'t have permission to access this resource.');
-      console.log('💡 Your role:', localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')).role : 'unknown');
-    }
+    // Handle 403 Forbidden errors silently
+    // User permissions are managed by the application
 
     return Promise.reject(error);
   }
