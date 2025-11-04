@@ -278,7 +278,7 @@ const Calendar = () => {
           )}
         </div>
       </div>
-      <style jsx>{`
+      <style dangerouslySetInnerHTML={{__html: `
         .calendar-container .rbc-calendar {
           font-family: inherit;
         }
@@ -292,7 +292,7 @@ const Calendar = () => {
         .calendar-container .rbc-off-range-bg {
           background: ${currentTheme === 'light' ? '#f3f4f6' : '#1f2937'};
         }
-      `}</style>
+      `}} />
     </div>
   );
 };
