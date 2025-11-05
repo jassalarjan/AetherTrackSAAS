@@ -4,6 +4,7 @@ import { checkRole } from '../middleware/roleCheck.js';
 import Task from '../models/Task.js';
 import Notification from '../models/Notification.js';
 import User from '../models/User.js';
+import { logChange } from '../utils/changeLogService.js';
 
 const router = express.Router();
 
@@ -72,6 +73,25 @@ router.post('/', authenticate, async (req, res) => {
       .populate('created_by', 'full_name email')
       .populate('assigned_to', 'full_name email')
       .populate('team_id', 'name');
+
+    // Log task creation
+    const user_ip = req.ip || req.connection.remoteAddress || req.socket.remoteAddress;
+    await logChange({
+      event_type: 'task_created',
+      user: req.user,
+      user_ip,
+      target_type: 'task',
+      target_id: task._id.toString(),
+      target_name: task.title,
+      action: 'Created task',
+      description: `${req.user.full_name} created task "${task.title}"`,
+      metadata: {
+        priority: task.priority,
+        status: task.status,
+        due_date: task.due_date,
+        assigned_to: assigned_to
+      }
+    });
 
     // Emit socket event for task creation
     if (req.app.get('io')) {
@@ -237,6 +257,32 @@ router.patch('/:id', authenticate, async (req, res) => {
       .populate('assigned_to', 'full_name email')
       .populate('team_id', 'name');
 
+    // Log task update
+    const user_ip = req.ip || req.connection.remoteAddress || req.socket.remoteAddress;
+    const changes = {};
+    if (status && status !== oldStatus) {
+      changes.status = { old: oldStatus, new: status };
+    }
+    if (title && title !== task.title) changes.title = title;
+    if (priority) changes.priority = priority;
+    
+    await logChange({
+      event_type: status && status !== oldStatus ? 'task_status_changed' : 'task_updated',
+      user: req.user,
+      user_ip,
+      target_type: 'task',
+      target_id: task._id.toString(),
+      target_name: task.title,
+      action: 'Updated task',
+      description: `${req.user.full_name} updated task "${task.title}"${status && status !== oldStatus ? ` (${oldStatus} → ${status})` : ''}`,
+      metadata: {
+        priority: task.priority,
+        status: task.status,
+        due_date: task.due_date
+      },
+      changes
+    });
+
     // Emit socket event
     if (req.app.get('io')) {
       req.app.get('io').emit('task:updated', updatedTask);
@@ -258,7 +304,21 @@ router.delete('/:id', authenticate, checkRole(['admin', 'hr', 'team_lead']), asy
       return res.status(404).json({ message: 'Task not found' });
     }
 
+    const taskTitle = task.title;
     await Task.findByIdAndDelete(req.params.id);
+
+    // Log task deletion
+    const user_ip = req.ip || req.connection.remoteAddress || req.socket.remoteAddress;
+    await logChange({
+      event_type: 'task_deleted',
+      user: req.user,
+      user_ip,
+      target_type: 'task',
+      target_id: req.params.id,
+      target_name: taskTitle,
+      action: 'Deleted task',
+      description: `${req.user.full_name} deleted task "${taskTitle}"`
+    });
 
     res.json({ message: 'Task deleted' });
   } catch (error) {

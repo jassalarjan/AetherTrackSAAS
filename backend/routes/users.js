@@ -5,6 +5,7 @@ import { checkRole } from '../middleware/roleCheck.js';
 import User from '../models/User.js';
 import Team from '../models/Team.js';
 import { sendCredentialEmail, sendPasswordResetEmail } from '../utils/emailService.js';
+import { logChange } from '../utils/changeLogService.js';
 import multer from 'multer';
 import xlsx from 'xlsx';
 
@@ -205,6 +206,24 @@ router.post('/', authenticate, checkRole(['admin', 'hr']), validateUserCreation,
     const userResponse = await User.findById(user._id)
       .select('-password_hash')
       .populate('team_id');
+
+    // Log user creation
+    const user_ip = req.ip || req.connection.remoteAddress || req.socket.remoteAddress;
+    await logChange({
+      event_type: 'user_created',
+      user: req.user,
+      user_ip,
+      target_type: 'user',
+      target_id: user._id.toString(),
+      target_name: full_name,
+      action: 'Created user',
+      description: `${req.user.full_name} created user account for ${full_name} (${email}) with role ${role}`,
+      metadata: {
+        email,
+        role,
+        team_id
+      }
+    });
 
     // Respond immediately without waiting for email
     res.status(201).json({
