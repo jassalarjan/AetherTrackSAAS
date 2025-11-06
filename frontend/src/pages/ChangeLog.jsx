@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useTheme } from '../context/ThemeContext';
+import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import api from '../api/axios';
 import { 
@@ -15,14 +17,18 @@ import {
   TrendingUp,
   Clock,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  AlertCircle
 } from 'lucide-react';
 
 const ChangeLog = () => {
   const { currentTheme, currentColorScheme } = useTheme();
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const [logs, setLogs] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
@@ -39,14 +45,23 @@ const ChangeLog = () => {
   const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
-    fetchLogs();
-    fetchStats();
-    fetchEventTypes();
-  }, [page, filters]);
+    // Check if user is admin
+    if (user && user.role !== 'admin') {
+      navigate('/dashboard');
+      return;
+    }
+    
+    if (user) {
+      fetchLogs();
+      fetchStats();
+      fetchEventTypes();
+    }
+  }, [page, filters, user]);
 
   const fetchLogs = async () => {
     try {
       setLoading(true);
+      setError(null);
       const params = new URLSearchParams({
         page: page.toString(),
         ...filters
@@ -58,6 +73,14 @@ const ChangeLog = () => {
       setTotal(response.data.total);
     } catch (error) {
       console.error('Error fetching change logs:', error);
+      if (error.response?.status === 401) {
+        setError('Authentication required. Please log in again.');
+      } else if (error.response?.status === 403) {
+        setError('Access denied. Admin privileges required.');
+        navigate('/dashboard');
+      } else {
+        setError('Failed to fetch change logs. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -73,6 +96,7 @@ const ChangeLog = () => {
       setStats(response.data);
     } catch (error) {
       console.error('Error fetching stats:', error);
+      // Don't show error for stats, just log it
     }
   };
 
@@ -82,6 +106,7 @@ const ChangeLog = () => {
       setEventTypes(response.data);
     } catch (error) {
       console.error('Error fetching event types:', error);
+      // Don't show error for event types, just log it
     }
   };
 
@@ -168,6 +193,23 @@ const ChangeLog = () => {
       <Navbar />
       <div className={`flex-1 overflow-auto ${currentTheme.background}`}>
         <div className="p-6 max-w-7xl mx-auto">
+          {/* Error Alert */}
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg flex items-start space-x-3">
+              <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <h3 className="text-sm font-semibold text-red-800 dark:text-red-300 mb-1">Error</h3>
+                <p className="text-sm text-red-700 dark:text-red-400">{error}</p>
+              </div>
+              <button
+                onClick={() => setError(null)}
+                className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
+              >
+                ×
+              </button>
+            </div>
+          )}
+
           {/* Header */}
           <div className="mb-8">
             <div className="flex items-center justify-between mb-4">
