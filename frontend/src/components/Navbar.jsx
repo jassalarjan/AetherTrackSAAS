@@ -17,16 +17,19 @@ const Navbar = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   useEffect(() => {
-    fetchNotifications();
-  }, []);
+    if (user) {
+      fetchNotifications();
+    }
+  }, [user]);
 
   const fetchNotifications = async () => {
+    if (!user) return;
+    
     try {
       const response = await api.get('/notifications');
       setNotifications(response.data.notifications);
       setUnreadCount(response.data.unreadCount);
     } catch (error) {
-      console.error('Error fetching notifications:', error);
       // Don't show error for unauthorized - user might not be logged in yet
       if (error.response?.status !== 401) {
         console.error('Error fetching notifications:', error);
