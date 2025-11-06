@@ -14,6 +14,7 @@ yarn-error.log*
 ./frontend/.env.local
 ./frontend/.env.development.local
 ./frontend/.env.test.local
+/backend/.env
 ./backend/.env
 ./backend/.env.local
 ./backend/.env.development.local
