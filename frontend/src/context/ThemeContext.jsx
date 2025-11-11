@@ -28,6 +28,7 @@ export const ThemeProvider = ({ children }) => {
     blue: {
       name: 'Blue',
       primary: 'bg-blue-600',
+      primaryHex: '#2563eb',
       primaryHover: 'hover:bg-blue-700',
       primaryLight: 'bg-blue-50',
       primaryText: 'text-blue-600',
@@ -42,6 +43,7 @@ export const ThemeProvider = ({ children }) => {
     purple: {
       name: 'Purple',
       primary: 'bg-purple-600',
+      primaryHex: '#9333ea',
       primaryHover: 'hover:bg-purple-700',
       primaryLight: 'bg-purple-50',
       primaryText: 'text-purple-600',
@@ -56,6 +58,7 @@ export const ThemeProvider = ({ children }) => {
     green: {
       name: 'Green',
       primary: 'bg-green-600',
+      primaryHex: '#16a34a',
       primaryHover: 'hover:bg-green-700',
       primaryLight: 'bg-green-50',
       primaryText: 'text-green-600',
@@ -70,6 +73,7 @@ export const ThemeProvider = ({ children }) => {
     orange: {
       name: 'Orange',
       primary: 'bg-orange-600',
+      primaryHex: '#ea580c',
       primaryHover: 'hover:bg-orange-700',
       primaryLight: 'bg-orange-50',
       primaryText: 'text-orange-600',
@@ -84,6 +88,7 @@ export const ThemeProvider = ({ children }) => {
     pink: {
       name: 'Pink',
       primary: 'bg-pink-600',
+      primaryHex: '#db2777',
       primaryHover: 'hover:bg-pink-700',
       primaryLight: 'bg-pink-50',
       primaryText: 'text-pink-600',
@@ -91,6 +96,81 @@ export const ThemeProvider = ({ children }) => {
       accentHover: 'hover:bg-pink-600',
       secondary: 'bg-purple-600',
       secondaryHover: 'hover:bg-purple-700',
+      warning: 'bg-yellow-500',
+      danger: 'bg-red-500',
+      success: 'bg-green-500',
+    },
+    teal: {
+      name: 'Teal',
+      primary: 'bg-teal-600',
+      primaryHex: '#0d9488',
+      primaryHover: 'hover:bg-teal-700',
+      primaryLight: 'bg-teal-50',
+      primaryText: 'text-teal-600',
+      accent: 'bg-teal-500',
+      accentHover: 'hover:bg-teal-600',
+      secondary: 'bg-cyan-600',
+      secondaryHover: 'hover:bg-cyan-700',
+      warning: 'bg-yellow-500',
+      danger: 'bg-red-500',
+      success: 'bg-emerald-500',
+    },
+    indigo: {
+      name: 'Indigo',
+      primary: 'bg-indigo-600',
+      primaryHex: '#4f46e5',
+      primaryHover: 'hover:bg-indigo-700',
+      primaryLight: 'bg-indigo-50',
+      primaryText: 'text-indigo-600',
+      accent: 'bg-indigo-500',
+      accentHover: 'hover:bg-indigo-600',
+      secondary: 'bg-blue-600',
+      secondaryHover: 'hover:bg-blue-700',
+      warning: 'bg-yellow-500',
+      danger: 'bg-red-500',
+      success: 'bg-green-500',
+    },
+    rose: {
+      name: 'Rose',
+      primary: 'bg-rose-600',
+      primaryHex: '#e11d48',
+      primaryHover: 'hover:bg-rose-700',
+      primaryLight: 'bg-rose-50',
+      primaryText: 'text-rose-600',
+      accent: 'bg-rose-500',
+      accentHover: 'hover:bg-rose-600',
+      secondary: 'bg-pink-600',
+      secondaryHover: 'hover:bg-pink-700',
+      warning: 'bg-amber-500',
+      danger: 'bg-red-500',
+      success: 'bg-green-500',
+    },
+    cyan: {
+      name: 'Cyan',
+      primary: 'bg-cyan-600',
+      primaryHex: '#0891b2',
+      primaryHover: 'hover:bg-cyan-700',
+      primaryLight: 'bg-cyan-50',
+      primaryText: 'text-cyan-600',
+      accent: 'bg-cyan-500',
+      accentHover: 'hover:bg-cyan-600',
+      secondary: 'bg-blue-600',
+      secondaryHover: 'hover:bg-blue-700',
+      warning: 'bg-yellow-500',
+      danger: 'bg-red-500',
+      success: 'bg-teal-500',
+    },
+    emerald: {
+      name: 'Emerald',
+      primary: 'bg-emerald-600',
+      primaryHex: '#059669',
+      primaryHover: 'hover:bg-emerald-700',
+      primaryLight: 'bg-emerald-50',
+      primaryText: 'text-emerald-600',
+      accent: 'bg-emerald-500',
+      accentHover: 'hover:bg-emerald-600',
+      secondary: 'bg-teal-600',
+      secondaryHover: 'hover:bg-teal-700',
       warning: 'bg-yellow-500',
       danger: 'bg-red-500',
       success: 'bg-green-500',
@@ -148,18 +228,21 @@ export const ThemeProvider = ({ children }) => {
 
   // Apply theme to document
   useEffect(() => {
-    const currentTheme = getCurrentTheme();
+    const currentThemeObj = getCurrentTheme();
     const root = document.documentElement;
+    const currentColorScheme = colorSchemes[colorScheme];
 
-    // Remove existing theme classes
-    Object.values(themes).forEach(t => {
-      if (t.name) {
-        root.classList.remove(t.name.toLowerCase());
-      }
-    });
+    // Apply dark mode class
+    if (currentThemeObj.name === 'Dark') {
+      root.classList.add('dark');
+    } else {
+      root.classList.remove('dark');
+    }
 
-    // Add current theme class
-    root.classList.add(currentTheme.name.toLowerCase());
+    // Apply CSS custom properties for dynamic color scheme
+    if (currentColorScheme.primaryHex) {
+      root.style.setProperty('--color-primary', currentColorScheme.primaryHex);
+    }
 
     // Save to localStorage
     localStorage.setItem('theme', theme);
@@ -174,7 +257,16 @@ export const ThemeProvider = ({ children }) => {
   useEffect(() => {
     if (theme === 'auto') {
       const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-      const handleChange = () => setTheme('auto'); // Trigger re-render
+      const handleChange = () => {
+        const root = document.documentElement;
+        if (mediaQuery.matches) {
+          root.classList.add('dark');
+        } else {
+          root.classList.remove('dark');
+        }
+      };
+      
+      handleChange(); // Run immediately
       mediaQuery.addEventListener('change', handleChange);
       return () => mediaQuery.removeEventListener('change', handleChange);
     }

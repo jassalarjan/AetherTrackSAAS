@@ -69,34 +69,44 @@ const Calendar = () => {
     setEvents(calendarEvents);
   };
 
+  const getStatusColor = (status) => {
+    const colors = {
+      todo: '#6b7280',        // gray
+      in_progress: '#3b82f6', // blue
+      review: '#eab308',      // yellow
+      done: '#22c55e',        // green
+      archived: '#ef4444',    // red
+    };
+    return colors[status] || colors.todo;
+  };
+
+  const getPriorityBadgeColor = (priority) => {
+    const colors = {
+      low: '#10b981',     // emerald
+      medium: '#f59e0b',  // amber
+      high: '#f97316',    // orange
+      urgent: '#dc2626',  // red
+    };
+    return colors[priority] || colors.medium;
+  };
+
   const eventStyleGetter = (event) => {
     const task = event.resource;
-    let backgroundColor = '#3174ad';
-    switch (task.priority) {
-      case 'urgent':
-        backgroundColor = '#dc2626';
-        break;
-      case 'high':
-        backgroundColor = '#f97316';
-        break;
-      case 'medium':
-        backgroundColor = '#eab308';
-        break;
-      case 'low':
-        backgroundColor = '#22c55e';
-        break;
-    }
-    if (task.status === 'done') {
-      backgroundColor = '#9ca3af';
-    }
+    const backgroundColor = getStatusColor(task.status);
+    const borderColor = getPriorityBadgeColor(task.priority);
+    
     return {
       style: {
         backgroundColor,
-        borderRadius: '5px',
-        opacity: 0.8,
+        borderRadius: '6px',
+        opacity: 0.9,
         color: 'white',
-        border: '0px',
+        border: `3px solid ${borderColor}`,
+        borderLeft: `6px solid ${borderColor}`,
         display: 'block',
+        fontWeight: '600',
+        padding: '2px 6px',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24)',
       },
     };
   };
@@ -193,30 +203,60 @@ const Calendar = () => {
               </div>
             </div>
           </div>
+          
+          {/* Legend - Updated to show Status with Priority border indicator */}
           <div className={`${currentTheme.surface} rounded-lg shadow-md p-4 mb-6`}>
-            <div className="flex items-center space-x-6 text-sm">
-              <div className="flex items-center space-x-2">
-                <div className="w-4 h-4 bg-red-600 rounded"></div>
-                <span className={currentTheme.textSecondary}>Urgent</span>
+            <h3 className={`text-sm font-semibold ${currentTheme.text} mb-3`}>Legend</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className={`text-xs font-medium ${currentTheme.textSecondary} mb-2`}>Status (Background)</p>
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-4 h-4 bg-gray-500 rounded border-2 border-gray-600"></div>
+                    <span className={`text-sm ${currentTheme.textSecondary}`}>To Do</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-4 h-4 bg-blue-500 rounded border-2 border-blue-600"></div>
+                    <span className={`text-sm ${currentTheme.textSecondary}`}>In Progress</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-4 h-4 bg-yellow-500 rounded border-2 border-yellow-600"></div>
+                    <span className={`text-sm ${currentTheme.textSecondary}`}>Review</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-4 h-4 bg-green-500 rounded border-2 border-green-600"></div>
+                    <span className={`text-sm ${currentTheme.textSecondary}`}>Done</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-4 h-4 bg-red-500 rounded border-2 border-red-600"></div>
+                    <span className={`text-sm ${currentTheme.textSecondary}`}>Archived</span>
+                  </div>
+                </div>
               </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-4 h-4 bg-orange-500 rounded"></div>
-                <span className={currentTheme.textSecondary}>High</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-4 h-4 bg-yellow-500 rounded"></div>
-                <span className={currentTheme.textSecondary}>Medium</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-4 h-4 bg-green-500 rounded"></div>
-                <span className={currentTheme.textSecondary}>Low</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-4 h-4 bg-gray-400 rounded"></div>
-                <span className={currentTheme.textSecondary}>Completed</span>
+              <div>
+                <p className={`text-xs font-medium ${currentTheme.textSecondary} mb-2`}>Priority (Border)</p>
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-4 h-4 bg-gray-200 rounded border-4 border-emerald-500"></div>
+                    <span className={`text-sm ${currentTheme.textSecondary}`}>Low</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-4 h-4 bg-gray-200 rounded border-4 border-amber-500"></div>
+                    <span className={`text-sm ${currentTheme.textSecondary}`}>Medium</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-4 h-4 bg-gray-200 rounded border-4 border-orange-500"></div>
+                    <span className={`text-sm ${currentTheme.textSecondary}`}>High</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-4 h-4 bg-gray-200 rounded border-4 border-red-600"></div>
+                    <span className={`text-sm ${currentTheme.textSecondary}`}>Urgent</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
+          
           <div className={`${currentTheme.surface} rounded-lg shadow-md p-6 calendar-container`}>
             <BigCalendar
               localizer={localizer}
@@ -283,14 +323,64 @@ const Calendar = () => {
           font-family: inherit;
         }
         .calendar-container .rbc-header {
-          padding: 10px;
+          padding: 12px;
           font-weight: 600;
+          background: ${currentTheme.background === 'bg-gray-900' ? '#1f2937' : '#f9fafb'};
+          color: ${currentTheme.background === 'bg-gray-900' ? '#f9fafb' : '#111827'};
+          border-color: ${currentTheme.background === 'bg-gray-900' ? '#374151' : '#e5e7eb'};
         }
         .calendar-container .rbc-today {
-          background-color: ${currentTheme === 'light' ? '#e0f2fe' : '#1e40af'};
+          background-color: ${currentTheme.background === 'bg-gray-900' ? '#1e3a8a' : '#dbeafe'};
         }
         .calendar-container .rbc-off-range-bg {
-          background: ${currentTheme === 'light' ? '#f3f4f6' : '#1f2937'};
+          background: ${currentTheme.background === 'bg-gray-900' ? '#111827' : '#f9fafb'};
+        }
+        .calendar-container .rbc-date-cell {
+          color: ${currentTheme.background === 'bg-gray-900' ? '#d1d5db' : '#374151'};
+        }
+        .calendar-container .rbc-off-range {
+          color: ${currentTheme.background === 'bg-gray-900' ? '#4b5563' : '#9ca3af'};
+        }
+        .calendar-container .rbc-month-view {
+          background: ${currentTheme.background === 'bg-gray-900' ? '#1f2937' : '#ffffff'};
+          border-color: ${currentTheme.background === 'bg-gray-900' ? '#374151' : '#e5e7eb'};
+        }
+        .calendar-container .rbc-day-bg {
+          background: ${currentTheme.background === 'bg-gray-900' ? '#1f2937' : '#ffffff'};
+          border-color: ${currentTheme.background === 'bg-gray-900' ? '#374151' : '#e5e7eb'};
+        }
+        .calendar-container .rbc-event {
+          transition: all 0.2s ease;
+        }
+        .calendar-container .rbc-event:hover {
+          transform: scale(1.05);
+          box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+        .calendar-container .rbc-toolbar {
+          color: ${currentTheme.background === 'bg-gray-900' ? '#f9fafb' : '#111827'};
+          margin-bottom: 20px;
+        }
+        .calendar-container .rbc-toolbar button {
+          color: ${currentTheme.background === 'bg-gray-900' ? '#f9fafb' : '#111827'};
+          background: ${currentTheme.background === 'bg-gray-900' ? '#374151' : '#f3f4f6'};
+          border-color: ${currentTheme.background === 'bg-gray-900' ? '#4b5563' : '#d1d5db'};
+        }
+        .calendar-container .rbc-toolbar button:hover {
+          background: ${currentTheme.background === 'bg-gray-900' ? '#4b5563' : '#e5e7eb'};
+        }
+        .calendar-container .rbc-toolbar button.rbc-active {
+          background: ${currentTheme.background === 'bg-gray-900' ? '#2563eb' : '#3b82f6'};
+          color: white;
+        }
+        .calendar-container .rbc-agenda-view {
+          background: ${currentTheme.background === 'bg-gray-900' ? '#1f2937' : '#ffffff'};
+        }
+        .calendar-container .rbc-agenda-view table {
+          border-color: ${currentTheme.background === 'bg-gray-900' ? '#374151' : '#e5e7eb'};
+        }
+        .calendar-container .rbc-agenda-table tbody > tr > td {
+          color: ${currentTheme.background === 'bg-gray-900' ? '#d1d5db' : '#374151'};
+          border-color: ${currentTheme.background === 'bg-gray-900' ? '#374151' : '#e5e7eb'};
         }
       `}} />
     </div>
