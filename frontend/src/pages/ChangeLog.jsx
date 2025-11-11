@@ -68,18 +68,24 @@ const ChangeLog = () => {
       });
 
       const response = await api.get(`/changelog?${params}`);
-      setLogs(response.data.logs);
-      setTotalPages(response.data.totalPages);
-      setTotal(response.data.total);
+      
+      setLogs(response.data.logs || []);
+      setTotalPages(response.data.totalPages || 1);
+      setTotal(response.data.total || 0);
     } catch (error) {
       console.error('Error fetching change logs:', error);
+      
       if (error.response?.status === 401) {
         setError('Authentication required. Please log in again.');
       } else if (error.response?.status === 403) {
         setError('Access denied. Admin privileges required.');
-        navigate('/dashboard');
+        setTimeout(() => navigate('/dashboard'), 2000);
+      } else if (error.response?.status === 404) {
+        setError('⚠️ Changelog routes not found. Please restart the backend server! See RESTART_BACKEND.md for instructions.');
+      } else if (error.response?.data?.message) {
+        setError(`Error: ${error.response.data.message}`);
       } else {
-        setError('Failed to fetch change logs. Please try again.');
+        setError(`Failed to fetch change logs: ${error.message || 'Unknown error'}`);
       }
     } finally {
       setLoading(false);
@@ -96,17 +102,35 @@ const ChangeLog = () => {
       setStats(response.data);
     } catch (error) {
       console.error('Error fetching stats:', error);
-      // Don't show error for stats, just log it
+      // Set default stats if error
+      setStats({
+        total: 0,
+        by_event_type: [],
+        top_users: []
+      });
     }
   };
 
   const fetchEventTypes = async () => {
     try {
       const response = await api.get('/changelog/event-types');
-      setEventTypes(response.data);
+      setEventTypes(response.data || []);
     } catch (error) {
       console.error('Error fetching event types:', error);
-      // Don't show error for event types, just log it
+      // Set default event types
+      setEventTypes([
+        'user_login',
+        'user_logout',
+        'user_created',
+        'user_updated',
+        'user_deleted',
+        'task_created',
+        'task_updated',
+        'task_deleted',
+        'team_created',
+        'team_updated',
+        'team_deleted'
+      ]);
     }
   };
 
