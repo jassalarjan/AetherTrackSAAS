@@ -555,15 +555,19 @@ const Tasks = () => {
           {filteredTasks.map((task) => (
             <div
               key={task._id}
-              className={`${currentTheme.surface} rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow cursor-pointer border-l-4 ${getStatusBorderColor(task.status)}`}
+              className={`${currentTheme.surface} rounded-lg shadow-md hover:shadow-lg transition-all cursor-pointer border-l-[6px] ${getStatusBorderColor(task.status)} overflow-hidden relative`}
               onClick={() => viewTaskDetails(task)}
               data-testid="task-card"
             >
-              <div className="flex justify-between items-start mb-4">
-                <div className="flex items-center space-x-2 flex-1">
-                  <div className={`w-2 h-2 rounded-full ${getStatusAccentColor(task.status)} flex-shrink-0`}></div>
-                  <h3 className={`font-semibold text-lg ${currentTheme.text}`}>{task.title}</h3>
-                </div>
+              {/* Status Color Bar - Left Side */}
+              <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${getStatusAccentColor(task.status)}`}></div>
+              
+              <div className="p-6">
+                <div className="flex justify-between items-start mb-4">
+                  <div className="flex items-center space-x-2 flex-1">
+                    <div className={`w-3 h-3 rounded-full ${getStatusAccentColor(task.status)} flex-shrink-0 animate-pulse`}></div>
+                    <h3 className={`font-semibold text-lg ${currentTheme.text}`}>{task.title}</h3>
+                  </div>
                 <div className="flex space-x-2">
                   {canEditTask(task) && (
                     <button
@@ -655,6 +659,7 @@ const Tasks = () => {
                 <div className={`text-xs ${currentTheme.textMuted}`}>
                   Created: {new Date(task.created_at).toLocaleDateString()}
                 </div>
+              </div>
               </div>
             </div>
           ))}
