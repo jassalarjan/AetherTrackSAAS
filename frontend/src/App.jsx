@@ -13,6 +13,7 @@ import UserManagement from './pages/UserManagement';
 import Analytics from './pages/Analytics';
 import Settings from './pages/Settings';
 import Calendar from './pages/Calendar';
+import ChangeLog from './pages/ChangeLog';
 
 function AppContent() {
   // Initialize notifications
@@ -91,6 +92,15 @@ function AppContent() {
         element={
           <ProtectedRoute>
             <Calendar />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/changelog"
+        element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <ChangeLog />
           </ProtectedRoute>
         }
       />

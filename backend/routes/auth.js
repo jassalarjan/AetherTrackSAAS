@@ -2,6 +2,8 @@ import express from 'express';
 import { body, validationResult } from 'express-validator';
 import User from '../models/User.js';
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '../utils/jwt.js';
+import { logChange } from '../utils/changeLogService.js';
+import { authenticate } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -50,6 +52,20 @@ router.post('/login', validateLogin, async (req, res) => {
     // Generate tokens
     const accessToken = generateAccessToken(user._id, user.role);
     const refreshToken = generateRefreshToken(user._id);
+
+    // Log login event
+    const user_ip = req.ip || req.connection.remoteAddress || req.socket.remoteAddress;
+    await logChange({
+      event_type: 'user_login',
+      user: user,
+      user_ip,
+      action: 'User logged in',
+      description: `${user.full_name} (${user.email}) logged in successfully`,
+      metadata: {
+        role: user.role,
+        team_id: user.team_id
+      }
+    });
 
     res.json({
       message: 'Login successful',
@@ -105,7 +121,17 @@ router.post('/refresh', async (req, res) => {
 });
 
 // Logout
-router.post('/logout', (req, res) => {
+router.post('/logout', authenticate, async (req, res) => {
+  // Log logout event
+  const user_ip = req.ip || req.connection.remoteAddress || req.socket.remoteAddress;
+  await logChange({
+    event_type: 'user_logout',
+    user: req.user,
+    user_ip,
+    action: 'User logged out',
+    description: `${req.user.full_name} (${req.user.email}) logged out`
+  });
+
   // In a production app, you might want to blacklist the token
   res.json({ message: 'Logged out successfully' });
 });
