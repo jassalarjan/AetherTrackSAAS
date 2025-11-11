@@ -4,6 +4,7 @@ import User from '../models/User.js';
 import Team from '../models/Team.js';
 import { sendOverdueTaskReminder, sendWeeklyReport } from './emailService.js';
 import { generateExcelReport, generatePDFReport, isTaskOverdue, calculateDaysUntilDue } from './reportGenerator.js';
+import { logChange } from './changeLogService.js';
 
 // Initialize all scheduled jobs
 export const initializeScheduler = () => {
@@ -27,6 +28,20 @@ export const initializeScheduler = () => {
 // Send overdue task reminders to users
 const sendOverdueReminders = async () => {
   try {
+    console.log('🔔 Starting overdue reminders automation...');
+    
+    // Log automation trigger
+    await logChange({
+      event_type: 'automation_triggered',
+      action: 'Overdue task reminders automation',
+      description: 'System triggered automatic overdue task reminder emails',
+      target_type: 'automation',
+      metadata: {
+        automation_type: 'overdue_reminders',
+        triggered_at: new Date().toISOString()
+      }
+    });
+
     // Get all tasks that are overdue
     const tasks = await Task.find({
       due_date: { $lt: new Date() },
@@ -92,8 +107,36 @@ const sendOverdueReminders = async () => {
     }
 
     console.log(`📊 Reminder Summary: ${successCount} sent, ${failCount} failed`);
+    
+    // Log automation completion
+    await logChange({
+      event_type: 'automation_triggered',
+      action: 'Overdue reminders completed',
+      description: `Overdue reminder automation completed: ${successCount} emails sent successfully, ${failCount} failed`,
+      target_type: 'automation',
+      metadata: {
+        automation_type: 'overdue_reminders',
+        success_count: successCount,
+        fail_count: failCount,
+        total_tasks: tasks.length,
+        completed_at: new Date().toISOString()
+      }
+    });
   } catch (error) {
     console.error('❌ Error in sendOverdueReminders:', error);
+    
+    // Log automation error
+    await logChange({
+      event_type: 'automation_triggered',
+      action: 'Overdue reminders failed',
+      description: `Overdue reminder automation failed: ${error.message}`,
+      target_type: 'automation',
+      metadata: {
+        automation_type: 'overdue_reminders',
+        error: error.message,
+        failed_at: new Date().toISOString()
+      }
+    });
   }
 };
 
@@ -101,6 +144,18 @@ const sendOverdueReminders = async () => {
 const sendWeeklyReports = async () => {
   try {
     console.log('📊 Generating weekly reports...');
+    
+    // Log automation trigger
+    await logChange({
+      event_type: 'automation_triggered',
+      action: 'Weekly reports automation',
+      description: 'System triggered automatic weekly report generation and distribution',
+      target_type: 'automation',
+      metadata: {
+        automation_type: 'weekly_reports',
+        triggered_at: new Date().toISOString()
+      }
+    });
     
     // Get all tasks from the last 7 days
     const sevenDaysAgo = new Date();
@@ -223,8 +278,39 @@ const sendWeeklyReports = async () => {
     }
 
     console.log(`📊 Report Summary: ${successCount} sent, ${failCount} failed`);
+    
+    // Log report generation and distribution
+    await logChange({
+      event_type: 'report_generated',
+      action: 'Weekly reports generated and sent',
+      description: `Weekly reports generated and distributed: ${successCount} recipients received reports, ${failCount} failed`,
+      target_type: 'report',
+      metadata: {
+        report_type: 'weekly_summary',
+        success_count: successCount,
+        fail_count: failCount,
+        total_tasks: allTasks.length,
+        completed_tasks: analytics.completedTasks,
+        completion_rate: completionRate,
+        week_range: weekRange,
+        completed_at: new Date().toISOString()
+      }
+    });
   } catch (error) {
     console.error('❌ Error in sendWeeklyReports:', error);
+    
+    // Log report generation error
+    await logChange({
+      event_type: 'automation_triggered',
+      action: 'Weekly reports failed',
+      description: `Weekly report generation failed: ${error.message}`,
+      target_type: 'automation',
+      metadata: {
+        automation_type: 'weekly_reports',
+        error: error.message,
+        failed_at: new Date().toISOString()
+      }
+    });
   }
 };
 

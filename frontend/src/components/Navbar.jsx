@@ -1,7 +1,8 @@
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Bell, LogOut, User, LayoutDashboard, CheckSquare, Users, UserCog, Kanban, Menu, X, ChevronLeft, ChevronRight, BarChart3, Settings, Calendar as CalendarIcon } from 'lucide-react';
+import { Bell, LogOut, LayoutDashboard, CheckSquare, Users, UserCog, Kanban, Menu, X, ChevronLeft, ChevronRight, BarChart3, Settings, Calendar as CalendarIcon, Activity } from 'lucide-react';
+import Avatar from './Avatar';
 import { useState, useEffect } from 'react';
 import api from '../api/axios';
 
@@ -17,16 +18,19 @@ const Navbar = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   useEffect(() => {
-    fetchNotifications();
-  }, []);
+    if (user) {
+      fetchNotifications();
+    }
+  }, [user]);
 
   const fetchNotifications = async () => {
+    if (!user) return;
+    
     try {
       const response = await api.get('/notifications');
       setNotifications(response.data.notifications);
       setUnreadCount(response.data.unreadCount);
     } catch (error) {
-      console.error('Error fetching notifications:', error);
       // Don't show error for unauthorized - user might not be logged in yet
       if (error.response?.status !== 401) {
         console.error('Error fetching notifications:', error);
@@ -101,6 +105,12 @@ const Navbar = () => {
       href: '/users',
       icon: UserCog,
       roles: ['admin', 'hr'],
+    },
+    {
+      name: 'ChangeLog',
+      href: '/changelog',
+      icon: Activity,
+      roles: ['admin'],
     },
     {
       name: 'Settings',
@@ -217,8 +227,8 @@ const Navbar = () => {
                   {/* Avatar with gradient ring */}
                   <div className={`relative flex-shrink-0`}>
                     <div className={`absolute inset-0 rounded-full ${currentColorScheme.primary} opacity-20 blur-sm group-hover:opacity-30 transition-opacity`}></div>
-                    <div className={`relative w-10 h-10 rounded-full ${currentColorScheme.primaryLight} flex items-center justify-center border-2 ${primaryBorderClass} shadow-lg`}>
-                      <User className={`w-5 h-5 ${currentColorScheme.primaryText}`} />
+                    <div className={`relative w-10 h-10 rounded-full ${currentColorScheme.primaryLight} flex items-center justify-center border-2 ${primaryBorderClass} shadow-lg overflow-hidden`}>
+                      <Avatar size="w-10 h-10" className={`${currentColorScheme.primaryText}`} alt={`${user?.full_name || 'User'} avatar`} />
                     </div>
                   </div>
                   
@@ -313,11 +323,11 @@ const Navbar = () => {
                 <div className="mb-3 flex justify-center">
                   <div className={`relative group`}>
                     <div className={`absolute inset-0 rounded-full ${currentColorScheme.primary} opacity-20 blur-sm group-hover:opacity-40 transition-opacity`}></div>
-                    <div 
-                      className={`relative w-11 h-11 rounded-full ${currentColorScheme.primaryLight} flex items-center justify-center border-2 ${primaryBorderClass} shadow-md cursor-pointer hover:shadow-lg transition-all`}
+                      <div 
+                      className={`relative w-11 h-11 rounded-full ${currentColorScheme.primaryLight} flex items-center justify-center border-2 ${primaryBorderClass} shadow-md cursor-pointer hover:shadow-lg transition-all overflow-hidden`}
                       title={`${user?.full_name} - ${user?.role?.replace('_', ' ')}`}
                     >
-                      <User className={`w-6 h-6 ${currentColorScheme.primaryText}`} />
+                      <Avatar size="w-11 h-11" alt={`${user?.full_name || 'User'} avatar`} />
                     </div>
                   </div>
                 </div>

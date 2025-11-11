@@ -4,6 +4,7 @@ import { checkRole } from '../middleware/roleCheck.js';
 import Task from '../models/Task.js';
 import Notification from '../models/Notification.js';
 import User from '../models/User.js';
+import { logChange } from '../utils/changeLogService.js';
 
 const router = express.Router();
 
@@ -54,14 +55,16 @@ router.post('/', authenticate, async (req, res) => {
       if (notifications.length > 0) {
         await Notification.insertMany(notifications);
 
-        // Emit socket events
+        // Emit socket events for both notification and task assignment
         if (req.app.get('io')) {
           assigned_to
             .filter(userId => userId.toString() !== req.user._id.toString())
             .forEach(userId => {
+              // Emit notification event to specific user
               req.app.get('io').to(userId.toString()).emit('notification:new', {
                 type: 'task_assigned',
-                message: `New task assigned: ${task.title}`
+                message: `New task assigned: ${task.title}`,
+                task: task
               });
             });
         }
@@ -73,9 +76,40 @@ router.post('/', authenticate, async (req, res) => {
       .populate('assigned_to', 'full_name email')
       .populate('team_id', 'name');
 
-    // Emit socket event for task creation
+    // Log task creation
+    const user_ip = req.ip || req.connection.remoteAddress || req.socket.remoteAddress;
+    await logChange({
+      event_type: 'task_created',
+      user: req.user,
+      user_ip,
+      target_type: 'task',
+      target_id: task._id.toString(),
+      target_name: task.title,
+      action: 'Created task',
+      description: `${req.user.full_name} created task "${task.title}"`,
+      metadata: {
+        priority: task.priority,
+        status: task.status,
+        due_date: task.due_date,
+        assigned_to: assigned_to
+      }
+    });
+
+    // Emit socket events for task creation (to all users) and task assignment (to specific users)
     if (req.app.get('io')) {
       req.app.get('io').emit('task:created', populatedTask);
+      
+      // Also emit task:assigned event to assigned users specifically
+      if (assigned_to && assigned_to.length > 0) {
+        assigned_to
+          .filter(userId => userId.toString() !== req.user._id.toString())
+          .forEach(userId => {
+            req.app.get('io').to(userId.toString()).emit('task:assigned', {
+              task: populatedTask,
+              assigned_by: req.user.full_name
+            });
+          });
+      }
     }
 
     res.status(201).json({ message: 'Task created', task: populatedTask });
@@ -172,6 +206,7 @@ router.patch('/:id', authenticate, async (req, res) => {
     const { title, description, status, priority, assigned_to, due_date, progress } = req.body;
     
     const oldStatus = task.status;
+    const oldAssignedTo = task.assigned_to ? task.assigned_to.map(id => id.toString()) : [];
 
     if (title) task.title = title;
     if (description !== undefined) task.description = description;
@@ -181,8 +216,8 @@ router.patch('/:id', authenticate, async (req, res) => {
     if (progress !== undefined) task.progress = progress;
     
     // Only certain roles can reassign
-    if (assigned_to && ['admin', 'hr', 'team_lead'].includes(req.user.role)) {
-      task.assigned_to = assigned_to;
+    if (assigned_to !== undefined && ['admin', 'hr', 'team_lead'].includes(req.user.role)) {
+      task.assigned_to = Array.isArray(assigned_to) ? assigned_to : [];
     }
 
     task.updated_at = Date.now();
@@ -190,26 +225,42 @@ router.patch('/:id', authenticate, async (req, res) => {
 
     // Create notification for status change
     if (status && status !== oldStatus && task.assigned_to && task.assigned_to.length > 0) {
-      const notifications = task.assigned_to.map(userId => ({
-        user_id: userId,
-        type: 'status_changed',
-        payload: {
-          task_id: task._id,
-          task_title: task.title,
-          old_status: oldStatus,
-          new_status: status
-        }
-      }));
+      const notifications = task.assigned_to
+        .filter(userId => userId.toString() !== req.user._id.toString())
+        .map(userId => ({
+          user_id: userId,
+          type: 'status_changed',
+          payload: {
+            task_id: task._id,
+            task_title: task.title,
+            old_status: oldStatus,
+            new_status: status
+          }
+        }));
 
-      await Notification.insertMany(notifications);
+      if (notifications.length > 0) {
+        await Notification.insertMany(notifications);
+        
+        // Emit socket notification for status change
+        if (req.app.get('io')) {
+          task.assigned_to
+            .filter(userId => userId.toString() !== req.user._id.toString())
+            .forEach(userId => {
+              req.app.get('io').to(userId.toString()).emit('notification:new', {
+                type: 'status_changed',
+                message: `Task "${task.title}" status changed to ${status}`,
+                task: { _id: task._id, title: task.title, status, old_status: oldStatus }
+              });
+            });
+        }
+      }
     }
 
     // Create notification for reassignment
-    if (assigned_to && Array.isArray(assigned_to)) {
+    if (assigned_to !== undefined && Array.isArray(assigned_to) && ['admin', 'hr', 'team_lead'].includes(req.user.role)) {
       // Find newly assigned users (not previously assigned)
-      const oldAssignedIds = task.assigned_to ? task.assigned_to.map(id => id.toString()) : [];
       const newAssignedIds = assigned_to.map(id => id.toString());
-      const newlyAssigned = newAssignedIds.filter(id => !oldAssignedIds.includes(id) && id !== req.user._id.toString());
+      const newlyAssigned = newAssignedIds.filter(id => !oldAssignedTo.includes(id) && id !== req.user._id.toString());
 
       if (newlyAssigned.length > 0) {
         // Validate that all assigned users exist
@@ -229,6 +280,21 @@ router.patch('/:id', authenticate, async (req, res) => {
         }));
 
         await Notification.insertMany(notifications);
+        
+        // Emit socket notification for new assignments
+        if (req.app.get('io')) {
+          newlyAssigned.forEach(userId => {
+            req.app.get('io').to(userId).emit('notification:new', {
+              type: 'task_assigned',
+              message: `New task assigned: ${task.title}`,
+              task: { _id: task._id, title: task.title }
+            });
+            req.app.get('io').to(userId).emit('task:assigned', {
+              task: task,
+              assigned_by: req.user.full_name
+            });
+          });
+        }
       }
     }
 
@@ -236,6 +302,32 @@ router.patch('/:id', authenticate, async (req, res) => {
       .populate('created_by', 'full_name email')
       .populate('assigned_to', 'full_name email')
       .populate('team_id', 'name');
+
+    // Log task update
+    const user_ip = req.ip || req.connection.remoteAddress || req.socket.remoteAddress;
+    const changes = {};
+    if (status && status !== oldStatus) {
+      changes.status = { old: oldStatus, new: status };
+    }
+    if (title && title !== task.title) changes.title = title;
+    if (priority) changes.priority = priority;
+    
+    await logChange({
+      event_type: status && status !== oldStatus ? 'task_status_changed' : 'task_updated',
+      user: req.user,
+      user_ip,
+      target_type: 'task',
+      target_id: task._id.toString(),
+      target_name: task.title,
+      action: 'Updated task',
+      description: `${req.user.full_name} updated task "${task.title}"${status && status !== oldStatus ? ` (${oldStatus} → ${status})` : ''}`,
+      metadata: {
+        priority: task.priority,
+        status: task.status,
+        due_date: task.due_date
+      },
+      changes
+    });
 
     // Emit socket event
     if (req.app.get('io')) {
@@ -258,7 +350,27 @@ router.delete('/:id', authenticate, checkRole(['admin', 'hr', 'team_lead']), asy
       return res.status(404).json({ message: 'Task not found' });
     }
 
+    const taskTitle = task.title;
+    const taskId = req.params.id;
     await Task.findByIdAndDelete(req.params.id);
+
+    // Log task deletion
+    const user_ip = req.ip || req.connection.remoteAddress || req.socket.remoteAddress;
+    await logChange({
+      event_type: 'task_deleted',
+      user: req.user,
+      user_ip,
+      target_type: 'task',
+      target_id: req.params.id,
+      target_name: taskTitle,
+      action: 'Deleted task',
+      description: `${req.user.full_name} deleted task "${taskTitle}"`
+    });
+
+    // Emit socket event for task deletion
+    if (req.app.get('io')) {
+      req.app.get('io').emit('task:deleted', { _id: taskId, title: taskTitle });
+    }
 
     res.json({ message: 'Task deleted' });
   } catch (error) {

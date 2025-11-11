@@ -4,6 +4,7 @@ import { useTheme } from '../context/ThemeContext';
 import { useSearchParams } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import api from '../api/axios';
+import useRealtimeSync from '../hooks/useRealtimeSync';
 import { Plus, X, Edit2, Trash2, MessageSquare, Clock, UserCheck } from 'lucide-react';
 
 const Tasks = () => {
@@ -80,6 +81,22 @@ const Tasks = () => {
     applyFilters();
   }, [tasks, filters]);
 
+  // Real-time synchronization
+  useRealtimeSync({
+    onTaskCreated: () => {
+      fetchTasks();
+    },
+    onTaskUpdated: () => {
+      fetchTasks();
+    },
+    onTaskDeleted: () => {
+      fetchTasks();
+    },
+    onCommentAdded: () => {
+      fetchTasks();
+    },
+  });
+
   // Memoize filtered tasks to prevent unnecessary recalculations
   const applyFilters = useCallback(() => {
     let filtered = [...tasks];
@@ -141,7 +158,9 @@ const Tasks = () => {
 
   const fetchUsers = async () => {
     try {
-      const response = await api.get('/users');
+      // Use different endpoint based on role
+      const endpoint = user?.role === 'team_lead' ? '/users/team-members' : '/users';
+      const response = await api.get(endpoint);
       setUsers(response.data.users);
     } catch (error) {
       if (error.response?.status === 403) {
@@ -212,12 +231,32 @@ const Tasks = () => {
   };
 
   const openEditModal = (task) => {
+    // Get the team members for the current team
+    const taskTeam = teams.find(t => t._id === (task.team_id?._id || task.team_id));
+    let members = taskTeam ? taskTeam.members : [];
+    
+    // Ensure team lead is always included in the assignable members
+    if (taskTeam && user?.role === 'team_lead') {
+      const teamLeadAlreadyIncluded = members.some(member => member._id === user?.id);
+      if (!teamLeadAlreadyIncluded && taskTeam.lead_id?._id === user?.id) {
+        members = [
+          ...members,
+          {
+            _id: user.id,
+            full_name: user.full_name || user.username || user.email,
+            role: user.role,
+            email: user.email
+          }
+        ];
+      }
+    }
+    
+    setSelectedTeamMembers(members);
     setEditingTask({
       ...task,
-      assigned_to: task.assigned_to ? (Array.isArray(task.assigned_to) ? task.assigned_to.map(u => u._id) : [task.assigned_to._id]) : [],
+      assigned_to: task.assigned_to ? (Array.isArray(task.assigned_to) ? task.assigned_to.map(u => u._id || u) : [task.assigned_to._id || task.assigned_to]) : [],
       team_id: task.team_id?._id || task.team_id || '',
     });
-    setSelectedTeamMembers(task.team_id?.members || []);
     setShowEditModal(true);
   };
 
@@ -267,7 +306,17 @@ const Tasks = () => {
     }
     
     setSelectedTeamMembers(members);
-    setEditingTask({ ...editingTask, team_id: teamId, assigned_to: [] });
+    
+    // Keep existing assignments if they're members of the new team, otherwise clear
+    const memberIds = members.map(m => m._id);
+    const currentAssigned = editingTask.assigned_to || [];
+    const validAssignments = currentAssigned.filter(id => memberIds.includes(id));
+    
+    setEditingTask({ 
+      ...editingTask, 
+      team_id: teamId, 
+      assigned_to: validAssignments 
+    });
   };
 
   const handleMemberToggle = (memberId) => {
@@ -757,7 +806,7 @@ const Tasks = () => {
 
               <div>
                 <label className={`block text-sm font-medium ${currentTheme.text} mb-2`}>
-                  Due Date
+                  Due Date *
                 </label>
                 <input
                   type="date"
@@ -765,6 +814,7 @@ const Tasks = () => {
                   onChange={(e) => setEditingTask({ ...editingTask, due_date: e.target.value })}
                   className="input"
                   data-testid="edit-task-due-date-input"
+                  required
                 />
               </div>
 
@@ -803,7 +853,7 @@ const Tasks = () => {
                               onChange={() => handleMemberToggle(member._id)}
                               className="rounded"
                             />
-                            <span className="text-sm">
+                            <span className={`text-sm ${currentTheme.text}`}>
                               {member.full_name} ({member.role})
                               {member._id === user?.id && <span className="text-blue-600 font-medium"> (You)</span>}
                             </span>
@@ -915,7 +965,7 @@ const Tasks = () => {
 
               <div>
                 <label className={`block text-sm font-medium ${currentTheme.text} mb-2`}>
-                  Due Date
+                  Due Date *
                 </label>
                 <input
                   type="date"
@@ -923,6 +973,7 @@ const Tasks = () => {
                   onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
                   className="input"
                   data-testid="task-due-date-input"
+                  required
                 />
               </div>
 
@@ -1000,7 +1051,7 @@ const Tasks = () => {
                               }}
                               className="rounded"
                             />
-                            <span className="text-sm">
+                            <span className={`text-sm ${currentTheme.text}`}>
                               {member.full_name} ({member.role})
                               {member._id === user?.id && <span className="text-blue-600 font-medium"> (You)</span>}
                             </span>

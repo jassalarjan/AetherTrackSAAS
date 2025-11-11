@@ -5,6 +5,7 @@ import { checkRole } from '../middleware/roleCheck.js';
 import User from '../models/User.js';
 import Team from '../models/Team.js';
 import { sendCredentialEmail, sendPasswordResetEmail } from '../utils/emailService.js';
+import { logChange } from '../utils/changeLogService.js';
 import multer from 'multer';
 import xlsx from 'xlsx';
 
@@ -125,6 +126,35 @@ router.get('/', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
   }
 });
 
+// Get users for team lead - returns team members + the team lead themselves
+router.get('/team-members', authenticate, checkRole(['team_lead']), async (req, res) => {
+  try {
+    // Find the team where the user is the team lead
+    const team = await Team.findOne({ lead_id: req.user._id }).populate('members', '-password_hash');
+    
+    if (!team) {
+      return res.json({ users: [], count: 0 });
+    }
+
+    // Get all team members
+    let users = team.members || [];
+    
+    // Add the team lead to the list if not already included
+    const teamLeadIncluded = users.some(member => member._id.toString() === req.user._id.toString());
+    if (!teamLeadIncluded) {
+      const teamLead = await User.findById(req.user._id).select('-password_hash').populate('team_id');
+      if (teamLead) {
+        users = [teamLead, ...users];
+      }
+    }
+
+    res.json({ users, count: users.length });
+  } catch (error) {
+    console.error('Get team members error:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
 // Get single user by ID (Admin & HR only)
 router.get('/:id', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
   try {
@@ -206,6 +236,29 @@ router.post('/', authenticate, checkRole(['admin', 'hr']), validateUserCreation,
       .select('-password_hash')
       .populate('team_id');
 
+    // Log user creation
+    const user_ip = req.ip || req.connection.remoteAddress || req.socket.remoteAddress;
+    await logChange({
+      event_type: 'user_created',
+      user: req.user,
+      user_ip,
+      target_type: 'user',
+      target_id: user._id.toString(),
+      target_name: full_name,
+      action: 'Created user',
+      description: `${req.user.full_name} created user account for ${full_name} (${email}) with role ${role}`,
+      metadata: {
+        email,
+        role,
+        team_id
+      }
+    });
+
+    // Emit socket event for user creation
+    if (req.app.get('io')) {
+      req.app.get('io').emit('user:created', userResponse);
+    }
+
     // Respond immediately without waiting for email
     res.status(201).json({
       message: 'User created successfully. Credentials will be sent via email.',
@@ -235,6 +288,11 @@ router.post('/bulk-delete', authenticate, checkRole(['admin']), async (req, res)
     }
 
     const result = await User.deleteMany({ _id: { $in: idsToDelete } });
+
+    // Emit socket event for bulk user deletion
+    if (req.app.get('io')) {
+      req.app.get('io').emit('users:bulk-deleted', { userIds: idsToDelete, count: result.deletedCount });
+    }
 
     res.json({ 
       message: `Successfully deleted ${result.deletedCount} user(s)`,
@@ -305,6 +363,11 @@ router.put('/:id', authenticate, checkRole(['admin', 'hr']), async (req, res) =>
       return res.status(404).json({ message: 'User not found' });
     }
 
+    // Emit socket event for user update
+    if (req.app.get('io')) {
+      req.app.get('io').emit('user:updated', user);
+    }
+
     res.json({ message: 'User updated successfully', user });
   } catch (error) {
     console.error('Update user error:', error);
@@ -326,6 +389,11 @@ router.delete('/:id', authenticate, checkRole(['admin']), async (req, res) => {
 
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Emit socket event for user deletion
+    if (req.app.get('io')) {
+      req.app.get('io').emit('user:deleted', { _id: user._id, email: user.email });
     }
 
     res.json({ message: 'User deleted successfully', user: { id: user._id, email: user.email } });
