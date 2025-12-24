@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { useTheme } from '../context/ThemeContext';
 import Sidebar from '../components/Sidebar';
 import ThemeToggle from '../components/ThemeToggle';
 import NotificationSettings from '../components/NotificationSettings';
@@ -10,7 +9,6 @@ import { User, Settings as SettingsIcon, Palette, Monitor, Lock, Eye, EyeOff, Be
 
 const Settings = () => {
   const { user } = useAuth();
-  const { theme } = useTheme();
   const [showOldPassword, setShowOldPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -57,16 +55,16 @@ const Settings = () => {
   };
 
   return (
-    <div className={`flex h-screen w-full overflow-hidden ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'}`}>
+    <div className="flex h-screen w-full overflow-hidden bg-[#111418]">
       <Sidebar />
 
-      <main className={`flex-1 flex flex-col h-full min-w-0 ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'}`}>
+      <main className="flex-1 flex flex-col h-full min-w-0 bg-[#111418]">
         {/* Header */}
-        <header className={`border-b ${theme === 'dark' ? 'border-[#282f39] bg-[#111418]' : 'border-gray-200 bg-white'} shrink-0`}>
+        <header className="border-b border-[#282f39] bg-[#111418] shrink-0">
           <div className="flex items-center justify-between px-6 py-4">
             <div>
-              <h2 className={`${theme === 'dark' ? 'text-white' : 'text-gray-900'} text-xl font-bold leading-tight`}>Settings</h2>
-              <p className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} text-xs mt-1`}>Customize your TaskFlow experience</p>
+              <h2 className="text-white text-xl font-bold leading-tight">Settings</h2>
+              <p className="text-[#9da8b9] text-xs mt-1">Customize your TaskFlow experience</p>
             </div>
           </div>
         </header>
@@ -75,60 +73,60 @@ const Settings = () => {
         <div className="flex-1 overflow-auto p-6">
           <div className="max-w-4xl mx-auto space-y-6">
             {/* Profile Section */}
-            <div className={`${theme === 'dark' ? 'bg-[#1c2027] border-[#282f39]' : 'bg-white border-gray-200'} rounded border p-6`}>
+            <div className="bg-[#1c2027] rounded border border-[#282f39] p-6">
               <div className="flex items-center gap-3 mb-6">
                 <User className="text-[#136dec]" size={24} />
-                <h3 className={`text-lg font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} uppercase tracking-wider`}>Profile</h3>
+                <h3 className="text-lg font-bold text-white uppercase tracking-wider">Profile</h3>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className={`block text-xs font-bold ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} uppercase tracking-wider mb-2`}>Full Name</label>
+                  <label className="block text-xs font-bold text-[#9da8b9] uppercase tracking-wider mb-2">Full Name</label>
                   <input
                     type="text"
                     value={user?.full_name || ''}
                     readOnly
-                    className={`w-full px-3 py-2 ${theme === 'dark' ? 'bg-[#111418] border-[#282f39] text-white' : 'bg-gray-50 border-gray-300 text-gray-900'} border rounded`}
+                    className="w-full px-3 py-2 bg-[#111418] border border-[#282f39] rounded text-white"
                   />
                 </div>
                 <div>
-                  <label className={`block text-xs font-bold ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} uppercase tracking-wider mb-2`}>Email</label>
+                  <label className="block text-xs font-bold text-[#9da8b9] uppercase tracking-wider mb-2">Email</label>
                   <input
                     type="email"
                     value={user?.email || ''}
                     readOnly
-                    className={`w-full px-3 py-2 ${theme === 'dark' ? 'bg-[#111418] border-[#282f39] text-white' : 'bg-gray-50 border-gray-300 text-gray-900'} border rounded`}
+                    className="w-full px-3 py-2 bg-[#111418] border border-[#282f39] rounded text-white"
                   />
                 </div>
                 <div>
-                  <label className={`block text-xs font-bold ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} uppercase tracking-wider mb-2`}>Role</label>
+                  <label className="block text-xs font-bold text-[#9da8b9] uppercase tracking-wider mb-2">Role</label>
                   <input
                     type="text"
                     value={user?.role?.replace('_', ' ') || ''}
                     readOnly
-                    className={`w-full px-3 py-2 ${theme === 'dark' ? 'bg-[#111418] border-[#282f39] text-white' : 'bg-gray-50 border-gray-300 text-gray-900'} border rounded capitalize`}
+                    className="w-full px-3 py-2 bg-[#111418] border border-[#282f39] rounded text-white capitalize"
                   />
                 </div>
                 <div>
-                  <label className={`block text-xs font-bold ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} uppercase tracking-wider mb-2`}>Member Since</label>
+                  <label className="block text-xs font-bold text-[#9da8b9] uppercase tracking-wider mb-2">Member Since</label>
                   <input
                     type="text"
                     value={user?.created_at ? new Date(user.created_at).toLocaleDateString() : ''}
                     readOnly
-                    className={`w-full px-3 py-2 ${theme === 'dark' ? 'bg-[#111418] border-[#282f39] text-white' : 'bg-gray-50 border-gray-300 text-gray-900'} border rounded`}
+                    className="w-full px-3 py-2 bg-[#111418] border border-[#282f39] rounded text-white"
                   />
                 </div>
               </div>
             </div>
 
             {/* Security Section */}
-            <div className={`${theme === 'dark' ? 'bg-[#1c2027] border-[#282f39]' : 'bg-white border-gray-200'} rounded border p-6`}>
+            <div className="bg-[#1c2027] rounded border border-[#282f39] p-6">
               <div className="flex items-center gap-3 mb-6">
                 <Lock className="text-[#136dec]" size={24} />
-                <h3 className={`text-lg font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} uppercase tracking-wider`}>Security</h3>
+                <h3 className="text-lg font-bold text-white uppercase tracking-wider">Security</h3>
               </div>
               <form onSubmit={handlePasswordChange} className="space-y-4">
                 <div>
-                  <label className={`block text-xs font-bold ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} uppercase tracking-wider mb-2`}>
+                  <label className="block text-xs font-bold text-[#9da8b9] uppercase tracking-wider mb-2">
                     Current Password
                   </label>
                   <div className="relative">
@@ -136,13 +134,13 @@ const Settings = () => {
                       type={showOldPassword ? "text" : "password"}
                       value={passwordData.oldPassword}
                       onChange={(e) => setPasswordData({ ...passwordData, oldPassword: e.target.value })}
-                      className={`w-full px-3 py-2 pr-10 ${theme === 'dark' ? 'bg-[#111418] border-[#282f39] text-white' : 'bg-white border-gray-300 text-gray-900'} border rounded focus:ring-2 focus:ring-[#136dec] focus:border-transparent`}
+                      className="w-full px-3 py-2 pr-10 bg-[#111418] border border-[#282f39] rounded text-white focus:ring-2 focus:ring-[#136dec] focus:border-transparent"
                       required
                     />
                     <button
                       type="button"
                       onClick={() => setShowOldPassword(!showOldPassword)}
-                      className={`absolute right-2 top-1/2 -translate-y-1/2 ${theme === 'dark' ? 'text-[#9da8b9] hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-[#9da8b9] hover:text-white"
                     >
                       {showOldPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                     </button>
@@ -150,7 +148,7 @@ const Settings = () => {
                 </div>
 
                 <div>
-                  <label className={`block text-xs font-bold ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} uppercase tracking-wider mb-2`}>
+                  <label className="block text-xs font-bold text-[#9da8b9] uppercase tracking-wider mb-2">
                     New Password
                   </label>
                   <div className="relative">
@@ -158,14 +156,14 @@ const Settings = () => {
                       type={showNewPassword ? "text" : "password"}
                       value={passwordData.newPassword}
                       onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
-                      className={`w-full px-3 py-2 pr-10 ${theme === 'dark' ? 'bg-[#111418] border-[#282f39] text-white' : 'bg-white border-gray-300 text-gray-900'} border rounded focus:ring-2 focus:ring-[#136dec] focus:border-transparent`}
+                      className="w-full px-3 py-2 pr-10 bg-[#111418] border border-[#282f39] rounded text-white focus:ring-2 focus:ring-[#136dec] focus:border-transparent"
                       required
                       minLength={6}
                     />
                     <button
                       type="button"
                       onClick={() => setShowNewPassword(!showNewPassword)}
-                      className={`absolute right-2 top-1/2 -translate-y-1/2 ${theme === 'dark' ? 'text-[#9da8b9] hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-[#9da8b9] hover:text-white"
                     >
                       {showNewPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                     </button>
@@ -173,7 +171,7 @@ const Settings = () => {
                 </div>
 
                 <div>
-                  <label className={`block text-xs font-bold ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} uppercase tracking-wider mb-2`}>
+                  <label className="block text-xs font-bold text-[#9da8b9] uppercase tracking-wider mb-2">
                     Confirm New Password
                   </label>
                   <div className="relative">
@@ -181,14 +179,14 @@ const Settings = () => {
                       type={showConfirmPassword ? "text" : "password"}
                       value={passwordData.confirmPassword}
                       onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
-                      className={`w-full px-3 py-2 pr-10 ${theme === 'dark' ? 'bg-[#111418] border-[#282f39] text-white' : 'bg-white border-gray-300 text-gray-900'} border rounded focus:ring-2 focus:ring-[#136dec] focus:border-transparent`}
+                      className="w-full px-3 py-2 pr-10 bg-[#111418] border border-[#282f39] rounded text-white focus:ring-2 focus:ring-[#136dec] focus:border-transparent"
                       required
                       minLength={6}
                     />
                     <button
                       type="button"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className={`absolute right-2 top-1/2 -translate-y-1/2 ${theme === 'dark' ? 'text-[#9da8b9] hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-[#9da8b9] hover:text-white"
                     >
                       {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                     </button>
@@ -216,26 +214,26 @@ const Settings = () => {
             </div>
 
             {/* Appearance Section */}
-            <div className={`${theme === 'dark' ? 'bg-[#1c2027] border-[#282f39]' : 'bg-white border-gray-200'} rounded border p-6`}>
+            <div className="bg-[#1c2027] rounded border border-[#282f39] p-6">
               <div className="flex items-center gap-3 mb-6">
                 <Palette className="text-[#136dec]" size={24} />
-                <h3 className={`text-lg font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} uppercase tracking-wider`}>Appearance</h3>
+                <h3 className="text-lg font-bold text-white uppercase tracking-wider">Appearance</h3>
               </div>
               <div className="space-y-6">
                 <div>
-                  <h4 className={`text-sm font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-4`}>Theme & Color Scheme</h4>
-                  <p className={`text-sm ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} mb-4`}>
+                  <h4 className="text-sm font-semibold text-white mb-4">Theme & Color Scheme</h4>
+                  <p className="text-sm text-[#9da8b9] mb-4">
                     Customize how TaskFlow looks and feels. Changes are saved automatically.
                   </p>
                   <ThemeToggle />
                 </div>
 
-                <div className={`border-t ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} pt-6`}>
+                <div className="border-t border-[#282f39] pt-6">
                   <div className="flex items-center gap-3">
-                    <Monitor className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`} size={20} />
+                    <Monitor className="text-[#9da8b9]" size={20} />
                     <div>
-                      <h4 className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} text-sm`}>System Integration</h4>
-                      <p className={`text-xs ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} mt-1`}>
+                      <h4 className="font-medium text-white text-sm">System Integration</h4>
+                      <p className="text-xs text-[#9da8b9] mt-1">
                         Your theme preferences are automatically synced across devices and saved locally.
                       </p>
                     </div>
@@ -245,76 +243,76 @@ const Settings = () => {
             </div>
 
             {/* Preferences Section */}
-            <div className={`${theme === 'dark' ? 'bg-[#1c2027] border-[#282f39]' : 'bg-white border-gray-200'} rounded border p-6`}>
+            <div className="bg-[#1c2027] rounded border border-[#282f39] p-6">
               <div className="flex items-center gap-3 mb-6">
                 <SettingsIcon className="text-[#136dec]" size={24} />
-                <h3 className={`text-lg font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} uppercase tracking-wider`}>Preferences</h3>
+                <h3 className="text-lg font-bold text-white uppercase tracking-wider">Preferences</h3>
               </div>
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h4 className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} text-sm`}>Email Notifications</h4>
-                    <p className={`text-xs ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} mt-1`}>Receive email updates about your tasks</p>
+                    <h4 className="font-medium text-white text-sm">Email Notifications</h4>
+                    <p className="text-xs text-[#9da8b9] mt-1">Receive email updates about your tasks</p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input type="checkbox" className="sr-only peer" defaultChecked />
-                    <div className={`w-11 h-6 ${theme === 'dark' ? 'bg-[#282f39] border-[#3e454f]' : 'bg-gray-200 border-gray-300'} peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all border peer-checked:bg-[#136dec]`}></div>
+                    <div className="w-11 h-6 bg-[#282f39] peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all border border-[#3e454f] peer-checked:bg-[#136dec]"></div>
                   </label>
                 </div>
 
                 <div className="flex items-center justify-between">
                   <div>
-                    <h4 className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} text-sm`}>Task Reminders</h4>
-                    <p className={`text-xs ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} mt-1`}>Get reminded about upcoming due dates</p>
+                    <h4 className="font-medium text-white text-sm">Task Reminders</h4>
+                    <p className="text-xs text-[#9da8b9] mt-1">Get reminded about upcoming due dates</p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input type="checkbox" className="sr-only peer" defaultChecked />
-                    <div className={`w-11 h-6 ${theme === 'dark' ? 'bg-[#282f39] border-[#3e454f]' : 'bg-gray-200 border-gray-300'} peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all border peer-checked:bg-[#136dec]`}></div>
+                    <div className="w-11 h-6 bg-[#282f39] peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all border border-[#3e454f] peer-checked:bg-[#136dec]"></div>
                   </label>
                 </div>
               </div>
             </div>
 
             {/* Notification Settings */}
-            <div className={`${theme === 'dark' ? 'bg-[#1c2027] border-[#282f39]' : 'bg-white border-gray-200'} rounded border p-6`}>
+            <div className="bg-[#1c2027] rounded border border-[#282f39] p-6">
               <div className="flex items-center gap-3 mb-6">
                 <Bell className="text-[#136dec]" size={24} />
-                <h3 className={`text-lg font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} uppercase tracking-wider`}>Notifications</h3>
+                <h3 className="text-lg font-bold text-white uppercase tracking-wider">Notifications</h3>
               </div>
               <NotificationSettings />
             </div>
 
             {/* Session Timeout Settings */}
-            <div className={`${theme === 'dark' ? 'bg-[#1c2027] border-[#282f39]' : 'bg-white border-gray-200'} rounded border p-6`}>
+            <div className="bg-[#1c2027] rounded border border-[#282f39] p-6">
               <SessionSettings />
             </div>
 
             {/* Debug Info - Admin Only */}
             {user?.role === 'admin' && (
-              <div className={`${theme === 'dark' ? 'bg-[#1c2027] border-[#282f39]' : 'bg-white border-gray-200'} rounded border p-6`}>
+              <div className="bg-[#1c2027] rounded border border-[#282f39] p-6">
                 <div className="flex items-center gap-3 mb-4">
                   <AlertCircle className="text-yellow-500" size={24} />
-                  <h3 className={`text-sm font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} uppercase tracking-wider`}>Notification Debug (Admin Only)</h3>
+                  <h3 className="text-sm font-bold text-white uppercase tracking-wider">Notification Debug (Admin Only)</h3>
                 </div>
                 <div className="space-y-2 text-xs font-mono">
                   <div className="grid grid-cols-2 gap-2">
-                    <span className={theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}>Browser Support:</span>
-                    <span className={theme === 'dark' ? 'text-white' : 'text-gray-900'}>
+                    <span className="text-[#9da8b9]">Browser Support:</span>
+                    <span className="text-white">
                       {'Notification' in window ? '✅ Supported' : '❌ Not Supported'}
                     </span>
                     
-                    <span className={theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}>Permission:</span>
-                    <span className={theme === 'dark' ? 'text-white' : 'text-gray-900'}>
+                    <span className="text-[#9da8b9]">Permission:</span>
+                    <span className="text-white">
                       {typeof Notification !== 'undefined' ? Notification.permission : 'N/A'}
                     </span>
                     
-                    <span className={theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}>Service Worker:</span>
-                    <span className={theme === 'dark' ? 'text-white' : 'text-gray-900'}>
+                    <span className="text-[#9da8b9]">Service Worker:</span>
+                    <span className="text-white">
                       {'serviceWorker' in navigator ? '✅ Available' : '❌ Not Available'}
                     </span>
                     
-                    <span className={theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}>SW Registered:</span>
-                    <span className={theme === 'dark' ? 'text-white' : 'text-gray-900'}>
+                    <span className="text-[#9da8b9]">SW Registered:</span>
+                    <span className="text-white">
                       {navigator.serviceWorker?.controller ? '✅ Yes' : '⚠️ No'}
                     </span>
                   </div>

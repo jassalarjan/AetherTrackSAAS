@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>User &amp; Team Management - TaskFlow</title>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Theme Config -->
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#136dec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101822",
+                        "surface-dark": "#1a1d23",
+                        "border-dark": "#2c3038",
+                        "text-secondary": "#9da8b9",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+                },
+            },
+        }
+    </script>
+</head>
+<body class="font-display bg-background-light dark:bg-background-dark text-slate-900 dark:text-white antialiased overflow-hidden selection:bg-primary selection:text-white">
+<div class="flex h-screen w-full overflow-hidden">
+<!-- Sidebar -->
+<aside class="hidden w-64 flex-col border-r border-slate-200 dark:border-border-dark bg-white dark:bg-background-dark md:flex">
+<div class="flex h-16 items-center gap-3 px-6 border-b border-slate-100 dark:border-border-dark/50">
+<div class="h-8 w-8 rounded bg-primary flex items-center justify-center text-white">
+<span class="material-symbols-outlined text-[20px]">layers</span>
+</div>
+<div class="flex flex-col">
+<h1 class="text-sm font-bold leading-none dark:text-white">TaskFlow</h1>
+<p class="text-xs text-text-secondary mt-1">Enterprise</p>
+</div>
+</div>
+<div class="flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-4">
+<div class="px-3 py-2 text-xs font-semibold uppercase tracking-wider text-text-secondary">Main</div>
+<a class="flex items-center gap-3 rounded px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 dark:text-text-secondary dark:hover:bg-surface-dark dark:hover:text-white transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">dashboard</span>
+                    Dashboard
+                </a>
+<a class="flex items-center gap-3 rounded px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 dark:text-text-secondary dark:hover:bg-surface-dark dark:hover:text-white transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">check_circle</span>
+                    Tasks
+                </a>
+<a class="flex items-center gap-3 rounded px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 dark:text-text-secondary dark:hover:bg-surface-dark dark:hover:text-white transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">bar_chart</span>
+                    Reports
+                </a>
+<div class="mt-4 px-3 py-2 text-xs font-semibold uppercase tracking-wider text-text-secondary">Admin</div>
+<a class="flex items-center gap-3 rounded bg-primary/10 px-3 py-2 text-sm font-medium text-primary dark:bg-surface-dark dark:text-white" href="#">
+<span class="material-symbols-outlined text-[20px] text-primary dark:text-white">group</span>
+                    User Management
+                </a>
+<a class="flex items-center gap-3 rounded px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 dark:text-text-secondary dark:hover:bg-surface-dark dark:hover:text-white transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">settings</span>
+                    Settings
+                </a>
+<a class="flex items-center gap-3 rounded px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 dark:text-text-secondary dark:hover:bg-surface-dark dark:hover:text-white transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">security</span>
+                    Audit Logs
+                </a>
+</div>
+<div class="border-t border-slate-200 dark:border-border-dark p-4">
+<div class="flex items-center gap-3">
+<div class="h-9 w-9 overflow-hidden rounded-full bg-slate-200" data-alt="User profile avatar showing a generic silhouette">
+<img alt="User Avatar" class="h-full w-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBpcBVFkw72QF80rW0SwsiUtojRXCTbO2evpaW9L5tqMtmqZZqWnIrc2NGL28X6jvuhMXv8_IdLwNydvaVWK2CkGx0_Gsce7d8iX9ZvkFfPpalj7hmoJOE8knWJZ6J5MXVUqlEY-34OEczZnm0BZObPPP1aQuLS7oyXCG-IlOuW69_fknK9e3VT2w7jurxYchSjR4h4Cu5ZRCg3MIaG_E5YFNgYlIwAp2gN5sgpQmQWn_wY9lAV_AA2yiuSIQyXN4HPRu5iKTVA9p8"/>
+</div>
+<div class="flex flex-col">
+<p class="text-sm font-medium dark:text-white">Jane Admin</p>
+<p class="text-xs text-text-secondary">jane@taskflow.com</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="flex flex-1 flex-col overflow-hidden bg-background-light dark:bg-background-dark">
+<!-- Top Header (Mobile specific elements hidden on desktop) -->
+<header class="flex h-16 items-center justify-between border-b border-slate-200 dark:border-border-dark bg-white dark:bg-background-dark px-6 lg:px-8">
+<!-- Breadcrumbs -->
+<nav class="flex items-center text-sm font-medium text-text-secondary">
+<a class="hover:text-primary transition-colors" href="#">Settings</a>
+<span class="material-symbols-outlined mx-2 text-[16px]">chevron_right</span>
+<span class="text-slate-900 dark:text-white">Users &amp; Teams</span>
+</nav>
+<div class="flex items-center gap-4">
+<button class="flex items-center justify-center rounded p-2 text-text-secondary hover:bg-slate-100 dark:hover:bg-surface-dark transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="flex items-center justify-center rounded p-2 text-text-secondary hover:bg-slate-100 dark:hover:bg-surface-dark transition-colors">
+<span class="material-symbols-outlined">help</span>
+</button>
+</div>
+</header>
+<!-- Scrollable Content -->
+<div class="flex-1 overflow-y-auto p-6 lg:p-8">
+<div class="mx-auto max-w-7xl flex flex-col gap-6">
+<!-- Page Heading -->
+<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+<div>
+<h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-3xl">User &amp; Team Management</h1>
+<p class="mt-1 text-sm text-text-secondary">Manage access roles, team assignments, and user statuses across the organization.</p>
+</div>
+<div class="flex gap-3">
+<button class="flex h-9 items-center justify-center gap-2 rounded border border-slate-300 bg-white px-4 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-border-dark dark:bg-surface-dark dark:text-white dark:hover:bg-white/5 transition-colors">
+<span class="material-symbols-outlined text-[18px]">upload</span>
+<span>Import CSV</span>
+</button>
+<button class="flex h-9 items-center justify-center gap-2 rounded bg-primary px-4 text-sm font-medium text-white hover:bg-blue-600 transition-colors shadow-sm shadow-blue-900/20">
+<span class="material-symbols-outlined text-[18px]">add</span>
+<span>Add User</span>
+</button>
+</div>
+</div>
+<!-- Stats Cards -->
+<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+<div class="rounded border border-slate-200 dark:border-border-dark bg-white dark:bg-surface-dark p-5 shadow-sm">
+<p class="text-sm font-medium text-text-secondary">Total Users</p>
+<div class="mt-2 flex items-baseline gap-2">
+<span class="text-2xl font-bold text-slate-900 dark:text-white">1,240</span>
+<span class="text-xs font-medium text-green-500 flex items-center"><span class="material-symbols-outlined text-[14px] mr-0.5">trending_up</span>+12%</span>
+</div>
+</div>
+<div class="rounded border border-slate-200 dark:border-border-dark bg-white dark:bg-surface-dark p-5 shadow-sm">
+<p class="text-sm font-medium text-text-secondary">Active Now</p>
+<div class="mt-2 flex items-baseline gap-2">
+<span class="text-2xl font-bold text-slate-900 dark:text-white">85</span>
+<span class="text-xs text-text-secondary">concurrent sessions</span>
+</div>
+</div>
+<div class="rounded border border-slate-200 dark:border-border-dark bg-white dark:bg-surface-dark p-5 shadow-sm">
+<p class="text-sm font-medium text-text-secondary">Pending Invites</p>
+<div class="mt-2 flex items-baseline gap-2">
+<span class="text-2xl font-bold text-slate-900 dark:text-white">12</span>
+<span class="text-xs text-text-secondary">expiring in 48h</span>
+</div>
+</div>
+<div class="rounded border border-slate-200 dark:border-border-dark bg-white dark:bg-surface-dark p-5 shadow-sm">
+<p class="text-sm font-medium text-text-secondary">Seat Utilization</p>
+<div class="mt-2 flex items-baseline gap-2">
+<span class="text-2xl font-bold text-slate-900 dark:text-white">94%</span>
+<span class="text-xs text-text-secondary">of 1,300 limit</span>
+</div>
+</div>
+</div>
+<!-- Tabs & Filters -->
+<div class="flex flex-col gap-4 rounded border border-slate-200 dark:border-border-dark bg-white dark:bg-surface-dark shadow-sm">
+<!-- Tabs -->
+<div class="border-b border-slate-200 dark:border-border-dark px-4">
+<div class="flex gap-6 overflow-x-auto">
+<a class="border-b-2 border-primary py-4 text-sm font-semibold text-primary" href="#">All Users</a>
+<a class="border-b-2 border-transparent py-4 text-sm font-medium text-text-secondary hover:text-slate-900 dark:hover:text-white transition-colors" href="#">Teams</a>
+<a class="border-b-2 border-transparent py-4 text-sm font-medium text-text-secondary hover:text-slate-900 dark:hover:text-white transition-colors" href="#">Pending Invites</a>
+<a class="border-b-2 border-transparent py-4 text-sm font-medium text-text-secondary hover:text-slate-900 dark:hover:text-white transition-colors" href="#">Deactivated</a>
+</div>
+</div>
+<!-- Toolbar -->
+<div class="flex flex-col items-start justify-between gap-4 px-4 py-3 sm:flex-row sm:items-center">
+<div class="relative w-full max-w-md">
+<div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+<span class="material-symbols-outlined text-text-secondary text-[20px]">search</span>
+</div>
+<input class="block w-full rounded border-slate-300 dark:border-border-dark bg-slate-50 dark:bg-background-dark py-2 pl-10 pr-3 text-sm text-slate-900 dark:text-white placeholder-text-secondary focus:border-primary focus:bg-white dark:focus:bg-background-dark focus:ring-1 focus:ring-primary dark:focus:ring-primary sm:text-sm transition-all" placeholder="Search by name, email, or role..." type="text"/>
+</div>
+<div class="flex w-full items-center gap-3 sm:w-auto">
+<button class="flex flex-1 items-center justify-center gap-2 rounded border border-slate-300 dark:border-border-dark bg-white dark:bg-background-dark px-3 py-2 text-sm font-medium text-slate-700 dark:text-text-secondary hover:bg-slate-50 dark:hover:text-white transition-colors sm:flex-none">
+<span class="material-symbols-outlined text-[18px]">filter_list</span>
+                                    Filters
+                                </button>
+<button class="flex flex-1 items-center justify-center gap-2 rounded border border-slate-300 dark:border-border-dark bg-white dark:bg-background-dark px-3 py-2 text-sm font-medium text-slate-700 dark:text-text-secondary hover:bg-slate-50 dark:hover:text-white transition-colors sm:flex-none">
+<span class="material-symbols-outlined text-[18px]">view_column</span>
+                                    Columns
+                                </button>
+</div>
+</div>
+<!-- Table -->
+<div class="overflow-x-auto">
+<table class="w-full text-left text-sm text-text-secondary">
+<thead class="bg-slate-50 dark:bg-background-dark/50 text-xs uppercase font-semibold tracking-wider text-text-secondary">
+<tr>
+<th class="w-[50px] px-6 py-3" scope="col">
+<input class="h-4 w-4 rounded border-slate-300 bg-slate-100 text-primary focus:ring-primary dark:border-border-dark dark:bg-surface-dark dark:ring-offset-background-dark" type="checkbox"/>
+</th>
+<th class="px-6 py-3 cursor-pointer group hover:text-slate-900 dark:hover:text-white" scope="col">
+<div class="flex items-center gap-1">
+                                                User
+                                                <span class="material-symbols-outlined text-[16px] opacity-0 group-hover:opacity-100 transition-opacity">arrow_downward</span>
+</div>
+</th>
+<th class="px-6 py-3 cursor-pointer group hover:text-slate-900 dark:hover:text-white" scope="col">
+<div class="flex items-center gap-1">
+                                                Role
+                                                <span class="material-symbols-outlined text-[16px] opacity-0 group-hover:opacity-100 transition-opacity">unfold_more</span>
+</div>
+</th>
+<th class="px-6 py-3 cursor-pointer group hover:text-slate-900 dark:hover:text-white" scope="col">
+<div class="flex items-center gap-1">
+                                                Team
+                                                <span class="material-symbols-outlined text-[16px] opacity-0 group-hover:opacity-100 transition-opacity">unfold_more</span>
+</div>
+</th>
+<th class="px-6 py-3 cursor-pointer group hover:text-slate-900 dark:hover:text-white" scope="col">
+<div class="flex items-center gap-1">
+                                                Status
+                                            </div>
+</th>
+<th class="px-6 py-3 cursor-pointer group hover:text-slate-900 dark:hover:text-white" scope="col">
+<div class="flex items-center gap-1">
+                                                Last Active
+                                                <span class="material-symbols-outlined text-[16px] opacity-0 group-hover:opacity-100 transition-opacity">unfold_more</span>
+</div>
+</th>
+<th class="px-6 py-3 text-right" scope="col">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-200 dark:divide-border-dark bg-white dark:bg-surface-dark">
+<!-- Row 1 -->
+<tr class="hover:bg-slate-50 dark:hover:bg-background-dark/50 transition-colors group">
+<td class="px-6 py-4">
+<input class="h-4 w-4 rounded border-slate-300 bg-slate-100 text-primary focus:ring-primary dark:border-border-dark dark:bg-surface-dark dark:ring-offset-background-dark" type="checkbox"/>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="h-9 w-9 overflow-hidden rounded-full bg-slate-100" data-alt="Avatar of Sarah Jenkins">
+<img alt="Sarah Jenkins" class="h-full w-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA3rSK_0p3_5lRVV3c73wXn_JzndFwCLBfRQov1UjIibZmSxlwwd_tdVQVUCcUsBEzRH-vl2BoyZqKVa6fUIaTxrSM2KclX9U1PTRu00HNq3dD7XtS3c_4s3Nu03zwIB37zc5zFHGFkvJQN5EY_PUE-uIs3649YeLHLHNYU3Xdy7QYneZN6lxUsgUV1ekPVt-nC2KAYIV8LC4m7SiAWRfd-cBerWMnSX7h5ChwJbhHZ8paZiHU9jffa1O9NJLR7zXcWSaFM0zYCNM0"/>
+</div>
+<div class="flex flex-col">
+<span class="font-medium text-slate-900 dark:text-white">Sarah Jenkins</span>
+<span class="text-xs">sarah.j@taskflow.com</span>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2 rounded border border-transparent px-2 py-1 hover:border-slate-300 dark:hover:border-border-dark cursor-pointer transition-colors w-fit -ml-2">
+<span class="material-symbols-outlined text-[18px] text-purple-400">shield_person</span>
+<span class="text-slate-700 dark:text-slate-300">Admin</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="text-slate-700 dark:text-slate-300">Engineering</span>
+</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-medium text-emerald-500 ring-1 ring-inset ring-emerald-500/20">Active</span>
+</td>
+<td class="px-6 py-4 font-mono text-xs">
+                                            Oct 24, 2023 10:42 AM
+                                        </td>
+<td class="px-6 py-4 text-right">
+<button class="rounded p-1 text-text-secondary hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-background-dark dark:hover:text-white transition-colors">
+<span class="material-symbols-outlined text-[20px]">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-slate-50 dark:hover:bg-background-dark/50 transition-colors group">
+<td class="px-6 py-4">
+<input class="h-4 w-4 rounded border-slate-300 bg-slate-100 text-primary focus:ring-primary dark:border-border-dark dark:bg-surface-dark dark:ring-offset-background-dark" type="checkbox"/>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="h-9 w-9 overflow-hidden rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-medium text-sm">
+                                                    MK
+                                                </div>
+<div class="flex flex-col">
+<span class="font-medium text-slate-900 dark:text-white">Michael Kim</span>
+<span class="text-xs">michael.k@taskflow.com</span>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2 rounded border border-transparent px-2 py-1 hover:border-slate-300 dark:hover:border-border-dark cursor-pointer transition-colors w-fit -ml-2">
+<span class="material-symbols-outlined text-[18px] text-blue-400">person</span>
+<span class="text-slate-700 dark:text-slate-300">Editor</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="text-slate-700 dark:text-slate-300">Design</span>
+</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center rounded-full bg-amber-500/10 px-2.5 py-0.5 text-xs font-medium text-amber-500 ring-1 ring-inset ring-amber-500/20">Away</span>
+</td>
+<td class="px-6 py-4 font-mono text-xs">
+                                            Oct 24, 2023 09:15 AM
+                                        </td>
+<td class="px-6 py-4 text-right">
+<button class="rounded p-1 text-text-secondary hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-background-dark dark:hover:text-white transition-colors">
+<span class="material-symbols-outlined text-[20px]">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-slate-50 dark:hover:bg-background-dark/50 transition-colors group">
+<td class="px-6 py-4">
+<input class="h-4 w-4 rounded border-slate-300 bg-slate-100 text-primary focus:ring-primary dark:border-border-dark dark:bg-surface-dark dark:ring-offset-background-dark" type="checkbox"/>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="h-9 w-9 overflow-hidden rounded-full bg-pink-100 flex items-center justify-center text-pink-600 font-medium text-sm">
+                                                    AL
+                                                </div>
+<div class="flex flex-col">
+<span class="font-medium text-slate-900 dark:text-white">Anita Lopez</span>
+<span class="text-xs">anita.l@taskflow.com</span>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2 rounded border border-transparent px-2 py-1 hover:border-slate-300 dark:hover:border-border-dark cursor-pointer transition-colors w-fit -ml-2">
+<span class="material-symbols-outlined text-[18px] text-slate-400">visibility</span>
+<span class="text-slate-700 dark:text-slate-300">Viewer</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="text-slate-700 dark:text-slate-300">Marketing</span>
+</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center rounded-full bg-slate-500/10 px-2.5 py-0.5 text-xs font-medium text-slate-500 ring-1 ring-inset ring-slate-500/20">Offline</span>
+</td>
+<td class="px-6 py-4 font-mono text-xs">
+                                            Oct 23, 2023 04:55 PM
+                                        </td>
+<td class="px-6 py-4 text-right">
+<button class="rounded p-1 text-text-secondary hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-background-dark dark:hover:text-white transition-colors">
+<span class="material-symbols-outlined text-[20px]">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="hover:bg-slate-50 dark:hover:bg-background-dark/50 transition-colors group">
+<td class="px-6 py-4">
+<input class="h-4 w-4 rounded border-slate-300 bg-slate-100 text-primary focus:ring-primary dark:border-border-dark dark:bg-surface-dark dark:ring-offset-background-dark" type="checkbox"/>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="h-9 w-9 overflow-hidden rounded-full bg-slate-100" data-alt="Avatar of David Chen">
+<img alt="David Chen" class="h-full w-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCmJ03_rYPksw0joidA1ay_qoTXh8TfICT8UVX0EH8EP3YW8H9jwSsBovUAyd19zOLE10Gw1BbwsvMsOJcxjWRykJLpBDr2QDHvrB-pws8L9NtSHKIcZnVfSihmy2iZzJFJ-ImC1lGsU9nGE_wbwhabk-YXN7Xmbq8Fq16LLMr13AakPE8dmHApAafH47T1VbipBVVG79nebZ7M5zlul_Sl-Musp6c6iuivd5aoJeDQHrkly-nCwfEuw4T2hXSw9PcBLmvZXclnRKU"/>
+</div>
+<div class="flex flex-col">
+<span class="font-medium text-slate-900 dark:text-white">David Chen</span>
+<span class="text-xs">david.c@taskflow.com</span>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2 rounded border border-transparent px-2 py-1 hover:border-slate-300 dark:hover:border-border-dark cursor-pointer transition-colors w-fit -ml-2">
+<span class="material-symbols-outlined text-[18px] text-blue-400">person</span>
+<span class="text-slate-700 dark:text-slate-300">Editor</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="text-slate-700 dark:text-slate-300">Engineering</span>
+</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-medium text-emerald-500 ring-1 ring-inset ring-emerald-500/20">Active</span>
+</td>
+<td class="px-6 py-4 font-mono text-xs">
+                                            Oct 24, 2023 11:05 AM
+                                        </td>
+<td class="px-6 py-4 text-right">
+<button class="rounded p-1 text-text-secondary hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-background-dark dark:hover:text-white transition-colors">
+<span class="material-symbols-outlined text-[20px]">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 5 -->
+<tr class="bg-slate-50/50 dark:bg-background-dark/20 hover:bg-slate-50 dark:hover:bg-background-dark/50 transition-colors group">
+<td class="px-6 py-4">
+<input class="h-4 w-4 rounded border-slate-300 bg-slate-100 text-primary focus:ring-primary dark:border-border-dark dark:bg-surface-dark dark:ring-offset-background-dark" type="checkbox"/>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="h-9 w-9 overflow-hidden rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-medium text-sm">
+                                                    JR
+                                                </div>
+<div class="flex flex-col">
+<span class="font-medium text-slate-900 dark:text-white">James Ross</span>
+<span class="text-xs">james.r@taskflow.com</span>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2 rounded border border-transparent px-2 py-1 hover:border-slate-300 dark:hover:border-border-dark cursor-pointer transition-colors w-fit -ml-2">
+<span class="material-symbols-outlined text-[18px] text-slate-400">visibility</span>
+<span class="text-slate-700 dark:text-slate-300">Viewer</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="text-slate-700 dark:text-slate-300">Support</span>
+</td>
+<td class="px-6 py-4">
+<span class="inline-flex items-center rounded-full bg-slate-500/10 px-2.5 py-0.5 text-xs font-medium text-slate-500 ring-1 ring-inset ring-slate-500/20">Offline</span>
+</td>
+<td class="px-6 py-4 font-mono text-xs">
+                                            Oct 20, 2023 09:00 AM
+                                        </td>
+<td class="px-6 py-4 text-right">
+<button class="rounded p-1 text-text-secondary hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-background-dark dark:hover:text-white transition-colors">
+<span class="material-symbols-outlined text-[20px]">more_vert</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination -->
+<div class="flex items-center justify-between border-t border-slate-200 dark:border-border-dark px-4 py-3 sm:px-6">
+<div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+<div>
+<p class="text-sm text-text-secondary">
+                                        Showing
+                                        <span class="font-medium text-slate-900 dark:text-white">1</span>
+                                        to
+                                        <span class="font-medium text-slate-900 dark:text-white">10</span>
+                                        of
+                                        <span class="font-medium text-slate-900 dark:text-white">1,240</span>
+                                        results
+                                    </p>
+</div>
+<div>
+<nav aria-label="Pagination" class="isolate inline-flex -space-x-px rounded shadow-sm">
+<a class="relative inline-flex items-center rounded-l border border-slate-300 dark:border-border-dark bg-white dark:bg-background-dark px-2 py-2 text-text-secondary hover:bg-slate-50 dark:hover:bg-surface-dark focus:z-20 focus:outline-offset-0" href="#">
+<span class="sr-only">Previous</span>
+<span class="material-symbols-outlined text-[20px]">chevron_left</span>
+</a>
+<a aria-current="page" class="relative z-10 inline-flex items-center border border-primary bg-primary px-4 py-2 text-sm font-medium text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary" href="#">1</a>
+<a class="relative inline-flex items-center border border-slate-300 dark:border-border-dark bg-white dark:bg-background-dark px-4 py-2 text-sm font-medium text-text-secondary hover:bg-slate-50 dark:hover:bg-surface-dark focus:z-20 focus:outline-offset-0" href="#">2</a>
+<a class="relative hidden items-center border border-slate-300 dark:border-border-dark bg-white dark:bg-background-dark px-4 py-2 text-sm font-medium text-text-secondary hover:bg-slate-50 dark:hover:bg-surface-dark focus:z-20 focus:outline-offset-0 md:inline-flex" href="#">3</a>
+<span class="relative inline-flex items-center border border-slate-300 dark:border-border-dark bg-white dark:bg-background-dark px-4 py-2 text-sm font-medium text-text-secondary focus:outline-offset-0">...</span>
+<a class="relative inline-flex items-center border border-slate-300 dark:border-border-dark bg-white dark:bg-background-dark px-4 py-2 text-sm font-medium text-text-secondary hover:bg-slate-50 dark:hover:bg-surface-dark focus:z-20 focus:outline-offset-0" href="#">124</a>
+<a class="relative inline-flex items-center rounded-r border border-slate-300 dark:border-border-dark bg-white dark:bg-background-dark px-2 py-2 text-text-secondary hover:bg-slate-50 dark:hover:bg-surface-dark focus:z-20 focus:outline-offset-0" href="#">
+<span class="sr-only">Next</span>
+<span class="material-symbols-outlined text-[20px]">chevron_right</span>
+</a>
+</nav>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

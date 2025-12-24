@@ -1,15 +1,19 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { useSearchParams } from 'react-router-dom';
-import Navbar from '../components/Navbar';
+import { useTheme } from '../context/ThemeContext';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 import useRealtimeSync from '../hooks/useRealtimeSync';
-import { Plus, X, Edit2, Trash2, Clock, Users, UserCheck, Target, AlertTriangle, Calendar, User, Search } from 'lucide-react';
-import { useTheme } from '../context/ThemeContext';
+import Sidebar from '../components/Sidebar';
+import { 
+  Plus, X, Search, Settings, UserPlus, Calendar as CalendarIcon,
+  MoreHorizontal, MessageSquare
+} from 'lucide-react';
 
 const Kanban = () => {
   const { user, socket } = useAuth();
-  const { currentTheme, currentColorScheme } = useTheme();
+  const { theme } = useTheme();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -41,10 +45,10 @@ const Kanban = () => {
   const [dragOverColumn, setDragOverColumn] = useState(null);
 
   const columns = [
-    { id: 'todo', title: 'To Do', color: 'bg-gray-100', borderColor: 'border-gray-500', accentColor: 'bg-gray-500' },
-    { id: 'in_progress', title: 'In Progress', color: 'bg-blue-100', borderColor: 'border-blue-500', accentColor: 'bg-blue-500' },
-    { id: 'review', title: 'Review', color: 'bg-yellow-100', borderColor: 'border-yellow-500', accentColor: 'bg-yellow-500' },
-    { id: 'done', title: 'Done', color: 'bg-green-100', borderColor: 'border-green-500', accentColor: 'bg-green-500' },
+    { id: 'todo', title: 'Todo', dotColor: 'bg-slate-500', count: 0 },
+    { id: 'in_progress', title: 'In Progress', dotColor: 'bg-[#136dec] animate-pulse', count: 0, hasTopBorder: true },
+    { id: 'review', title: 'Review', dotColor: 'bg-purple-500', count: 0 },
+    { id: 'done', title: 'Done', dotColor: 'bg-green-500', count: 0 },
   ];
 
   useEffect(() => {
@@ -54,14 +58,12 @@ const Kanban = () => {
       fetchTeams();
     }
 
-    // Check if we should open create modal
     if (searchParams.get('create') === 'true') {
       setShowCreateModal(true);
       searchParams.delete('create');
       setSearchParams(searchParams);
     }
 
-    // Socket listeners
     if (socket) {
       socket.on('task:created', (task) => {
         setTasks((prev) => [task, ...prev]);
@@ -80,20 +82,11 @@ const Kanban = () => {
     }
   }, [socket]);
 
-  // Real-time synchronization
   useRealtimeSync({
-    onTaskCreated: () => {
-      fetchTasks();
-    },
-    onTaskUpdated: () => {
-      fetchTasks();
-    },
-    onTaskDeleted: () => {
-      fetchTasks();
-    },
-    onStatusChanged: () => {
-      fetchTasks();
-    },
+    onTaskCreated: () => fetchTasks(),
+    onTaskUpdated: () => fetchTasks(),
+    onTaskDeleted: () => fetchTasks(),
+    onStatusChanged: () => fetchTasks(),
   });
 
   const fetchTasks = async () => {
@@ -112,9 +105,7 @@ const Kanban = () => {
       const response = await api.get('/users');
       setUsers(response.data.users);
     } catch (error) {
-      if (error.response?.status === 403) {
-        // No permission to view all users
-      } else {
+      if (error.response?.status !== 403) {
         console.error('Error fetching users:', error);
       }
     }
@@ -125,9 +116,7 @@ const Kanban = () => {
       const response = await api.get('/teams');
       setTeams(response.data.teams);
     } catch (error) {
-      if (error.response?.status === 403) {
-        // No permission to view teams
-      } else {
+      if (error.response?.status !== 403) {
         console.error('Error fetching teams:', error);
       }
     }
@@ -156,7 +145,6 @@ const Kanban = () => {
   };
 
   const handleUpdateTask = async (taskId, updates) => {
-    // Optimistic update
     setTasks((prev) =>
       prev.map((t) => (t._id === taskId ? { ...t, ...updates } : t))
     );
@@ -165,14 +153,12 @@ const Kanban = () => {
       const response = await api.patch(`/tasks/${taskId}`, updates);
       const updatedTask = response.data.task;
       
-      // Update with server response
       setTasks((prev) =>
         prev.map((t) => (t._id === taskId ? updatedTask : t))
       );
     } catch (error) {
       console.error('Error updating task:', error);
       alert(error.response?.data?.message || 'Failed to update task');
-      // Revert on error
       fetchTasks();
     }
   };
@@ -192,7 +178,6 @@ const Kanban = () => {
   const handleDragStart = (e, task) => {
     setDraggedTask(task);
     e.dataTransfer.effectAllowed = 'move';
-    // Add a slight delay to allow the drag image to be created
     e.currentTarget.style.opacity = '0.5';
   };
 
@@ -213,7 +198,6 @@ const Kanban = () => {
   };
 
   const handleDragLeave = (e) => {
-    // Only clear if we're actually leaving the column (not entering a child element)
     if (e.currentTarget === e.target) {
       setDragOverColumn(null);
     }
@@ -243,11 +227,9 @@ const Kanban = () => {
     const selectedTeam = teams.find(team => team._id === teamId);
     let members = selectedTeam ? selectedTeam.members : [];
     
-    // Ensure team lead is always included in the assignable members
     if (selectedTeam && user?.role === 'team_lead') {
       const teamLeadAlreadyIncluded = members.some(member => member._id === user?.id);
       if (!teamLeadAlreadyIncluded && selectedTeam.lead_id?._id === user?.id) {
-        // Add the team lead to the members list
         members = [
           ...members,
           {
@@ -320,20 +302,26 @@ const Kanban = () => {
         return isAssignedToUser;
       });
     }
-    if (filters.status) {
-      filtered = filtered.filter((t) => t.status === filters.status);
-    }
     return filtered;
   };
 
-  const getPriorityColor = (priority) => {
-    const colors = {
-      low: 'bg-green-100 text-green-800',
-      medium: 'bg-yellow-100 text-yellow-800',
-      high: 'bg-orange-100 text-orange-800',
-      urgent: 'bg-red-100 text-red-800',
+  const getPriorityBadge = (priority) => {
+    const badges = {
+      low: { bg: 'bg-blue-400/10', text: 'text-blue-400', label: 'Low' },
+      medium: { bg: 'bg-yellow-500/10', text: 'text-yellow-500', label: 'Med' },
+      high: { bg: 'bg-red-400/10', text: 'text-red-400', label: 'High' },
+      urgent: { bg: 'bg-red-600/10', text: 'text-red-600', label: 'Urgent' },
     };
-    return colors[priority] || colors.medium;
+    return badges[priority] || badges.medium;
+  };
+
+  const getUserInitials = (name) => {
+    if (!name) return 'U';
+    const parts = name.split(' ');
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
   };
 
   const canEditTask = (task) => {
@@ -347,428 +335,262 @@ const Kanban = () => {
 
   if (loading) {
     return (
-      <div className={`min-h-screen ${currentTheme.background}`}>
-        <Navbar />
-        <div className="flex items-center justify-center h-screen">
-          <div className="flex flex-col items-center gap-6">
-            <div className="flex gap-3">
-              {[0, 1, 2, 3].map((i) => (
-                <div
-                  key={i}
-                  className={`w-4 h-12 ${currentColorScheme.primary} rounded-full animate-pulse`}
-                  style={{ animationDelay: `${i * 0.15}s` }}
-                ></div>
-              ))}
-            </div>
-            <p className={`${currentTheme.text} font-medium`}>Loading Kanban board...</p>
+      <div className={`${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'} ${theme === 'dark' ? 'text-white' : 'text-gray-900'} font-['Inter'] h-screen flex items-center justify-center`}>
+        <div className="flex flex-col items-center gap-6">
+          <div className="flex gap-3">
+            {[0, 1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className="w-4 h-12 bg-[#136dec] rounded-full animate-pulse"
+                style={{ animationDelay: `${i * 0.15}s` }}
+              ></div>
+            ))}
           </div>
+          <p className={`${theme === 'dark' ? 'text-white' : 'text-gray-900'} font-medium`}>Loading Kanban board...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex" data-testid="kanban-page">
-      <Navbar />
-      <div className={`flex-1 p-4 sm:p-6 lg:p-8 ${currentTheme.background}`}>
-          {/* Header */}
-          <div className="mb-6">
-            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
-              <div>
-                <h1 className={`text-3xl font-bold ${currentTheme.text}`}>Kanban Board</h1>
-                <p className={`${currentTheme.textSecondary} mt-2`}>Visual task management with drag & drop</p>
-              </div>
+    <div className={`flex h-screen w-full overflow-hidden ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'}`}>
+      {/* Unified Sidebar */}
+      <Sidebar />
+
+      {/* Main Content */}
+      <main className={`flex-1 flex flex-col h-full min-w-0 ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'}`}>
+        {/* Header Section */}
+        <header className={`border-b ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'} shrink-0`}>
+          {/* Top Row: Title and Actions */}
+          <div className="flex items-center justify-between px-6 py-4">
+            <div>
+              <h2 className={`${theme === 'dark' ? 'text-white' : 'text-gray-900'} text-xl font-bold leading-tight`}>Kanban Board</h2>
+              <p className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} text-xs mt-1`}>Visual task workflow with drag & drop</p>
+            </div>
+            <div className="flex gap-3">
+              <button 
+                onClick={() => navigate('/settings')}
+                className={`flex items-center justify-center rounded h-9 px-3 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-white'} ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} ${theme === 'dark' ? 'hover:text-white' : 'hover:text-gray-900'} border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} ${theme === 'dark' ? 'hover:border-[#5a6472]' : 'hover:border-gray-300'} transition-colors`}
+              >
+                <Settings size={20} />
+              </button>
+              <button 
+                onClick={() => navigate('/teams')}
+                className={`flex items-center justify-center rounded h-9 px-3 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-white'} ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} ${theme === 'dark' ? 'hover:text-white' : 'hover:text-gray-900'} border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} ${theme === 'dark' ? 'hover:border-[#5a6472]' : 'hover:border-gray-300'} transition-colors`}
+              >
+                <UserPlus size={20} />
+              </button>
               <button
                 onClick={() => setShowCreateModal(true)}
-                className={`btn ${currentColorScheme.primary} text-white ${currentColorScheme.primaryHover} flex items-center justify-center space-x-2 w-full sm:w-auto`}
-                data-testid="create-task-btn"
+                className="flex items-center justify-center rounded h-9 px-4 bg-[#136dec] text-white gap-2 text-sm font-bold hover:bg-blue-600 transition-colors shadow-sm shadow-blue-900/20"
               >
-                <Plus className="w-5 h-5" />
+                <Plus size={20} />
                 <span>Create Task</span>
               </button>
             </div>
-
-            {/* Responsive Filters */}
-            <div className={`${currentTheme.surface} rounded-lg shadow-md p-4`}>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                {/* My Tasks Toggle */}
-                <button
-                  onClick={() => setFilters({ ...filters, showMyTasksOnly: !filters.showMyTasksOnly })}
-                  className={`px-4 py-2 rounded-lg font-semibold transition-all flex items-center justify-center space-x-2 border-2 ${
-                    filters.showMyTasksOnly
-                      ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white border-purple-600 shadow-md hover:shadow-lg hover:scale-105'
-                      : `${currentTheme.surface} ${currentTheme.text} ${currentTheme.border} hover:bg-gray-50 dark:hover:bg-gray-700`
-                  }`}
-                >
-                  <UserCheck className="w-4 h-4" />
-                  <span className="text-sm">{filters.showMyTasksOnly ? '👤 My Tasks Only' : '👥 All Tasks'}</span>
-                </button>
-                
-                {/* Advanced Filters for HR/Admin */}
-                {['admin', 'hr'].includes(user?.role) && (
-                  <>
-                    <select
-                      value={filters.team}
-                      onChange={(e) => setFilters({ ...filters, team: e.target.value })}
-                      className={`px-3 py-2 text-sm border-2 rounded-lg font-medium transition-all focus:ring-2 ${
-                        filters.team 
-                          ? 'border-orange-400 dark:border-orange-600 bg-orange-50 dark:bg-orange-900/20 focus:ring-orange-500' 
-                          : `${currentTheme.border} focus:ring-blue-500`
-                      } ${currentTheme.surface} ${currentTheme.text}`}
-                    >
-                      <option value="">👥 All Teams</option>
-                      {teams.map((team) => (
-                        <option key={team._id} value={team._id}>🏢 {team.name}</option>
-                      ))}
-                    </select>
-                    <select
-                      value={filters.assigned_to}
-                      onChange={(e) => setFilters({ ...filters, assigned_to: e.target.value })}
-                      className={`px-3 py-2 text-sm border-2 rounded-lg font-medium transition-all focus:ring-2 ${
-                        filters.assigned_to 
-                          ? 'border-blue-400 dark:border-blue-600 bg-blue-50 dark:bg-blue-900/20 focus:ring-blue-500' 
-                          : `${currentTheme.border} focus:ring-blue-500`
-                      } ${currentTheme.surface} ${currentTheme.text}`}
-                    >
-                      <option value="">👤 All Users</option>
-                      {users.map((u) => (
-                        <option key={u._id} value={u._id}>👨‍💼 {u.full_name}</option>
-                      ))}
-                    </select>
-                    <select
-                      value={filters.status}
-                      onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-                      className={`px-3 py-2 text-sm border-2 rounded-lg font-medium transition-all focus:ring-2 ${
-                        filters.status 
-                          ? filters.status === 'done' 
-                            ? 'border-green-400 dark:border-green-600 bg-green-50 dark:bg-green-900/20'
-                            : filters.status === 'in_progress'
-                            ? 'border-blue-400 dark:border-blue-600 bg-blue-50 dark:bg-blue-900/20'
-                            : filters.status === 'review'
-                            ? 'border-yellow-400 dark:border-yellow-600 bg-yellow-50 dark:bg-yellow-900/20'
-                            : 'border-gray-400 dark:border-gray-600 bg-gray-50 dark:bg-gray-900/20'
-                          : currentTheme.border
-                      } focus:ring-blue-500 ${currentTheme.surface} ${currentTheme.text}`}
-                    >
-                      <option value="">🌐 All Statuses</option>
-                      <option value="todo">⏳ To Do</option>
-                      <option value="in_progress">⚡ In Progress</option>
-                      <option value="review">👀 Review</option>
-                      <option value="done">✅ Done</option>
-                    </select>
-                    <select
-                      value={filters.priority}
-                      onChange={(e) => setFilters({ ...filters, priority: e.target.value })}
-                      className={`px-3 py-2 text-sm border-2 rounded-lg font-medium transition-all focus:ring-2 ${
-                        filters.priority 
-                          ? filters.priority === 'urgent' 
-                            ? 'border-red-400 dark:border-red-600 bg-red-50 dark:bg-red-900/20'
-                            : filters.priority === 'high'
-                            ? 'border-orange-400 dark:border-orange-600 bg-orange-50 dark:bg-orange-900/20'
-                            : filters.priority === 'medium'
-                            ? 'border-yellow-400 dark:border-yellow-600 bg-yellow-50 dark:bg-yellow-900/20'
-                            : 'border-green-400 dark:border-green-600 bg-green-50 dark:bg-green-900/20'
-                          : currentTheme.border
-                      } focus:ring-orange-500 ${currentTheme.surface} ${currentTheme.text}`}
-                    >
-                      <option value="">🎯 All Priorities</option>
-                      <option value="low">🟢 Low</option>
-                      <option value="medium">🟡 Medium</option>
-                      <option value="high">🟠 High</option>
-                      <option value="urgent">🔴 Urgent</option>
-                    </select>
-                    <input
-                      type="date"
-                      value={filters.dueDateFrom}
-                      onChange={(e) => setFilters({ ...filters, dueDateFrom: e.target.value })}
-                      className={`px-3 py-2 text-sm border-2 rounded-lg font-medium transition-all focus:ring-2 ${
-                        filters.dueDateFrom 
-                          ? 'border-green-400 dark:border-green-600 bg-green-50 dark:bg-green-900/20 focus:ring-green-500' 
-                          : `${currentTheme.border} focus:ring-green-500`
-                      } ${currentTheme.surface} ${currentTheme.text}`}
-                      placeholder="Due Date From"
-                    />
-                    <input
-                      type="date"
-                      value={filters.dueDateTo}
-                      onChange={(e) => setFilters({ ...filters, dueDateTo: e.target.value })}
-                      className={`px-3 py-2 text-sm border-2 rounded-lg font-medium transition-all focus:ring-2 ${
-                        filters.dueDateTo 
-                          ? 'border-red-400 dark:border-red-600 bg-red-50 dark:bg-red-900/20 focus:ring-red-500' 
-                          : `${currentTheme.border} focus:ring-red-500`
-                      } ${currentTheme.surface} ${currentTheme.text}`}
-                      placeholder="Due Date To"
-                    />
-                    <div className="relative sm:col-span-2 lg:col-span-1">
-                      <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 ${
-                        filters.search ? 'text-indigo-500' : currentTheme.textMuted
-                      }`} />
-                      <input
-                        type="text"
-                        placeholder="🔍 Search tasks..."
-                        value={filters.search}
-                        onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-                        className={`w-full pl-10 pr-3 py-2 text-sm border-2 rounded-lg font-medium transition-all focus:ring-2 ${
-                          filters.search 
-                            ? 'border-indigo-400 dark:border-indigo-600 bg-indigo-50 dark:bg-indigo-900/20 focus:ring-indigo-500' 
-                            : `${currentTheme.border} focus:ring-indigo-500`
-                        } ${currentTheme.surface} ${currentTheme.text}`}
-                      />
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
           </div>
 
-          {/* Kanban Board */}
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-            {columns.map((column) => (
-              <div
-                key={column.id}
-                className="flex flex-col"
-              >
-                <div className={`${currentTheme.surface} rounded-lg p-4 mb-4 border-t-4 ${column.borderColor} shadow-sm`}>
-                  <h3 className={`font-semibold ${currentTheme.text} flex items-center justify-between`}>
-                    <span className="flex items-center space-x-2">
-                      <div className={`w-3 h-3 rounded-full ${column.accentColor}`}></div>
-                      <span>{column.title}</span>
-                    </span>
-                    <span className={`text-sm px-2 py-1 rounded-full ${currentTheme.surfaceSecondary} ${currentTheme.textSecondary}`}>
-                      {getTasksByStatus(column.id).length}
-                    </span>
-                  </h3>
-                </div>
+          {/* Bottom Row: Filters */}
+          <div className="flex items-center gap-4 px-6 pb-4 overflow-x-auto">
+            <div className={`relative flex items-center h-9 w-64 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-white'} rounded border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} focus-within:border-[#136dec]/50 transition-colors`}>
+              <Search className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} ml-3`} size={20} />
+              <input
+                value={filters.search}
+                onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+                className={`w-full bg-transparent border-none text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'} placeholder-[#6b7280] focus:ring-0 px-2 h-full`}
+                placeholder="Search tasks..."
+              />
+            </div>
+            <div className="w-px h-6 bg-[#3e454f] mx-2"></div>
 
-                <div 
-                  className={`space-y-3 min-h-[500px] flex-1 p-4 rounded-lg transition-all border-2 ${
-                    dragOverColumn === column.id 
-                      ? `${column.color} ${column.borderColor} border-dashed shadow-lg` 
-                      : `border-transparent ${currentTheme.surfaceSecondary}`
+            <div className="flex gap-2">
+              {filters.showMyTasksOnly && (
+                <button
+                  onClick={() => setFilters({ ...filters, showMyTasksOnly: false })}
+                  className="flex h-7 items-center gap-2 rounded-full bg-[#136dec]/20 border border-[#136dec]/30 px-3 text-[#136dec] hover:bg-[#136dec]/30 transition-colors"
+                >
+                  <span className="text-xs font-medium">Only My Tasks</span>
+                  <X size={14} />
+                </button>
+              )}
+              {!filters.showMyTasksOnly && (
+                <button
+                  onClick={() => setFilters({ ...filters, showMyTasksOnly: true })}
+                  className={`flex h-7 items-center gap-2 rounded-full ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-white'} border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} px-3 ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} ${theme === 'dark' ? 'hover:text-white' : 'hover:text-gray-900'} ${theme === 'dark' ? 'hover:border-[#5a6472]' : 'hover:border-gray-300'} transition-colors`}
+                >
+                  <span className="text-xs font-medium">My Tasks</span>
+                </button>
+              )}
+              {filters.priority && (
+                <button
+                  onClick={() => setFilters({ ...filters, priority: '' })}
+                  className="flex h-7 items-center gap-2 rounded-full bg-orange-500/20 border border-orange-500/30 px-3 text-orange-400 hover:bg-orange-500/30 transition-colors"
+                >
+                  <span className="text-xs font-medium">{filters.priority.charAt(0).toUpperCase() + filters.priority.slice(1)} Priority</span>
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+          </div>
+        </header>
+
+        {/* Kanban Board Area */}
+        <div className="flex-1 overflow-x-auto overflow-y-hidden p-6">
+          <div className="flex h-full gap-4 min-w-[1000px]">
+            {columns.map((column) => {
+              const columnTasks = getTasksByStatus(column.id);
+              const isDragOver = dragOverColumn === column.id;
+              
+              return (
+                <div
+                  key={column.id}
+                  className={`flex flex-col w-1/4 min-w-[280px] ${theme === 'dark' ? 'bg-[#1c2128]' : 'bg-white'} rounded-lg h-full border transition-colors ${
+                    isDragOver ? 'border-[#136dec] bg-[#136dec]/5' : `${theme === 'dark' ? 'border-[#3e454f]/50' : 'border-gray-200'}`
                   }`}
                   onDragOver={handleDragOver}
                   onDragEnter={(e) => handleDragEnter(e, column.id)}
                   onDragLeave={handleDragLeave}
                   onDrop={(e) => handleDrop(e, column.id)}
                 >
-                  {getTasksByStatus(column.id).map((task) => (
-                    <div
-                      key={task._id}
-                      draggable
-                      onDragStart={(e) => handleDragStart(e, task)}
-                      onDragEnd={handleDragEnd}
-                      className={`${currentTheme.surface} rounded-lg shadow-sm border-l-4 ${column.borderColor} p-4 cursor-move hover:shadow-lg transition-all ${currentTheme.border} ${
-                        draggedTask?._id === task._id ? 'opacity-50' : 'opacity-100'
-                      }`}
-                      data-testid="kanban-task-card"
-                    >
-                      <div className="flex justify-between items-start mb-3">
-                        <div className="flex items-center space-x-2 flex-1">
-                          <div className={`w-2 h-2 rounded-full ${column.accentColor} flex-shrink-0`}></div>
-                          <h4 className={`font-medium ${currentTheme.text}`}>{task.title}</h4>
-                        </div>
-                        <div className="flex space-x-1">
-                          {canEditTask(task) && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                // Handle edit - could open modal or inline edit
-                              }}
-                              className={`p-1 ${currentColorScheme.primaryText} hover:${currentColorScheme.primaryHover}`}
-                            >
-                              <Edit2 className="w-3 h-3" />
-                            </button>
-                          )}
-                          {canDeleteTask(task) && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteTask(task._id);
-                              }}
-                              className="text-red-600 hover:text-red-800 p-1"
-                            >
-                              <Trash2 className="w-3 h-3" />
-                            </button>
-                          )}
-                        </div>
-                      </div>
+                  <div className={`flex items-center justify-between p-3 border-b ${theme === 'dark' ? 'border-[#3e454f]/50' : 'border-gray-200'} relative overflow-hidden ${column.hasTopBorder ? 'border-t-2 border-t-[#136dec]' : ''}`}>
+                    <div className="flex items-center gap-2">
+                      <div className={`w-2 h-2 rounded-full ${column.dotColor}`}></div>
+                      <h3 className={`text-sm font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{column.title}</h3>
+                      <span className={`${theme === 'dark' ? 'bg-[#282f39]' : 'bg-gray-100'} ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} text-xs px-2 py-0.5 rounded-full border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'}`}>
+                        {columnTasks.length}
+                      </span>
+                    </div>
+                    <MoreHorizontal className="text-[#6b7280] hover:text-white cursor-pointer" size={20} />
+                  </div>
 
-                      <p className={`text-sm ${currentTheme.textSecondary} mb-3 line-clamp-2`}>{task.description}</p>
-
-                      <div className="flex items-center justify-between mb-3 gap-2">
-                        <span className={`text-xs px-2 py-1 rounded-full ${getPriorityColor(task.priority)}`}>
-                          <select
-                            value={task.priority}
-                            onChange={async (e) => {
-                              const newPriority = e.target.value;
-                              try {
-                                await handleUpdateTask(task._id, { priority: newPriority });
-                              } catch (err) {
-                                alert('Failed to update priority');
-                              }
-                            }}
-                            className="input text-xs px-1 py-0 rounded-full"
-                            style={{ minWidth: 70 }}
-                            onClick={e => e.stopPropagation()}
-                          >
-                            <option value="low">Low</option>
-                            <option value="medium">Medium</option>
-                            <option value="high">High</option>
-                            <option value="urgent">Urgent</option>
-                          </select>
-                        </span>
-                        <input
-                          type="date"
-                          value={task.due_date ? task.due_date.slice(0, 10) : ''}
-                          onChange={async (e) => {
-                            const newDate = e.target.value;
-                            try {
-                              await handleUpdateTask(task._id, { due_date: newDate });
-                            } catch (err) {
-                              alert('Failed to update due date');
-                            }
-                          }}
-                          className="input text-xs px-1 py-0 rounded-full"
-                          style={{ minWidth: 110 }}
-                          onClick={e => e.stopPropagation()}
-                        />
-                      </div>
-
-                      <div className="flex items-center justify-between mb-3">
-                        {task.due_date && (
-                          <div className={`flex items-center text-xs ${currentTheme.textMuted}`}>
-                            <Clock className="w-3 h-3 mr-1" />
-                            <span className={new Date(task.due_date) < new Date() ? 'text-red-600 font-medium' : ''}>
-                              {new Date(task.due_date).toLocaleDateString()}
+                  <div className="flex-1 overflow-y-auto p-2 flex flex-col gap-2">
+                    {columnTasks.map((task) => {
+                      const priorityBadge = getPriorityBadge(task.priority);
+                      const isDone = task.status === 'done';
+                      
+                      return (
+                        <div
+                          key={task._id}
+                          draggable={canEditTask(task)}
+                          onDragStart={(e) => handleDragStart(e, task)}
+                          onDragEnd={handleDragEnd}
+                          className={`group ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-gray-50'} p-3 rounded border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} hover:border-[#136dec]/50 cursor-grab shadow-sm transition-all hover:shadow-md ${
+                            isDone ? 'opacity-70 hover:opacity-100' : ''
+                          }`}
+                          onClick={() => setSelectedTask(task)}
+                        >
+                          <div className="flex justify-between items-start mb-2">
+                            <span className={`text-[11px] font-mono text-[#6b7280] ${isDone ? 'line-through' : ''}`}>
+                              {task._id.substring(0, 8).toUpperCase()}
+                            </span>
+                            <span className={`text-[10px] font-bold ${priorityBadge.text} ${priorityBadge.bg} px-1.5 py-0.5 rounded uppercase tracking-wider`}>
+                              {priorityBadge.label}
                             </span>
                           </div>
-                        )}
-                      </div>
-
-                      {task.assigned_to && task.assigned_to.length > 0 && (
-                        <div className={`flex items-center text-xs ${currentTheme.textSecondary} mb-2`}>
-                          <Users className="w-3 h-3 mr-1" />
-                          <div className="flex flex-wrap gap-1">
-                            {task.assigned_to.slice(0, 3).map((user) => (
-                              <span key={user._id} className="bg-blue-100 text-blue-800 px-1 py-0.5 rounded text-xs">
-                                {user.full_name.split(' ')[0]}
+                          <p className={`text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-3 leading-snug group-hover:text-[#136dec] transition-colors ${
+                            isDone ? 'line-through decoration-slate-600' : ''
+                          }`}>
+                            {task.title}
+                          </p>
+                          <div className={`flex items-center justify-between border-t ${theme === 'dark' ? 'border-[#3e454f]/50' : 'border-gray-200'} pt-2 mt-auto`}>
+                            <div className="flex -space-x-2">
+                              {task.assigned_to && task.assigned_to.length > 0 ? (
+                                task.assigned_to.slice(0, 2).map((assignee, idx) => (
+                                  <div
+                                    key={assignee._id || idx}
+                                    className={`size-5 rounded-full bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center text-[8px] text-white font-bold ring-2 ring-[#282f39] ${
+                                      isDone ? 'grayscale' : ''
+                                    }`}
+                                    title={assignee.full_name}
+                                  >
+                                    {getUserInitials(assignee.full_name)}
+                                  </div>
+                                ))
+                              ) : (
+                                <div className="size-5 rounded-full bg-[#3e454f] flex items-center justify-center text-[8px] text-[#6b7280] font-bold">
+                                  ?
+                                </div>
+                              )}
+                              {task.assigned_to && task.assigned_to.length > 2 && (
+                                <div className="size-5 rounded-full bg-[#3e454f] flex items-center justify-center text-[8px] text-white font-bold ring-2 ring-[#282f39]">
+                                  +{task.assigned_to.length - 2}
+                                </div>
+                              )}
+                            </div>
+                            <div className={`flex items-center gap-1 ${isDone ? 'text-green-500' : task.due_date && new Date(task.due_date) < new Date() ? 'text-red-400' : task.due_date && new Date(task.due_date) < new Date(Date.now() + 86400000) ? 'text-[#136dec]' : 'text-[#6b7280]'}`}>
+                              <CalendarIcon size={14} />
+                              <span className="text-[11px]">
+                                {task.due_date 
+                                  ? new Date(task.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                                  : 'No date'}
                               </span>
-                            ))}
-                            {task.assigned_to.length > 3 && (
-                              <span className={`${currentTheme.textMuted}`}>+{task.assigned_to.length - 3}</span>
-                            )}
+                            </div>
                           </div>
                         </div>
-                      )}
+                      );
+                    })}
+                  </div>
 
-                      {task.team_id && (
-                        <div className={`text-xs ${currentTheme.textMuted}`}>
-                          🏢 {task.team_id.name}
-                        </div>
-                      )}
-
-                      {/* Inline status update dropdown */}
-                      <div className="flex items-center gap-2 mb-2">
-                        <select
-                          value={task.status}
-                          onChange={async (e) => {
-                            const newStatus = e.target.value;
-                            try {
-                              await handleUpdateTask(task._id, { status: newStatus });
-                            } catch (err) {
-                              alert('Failed to update status');
-                            }
-                          }}
-                          className={`input text-xs px-2 py-1 rounded-full font-semibold border-2 ${
-                            task.status === 'todo' ? 'bg-gray-100 border-gray-400 text-gray-800' :
-                            task.status === 'in_progress' ? 'bg-blue-100 border-blue-400 text-blue-800' :
-                            task.status === 'review' ? 'bg-yellow-100 border-yellow-400 text-yellow-800' :
-                            task.status === 'done' ? 'bg-green-100 border-green-400 text-green-800' :
-                            'bg-gray-200 border-gray-300 text-gray-700'
-                          } transition-colors`}
-                          style={{ minWidth: 110 }}
-                          onClick={e => e.stopPropagation()}
-                        >
-                          <option value="todo" className="bg-gray-100 text-gray-800">To Do</option>
-                          <option value="in_progress" className="bg-blue-100 text-blue-800">In Progress</option>
-                          <option value="review" className="bg-yellow-100 text-yellow-800">Review</option>
-                          <option value="done" className="bg-green-100 text-green-800">Done</option>
-                        </select>
-                      </div>
-                    </div>
-                  ))}
-
-                  {getTasksByStatus(column.id).length === 0 && (
-                    <div className={`text-center py-12 ${currentTheme.textMuted}`}>
-                      <div className="text-4xl mb-2">📋</div>
-                      <p className="text-sm">
-                        {dragOverColumn === column.id 
-                          ? 'Drop here to move task' 
-                          : `No tasks in ${column.title.toLowerCase()}`}
-                      </p>
-                    </div>
-                  )}
+                  <button
+                    onClick={() => {
+                      setFormData({ ...formData, status: column.id });
+                      setShowCreateModal(true);
+                    }}
+                    className={`p-2 mx-2 mb-2 flex items-center gap-2 text-[#6b7280] ${theme === 'dark' ? 'hover:text-white' : 'hover:text-gray-900'} ${theme === 'dark' ? 'hover:bg-[#282f39]' : 'hover:bg-gray-100'} rounded transition-colors text-sm font-medium`}
+                  >
+                    <Plus size={18} />
+                    <span>Add Task</span>
+                  </button>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
+      </main>
 
       {/* Create Task Modal */}
       {showCreateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" data-testid="create-task-modal">
-          <div className={`${currentTheme.surface} rounded-lg p-8 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto`}>
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded-lg p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'}`}>
             <div className="flex justify-between items-center mb-6">
-              <h2 className={`text-2xl font-bold ${currentTheme.text}`}>Create New Task</h2>
+              <h2 className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Create New Task</h2>
               <button
-                onClick={() => {
-                  setShowCreateModal(false);
-                  setSelectedTeamMembers([]);
-                }}
-                className={`${currentTheme.textMuted} hover:${currentTheme.text}`}
+                onClick={() => setShowCreateModal(false)}
+                className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} ${theme === 'dark' ? 'hover:text-white' : 'hover:text-gray-900'}`}
               >
-                <X className="w-6 h-6" />
+                <X size={24} />
               </button>
             </div>
 
             <form onSubmit={handleCreateTask} className="space-y-4">
               <div>
-                <label className={`block text-sm font-medium ${currentTheme.text} mb-2`}>
-                  Title *
-                </label>
+                <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2`}>Title *</label>
                 <input
                   type="text"
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  className="input"
+                  className={`w-full px-4 py-2 ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'} border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} rounded ${theme === 'dark' ? 'text-white' : 'text-gray-900'} focus:ring-2 focus:ring-[#136dec] focus:border-transparent`}
                   required
-                  data-testid="task-title-input"
                 />
               </div>
 
               <div>
-                <label className={`block text-sm font-medium ${currentTheme.text} mb-2`}>
-                  Description
-                </label>
+                <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2`}>Description</label>
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="input"
+                  className={`w-full px-4 py-2 ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'} border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} rounded ${theme === 'dark' ? 'text-white' : 'text-gray-900'} focus:ring-2 focus:ring-[#136dec] focus:border-transparent`}
                   rows="4"
-                  data-testid="task-description-input"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className={`block text-sm font-medium ${currentTheme.text} mb-2`}>
-                    Priority
-                  </label>
+                  <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2`}>Priority</label>
                   <select
                     value={formData.priority}
                     onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
-                    className="input"
-                    data-testid="task-priority-select"
+                    className={`w-full px-4 py-2 ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'} border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} rounded ${theme === 'dark' ? 'text-white' : 'text-gray-900'} focus:ring-2 focus:ring-[#136dec] focus:border-transparent`}
                   >
                     <option value="low">Low</option>
                     <option value="medium">Medium</option>
@@ -778,14 +600,11 @@ const Kanban = () => {
                 </div>
 
                 <div>
-                  <label className={`block text-sm font-medium ${currentTheme.text} mb-2`}>
-                    Status
-                  </label>
+                  <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2`}>Status</label>
                   <select
                     value={formData.status}
                     onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                    className="input"
-                    data-testid="task-status-select"
+                    className={`w-full px-4 py-2 ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'} border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} rounded ${theme === 'dark' ? 'text-white' : 'text-gray-900'} focus:ring-2 focus:ring-[#136dec] focus:border-transparent`}
                   >
                     <option value="todo">To Do</option>
                     <option value="in_progress">In Progress</option>
@@ -796,15 +615,12 @@ const Kanban = () => {
               </div>
 
               <div>
-                <label className={`block text-sm font-medium ${currentTheme.text} mb-2`}>
-                  Due Date *
-                </label>
+                <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2`}>Due Date *</label>
                 <input
                   type="date"
                   value={formData.due_date}
                   onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
-                  className="input"
-                  data-testid="task-due-date-input"
+                  className={`w-full px-4 py-2 ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'} border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} rounded ${theme === 'dark' ? 'text-white' : 'text-gray-900'} focus:ring-2 focus:ring-[#136dec] focus:border-transparent`}
                   required
                 />
               </div>
@@ -812,14 +628,11 @@ const Kanban = () => {
               {['admin', 'hr', 'team_lead'].includes(user?.role) && (
                 <>
                   <div>
-                    <label className={`block text-sm font-medium ${currentTheme.text} mb-2`}>
-                      Select Team
-                    </label>
+                    <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2`}>Select Team</label>
                     <select
                       value={formData.team_id}
                       onChange={(e) => handleTeamChange(e.target.value)}
-                      className="input"
-                      data-testid="task-team-select"
+                      className={`w-full px-4 py-2 ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'} border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} rounded ${theme === 'dark' ? 'text-white' : 'text-gray-900'} focus:ring-2 focus:ring-[#136dec] focus:border-transparent`}
                     >
                       <option value="">No Team</option>
                       {teams.map((team) => (
@@ -832,21 +645,19 @@ const Kanban = () => {
 
                   {formData.team_id && selectedTeamMembers.length > 0 && (
                     <div>
-                      <label className={`block text-sm font-medium ${currentTheme.text} mb-2`}>
-                        Assign Team Members
-                      </label>
-                      <div className={`space-y-2 max-h-40 overflow-y-auto border rounded-lg p-3 ${currentTheme.border}`}>
+                      <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2`}>Assign Team Members</label>
+                      <div className={`space-y-2 max-h-40 overflow-y-auto border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} rounded-lg p-3 ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'}`}>
                         {selectedTeamMembers.map((member) => (
                           <label key={member._id} className="flex items-center space-x-2">
                             <input
                               type="checkbox"
                               checked={formData.assigned_to.includes(member._id)}
                               onChange={() => handleMemberToggle(member._id)}
-                              className="rounded"
+                              className="rounded border-[#4b5563] text-[#136dec] focus:ring-[#136dec]"
                             />
-                            <span className="text-sm">
+                            <span className={`text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                               {member.full_name} ({member.role})
-                              {member._id === user?.id && <span className="text-blue-600 font-medium"> (You)</span>}
+                              {member._id === user?.id && <span className="text-[#136dec] font-medium"> (You)</span>}
                             </span>
                           </label>
                         ))}
@@ -863,15 +674,135 @@ const Kanban = () => {
                     setShowCreateModal(false);
                     setSelectedTeamMembers([]);
                   }}
-                  className="btn btn-secondary"
+                  className={`px-6 py-2 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-gray-200'} ${theme === 'dark' ? 'text-white' : 'text-gray-900'} rounded ${theme === 'dark' ? 'hover:bg-[#3a4454]' : 'hover:bg-gray-300'} transition-colors`}
                 >
                   Cancel
                 </button>
-                <button type="submit" className={`btn ${currentColorScheme.primary} text-white ${currentColorScheme.primaryHover}`} data-testid="submit-create-task">
+                <button
+                  type="submit"
+                  className="px-6 py-2 bg-[#136dec] text-white rounded hover:bg-blue-600 transition-colors font-semibold"
+                >
                   Create Task
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Task Detail Modal */}
+      {selectedTask && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded-lg p-8 max-w-3xl w-full max-h-[90vh] overflow-y-auto border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'}`}>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{selectedTask.title}</h2>
+              <button
+                onClick={() => setSelectedTask(null)}
+                className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} ${theme === 'dark' ? 'hover:text-white' : 'hover:text-gray-900'}`}
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className="space-y-6">
+              <div>
+                <p className="text-[#d1d5db]">{selectedTask.description || 'No description'}</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2`}>Status</label>
+                  <select
+                    value={selectedTask.status}
+                    onChange={(e) => {
+                      handleUpdateTask(selectedTask._id, { status: e.target.value });
+                      setSelectedTask({ ...selectedTask, status: e.target.value });
+                    }}
+                    className={`w-full px-4 py-2 ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'} border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} rounded ${theme === 'dark' ? 'text-white' : 'text-gray-900'} focus:ring-2 focus:ring-[#136dec] focus:border-transparent`}
+                  >
+                    <option value="todo">To Do</option>
+                    <option value="in_progress">In Progress</option>
+                    <option value="review">Review</option>
+                    <option value="done">Done</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2`}>Priority</label>
+                  <div className="flex items-center gap-2">
+                    {(() => {
+                      const badge = getPriorityBadge(selectedTask.priority);
+                      return (
+                        <span className={`inline-block px-3 py-1 rounded text-sm ${badge.bg} ${badge.text} font-medium`}>
+                          {badge.label}
+                        </span>
+                      );
+                    })()}
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <p className={`text-sm ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`}>
+                      <span className="font-medium">Created by:</span> {selectedTask.created_by?.full_name || 'Unknown'}
+                    </p>
+                    {selectedTask.team_id && (
+                      <p className={`text-sm ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`}>
+                        <span className="font-medium">Team:</span> {selectedTask.team_id.name}
+                      </p>
+                    )}
+                  </div>
+                  <div>
+                    {selectedTask.assigned_to && selectedTask.assigned_to.length > 0 && (
+                      <div className={`text-sm ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`}>
+                        <span className="font-medium">Assigned to:</span>
+                        <div className="mt-1 flex flex-wrap gap-1">
+                          {selectedTask.assigned_to.map((user) => (
+                            <span key={user._id} className="inline-block bg-blue-500/10 text-blue-400 text-xs px-2 py-1 rounded border border-blue-500/20">
+                              {user.full_name}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <p className={`text-sm ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`}>
+                      <span className="font-medium">Created:</span> {new Date(selectedTask.created_at).toLocaleString()}
+                    </p>
+                  </div>
+                  <div>
+                    {selectedTask.due_date && (
+                      <p className={`text-sm ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`}>
+                        <span className="font-medium">Due:</span>
+                        <span className={`font-medium ml-1 ${new Date(selectedTask.due_date) < new Date() ? 'text-red-400' : 'text-orange-400'}`}>
+                          {new Date(selectedTask.due_date).toLocaleString()}
+                        </span>
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {canDeleteTask(selectedTask) && (
+                <div className={`pt-4 border-t ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'}`}>
+                  <button
+                    onClick={() => {
+                      handleDeleteTask(selectedTask._id);
+                      setSelectedTask(null);
+                    }}
+                    className="px-4 py-2 bg-red-500/10 text-red-400 rounded hover:bg-red-500/20 transition-colors border border-red-500/20"
+                  >
+                    Delete Task
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
