@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>TaskFlow Calendar</title>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#136dec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101822",
+                        "surface-dark": "#161b22",
+                        "surface-light": "#ffffff",
+                        "border-dark": "#282f39",
+                        "border-light": "#e5e7eb",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+                },
+            },
+        }
+    </script>
+<style>
+        /* Custom scrollbar for webkit */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #282f39;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #374151;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-white font-display overflow-hidden h-screen flex">
+<!-- Left Sidebar -->
+<aside class="w-64 flex-col bg-surface-light dark:bg-surface-dark border-r border-border-light dark:border-border-dark hidden md:flex z-20">
+<!-- Logo -->
+<div class="h-16 flex items-center px-6 border-b border-border-light dark:border-border-dark gap-3">
+<div class="size-8 text-primary">
+<svg fill="none" viewbox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+<path d="M13.8261 30.5736C16.7203 29.8826 20.2244 29.4783 24 29.4783C27.7756 29.4783 31.2797 29.8826 34.1739 30.5736C36.9144 31.2278 39.9967 32.7669 41.3563 33.8352L24.8486 7.36089C24.4571 6.73303 23.5429 6.73303 23.1514 7.36089L6.64374 33.8352C8.00331 32.7669 11.0856 31.2278 13.8261 30.5736Z" fill="currentColor"></path>
+<path clip-rule="evenodd" d="M39.998 35.764C39.9944 35.7463 39.9875 35.7155 39.9748 35.6706C39.9436 35.5601 39.8949 35.4259 39.8346 35.2825C39.8168 35.2403 39.7989 35.1993 39.7813 35.1602C38.5103 34.2887 35.9788 33.0607 33.7095 32.5189C30.9875 31.8691 27.6413 31.4783 24 31.4783C20.3587 31.4783 17.0125 31.8691 14.2905 32.5189C12.0012 33.0654 9.44505 34.3104 8.18538 35.1832C8.17384 35.2075 8.16216 35.233 8.15052 35.2592C8.09919 35.3751 8.05721 35.4886 8.02977 35.589C8.00356 35.6848 8.00039 35.7333 8.00004 35.7388C8.00004 35.739 8 35.7393 8.00004 35.7388C8.00004 35.7641 8.0104 36.0767 8.68485 36.6314C9.34546 37.1746 10.4222 37.7531 11.9291 38.2772C14.9242 39.319 19.1919 40 24 40C28.8081 40 33.0758 39.319 36.0709 38.2772C37.5778 37.7531 38.6545 37.1746 39.3151 36.6314C39.9006 36.1499 39.9857 35.8511 39.998 35.764ZM4.95178 32.7688L21.4543 6.30267C22.6288 4.4191 25.3712 4.41909 26.5457 6.30267L43.0534 32.777C43.0709 32.8052 43.0878 32.8338 43.104 32.8629L41.3563 33.8352C43.104 32.8629 43.1038 32.8626 43.104 32.8629L43.1051 32.865L43.1065 32.8675L43.1101 32.8739L43.1199 32.8918C43.1276 32.906 43.1377 32.9246 43.1497 32.9473C43.1738 32.9925 43.2062 33.0545 43.244 33.1299C43.319 33.2792 43.4196 33.489 43.5217 33.7317C43.6901 34.1321 44 34.9311 44 35.7391C44 37.4427 43.003 38.7775 41.8558 39.7209C40.6947 40.6757 39.1354 41.4464 37.385 42.0552C33.8654 43.2794 29.133 44 24 44C18.867 44 14.1346 43.2794 10.615 42.0552C8.86463 41.4464 7.30529 40.6757 6.14419 39.7209C4.99695 38.7775 3.99999 37.4427 3.99999 35.7391C3.99999 34.8725 4.29264 34.0922 4.49321 33.6393C4.60375 33.3898 4.71348 33.1804 4.79687 33.0311C4.83898 32.9556 4.87547 32.8935 4.9035 32.8471C4.91754 32.8238 4.92954 32.8043 4.93916 32.7889L4.94662 32.777L4.95178 32.7688ZM35.9868 29.004L24 9.77997L12.0131 29.004C12.4661 28.8609 12.9179 28.7342 13.3617 28.6282C16.4281 27.8961 20.0901 27.4783 24 27.4783C27.9099 27.4783 31.5719 27.8961 34.6383 28.6282C35.082 28.7342 35.5339 28.8609 35.9868 29.004Z" fill="currentColor" fill-rule="evenodd"></path>
+</svg>
+</div>
+<h1 class="text-slate-900 dark:text-white text-lg font-bold tracking-tight">TaskFlow</h1>
+</div>
+<!-- Navigation -->
+<div class="flex flex-col gap-1 p-4 flex-1">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-border-dark transition-colors" href="#">
+<span class="material-symbols-outlined text-[24px]">dashboard</span>
+<span class="text-sm font-medium">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-primary/10 text-primary" href="#">
+<span class="material-symbols-outlined text-[24px] fill-current">calendar_today</span>
+<span class="text-sm font-medium">Calendar</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-border-dark transition-colors" href="#">
+<span class="material-symbols-outlined text-[24px]">check_box</span>
+<span class="text-sm font-medium">Tasks</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-border-dark transition-colors" href="#">
+<span class="material-symbols-outlined text-[24px]">group</span>
+<span class="text-sm font-medium">Team</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-border-dark transition-colors" href="#">
+<span class="material-symbols-outlined text-[24px]">bar_chart</span>
+<span class="text-sm font-medium">Reports</span>
+</a>
+</div>
+<!-- User Profile (Bottom of Sidebar) -->
+<div class="p-4 border-t border-border-light dark:border-border-dark">
+<button class="flex items-center gap-3 w-full p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-border-dark transition-colors">
+<div class="bg-center bg-no-repeat bg-cover rounded-full size-8" data-alt="User profile picture" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCycpw10PvpQW68Uw-PDEoqwUlINHkIiNzbeWsdeKha6yBRp8hR08drrAGdZLXIUuqokXWi5L96BeUYweR6z4v7JVkzJwJJ4gF1NfSrAT41f82WNL7lAGVd1QvG0nJgjEw_Wc9dQSF2OHvKUI2eaBRupE2w3bavAMX7ckFkARqqrIouP-b1XdThgYnoUrFdkuju7S28EQ0Sw_KUfKACv8rra24fy3eOzgV-PgbXGVW_I7RpCdOofnDUBWBs8x00kd-a4UUwEailvzY");'></div>
+<div class="flex flex-col items-start min-w-0">
+<span class="text-sm font-medium text-slate-900 dark:text-white truncate">David Miller</span>
+<span class="text-xs text-slate-500 dark:text-slate-400 truncate">Product Manager</span>
+</div>
+<span class="material-symbols-outlined ml-auto text-slate-400">expand_more</span>
+</button>
+</div>
+</aside>
+<!-- Main Content Area -->
+<div class="flex-1 flex flex-col min-w-0">
+<!-- Header -->
+<header class="h-16 flex items-center justify-between px-6 border-b border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark shrink-0 z-10">
+<!-- Search -->
+<div class="max-w-md w-full">
+<label class="flex items-center gap-2 w-full bg-slate-100 dark:bg-border-dark rounded-lg px-3 h-10 border border-transparent focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-primary/20 transition-all">
+<span class="material-symbols-outlined text-slate-400 text-[20px]">search</span>
+<input class="bg-transparent border-none text-sm w-full text-slate-900 dark:text-white placeholder-slate-500 focus:ring-0 p-0" placeholder="Search tasks, projects, or people..." type="text"/>
+</label>
+</div>
+<!-- Right Actions -->
+<div class="flex items-center gap-4">
+<button class="size-10 flex items-center justify-center rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-border-dark transition-colors relative">
+<span class="material-symbols-outlined text-[20px]">notifications</span>
+<span class="absolute top-2.5 right-2.5 size-2 bg-red-500 rounded-full border-2 border-surface-light dark:border-surface-dark"></span>
+</button>
+<button class="size-10 flex items-center justify-center rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-border-dark transition-colors">
+<span class="material-symbols-outlined text-[20px]">chat</span>
+</button>
+<button class="size-10 flex items-center justify-center rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-border-dark transition-colors">
+<span class="material-symbols-outlined text-[20px]">settings</span>
+</button>
+</div>
+</header>
+<!-- Main Body -->
+<main class="flex-1 overflow-hidden flex flex-col">
+<!-- Toolbar -->
+<div class="px-8 py-6 flex flex-wrap items-center justify-between gap-4 shrink-0">
+<div class="flex items-center gap-4">
+<h2 class="text-3xl font-black tracking-tight text-slate-900 dark:text-white">October 2023</h2>
+<div class="flex items-center bg-slate-100 dark:bg-border-dark rounded-lg p-0.5 border border-slate-200 dark:border-transparent">
+<button class="size-8 flex items-center justify-center rounded hover:bg-white dark:hover:bg-surface-dark text-slate-600 dark:text-slate-300 transition-all shadow-sm">
+<span class="material-symbols-outlined text-[20px]">chevron_left</span>
+</button>
+<button class="size-8 flex items-center justify-center rounded hover:bg-white dark:hover:bg-surface-dark text-slate-600 dark:text-slate-300 transition-all shadow-sm">
+<span class="material-symbols-outlined text-[20px]">chevron_right</span>
+</button>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<!-- View Toggle -->
+<div class="flex bg-slate-100 dark:bg-border-dark rounded-lg p-1">
+<label class="cursor-pointer px-4 py-1.5 rounded text-sm font-medium transition-all shadow-sm bg-white dark:bg-surface-dark text-slate-900 dark:text-white">
+<span>Month</span>
+<input checked="" class="hidden" name="view" type="radio"/>
+</label>
+<label class="cursor-pointer px-4 py-1.5 rounded text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all">
+<span>Week</span>
+<input class="hidden" name="view" type="radio"/>
+</label>
+<label class="cursor-pointer px-4 py-1.5 rounded text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all">
+<span>Day</span>
+<input class="hidden" name="view" type="radio"/>
+</label>
+</div>
+<!-- Add Task CTA -->
+<button class="flex items-center gap-2 bg-primary hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-lg shadow-primary/20 transition-all">
+<span class="material-symbols-outlined text-[20px]">add</span>
+<span>Add Task</span>
+</button>
+</div>
+</div>
+<!-- Content Split -->
+<div class="flex-1 flex px-8 pb-8 gap-6 min-h-0">
+<!-- Left Panel (Controls) -->
+<div class="w-64 flex flex-col gap-8 shrink-0 overflow-y-auto pr-2 pb-4 hidden xl:flex">
+<!-- Mini Calendar -->
+<div class="flex flex-col gap-4">
+<div class="flex items-center justify-between">
+<span class="font-bold text-slate-900 dark:text-white">Oct 2023</span>
+<div class="flex gap-2">
+<button class="text-slate-400 hover:text-slate-900 dark:hover:text-white"><span class="material-symbols-outlined text-[18px]">chevron_left</span></button>
+<button class="text-slate-400 hover:text-slate-900 dark:hover:text-white"><span class="material-symbols-outlined text-[18px]">chevron_right</span></button>
+</div>
+</div>
+<div class="grid grid-cols-7 text-center gap-y-2">
+<span class="text-xs font-semibold text-slate-400">S</span>
+<span class="text-xs font-semibold text-slate-400">M</span>
+<span class="text-xs font-semibold text-slate-400">T</span>
+<span class="text-xs font-semibold text-slate-400">W</span>
+<span class="text-xs font-semibold text-slate-400">T</span>
+<span class="text-xs font-semibold text-slate-400">F</span>
+<span class="text-xs font-semibold text-slate-400">S</span>
+<!-- Dates (Simplified) -->
+<span class="text-xs text-slate-600 dark:text-slate-500 py-1">28</span>
+<span class="text-xs text-slate-600 dark:text-slate-500 py-1">29</span>
+<span class="text-xs text-slate-600 dark:text-slate-500 py-1">30</span>
+<span class="text-xs text-slate-300 dark:text-slate-500 py-1">1</span>
+<span class="text-xs text-slate-900 dark:text-white font-medium py-1">2</span>
+<span class="text-xs text-slate-900 dark:text-white font-medium py-1">3</span>
+<span class="text-xs text-slate-900 dark:text-white font-medium py-1">4</span>
+<span class="text-xs bg-primary text-white rounded-full size-6 flex items-center justify-center mx-auto font-medium">5</span>
+<span class="text-xs text-slate-900 dark:text-white font-medium py-1">6</span>
+<span class="text-xs text-slate-900 dark:text-white font-medium py-1">7</span>
+<span class="text-xs text-slate-900 dark:text-white font-medium py-1">8</span>
+<span class="text-xs text-slate-900 dark:text-white font-medium py-1">9</span>
+<span class="text-xs text-slate-900 dark:text-white font-medium py-1">10</span>
+<span class="text-xs text-slate-900 dark:text-white font-medium py-1">11</span>
+<span class="text-xs text-slate-900 dark:text-white font-medium py-1">12</span>
+<span class="text-xs text-slate-900 dark:text-white font-medium py-1">13</span>
+<span class="text-xs text-slate-900 dark:text-white font-medium py-1">14</span>
+<span class="text-xs text-slate-900 dark:text-white font-medium py-1">15</span>
+<span class="text-xs text-slate-900 dark:text-white font-medium py-1">16</span>
+<span class="text-xs text-slate-900 dark:text-white font-medium py-1">17</span>
+<span class="text-xs text-slate-900 dark:text-white font-medium py-1">18</span>
+<span class="text-xs text-slate-900 dark:text-white font-medium py-1">19</span>
+<span class="text-xs text-slate-900 dark:text-white font-medium py-1">20</span>
+<span class="text-xs text-slate-900 dark:text-white font-medium py-1">21</span>
+<span class="text-xs text-slate-900 dark:text-white font-medium py-1">22</span>
+<span class="text-xs text-slate-900 dark:text-white font-medium py-1">23</span>
+<span class="text-xs text-slate-900 dark:text-white font-medium py-1">24</span>
+<span class="text-xs text-slate-900 dark:text-white font-medium py-1">25</span>
+<span class="text-xs text-slate-900 dark:text-white font-medium py-1">26</span>
+<span class="text-xs text-slate-900 dark:text-white font-medium py-1">27</span>
+<span class="text-xs text-slate-900 dark:text-white font-medium py-1">28</span>
+<span class="text-xs text-slate-900 dark:text-white font-medium py-1">29</span>
+<span class="text-xs text-slate-900 dark:text-white font-medium py-1">30</span>
+<span class="text-xs text-slate-900 dark:text-white font-medium py-1">31</span>
+</div>
+</div>
+<!-- Filters -->
+<div class="flex flex-col gap-4">
+<div class="flex items-center justify-between">
+<span class="font-bold text-slate-900 dark:text-white text-sm">Filters</span>
+<button class="text-xs text-primary font-medium hover:underline">Reset</button>
+</div>
+<div class="flex flex-col gap-3">
+<label class="flex items-center gap-3 cursor-pointer group">
+<input checked="" class="rounded border-slate-300 dark:border-slate-600 bg-transparent text-primary focus:ring-primary/20" type="checkbox"/>
+<span class="text-sm text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">My Tasks</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer group">
+<input checked="" class="rounded border-slate-300 dark:border-slate-600 bg-transparent text-primary focus:ring-primary/20" type="checkbox"/>
+<span class="text-sm text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">Team Tasks</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer group">
+<input class="rounded border-slate-300 dark:border-slate-600 bg-transparent text-primary focus:ring-primary/20" type="checkbox"/>
+<span class="text-sm text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">Completed</span>
+</label>
+</div>
+</div>
+<div class="h-px bg-border-light dark:bg-border-dark w-full"></div>
+<!-- Teams -->
+<div class="flex flex-col gap-4">
+<span class="font-bold text-slate-900 dark:text-white text-sm">Teams</span>
+<div class="flex flex-col gap-3">
+<label class="flex items-center gap-3 cursor-pointer group">
+<input checked="" class="rounded border-slate-300 dark:border-slate-600 bg-transparent text-primary focus:ring-primary/20" type="checkbox"/>
+<div class="size-2 rounded-full bg-purple-500"></div>
+<span class="text-sm text-slate-600 dark:text-slate-300">Design Team</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer group">
+<input checked="" class="rounded border-slate-300 dark:border-slate-600 bg-transparent text-primary focus:ring-primary/20" type="checkbox"/>
+<div class="size-2 rounded-full bg-emerald-500"></div>
+<span class="text-sm text-slate-600 dark:text-slate-300">Development</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer group">
+<input class="rounded border-slate-300 dark:border-slate-600 bg-transparent text-primary focus:ring-primary/20" type="checkbox"/>
+<div class="size-2 rounded-full bg-orange-500"></div>
+<span class="text-sm text-slate-600 dark:text-slate-300">Marketing</span>
+</label>
+</div>
+</div>
+<!-- Legend -->
+<div class="mt-auto">
+<div class="bg-slate-50 dark:bg-surface-dark rounded-lg p-3 border border-border-light dark:border-border-dark">
+<p class="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wider">Priority Legend</p>
+<div class="flex flex-col gap-2">
+<div class="flex items-center gap-2">
+<div class="w-1 h-3 bg-red-500 rounded-full"></div>
+<span class="text-xs text-slate-600 dark:text-slate-300">High Priority</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-1 h-3 bg-amber-500 rounded-full"></div>
+<span class="text-xs text-slate-600 dark:text-slate-300">Medium Priority</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-1 h-3 bg-primary rounded-full"></div>
+<span class="text-xs text-slate-600 dark:text-slate-300">Low Priority</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Main Grid -->
+<div class="flex-1 bg-surface-light dark:bg-surface-dark rounded-xl border border-border-light dark:border-border-dark flex flex-col shadow-sm overflow-hidden min-h-[500px]">
+<!-- Days Header -->
+<div class="grid grid-cols-7 border-b border-border-light dark:border-border-dark bg-slate-50 dark:bg-[#1c242e]">
+<div class="py-3 px-2 text-center text-sm font-semibold text-slate-500 dark:text-slate-400 border-r border-border-light dark:border-border-dark last:border-r-0">Mon</div>
+<div class="py-3 px-2 text-center text-sm font-semibold text-slate-500 dark:text-slate-400 border-r border-border-light dark:border-border-dark last:border-r-0">Tue</div>
+<div class="py-3 px-2 text-center text-sm font-semibold text-slate-500 dark:text-slate-400 border-r border-border-light dark:border-border-dark last:border-r-0">Wed</div>
+<div class="py-3 px-2 text-center text-sm font-semibold text-slate-500 dark:text-slate-400 border-r border-border-light dark:border-border-dark last:border-r-0">Thu</div>
+<div class="py-3 px-2 text-center text-sm font-semibold text-slate-500 dark:text-slate-400 border-r border-border-light dark:border-border-dark last:border-r-0">Fri</div>
+<div class="py-3 px-2 text-center text-sm font-semibold text-slate-500 dark:text-slate-400 border-r border-border-light dark:border-border-dark last:border-r-0">Sat</div>
+<div class="py-3 px-2 text-center text-sm font-semibold text-slate-500 dark:text-slate-400">Sun</div>
+</div>
+<!-- Calendar Body -->
+<div class="grid grid-cols-7 grid-rows-5 flex-1 divide-x divide-y divide-border-light dark:divide-border-dark">
+<!-- Week 1 -->
+<!-- Previous Month Days -->
+<div class="p-2 min-h-[100px] bg-slate-50/50 dark:bg-transparent flex flex-col gap-1">
+<span class="text-slate-400 dark:text-slate-600 text-sm font-medium">25</span>
+</div>
+<div class="p-2 min-h-[100px] bg-slate-50/50 dark:bg-transparent flex flex-col gap-1">
+<span class="text-slate-400 dark:text-slate-600 text-sm font-medium">26</span>
+</div>
+<div class="p-2 min-h-[100px] bg-slate-50/50 dark:bg-transparent flex flex-col gap-1">
+<span class="text-slate-400 dark:text-slate-600 text-sm font-medium">27</span>
+</div>
+<div class="p-2 min-h-[100px] bg-slate-50/50 dark:bg-transparent flex flex-col gap-1">
+<span class="text-slate-400 dark:text-slate-600 text-sm font-medium">28</span>
+</div>
+<div class="p-2 min-h-[100px] bg-slate-50/50 dark:bg-transparent flex flex-col gap-1">
+<span class="text-slate-400 dark:text-slate-600 text-sm font-medium">29</span>
+</div>
+<div class="p-2 min-h-[100px] bg-slate-50/50 dark:bg-transparent flex flex-col gap-1">
+<span class="text-slate-400 dark:text-slate-600 text-sm font-medium">30</span>
+</div>
+<!-- Current Month Starts -->
+<div class="p-2 min-h-[100px] flex flex-col gap-1 relative group hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+<span class="text-slate-700 dark:text-slate-300 text-sm font-medium">1</span>
+</div>
+<!-- Week 2 -->
+<div class="p-2 min-h-[100px] flex flex-col gap-1 relative group hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+<span class="text-slate-700 dark:text-slate-300 text-sm font-medium">2</span>
+<div class="bg-primary/10 border-l-[3px] border-primary rounded-r text-[11px] p-1.5 cursor-pointer hover:bg-primary/20 transition-colors">
+<p class="text-primary font-bold truncate leading-tight">Sprint Planning</p>
+<p class="text-slate-500 dark:text-slate-400 truncate text-[10px]">10:00 AM</p>
+</div>
+</div>
+<div class="p-2 min-h-[100px] flex flex-col gap-1 relative group hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+<span class="text-slate-700 dark:text-slate-300 text-sm font-medium">3</span>
+</div>
+<div class="p-2 min-h-[100px] flex flex-col gap-1 relative group hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+<span class="text-slate-700 dark:text-slate-300 text-sm font-medium">4</span>
+<div class="bg-red-500/10 border-l-[3px] border-red-500 rounded-r text-[11px] p-1.5 cursor-pointer hover:bg-red-500/20 transition-colors">
+<p class="text-red-600 dark:text-red-400 font-bold truncate leading-tight">Q3 Financial Review</p>
+<p class="text-slate-500 dark:text-slate-400 truncate text-[10px]">2:00 PM</p>
+</div>
+<div class="bg-amber-500/10 border-l-[3px] border-amber-500 rounded-r text-[11px] p-1.5 cursor-pointer hover:bg-amber-500/20 transition-colors">
+<p class="text-amber-600 dark:text-amber-400 font-bold truncate leading-tight">Client Call</p>
+<p class="text-slate-500 dark:text-slate-400 truncate text-[10px]">4:30 PM</p>
+</div>
+</div>
+<!-- Today -->
+<div class="p-2 min-h-[100px] flex flex-col gap-1 relative group bg-primary/5 dark:bg-primary/5">
+<span class="size-7 bg-primary rounded-full flex items-center justify-center text-white text-sm font-bold shadow-md shadow-primary/20">5</span>
+<div class="bg-primary/10 border-l-[3px] border-primary rounded-r text-[11px] p-1.5 cursor-pointer hover:bg-primary/20 transition-colors">
+<p class="text-primary font-bold truncate leading-tight">Design Sync</p>
+<p class="text-slate-500 dark:text-slate-400 truncate text-[10px]">11:00 AM</p>
+</div>
+</div>
+<div class="p-2 min-h-[100px] flex flex-col gap-1 relative group hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+<span class="text-slate-700 dark:text-slate-300 text-sm font-medium">6</span>
+</div>
+<div class="p-2 min-h-[100px] flex flex-col gap-1 relative group hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+<span class="text-slate-700 dark:text-slate-300 text-sm font-medium">7</span>
+</div>
+<div class="p-2 min-h-[100px] flex flex-col gap-1 relative group hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+<span class="text-slate-700 dark:text-slate-300 text-sm font-medium">8</span>
+</div>
+<!-- Week 3 -->
+<div class="p-2 min-h-[100px] flex flex-col gap-1 relative group hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+<span class="text-slate-700 dark:text-slate-300 text-sm font-medium">9</span>
+<div class="bg-purple-500/10 border-l-[3px] border-purple-500 rounded-r text-[11px] p-1.5 cursor-pointer hover:bg-purple-500/20 transition-colors">
+<p class="text-purple-600 dark:text-purple-400 font-bold truncate leading-tight">UX Workshop</p>
+<p class="text-slate-500 dark:text-slate-400 truncate text-[10px]">All Day</p>
+</div>
+</div>
+<div class="p-2 min-h-[100px] flex flex-col gap-1 relative group hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+<span class="text-slate-700 dark:text-slate-300 text-sm font-medium">10</span>
+</div>
+<div class="p-2 min-h-[100px] flex flex-col gap-1 relative group hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+<span class="text-slate-700 dark:text-slate-300 text-sm font-medium">11</span>
+<div class="bg-amber-500/10 border-l-[3px] border-amber-500 rounded-r text-[11px] p-1.5 cursor-pointer hover:bg-amber-500/20 transition-colors">
+<p class="text-amber-600 dark:text-amber-400 font-bold truncate leading-tight">Team Lunch</p>
+<p class="text-slate-500 dark:text-slate-400 truncate text-[10px]">12:30 PM</p>
+</div>
+</div>
+<div class="p-2 min-h-[100px] flex flex-col gap-1 relative group hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+<span class="text-slate-700 dark:text-slate-300 text-sm font-medium">12</span>
+</div>
+<div class="p-2 min-h-[100px] flex flex-col gap-1 relative group hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+<span class="text-slate-700 dark:text-slate-300 text-sm font-medium">13</span>
+<div class="bg-red-500/10 border-l-[3px] border-red-500 rounded-r text-[11px] p-1.5 cursor-pointer hover:bg-red-500/20 transition-colors">
+<p class="text-red-600 dark:text-red-400 font-bold truncate leading-tight">Deadline: Mockups</p>
+<p class="text-slate-500 dark:text-slate-400 truncate text-[10px]">5:00 PM</p>
+</div>
+</div>
+<div class="p-2 min-h-[100px] flex flex-col gap-1 relative group hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+<span class="text-slate-700 dark:text-slate-300 text-sm font-medium">14</span>
+</div>
+<div class="p-2 min-h-[100px] flex flex-col gap-1 relative group hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+<span class="text-slate-700 dark:text-slate-300 text-sm font-medium">15</span>
+</div>
+<!-- Week 4 -->
+<div class="p-2 min-h-[100px] flex flex-col gap-1 relative group hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+<span class="text-slate-700 dark:text-slate-300 text-sm font-medium">16</span>
+</div>
+<div class="p-2 min-h-[100px] flex flex-col gap-1 relative group hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+<span class="text-slate-700 dark:text-slate-300 text-sm font-medium">17</span>
+<div class="bg-primary/10 border-l-[3px] border-primary rounded-r text-[11px] p-1.5 cursor-pointer hover:bg-primary/20 transition-colors">
+<p class="text-primary font-bold truncate leading-tight">Dev Handoff</p>
+<p class="text-slate-500 dark:text-slate-400 truncate text-[10px]">10:00 AM</p>
+</div>
+<div class="bg-primary/10 border-l-[3px] border-primary rounded-r text-[11px] p-1.5 cursor-pointer hover:bg-primary/20 transition-colors">
+<p class="text-primary font-bold truncate leading-tight">Standup</p>
+<p class="text-slate-500 dark:text-slate-400 truncate text-[10px]">9:00 AM</p>
+</div>
+</div>
+<div class="p-2 min-h-[100px] flex flex-col gap-1 relative group hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+<span class="text-slate-700 dark:text-slate-300 text-sm font-medium">18</span>
+</div>
+<div class="p-2 min-h-[100px] flex flex-col gap-1 relative group hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+<span class="text-slate-700 dark:text-slate-300 text-sm font-medium">19</span>
+<div class="bg-emerald-500/10 border-l-[3px] border-emerald-500 rounded-r text-[11px] p-1.5 cursor-pointer hover:bg-emerald-500/20 transition-colors">
+<p class="text-emerald-600 dark:text-emerald-400 font-bold truncate leading-tight">Release v2.4</p>
+<p class="text-slate-500 dark:text-slate-400 truncate text-[10px]">10:00 AM</p>
+</div>
+</div>
+<div class="p-2 min-h-[100px] flex flex-col gap-1 relative group hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+<span class="text-slate-700 dark:text-slate-300 text-sm font-medium">20</span>
+</div>
+<div class="p-2 min-h-[100px] flex flex-col gap-1 relative group hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+<span class="text-slate-700 dark:text-slate-300 text-sm font-medium">21</span>
+</div>
+<div class="p-2 min-h-[100px] flex flex-col gap-1 relative group hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+<span class="text-slate-700 dark:text-slate-300 text-sm font-medium">22</span>
+</div>
+<!-- Week 5 -->
+<div class="p-2 min-h-[100px] flex flex-col gap-1 relative group hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+<span class="text-slate-700 dark:text-slate-300 text-sm font-medium">23</span>
+</div>
+<div class="p-2 min-h-[100px] flex flex-col gap-1 relative group hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+<span class="text-slate-700 dark:text-slate-300 text-sm font-medium">24</span>
+</div>
+<div class="p-2 min-h-[100px] flex flex-col gap-1 relative group hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+<span class="text-slate-700 dark:text-slate-300 text-sm font-medium">25</span>
+<div class="bg-amber-500/10 border-l-[3px] border-amber-500 rounded-r text-[11px] p-1.5 cursor-pointer hover:bg-amber-500/20 transition-colors">
+<p class="text-amber-600 dark:text-amber-400 font-bold truncate leading-tight">Retrospective</p>
+<p class="text-slate-500 dark:text-slate-400 truncate text-[10px]">3:00 PM</p>
+</div>
+</div>
+<div class="p-2 min-h-[100px] flex flex-col gap-1 relative group hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+<span class="text-slate-700 dark:text-slate-300 text-sm font-medium">26</span>
+</div>
+<div class="p-2 min-h-[100px] flex flex-col gap-1 relative group hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+<span class="text-slate-700 dark:text-slate-300 text-sm font-medium">27</span>
+</div>
+<div class="p-2 min-h-[100px] flex flex-col gap-1 relative group hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+<span class="text-slate-700 dark:text-slate-300 text-sm font-medium">28</span>
+</div>
+<div class="p-2 min-h-[100px] flex flex-col gap-1 relative group hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+<span class="text-slate-700 dark:text-slate-300 text-sm font-medium">29</span>
+</div>
+<!-- Week 6 - Overflow -->
+<div class="p-2 min-h-[100px] flex flex-col gap-1 relative group hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+<span class="text-slate-700 dark:text-slate-300 text-sm font-medium">30</span>
+<div class="bg-primary/10 border-l-[3px] border-primary rounded-r text-[11px] p-1.5 cursor-pointer hover:bg-primary/20 transition-colors">
+<p class="text-primary font-bold truncate leading-tight">Monthly Report</p>
+<p class="text-slate-500 dark:text-slate-400 truncate text-[10px]">9:00 AM</p>
+</div>
+</div>
+<div class="p-2 min-h-[100px] flex flex-col gap-1 relative group hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+<span class="text-slate-700 dark:text-slate-300 text-sm font-medium">31</span>
+</div>
+<!-- Next Month -->
+<div class="p-2 min-h-[100px] bg-slate-50/50 dark:bg-transparent flex flex-col gap-1">
+<span class="text-slate-400 dark:text-slate-600 text-sm font-medium">1</span>
+</div>
+<div class="p-2 min-h-[100px] bg-slate-50/50 dark:bg-transparent flex flex-col gap-1">
+<span class="text-slate-400 dark:text-slate-600 text-sm font-medium">2</span>
+</div>
+<div class="p-2 min-h-[100px] bg-slate-50/50 dark:bg-transparent flex flex-col gap-1">
+<span class="text-slate-400 dark:text-slate-600 text-sm font-medium">3</span>
+</div>
+<div class="p-2 min-h-[100px] bg-slate-50/50 dark:bg-transparent flex flex-col gap-1">
+<span class="text-slate-400 dark:text-slate-600 text-sm font-medium">4</span>
+</div>
+<div class="p-2 min-h-[100px] bg-slate-50/50 dark:bg-transparent flex flex-col gap-1">
+<span class="text-slate-400 dark:text-slate-600 text-sm font-medium">5</span>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

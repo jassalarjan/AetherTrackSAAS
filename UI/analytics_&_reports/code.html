@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>TaskFlow - Analytics &amp; Reports</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#136dec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101822",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "9999px", "sm": "0.125rem"},
+                },
+            },
+        }
+    </script>
+<style>
+        /* Custom scrollbar for dark theme dashboard feel */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1c2027; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #3b4554; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #4b5563; 
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-white font-display overflow-hidden selection:bg-primary/30">
+<div class="flex h-screen w-full overflow-hidden">
+<!-- SIDEBAR -->
+<aside class="flex w-64 flex-col border-r border-[#282f39] bg-[#111418] shrink-0 z-20 hidden md:flex">
+<div class="flex h-full flex-col justify-between p-4">
+<div class="flex flex-col gap-4">
+<!-- Logo / Brand -->
+<div class="flex gap-3 items-center px-2 py-1">
+<div class="bg-center bg-no-repeat bg-cover rounded-full size-8 shrink-0 bg-primary flex items-center justify-center text-white font-bold" data-alt="TaskFlow Logo Abstract">
+                            TF
+                        </div>
+<div class="flex flex-col">
+<h1 class="text-white text-base font-bold leading-tight tracking-tight">TaskFlow</h1>
+<p class="text-[#9da8b9] text-xs font-normal leading-none">Enterprise</p>
+</div>
+</div>
+<!-- Nav Items -->
+<nav class="flex flex-col gap-1 mt-4">
+<a class="flex items-center gap-3 px-3 py-2 text-[#9da8b9] hover:bg-[#282f39] hover:text-white rounded transition-colors group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-white transition-colors">dashboard</span>
+<span class="text-sm font-medium leading-normal">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-[#9da8b9] hover:bg-[#282f39] hover:text-white rounded transition-colors group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-white transition-colors">check_circle</span>
+<span class="text-sm font-medium leading-normal">Tasks</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 bg-[#282f39] text-white rounded transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px] text-primary">bar_chart</span>
+<span class="text-sm font-medium leading-normal">Analytics</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-[#9da8b9] hover:bg-[#282f39] hover:text-white rounded transition-colors group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-white transition-colors">group</span>
+<span class="text-sm font-medium leading-normal">Team</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-[#9da8b9] hover:bg-[#282f39] hover:text-white rounded transition-colors group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-white transition-colors">settings</span>
+<span class="text-sm font-medium leading-normal">Settings</span>
+</a>
+</nav>
+</div>
+<!-- User Profile -->
+<div class="flex items-center gap-3 px-3 py-3 border-t border-[#282f39]">
+<div class="bg-center bg-no-repeat bg-cover rounded-full size-8 bg-gray-600" data-alt="User Profile Avatar" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCqbln2ae9-tq17hNeHcb-mlRPZbsIaatBBtCvd96pCNaTaYI1OlSOs-eNtONjieTe6z49YnibAx59_NvLkprLjjb-gA9lCvqozensfPtSHhmaNlEd8bopmkUrJcG131zxYNFGhRbGZr5EpsOSTJKS_N_DRvbqWvob7hb9WeKbx7Lb7oHTg5qI8ZJ78MxNaen_0-RlUHl77zd5EfdeE2z80MUgOlCny8mJyzKXSrU4ChWj7uPBqby_DLECG6F4QbnXcM-nyrctgt9s");'></div>
+<div class="flex flex-col">
+<p class="text-white text-sm font-medium leading-none">Alex Morgan</p>
+<p class="text-[#9da8b9] text-xs leading-none mt-1">Admin</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- MAIN CONTENT -->
+<main class="flex-1 flex flex-col h-full relative overflow-y-auto bg-background-light dark:bg-background-dark">
+<!-- TOP HEADER -->
+<header class="sticky top-0 z-10 flex items-center justify-between whitespace-nowrap border-b border-solid border-[#282f39] bg-[#111418] px-6 py-3 w-full shrink-0">
+<!-- Breadcrumbs & Search -->
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-2 text-[#9da8b9] text-sm font-medium">
+<a class="hover:text-white transition-colors" href="#">Home</a>
+<span class="text-[#3b4554]">/</span>
+<span class="text-white">Analytics</span>
+</div>
+</div>
+<!-- Right Actions -->
+<div class="flex items-center gap-4">
+<div class="relative hidden sm:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[#9da8b9] text-[20px]">search</span>
+<input class="h-9 pl-10 pr-4 bg-[#1c2027] border border-[#282f39] rounded text-sm text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary placeholder:text-[#586375] w-64 transition-all" placeholder="Search reports..." type="text"/>
+</div>
+<button class="relative p-2 text-[#9da8b9] hover:text-white hover:bg-[#282f39] rounded transition-colors">
+<span class="material-symbols-outlined text-[24px]">notifications</span>
+<span class="absolute top-2 right-2 size-2 bg-red-500 rounded-full border border-[#111418]"></span>
+</button>
+<button class="p-2 text-[#9da8b9] hover:text-white hover:bg-[#282f39] rounded transition-colors sm:hidden">
+<span class="material-symbols-outlined text-[24px]">menu</span>
+</button>
+</div>
+</header>
+<!-- SCROLLABLE PAGE CONTENT -->
+<div class="flex flex-col p-6 gap-6 max-w-[1400px] w-full mx-auto">
+<!-- PAGE TITLE & CONTROLS -->
+<div class="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
+<div class="flex flex-col gap-1">
+<h1 class="text-white text-3xl font-bold tracking-tight">Analytics &amp; Reports</h1>
+<p class="text-[#9da8b9] text-sm">Track team performance, task velocity, and operational metrics.</p>
+</div>
+<!-- Filter Toolbar -->
+<div class="flex flex-wrap items-center gap-3">
+<!-- Select Date -->
+<div class="relative group">
+<select class="appearance-none h-10 pl-3 pr-10 bg-[#1c2027] border border-[#282f39] hover:border-[#3b4554] rounded text-white text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all cursor-pointer min-w-[140px]">
+<option>Last 30 Days</option>
+<option>Last 7 Days</option>
+<option>This Quarter</option>
+<option>Year to Date</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-[#9da8b9] text-[18px] pointer-events-none">calendar_today</span>
+</div>
+<!-- Select Department -->
+<div class="relative group">
+<select class="appearance-none h-10 pl-3 pr-8 bg-[#1c2027] border border-[#282f39] hover:border-[#3b4554] rounded text-white text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all cursor-pointer min-w-[120px]">
+<option>All Teams</option>
+<option>Engineering</option>
+<option>Design</option>
+<option>Marketing</option>
+</select>
+<span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-[#9da8b9] text-[20px] pointer-events-none">arrow_drop_down</span>
+</div>
+<div class="h-6 w-px bg-[#282f39] mx-1"></div>
+<button class="h-10 px-4 bg-primary hover:bg-primary/90 text-white text-sm font-medium rounded flex items-center gap-2 transition-colors shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined text-[18px]">download</span>
+                            Export Report
+                         </button>
+</div>
+</div>
+<!-- KPI CARDS GRID -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+<!-- Card 1 -->
+<div class="bg-[#181b21] p-5 rounded border border-[#282f39] flex flex-col gap-4 hover:border-[#3b4554] transition-colors group">
+<div class="flex items-center justify-between">
+<p class="text-[#9da8b9] text-sm font-medium">Total Tasks</p>
+<span class="material-symbols-outlined text-[#3b4554] group-hover:text-primary transition-colors text-[20px]">assignment</span>
+</div>
+<div class="flex items-end gap-3">
+<h2 class="text-3xl font-bold text-white leading-none">1,248</h2>
+<div class="flex items-center gap-1 text-emerald-400 text-xs font-medium bg-emerald-400/10 px-1.5 py-0.5 rounded mb-1">
+<span class="material-symbols-outlined text-[12px]">trending_up</span>
+<span>12%</span>
+</div>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="bg-[#181b21] p-5 rounded border border-[#282f39] flex flex-col gap-4 hover:border-[#3b4554] transition-colors group">
+<div class="flex items-center justify-between">
+<p class="text-[#9da8b9] text-sm font-medium">Completion Rate</p>
+<span class="material-symbols-outlined text-[#3b4554] group-hover:text-primary transition-colors text-[20px]">check_circle</span>
+</div>
+<div class="flex items-end gap-3">
+<h2 class="text-3xl font-bold text-white leading-none">84.2%</h2>
+<div class="flex items-center gap-1 text-emerald-400 text-xs font-medium bg-emerald-400/10 px-1.5 py-0.5 rounded mb-1">
+<span class="material-symbols-outlined text-[12px]">trending_up</span>
+<span>2.4%</span>
+</div>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="bg-[#181b21] p-5 rounded border border-[#282f39] flex flex-col gap-4 hover:border-[#3b4554] transition-colors group">
+<div class="flex items-center justify-between">
+<p class="text-[#9da8b9] text-sm font-medium">Avg Resolution</p>
+<span class="material-symbols-outlined text-[#3b4554] group-hover:text-primary transition-colors text-[20px]">timer</span>
+</div>
+<div class="flex items-end gap-3">
+<h2 class="text-3xl font-bold text-white leading-none">3.2d</h2>
+<div class="flex items-center gap-1 text-rose-400 text-xs font-medium bg-rose-400/10 px-1.5 py-0.5 rounded mb-1">
+<span class="material-symbols-outlined text-[12px]">trending_down</span>
+<span>4h</span>
+</div>
+</div>
+</div>
+<!-- Card 4 -->
+<div class="bg-[#181b21] p-5 rounded border border-[#282f39] flex flex-col gap-4 hover:border-[#3b4554] transition-colors group">
+<div class="flex items-center justify-between">
+<p class="text-[#9da8b9] text-sm font-medium">Pending Review</p>
+<span class="material-symbols-outlined text-[#3b4554] group-hover:text-primary transition-colors text-[20px]">pending</span>
+</div>
+<div class="flex items-end gap-3">
+<h2 class="text-3xl font-bold text-white leading-none">42</h2>
+<div class="flex items-center gap-1 text-[#9da8b9] text-xs font-medium bg-[#282f39] px-1.5 py-0.5 rounded mb-1">
+<span>Stable</span>
+</div>
+</div>
+</div>
+</div>
+<!-- MAIN CHARTS ROW -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<!-- CHART 1: VELOCITY (Wide) -->
+<div class="lg:col-span-2 bg-[#181b21] rounded border border-[#282f39] p-5 flex flex-col">
+<div class="flex items-center justify-between mb-6">
+<h3 class="text-white font-semibold text-lg">Task Velocity</h3>
+<button class="text-[#9da8b9] hover:text-white transition-colors">
+<span class="material-symbols-outlined text-[20px]">more_horiz</span>
+</button>
+</div>
+<div class="flex-1 relative h-64 w-full">
+<!-- Axis Labels Y -->
+<div class="absolute left-0 top-0 bottom-6 w-8 flex flex-col justify-between text-xs text-[#586375] font-medium text-right pr-2">
+<span>100</span>
+<span>75</span>
+<span>50</span>
+<span>25</span>
+<span>0</span>
+</div>
+<!-- Chart Area -->
+<div class="absolute left-10 right-0 top-2 bottom-6 border-l border-b border-[#282f39]">
+<!-- Grid lines -->
+<div class="w-full h-full flex flex-col justify-between">
+<div class="border-t border-[#282f39]/50 w-full h-0"></div>
+<div class="border-t border-[#282f39]/50 w-full h-0"></div>
+<div class="border-t border-[#282f39]/50 w-full h-0"></div>
+<div class="border-t border-[#282f39]/50 w-full h-0"></div>
+<div class="border-t border-[#282f39]/50 w-full h-0"></div>
+</div>
+<!-- The Line SVG -->
+<svg class="absolute inset-0 w-full h-full overflow-visible" preserveaspectratio="none" viewbox="0 0 100 100">
+<defs>
+<lineargradient id="gradient" x1="0" x2="0" y1="0" y2="1">
+<stop offset="0%" stop-color="#136dec" stop-opacity="0.2"></stop>
+<stop offset="100%" stop-color="#136dec" stop-opacity="0"></stop>
+</lineargradient>
+</defs>
+<path d="M0,80 Q10,75 20,60 T40,50 T60,30 T80,45 T100,20 L100,100 L0,100 Z" fill="url(#gradient)"></path>
+<path d="M0,80 Q10,75 20,60 T40,50 T60,30 T80,45 T100,20" fill="none" stroke="#136dec" stroke-width="2" vector-effect="non-scaling-stroke"></path>
+<!-- Dots -->
+<circle cx="20" cy="60" fill="#181b21" r="3" stroke="#136dec" stroke-width="2"></circle>
+<circle cx="60" cy="30" fill="#181b21" r="3" stroke="#136dec" stroke-width="2"></circle>
+<circle cx="100" cy="20" fill="#181b21" r="3" stroke="#136dec" stroke-width="2"></circle>
+</svg>
+</div>
+<!-- Axis Labels X -->
+<div class="absolute left-10 right-0 bottom-0 h-4 flex justify-between text-xs text-[#586375] font-medium pt-1">
+<span>Mon</span>
+<span>Tue</span>
+<span>Wed</span>
+<span>Thu</span>
+<span>Fri</span>
+<span>Sat</span>
+<span>Sun</span>
+</div>
+</div>
+</div>
+<!-- CHART 2: STATUS BREAKDOWN (Doughnut) -->
+<div class="bg-[#181b21] rounded border border-[#282f39] p-5 flex flex-col">
+<div class="flex items-center justify-between mb-4">
+<h3 class="text-white font-semibold text-lg">Status</h3>
+<button class="text-[#9da8b9] hover:text-white transition-colors">
+<span class="material-symbols-outlined text-[20px]">filter_list</span>
+</button>
+</div>
+<div class="flex-1 flex flex-col items-center justify-center gap-6">
+<div class="relative size-48">
+<!-- CSS Conic Gradient Chart -->
+<div class="w-full h-full rounded-full" style="background: conic-gradient(#136dec 0% 45%, #3b82f6 45% 70%, #60a5fa 70% 85%, #282f39 85% 100%);"></div>
+<!-- Inner Cutout -->
+<div class="absolute inset-4 bg-[#181b21] rounded-full flex flex-col items-center justify-center">
+<span class="text-3xl font-bold text-white">45%</span>
+<span class="text-xs text-[#9da8b9] uppercase tracking-wide">Done</span>
+</div>
+</div>
+<!-- Legend -->
+<div class="flex flex-wrap justify-center gap-x-4 gap-y-2 w-full">
+<div class="flex items-center gap-2">
+<span class="size-2.5 rounded-full bg-[#136dec]"></span>
+<span class="text-sm text-[#9da8b9]">Done</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="size-2.5 rounded-full bg-[#3b82f6]"></span>
+<span class="text-sm text-[#9da8b9]">In Progress</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="size-2.5 rounded-full bg-[#60a5fa]"></span>
+<span class="text-sm text-[#9da8b9]">Review</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="size-2.5 rounded-full bg-[#282f39]"></span>
+<span class="text-sm text-[#9da8b9]">Backlog</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- CHART 3: WORKLOAD (Horizontal Bars) & TABLE SECTION -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+<!-- Workload Distribution -->
+<div class="bg-[#181b21] rounded border border-[#282f39] p-5 flex flex-col h-full">
+<h3 class="text-white font-semibold text-lg mb-6">Workload by Role</h3>
+<div class="flex flex-col gap-5 flex-1 justify-center">
+<!-- Item -->
+<div class="flex flex-col gap-1">
+<div class="flex justify-between text-sm mb-1">
+<span class="text-white">Engineering</span>
+<span class="text-[#9da8b9]">142h</span>
+</div>
+<div class="w-full bg-[#282f39] rounded-full h-2">
+<div class="bg-primary h-2 rounded-full" style="width: 85%"></div>
+</div>
+</div>
+<!-- Item -->
+<div class="flex flex-col gap-1">
+<div class="flex justify-between text-sm mb-1">
+<span class="text-white">Design</span>
+<span class="text-[#9da8b9]">86h</span>
+</div>
+<div class="w-full bg-[#282f39] rounded-full h-2">
+<div class="bg-primary/80 h-2 rounded-full" style="width: 60%"></div>
+</div>
+</div>
+<!-- Item -->
+<div class="flex flex-col gap-1">
+<div class="flex justify-between text-sm mb-1">
+<span class="text-white">Marketing</span>
+<span class="text-[#9da8b9]">45h</span>
+</div>
+<div class="w-full bg-[#282f39] rounded-full h-2">
+<div class="bg-primary/60 h-2 rounded-full" style="width: 35%"></div>
+</div>
+</div>
+<!-- Item -->
+<div class="flex flex-col gap-1">
+<div class="flex justify-between text-sm mb-1">
+<span class="text-white">Product</span>
+<span class="text-[#9da8b9]">120h</span>
+</div>
+<div class="w-full bg-[#282f39] rounded-full h-2">
+<div class="bg-primary/40 h-2 rounded-full" style="width: 70%"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Detailed Table -->
+<div class="lg:col-span-2 bg-[#181b21] rounded border border-[#282f39] p-0 overflow-hidden flex flex-col">
+<div class="p-5 border-b border-[#282f39] flex items-center justify-between">
+<h3 class="text-white font-semibold text-lg">Recent Report Generations</h3>
+<button class="text-primary text-sm font-medium hover:text-primary/80">View All</button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left text-sm whitespace-nowrap">
+<thead class="bg-[#1c2027] text-[#9da8b9] font-medium border-b border-[#282f39]">
+<tr>
+<th class="px-5 py-3 font-medium">Report Name</th>
+<th class="px-5 py-3 font-medium">Generated By</th>
+<th class="px-5 py-3 font-medium">Date</th>
+<th class="px-5 py-3 font-medium">Status</th>
+<th class="px-5 py-3 font-medium text-right">Action</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-[#282f39] text-white">
+<tr class="hover:bg-[#282f39]/50 transition-colors">
+<td class="px-5 py-4 font-medium">Q3 Performance Summary</td>
+<td class="px-5 py-4 text-[#9da8b9]">Alex Morgan</td>
+<td class="px-5 py-4 text-[#9da8b9]">Oct 24, 2023</td>
+<td class="px-5 py-4">
+<span class="inline-flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium bg-emerald-400/10 text-emerald-400 border border-emerald-400/20">
+                                                Ready
+                                            </span>
+</td>
+<td class="px-5 py-4 text-right">
+<button class="text-[#9da8b9] hover:text-white">
+<span class="material-symbols-outlined text-[20px]">download</span>
+</button>
+</td>
+</tr>
+<tr class="hover:bg-[#282f39]/50 transition-colors">
+<td class="px-5 py-4 font-medium">Sprint 42 Velocity</td>
+<td class="px-5 py-4 text-[#9da8b9]">Sarah Chen</td>
+<td class="px-5 py-4 text-[#9da8b9]">Oct 22, 2023</td>
+<td class="px-5 py-4">
+<span class="inline-flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium bg-emerald-400/10 text-emerald-400 border border-emerald-400/20">
+                                                Ready
+                                            </span>
+</td>
+<td class="px-5 py-4 text-right">
+<button class="text-[#9da8b9] hover:text-white">
+<span class="material-symbols-outlined text-[20px]">download</span>
+</button>
+</td>
+</tr>
+<tr class="hover:bg-[#282f39]/50 transition-colors">
+<td class="px-5 py-4 font-medium">Monthly Resource Allocation</td>
+<td class="px-5 py-4 text-[#9da8b9]">System</td>
+<td class="px-5 py-4 text-[#9da8b9]">Oct 20, 2023</td>
+<td class="px-5 py-4">
+<span class="inline-flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium bg-[#282f39] text-[#9da8b9] border border-[#3b4554]">
+                                                Archived
+                                            </span>
+</td>
+<td class="px-5 py-4 text-right">
+<button class="text-[#9da8b9] hover:text-white">
+<span class="material-symbols-outlined text-[20px]">more_vert</span>
+</button>
+</td>
+</tr>
+<tr class="hover:bg-[#282f39]/50 transition-colors">
+<td class="px-5 py-4 font-medium">Bug Report - Oct 23</td>
+<td class="px-5 py-4 text-[#9da8b9]">David Kim</td>
+<td class="px-5 py-4 text-[#9da8b9]">Oct 18, 2023</td>
+<td class="px-5 py-4">
+<span class="inline-flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium bg-rose-400/10 text-rose-400 border border-rose-400/20">
+                                                Failed
+                                            </span>
+</td>
+<td class="px-5 py-4 text-right">
+<button class="text-[#9da8b9] hover:text-white">
+<span class="material-symbols-outlined text-[20px]">refresh</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>
