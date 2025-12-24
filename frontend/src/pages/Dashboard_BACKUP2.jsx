@@ -17,7 +17,7 @@ import { generateComprehensivePDFReport } from '../utils/comprehensiveReportGene
 
 const Dashboard = () => {
   const { user, logout } = useAuth();
-  const { theme } = useTheme();
+  const { currentTheme, currentColorScheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
   
@@ -390,58 +390,58 @@ const Dashboard = () => {
 
   if (loading) {
     return (
-      <div className={`min-h-screen ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'} flex items-center justify-center`}>
+      <div className="min-h-screen bg-[#111418] flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#136dec] mx-auto mb-4"></div>
-          <p className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} font-medium`}>Loading dashboard...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-400 font-medium">Loading dashboard...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className={`flex h-screen w-full overflow-hidden ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'}`}>
+    <div className="flex h-screen w-full overflow-hidden bg-[#111418]">
       {/* Unified Sidebar */}
       <Sidebar />
 
       {/* Main Content */}
-      <main className={`flex-1 flex flex-col h-full min-w-0 overflow-hidden ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'}`}>
+      <main className="flex-1 flex flex-col h-full min-w-0 overflow-hidden bg-[#111418]">
         {/* Top Header */}
-        <header className={`h-16 flex items-center justify-between px-6 border-b ${theme === 'dark' ? 'border-[#282f39] bg-[#111418]' : 'border-gray-200 bg-white'} shrink-0 z-20`}>
+        <header className="h-16 flex items-center justify-between px-6 border-b border-[#282f39] bg-[#111418] shrink-0 z-20">
           <div className="flex items-center gap-4">
-            <h2 className={`${theme === 'dark' ? 'text-white' : 'text-gray-900'} text-lg font-bold leading-tight tracking-tight`}>Dashboard</h2>
+            <h2 className="text-white text-lg font-bold leading-tight tracking-tight">Dashboard</h2>
           </div>
 
           <div className="flex items-center gap-6">
             {/* Search */}
             <div className="relative w-80 hidden md:block">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search className={`w-5 h-5 ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-400'}`} />
+                <Search className="w-5 h-5 text-[#9da8b9]" />
               </div>
               <input
-                className={`block w-full rounded-[0.125rem] ${theme === 'dark' ? 'bg-[#1c2027] text-white placeholder-[#9da8b9]' : 'bg-gray-100 text-gray-900 placeholder-gray-400'} border-0 py-2 pl-10 pr-3 focus:ring-1 focus:ring-[#136dec] sm:text-sm`}
+                className="block w-full rounded-sm bg-[#1c2027] border-0 py-2 pl-10 pr-3 text-white placeholder-[#9da8b9] focus:ring-1 focus:ring-blue-600 sm:text-sm"
                 placeholder="Search tasks, projects, or people..."
                 type="text"
               />
             </div>
 
             {/* Actions */}
-            <div className={`flex items-center gap-4 border-l ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} pl-6`}>
+            <div className="flex items-center gap-4 border-l border-[#282f39] pl-6">
               <button 
                 onClick={() => navigate('/notifications')}
-                className={`${theme === 'dark' ? 'text-[#9da8b9] hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors relative`}
+                className="text-[#9da8b9] hover:text-white transition-colors relative"
               >
                 <Bell className="w-5 h-5" />
                 {unreadNotifications > 0 && (
-                  <span className={`absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-500 ring-2 ${theme === 'dark' ? 'ring-[#111418]' : 'ring-white'}`}></span>
+                  <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-500 ring-2 ring-[#111418]"></span>
                 )}
               </button>
-              <button className={`${theme === 'dark' ? 'text-[#9da8b9] hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}>
+              <button className="text-[#9da8b9] hover:text-white transition-colors">
                 <HelpCircle className="w-5 h-5" />
               </button>
               <button 
                 onClick={() => navigate('/settings')}
-                className={`${theme === 'dark' ? 'text-[#9da8b9] hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}
+                className="text-[#9da8b9] hover:text-white transition-colors"
               >
                 <Settings className="w-5 h-5" />
               </button>
@@ -450,34 +450,34 @@ const Dashboard = () => {
         </header>
 
         {/* KPI Ribbon */}
-        <div className={`${theme === 'dark' ? 'bg-[#111418] border-[#282f39]' : 'bg-white border-gray-200'} border-b px-6 py-4 shrink-0`}>
+        <div className="bg-[#111418] border-b border-[#282f39] px-6 py-4 shrink-0">
           <div className="flex items-center gap-8 text-sm">
             <div className="flex items-baseline gap-2">
-              <span className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} tracking-tight`}>{stats.totalTasks}</span>
-              <span className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} font-medium uppercase text-xs tracking-wide`}>Total Tasks</span>
+              <span className="text-2xl font-bold text-white tracking-tight">{stats.totalTasks}</span>
+              <span className="text-[#9da8b9] font-medium uppercase text-xs tracking-wide">Total Tasks</span>
             </div>
-            <div className={`h-8 w-px ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-gray-200'}`}></div>
+            <div className="h-8 w-px bg-[#282f39]"></div>
             <div className="flex items-baseline gap-2">
-              <span className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} tracking-tight`}>{stats.myTasks}</span>
-              <span className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} font-medium uppercase text-xs tracking-wide`}>Assigned to Me</span>
+              <span className="text-2xl font-bold text-white tracking-tight">{stats.myTasks}</span>
+              <span className="text-[#9da8b9] font-medium uppercase text-xs tracking-wide">Assigned to Me</span>
             </div>
-            <div className={`h-8 w-px ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-gray-200'}`}></div>
+            <div className="h-8 w-px bg-[#282f39]"></div>
             <div className="flex items-baseline gap-2">
               <span className="text-2xl font-bold text-red-400 tracking-tight">{stats.overdueTasks}</span>
-              <span className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} font-medium uppercase text-xs tracking-wide`}>Overdue</span>
+              <span className="text-[#9da8b9] font-medium uppercase text-xs tracking-wide">Overdue</span>
             </div>
-            <div className={`h-8 w-px ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-gray-200'}`}></div>
+            <div className="h-8 w-px bg-[#282f39]"></div>
             <div className="flex items-baseline gap-2">
-              <span className="text-2xl font-bold text-[#136dec] tracking-tight">
+              <span className="text-2xl font-bold text-blue-600 tracking-tight">
                 {stats.totalTasks > 0 ? Math.round((stats.inProgress / stats.totalTasks) * 100) : 0}%
               </span>
-              <span className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} font-medium uppercase text-xs tracking-wide`}>Team Capacity</span>
+              <span className="text-[#9da8b9] font-medium uppercase text-xs tracking-wide">Team Capacity</span>
             </div>
             <div className="ml-auto flex items-center gap-3">
-              <span className={`text-xs ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`}>Last updated: Just now</span>
+              <span className="text-xs text-[#9da8b9]">Last updated: Just now</span>
               <Link
                 to="/tasks"
-                className="flex items-center gap-2 bg-[#136dec] hover:bg-[#1258c4] text-white text-xs font-bold px-3 py-2 rounded-[0.125rem] transition-colors"
+                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-3 py-2 rounded-sm transition-colors"
               >
                 <Plus className="w-4 h-4" />
                 New Task
@@ -492,15 +492,15 @@ const Dashboard = () => {
             {/* LEFT: Main Task Table */}
             <div className="flex-1 flex flex-col min-w-0">
               <div className="flex items-center justify-between mb-4">
-                <h3 className={`${theme === 'dark' ? 'text-white' : 'text-gray-900'} text-lg font-bold leading-tight`}>Active Task Queue</h3>
+                <h3 className="text-white text-lg font-bold leading-tight">Active Task Queue</h3>
                 <div className="flex gap-2">
-                  <button className={`flex items-center gap-1 px-2 py-1 text-xs font-medium ${theme === 'dark' ? 'text-[#9da8b9] hover:text-white hover:bg-[#1c2027]' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'} rounded-[0.125rem] transition-colors`}>
+                  <button className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-[#9da8b9] hover:text-white rounded-sm hover:bg-[#1c2027] transition-colors">
                     <Filter className="w-4 h-4" />
                     Filter
                   </button>
                   <button
                     onClick={() => setShowReportOptions(!showReportOptions)}
-                    className={`flex items-center gap-1 px-2 py-1 text-xs font-medium ${theme === 'dark' ? 'text-[#9da8b9] hover:text-white hover:bg-[#1c2027]' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'} rounded-[0.125rem] transition-colors`}
+                    className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-[#9da8b9] hover:text-white rounded-sm hover:bg-[#1c2027] transition-colors"
                   >
                     <Download className="w-4 h-4" />
                     Export
@@ -510,17 +510,17 @@ const Dashboard = () => {
 
               {/* Report Options Dropdown */}
               {showReportOptions && (
-                <div className={`absolute right-6 mt-12 ${theme === 'dark' ? 'bg-[#1c2027] border-[#282f39]' : 'bg-white border-gray-200'} border rounded-[0.125rem] shadow-lg p-2 z-50`}>
+                <div className="absolute right-6 mt-12 bg-[#1c2027] border border-[#282f39] rounded-sm shadow-lg p-2 z-50">
                   <button
                     onClick={() => handleGenerateReport('excel')}
-                    className={`flex items-center gap-2 w-full px-3 py-2 text-sm ${theme === 'dark' ? 'text-white hover:bg-[#282f39]' : 'text-gray-900 hover:bg-gray-100'} rounded-[0.125rem] transition-colors`}
+                    className="flex items-center gap-2 w-full px-3 py-2 text-sm text-white hover:bg-[#282f39] rounded-sm transition-colors"
                   >
                     <FileSpreadsheet className="w-4 h-4" />
                     Export as Excel
                   </button>
                   <button
                     onClick={() => handleGenerateReport('pdf')}
-                    className={`flex items-center gap-2 w-full px-3 py-2 text-sm ${theme === 'dark' ? 'text-white hover:bg-[#282f39]' : 'text-gray-900 hover:bg-gray-100'} rounded-[0.125rem] transition-colors`}
+                    className="flex items-center gap-2 w-full px-3 py-2 text-sm text-white hover:bg-[#282f39] rounded-sm transition-colors"
                   >
                     <FileText className="w-4 h-4" />
                     Export as PDF
@@ -529,62 +529,62 @@ const Dashboard = () => {
               )}
 
               {/* Table Container */}
-              <div className={`border ${theme === 'dark' ? 'border-[#282f39] bg-[#1c2027]' : 'border-gray-200 bg-white'} rounded-[0.125rem] overflow-hidden flex flex-col`}>
+              <div className="border border-[#282f39] rounded-sm bg-[#1c2027] overflow-hidden flex flex-col">
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse">
                     <thead>
-                      <tr className={`${theme === 'dark' ? 'bg-[#181b21] border-[#282f39]' : 'bg-gray-50 border-gray-200'} border-b`}>
-                        <th className={`px-4 py-3 text-xs font-semibold ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} uppercase tracking-wider w-8`}>
+                      <tr className="bg-[#181b21] border-b border-[#282f39]">
+                        <th className="px-4 py-3 text-xs font-semibold text-[#9da8b9] uppercase tracking-wider w-8">
                           <input
-                            className={`form-checkbox rounded-[0.125rem] ${theme === 'dark' ? 'border-[#282f39] bg-[#282f39]' : 'border-gray-300 bg-gray-100'} text-[#136dec] focus:ring-0 focus:ring-offset-0 h-3 w-3`}
+                            className="form-checkbox rounded-sm border-[#282f39] bg-[#282f39] text-blue-600 focus:ring-0 focus:ring-offset-0 h-3 w-3"
                             type="checkbox"
                           />
                         </th>
-                        <th className={`px-4 py-3 text-xs font-semibold ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} uppercase tracking-wider w-5/12`}>
+                        <th className="px-4 py-3 text-xs font-semibold text-[#9da8b9] uppercase tracking-wider w-5/12">
                           Task Name
                         </th>
-                        <th className={`px-4 py-3 text-xs font-semibold ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} uppercase tracking-wider w-2/12`}>
+                        <th className="px-4 py-3 text-xs font-semibold text-[#9da8b9] uppercase tracking-wider w-2/12">
                           Priority
                         </th>
-                        <th className={`px-4 py-3 text-xs font-semibold ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} uppercase tracking-wider w-2/12`}>
+                        <th className="px-4 py-3 text-xs font-semibold text-[#9da8b9] uppercase tracking-wider w-2/12">
                           Due Date
                         </th>
-                        <th className={`px-4 py-3 text-xs font-semibold ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} uppercase tracking-wider w-2/12`}>
+                        <th className="px-4 py-3 text-xs font-semibold text-[#9da8b9] uppercase tracking-wider w-2/12">
                           Status
                         </th>
-                        <th className={`px-4 py-3 text-xs font-semibold ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} uppercase tracking-wider w-1/12 text-right`}>
+                        <th className="px-4 py-3 text-xs font-semibold text-[#9da8b9] uppercase tracking-wider w-1/12 text-right">
                           Owner
                         </th>
                       </tr>
                     </thead>
-                    <tbody className={`divide-y ${theme === 'dark' ? 'divide-[#282f39]' : 'divide-gray-200'} text-sm`}>
+                    <tbody className="divide-y divide-[#282f39] text-sm">
                       {recentTasks.slice(0, 5).map((task) => (
                         <tr
                           key={task._id}
-                          className={`group ${theme === 'dark' ? 'hover:bg-[#232830]' : 'hover:bg-gray-50'} transition-colors cursor-pointer`}
+                          className="group hover:bg-[#232830] transition-colors cursor-pointer"
                           onClick={() => navigate(`/tasks`)}
                         >
                           <td className="px-4 py-3">
                             <input
-                              className={`form-checkbox rounded-[0.125rem] ${theme === 'dark' ? 'border-[#282f39] bg-[#282f39] group-hover:border-[#9da8b9]' : 'border-gray-300 bg-gray-100 group-hover:border-gray-400'} text-[#136dec] focus:ring-0 focus:ring-offset-0 h-3 w-3`}
+                              className="form-checkbox rounded-sm border-[#282f39] bg-[#282f39] text-blue-600 focus:ring-0 focus:ring-offset-0 h-3 w-3 group-hover:border-[#9da8b9]"
                               type="checkbox"
                               onClick={(e) => e.stopPropagation()}
                             />
                           </td>
                           <td className="px-4 py-3">
                             <div className="flex flex-col">
-                              <span className={`${theme === 'dark' ? 'text-white' : 'text-gray-900'} font-medium`}>{task.title}</span>
-                              <span className={`text-xs ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`}>
+                              <span className="text-white font-medium">{task.title}</span>
+                              <span className="text-xs text-[#9da8b9]">
                                 Project: {task.team_id?.name || 'No Team'}
                               </span>
                             </div>
                           </td>
                           <td className="px-4 py-3">
-                            <div className={`inline-flex items-center px-2 py-0.5 rounded-[0.125rem] text-xs font-medium border ${getPriorityColor(task.priority)}`}>
+                            <div className={`inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium border ${getPriorityColor(task.priority)}`}>
                               {task.priority?.charAt(0).toUpperCase() + task.priority?.slice(1)}
                             </div>
                           </td>
-                          <td className={`px-4 py-3 ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} font-mono text-xs`}>
+                          <td className="px-4 py-3 text-[#9da8b9] font-mono text-xs">
                             {formatDate(task.due_date)}
                           </td>
                           <td className="px-4 py-3">
@@ -603,7 +603,7 @@ const Dashboard = () => {
 
                       {recentTasks.length === 0 && (
                         <tr>
-                          <td colSpan="6" className={`px-4 py-8 text-center ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`}>
+                          <td colSpan="6" className="px-4 py-8 text-center text-[#9da8b9]">
                             No tasks found. Create your first task to get started!
                           </td>
                         </tr>
@@ -611,14 +611,14 @@ const Dashboard = () => {
                     </tbody>
                   </table>
                 </div>
-                <div className={`p-3 border-t ${theme === 'dark' ? 'border-[#282f39] bg-[#181b21] text-[#9da8b9]' : 'border-gray-200 bg-gray-50 text-gray-600'} flex justify-between items-center text-xs`}>
+                <div className="p-3 border-t border-[#282f39] bg-[#181b21] flex justify-between items-center text-xs text-[#9da8b9]">
                   <span>Showing {Math.min(5, recentTasks.length)} of {stats.totalTasks} tasks</span>
                   <div className="flex gap-2">
-                    <button className={`${theme === 'dark' ? 'hover:text-white' : 'hover:text-gray-900'} disabled:opacity-50`} disabled>
+                    <button className="hover:text-white disabled:opacity-50" disabled>
                       Previous
                     </button>
-                    <span className={theme === 'dark' ? 'text-[#282f39]' : 'text-gray-300'}>|</span>
-                    <Link to="/tasks" className={theme === 'dark' ? 'hover:text-white' : 'hover:text-gray-900'}>
+                    <span className="text-[#282f39]">|</span>
+                    <Link to="/tasks" className="hover:text-white">
                       View All
                     </Link>
                   </div>
@@ -631,29 +631,29 @@ const Dashboard = () => {
               {/* Overdue Tasks Widget */}
               <div className="flex flex-col">
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className={`${theme === 'dark' ? 'text-white' : 'text-gray-900'} text-sm font-bold uppercase tracking-wider`}>Attention Needed</h3>
+                  <h3 className="text-white text-sm font-bold uppercase tracking-wider">Attention Needed</h3>
                 </div>
-                <div className={`${theme === 'dark' ? 'bg-[#1c2027] border-[#282f39]' : 'bg-white border-gray-200'} border rounded-[0.125rem] overflow-hidden`}>
-                  <div className={`flex flex-col divide-y ${theme === 'dark' ? 'divide-[#282f39]' : 'divide-gray-200'}`}>
+                <div className="bg-[#1c2027] border border-[#282f39] rounded-sm overflow-hidden">
+                  <div className="flex flex-col divide-y divide-[#282f39]">
                     {overdueTasks.slice(0, 2).map((task) => (
                       <div
                         key={task._id}
-                        className={`p-3 ${theme === 'dark' ? 'hover:bg-[#232830]' : 'hover:bg-gray-50'} transition-colors cursor-pointer border-l-2 border-transparent hover:border-red-500`}
+                        className="p-3 hover:bg-[#232830] transition-colors cursor-pointer border-l-2 border-transparent hover:border-red-500"
                         onClick={() => navigate('/tasks')}
                       >
                         <div className="flex justify-between items-start mb-1">
-                          <p className={`text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'} font-medium line-clamp-1`}>{task.title}</p>
+                          <p className="text-sm text-white font-medium line-clamp-1">{task.title}</p>
                           <span className="text-xs text-red-400 font-mono whitespace-nowrap">
                             {Math.abs(Math.ceil((new Date(task.due_date) - new Date()) / (1000 * 60 * 60 * 24)))}d ago
                           </span>
                         </div>
-                        <p className={`text-xs ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} mb-2`}>
+                        <p className="text-xs text-[#9da8b9] mb-2">
                           {task.team_id?.name || 'No Team'} • {task.priority?.charAt(0).toUpperCase() + task.priority?.slice(1)}
                         </p>
                         {task.assigned_to && task.assigned_to.length > 0 && (
                           <div className="flex items-center gap-2">
                             <Avatar user={task.assigned_to[0]} size="xs" />
-                            <span className={`text-[10px] ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`}>
+                            <span className="text-[10px] text-[#9da8b9]">
                               Assigned to {task.assigned_to[0].full_name}
                             </span>
                           </div>
@@ -662,7 +662,7 @@ const Dashboard = () => {
                     ))}
 
                     {overdueTasks.length === 0 && (
-                      <div className={`p-4 text-center text-sm ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`}>
+                      <div className="p-4 text-center text-sm text-[#9da8b9]">
                         No overdue tasks! 🎉
                       </div>
                     )}
@@ -670,7 +670,7 @@ const Dashboard = () => {
                   {overdueTasks.length > 2 && (
                     <Link
                       to="/tasks"
-                      className={`block ${theme === 'dark' ? 'bg-[#181b21] text-[#9da8b9] hover:text-white border-[#282f39]' : 'bg-gray-50 text-gray-600 hover:text-gray-900 border-gray-200'} p-2 text-center text-xs transition-colors border-t`}
+                      className="block bg-[#181b21] p-2 text-center text-xs text-[#9da8b9] hover:text-white transition-colors border-t border-[#282f39]"
                     >
                       View all {overdueTasks.length} overdue
                     </Link>
@@ -681,24 +681,24 @@ const Dashboard = () => {
               {/* Team Load Widget */}
               <div className="flex flex-col">
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className={`${theme === 'dark' ? 'text-white' : 'text-gray-900'} text-sm font-bold uppercase tracking-wider`}>Team Load</h3>
+                  <h3 className="text-white text-sm font-bold uppercase tracking-wider">Team Load</h3>
                 </div>
-                <div className={`${theme === 'dark' ? 'bg-[#1c2027] border-[#282f39]' : 'bg-white border-gray-200'} border rounded-[0.125rem] p-4`}>
+                <div className="bg-[#1c2027] border border-[#282f39] rounded-sm p-4">
                   <div className="flex flex-col gap-4">
                     {analyticsData.assigneePerformance.slice(0, 3).map((member) => (
                       <div key={member.name} className="flex items-center gap-3">
-                        <div className="bg-[#136dec]/20 flex items-center justify-center rounded-full size-8 text-[#136dec] text-sm font-bold">
+                        <div className="bg-blue-600/20 flex items-center justify-center rounded-full size-8 text-blue-600 text-sm font-bold">
                           {member.name.charAt(0)}
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex justify-between items-end mb-1">
-                            <span className={`text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'} font-medium truncate`}>{member.name}</span>
-                            <span className={`text-xs ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`}>{member.total} tasks</span>
+                            <span className="text-sm text-white font-medium truncate">{member.name}</span>
+                            <span className="text-xs text-[#9da8b9]">{member.total} tasks</span>
                           </div>
-                          <div className={`h-1.5 w-full ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-200'} rounded-full overflow-hidden`}>
+                          <div className="h-1.5 w-full bg-[#111418] rounded-full overflow-hidden">
                             <div
                               className={`h-full rounded-full ${
-                                member.completionRate >= 80 ? 'bg-[#136dec]' :
+                                member.completionRate >= 80 ? 'bg-blue-600' :
                                 member.completionRate >= 50 ? 'bg-green-500' : 'bg-orange-400'
                               }`}
                               style={{ width: `${member.completionRate}%` }}
@@ -709,7 +709,7 @@ const Dashboard = () => {
                     ))}
 
                     {analyticsData.assigneePerformance.length === 0 && (
-                      <p className={`text-sm text-center ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} py-4`}>
+                      <p className="text-sm text-center text-[#9da8b9] py-4">
                         No team members with assigned tasks
                       </p>
                     )}
@@ -720,28 +720,28 @@ const Dashboard = () => {
               {/* Activity Log Widget */}
               <div className="flex flex-col flex-1 min-h-0">
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className={`${theme === 'dark' ? 'text-white' : 'text-gray-900'} text-sm font-bold uppercase tracking-wider`}>Live Activity</h3>
+                  <h3 className="text-white text-sm font-bold uppercase tracking-wider">Live Activity</h3>
                 </div>
                 <div className="relative pl-2 space-y-4">
-                  <div className={`absolute left-2 top-2 bottom-0 w-px ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-gray-200'}`}></div>
+                  <div className="absolute left-2 top-2 bottom-0 w-px bg-[#282f39]"></div>
                   {recentTasks.slice(0, 3).map((task, index) => (
                     <div key={task._id} className="relative pl-6">
-                      <div className={`absolute left-0 top-1.5 size-4 rounded-full ${theme === 'dark' ? 'bg-[#111418] border-[#282f39]' : 'bg-white border-gray-200'} border flex items-center justify-center`}>
+                      <div className="absolute left-0 top-1.5 size-4 rounded-full bg-[#111418] border border-[#282f39] flex items-center justify-center">
                         <div className={`size-1.5 rounded-full ${
                           task.status === 'done' ? 'bg-green-500' : 
-                          task.status === 'in_progress' ? 'bg-[#136dec]' : 'bg-gray-400'
+                          task.status === 'in_progress' ? 'bg-blue-600' : 'bg-gray-400'
                         }`}></div>
                       </div>
-                      <p className={`text-xs ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`}>
-                        <span className={`${theme === 'dark' ? 'text-white' : 'text-gray-900'} font-medium`}>
+                      <p className="text-xs text-[#9da8b9]">
+                        <span className="text-white font-medium">
                           {task.assigned_to?.[0]?.full_name || 'Someone'}
                         </span>{' '}
                         {task.status === 'done' ? 'completed' : 'updated'}{' '}
-                        <span className="text-[#136dec] hover:underline cursor-pointer">
+                        <span className="text-blue-600 hover:underline cursor-pointer">
                           {task.title}
                         </span>
                       </p>
-                      <p className={`text-[10px] ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} mt-0.5`}>
+                      <p className="text-[10px] text-[#9da8b9] mt-0.5">
                         {new Date(task.created_at || Date.now()).toLocaleTimeString('en-US', { 
                           hour: 'numeric', 
                           minute: '2-digit' 
@@ -751,7 +751,7 @@ const Dashboard = () => {
                   ))}
 
                   {recentTasks.length === 0 && (
-                    <p className={`text-xs ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} text-center py-4`}>
+                    <p className="text-xs text-[#9da8b9] text-center py-4">
                       No recent activity
                     </p>
                   )}

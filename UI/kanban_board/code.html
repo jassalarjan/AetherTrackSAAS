@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>TaskFlow Kanban Board</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Config -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#136dec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#111418",
+                        "surface-dark": "#1c2128", // Slightly lighter for columns
+                        "card-dark": "#282f39", // Lighter for cards
+                        "border-dark": "#3e454f",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"],
+                        "body": ["Inter", "sans-serif"],
+                    },
+                    borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+                },
+            },
+        }
+    </script>
+<style>
+        /* Custom scrollbar for dense feeling */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #111418;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #3e454f;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #5a6472;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark h-screen w-screen overflow-hidden text-white flex">
+<!-- Sidebar -->
+<aside class="w-64 flex-shrink-0 border-r border-border-dark bg-[#111418] flex flex-col">
+<div class="flex flex-col gap-4 p-4 h-full">
+<div class="flex items-center gap-3 px-2">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-8" data-alt="TaskFlow gradient logo" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBQaquo6oCkxE93aXyB8wmk7UReOtomCggf8BwLQPX1cLPXWAUSparIkYJm4u6_4mCFnKUDpOvyypCvUPPRfUpXL6KkDG-brEdnDiLR_EjcGeglCqv9fEcx-OrNer1GsFzGNRXlrhn3uGBngyGAHnyDi0l3RsUjaUgKdG2zKRMBg4D-pu1jEH1XghWwjbqgC9E95XjoMFt7Tasyta5kmUuCwrgtWbV4QRaNUDD3LLWnOR0iYXMaJPhFuaog-UZ6xxJgFems8rWSR3g");'></div>
+<h1 class="text-white text-base font-bold leading-normal tracking-tight">TaskFlow</h1>
+</div>
+<div class="flex flex-col gap-1 mt-4">
+<div class="flex items-center gap-3 px-3 py-2 rounded hover:bg-card-dark cursor-pointer text-[#9da8b9] hover:text-white transition-colors">
+<span class="material-symbols-outlined text-[20px]">dashboard</span>
+<p class="text-sm font-medium leading-normal">Dashboard</p>
+</div>
+<div class="flex items-center gap-3 px-3 py-2 rounded hover:bg-card-dark cursor-pointer text-[#9da8b9] hover:text-white transition-colors">
+<span class="material-symbols-outlined text-[20px]">format_list_bulleted</span>
+<p class="text-sm font-medium leading-normal">Backlog</p>
+</div>
+<div class="flex items-center gap-3 px-3 py-2 rounded bg-primary/10 border-l-2 border-primary cursor-pointer">
+<span class="material-symbols-outlined text-[20px] text-primary font-variation-settings-'FILL' 1">view_kanban</span>
+<p class="text-white text-sm font-medium leading-normal">Kanban</p>
+</div>
+<div class="flex items-center gap-3 px-3 py-2 rounded hover:bg-card-dark cursor-pointer text-[#9da8b9] hover:text-white transition-colors">
+<span class="material-symbols-outlined text-[20px]">bar_chart</span>
+<p class="text-sm font-medium leading-normal">Reports</p>
+</div>
+</div>
+<div class="mt-auto">
+<div class="text-xs font-semibold text-[#6b7280] uppercase px-3 mb-2">My Projects</div>
+<div class="flex items-center gap-3 px-3 py-2 rounded hover:bg-card-dark cursor-pointer text-[#9da8b9] hover:text-white transition-colors">
+<div class="w-2 h-2 rounded-full bg-blue-500"></div>
+<p class="text-sm font-medium">Q3 Sprint</p>
+</div>
+<div class="flex items-center gap-3 px-3 py-2 rounded hover:bg-card-dark cursor-pointer text-[#9da8b9] hover:text-white transition-colors">
+<div class="w-2 h-2 rounded-full bg-orange-500"></div>
+<p class="text-sm font-medium">Mobile App</p>
+</div>
+</div>
+<div class="border-t border-border-dark pt-4 flex items-center gap-3 px-2">
+<div class="bg-center bg-no-repeat bg-cover rounded-full size-8 border border-border-dark" data-alt="User profile avatar" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDs1KpX9YQvlL-xszJYqVmoQ-1nnt-QDWPc64REm0QnBGnEQgP9pCd305lmAKbYEMeRcvv9A9UjIcar58auuj-84bdHrau6zeYLa_ABteWuKuWgO2e4vKVNOI0ixRkB0jCjYxDMtwZrFY3gRTv_EYAlRPoinHYZf4qlTXe2Ie_jwz6mvQxI8N9aojso3Pt-UzzHQu1TFAT4r_idQ87eWllim_VuCzITfHBwOfnERMZ34cg7BdNEgY8k-jIJhZY81ilh59XrjQDJw_I");'></div>
+<div class="flex flex-col">
+<span class="text-sm text-white font-medium">Alex Morgan</span>
+<span class="text-xs text-[#9da8b9]">Admin</span>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="flex-1 flex flex-col h-full min-w-0 bg-[#111418]">
+<!-- Header Section -->
+<header class="border-b border-border-dark bg-[#111418] shrink-0">
+<!-- Top Row: Title and Actions -->
+<div class="flex items-center justify-between px-6 py-4">
+<div>
+<h2 class="text-white text-xl font-bold leading-tight">Q3 Engineering Sprint</h2>
+<p class="text-[#9da8b9] text-xs mt-1">Oct 1 - Dec 31 • 12 Days Remaining</p>
+</div>
+<div class="flex gap-3">
+<button class="flex items-center justify-center rounded h-9 px-3 bg-card-dark text-[#9da8b9] hover:text-white border border-border-dark hover:border-[#5a6472] transition-colors">
+<span class="material-symbols-outlined text-[20px]">settings</span>
+</button>
+<button class="flex items-center justify-center rounded h-9 px-3 bg-card-dark text-[#9da8b9] hover:text-white border border-border-dark hover:border-[#5a6472] transition-colors">
+<span class="material-symbols-outlined text-[20px]">group_add</span>
+</button>
+<button class="flex items-center justify-center rounded h-9 px-4 bg-primary text-white gap-2 text-sm font-bold hover:bg-blue-600 transition-colors shadow-sm shadow-blue-900/20">
+<span class="material-symbols-outlined text-[20px]">add</span>
+<span>Create Task</span>
+</button>
+</div>
+</div>
+<!-- Bottom Row: Filters -->
+<div class="flex items-center gap-4 px-6 pb-4 overflow-x-auto no-scrollbar">
+<!-- Search -->
+<div class="relative flex items-center h-9 w-64 bg-card-dark rounded border border-border-dark focus-within:border-primary/50 transition-colors">
+<span class="material-symbols-outlined text-[#9da8b9] ml-3 text-[20px]">search</span>
+<input class="w-full bg-transparent border-none text-sm text-white placeholder-[#6b7280] focus:ring-0 px-2 h-full" placeholder="Search tasks..." type="text"/>
+</div>
+<div class="w-px h-6 bg-border-dark mx-2"></div>
+<!-- Chips -->
+<div class="flex gap-2">
+<button class="flex h-7 items-center gap-2 rounded-full bg-primary/20 border border-primary/30 px-3 text-primary hover:bg-primary/30 transition-colors">
+<span class="text-xs font-medium">Only My Tasks</span>
+<span class="material-symbols-outlined text-[14px]">close</span>
+</button>
+<button class="flex h-7 items-center gap-2 rounded-full bg-card-dark border border-border-dark px-3 text-[#9da8b9] hover:text-white hover:border-[#5a6472] transition-colors">
+<span class="text-xs font-medium">High Priority</span>
+</button>
+<button class="flex h-7 items-center gap-2 rounded-full bg-card-dark border border-border-dark px-3 text-[#9da8b9] hover:text-white hover:border-[#5a6472] transition-colors">
+<span class="text-xs font-medium">Bug</span>
+</button>
+<button class="flex h-7 items-center gap-2 rounded-full bg-card-dark border border-border-dark px-3 text-[#9da8b9] hover:text-white hover:border-[#5a6472] transition-colors">
+<span class="text-xs font-medium">Feature</span>
+</button>
+</div>
+</div>
+</header>
+<!-- Kanban Board Area -->
+<div class="flex-1 overflow-x-auto overflow-y-hidden p-6">
+<div class="flex h-full gap-4 min-w-[1000px]"> <!-- min-w ensures scroll on very small screens -->
+<!-- Column 1: Todo -->
+<div class="flex flex-col w-1/4 min-w-[280px] bg-surface-dark rounded-lg h-full border border-border-dark/50">
+<div class="flex items-center justify-between p-3 border-b border-border-dark/50">
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-slate-500"></div>
+<h3 class="text-sm font-semibold text-white">Todo</h3>
+<span class="bg-card-dark text-[#9da8b9] text-xs px-2 py-0.5 rounded-full border border-border-dark">4</span>
+</div>
+<span class="material-symbols-outlined text-[#6b7280] hover:text-white cursor-pointer text-[20px]">more_horiz</span>
+</div>
+<div class="flex-1 overflow-y-auto p-2 flex flex-col gap-2">
+<!-- Card -->
+<div class="group bg-card-dark p-3 rounded border border-border-dark hover:border-primary/50 cursor-grab shadow-sm transition-all hover:shadow-md">
+<div class="flex justify-between items-start mb-2">
+<span class="text-[11px] font-mono text-[#6b7280]">TF-102</span>
+<span class="text-[10px] font-bold text-red-400 bg-red-400/10 px-1.5 py-0.5 rounded uppercase tracking-wider">High</span>
+</div>
+<p class="text-sm font-medium text-white mb-3 leading-snug group-hover:text-primary transition-colors">Implement Auth0 integration for SSO login</p>
+<div class="flex items-center justify-between border-t border-border-dark/50 pt-2 mt-auto">
+<div class="bg-center bg-no-repeat bg-cover rounded-full size-5" data-alt="Assignee Avatar" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAsQ2TQoz4NIpZp4CLG2f0QGzWn8J2HcW9rcOCMkx6RNg8yIcvbBq-TcG3azOZ-RpL0gEnKOfO99BxS6UyW1wwgMicj4AvOoesOv8jy_hitWQuH8layf7DtTKEQ7VQfIMFDAj2VR5YiYdCnLIzh7xEImMWnLpDlyDIlBQu-6VmSNFm1jAzaDV6VCCGsscYBCGuqg519TKqTRfqhZcCTu-xZ-kaj7fhOQHWEt6mKK6Z9vX2q8Up0z7a_pSmbbJqpZiaZGOOb7-_g1Ko");'></div>
+<div class="flex items-center gap-1 text-[#6b7280]">
+<span class="material-symbols-outlined text-[14px]">calendar_today</span>
+<span class="text-[11px]">Oct 24</span>
+</div>
+</div>
+</div>
+<!-- Card -->
+<div class="group bg-card-dark p-3 rounded border border-border-dark hover:border-primary/50 cursor-grab shadow-sm transition-all hover:shadow-md">
+<div class="flex justify-between items-start mb-2">
+<span class="text-[11px] font-mono text-[#6b7280]">TF-145</span>
+<span class="text-[10px] font-bold text-yellow-500 bg-yellow-500/10 px-1.5 py-0.5 rounded uppercase tracking-wider">Med</span>
+</div>
+<p class="text-sm font-medium text-white mb-3 leading-snug group-hover:text-primary transition-colors">Fix navigation bar alignment bug on Safari</p>
+<div class="flex items-center justify-between border-t border-border-dark/50 pt-2 mt-auto">
+<div class="flex -space-x-2">
+<div class="bg-center bg-no-repeat bg-cover rounded-full size-5 ring-2 ring-card-dark" data-alt="Assignee Avatar" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAfyi6z90qqW0ghywyUSkHxl6cy4zLumSAnTs_AEafX5MyOEHKAtOPoaI5EbAj0GRiClFTVUfsmycy-IS4uLPqBkUieth2g0VVLOVNR8ZfX4DML_oLupksLnrAQsLSk4lwMosIRUgDnbpMEZsCDeA-p3elGCPUwe2I1Dfr4FquLiGdpnjIMkDEO_3-BCnc0Sd9eMPFlHJ1azrKk5Fb6RN4mnGdV_2Z-F0WdV6VDy5UYeH3DN4xV5BDTm7aspLBbnZ3NxaQ7GxFkTpo");'></div>
+</div>
+<div class="flex items-center gap-1 text-[#6b7280]">
+<span class="material-symbols-outlined text-[14px]">calendar_today</span>
+<span class="text-[11px]">Oct 25</span>
+</div>
+</div>
+</div>
+<!-- Card -->
+<div class="group bg-card-dark p-3 rounded border border-border-dark hover:border-primary/50 cursor-grab shadow-sm transition-all hover:shadow-md">
+<div class="flex justify-between items-start mb-2">
+<span class="text-[11px] font-mono text-[#6b7280]">TF-150</span>
+<span class="text-[10px] font-bold text-blue-400 bg-blue-400/10 px-1.5 py-0.5 rounded uppercase tracking-wider">Low</span>
+</div>
+<p class="text-sm font-medium text-white mb-3 leading-snug group-hover:text-primary transition-colors">Update API Documentation for v2 endpoints</p>
+<div class="flex items-center justify-between border-t border-border-dark/50 pt-2 mt-auto">
+<div class="flex -space-x-2">
+<div class="bg-center bg-no-repeat bg-cover rounded-full size-5 ring-2 ring-card-dark" data-alt="Assignee Avatar" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDbg4m81fqPaIBEZzOXmLm7Um24YCnhD5K7I_ETZdfsdVXTMKc6LPf92WV3hfScbg64DxndhN-TZlSUi8uUO2oJXgHD0JslHJ2JCrRu6ZGNsTk2EqDIdFRsVu5ZFrqAFx2aU-YPpN8iVw1x5GlYmwqsv_Bg2HYYJ4xmF8ovfwatpUoeBRC8MCGxkjzeTtWUdnZ0uDFpDwPeZABVkJS4fG03guvbnhSTN39ej6CDztJcB7swuWV1ETVwcA-tPnd6Jfr5g94RUZ_mD5c");'></div>
+</div>
+<div class="flex items-center gap-1 text-[#6b7280]">
+<span class="material-symbols-outlined text-[14px]">calendar_today</span>
+<span class="text-[11px]">Nov 01</span>
+</div>
+</div>
+</div>
+</div>
+<button class="p-2 mx-2 mb-2 flex items-center gap-2 text-[#6b7280] hover:text-white hover:bg-card-dark rounded transition-colors text-sm font-medium">
+<span class="material-symbols-outlined text-[18px]">add</span>
+<span>Add Task</span>
+</button>
+</div>
+<!-- Column 2: In Progress -->
+<div class="flex flex-col w-1/4 min-w-[280px] bg-surface-dark rounded-lg h-full border border-border-dark/50">
+<div class="flex items-center justify-between p-3 border-b border-border-dark/50 relative overflow-hidden">
+<div class="absolute top-0 left-0 w-full h-[2px] bg-primary"></div>
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
+<h3 class="text-sm font-semibold text-white">In Progress</h3>
+<span class="bg-card-dark text-[#9da8b9] text-xs px-2 py-0.5 rounded-full border border-border-dark">2</span>
+</div>
+<span class="material-symbols-outlined text-[#6b7280] hover:text-white cursor-pointer text-[20px]">more_horiz</span>
+</div>
+<div class="flex-1 overflow-y-auto p-2 flex flex-col gap-2">
+<!-- Card -->
+<div class="group bg-card-dark p-3 rounded border border-border-dark hover:border-primary/50 cursor-grab shadow-sm transition-all hover:shadow-md">
+<div class="flex justify-between items-start mb-2">
+<span class="text-[11px] font-mono text-[#6b7280]">TF-120</span>
+<span class="text-[10px] font-bold text-red-400 bg-red-400/10 px-1.5 py-0.5 rounded uppercase tracking-wider">High</span>
+</div>
+<p class="text-sm font-medium text-white mb-3 leading-snug group-hover:text-primary transition-colors">Database migration to PostgreSQL 15</p>
+<div class="flex gap-2 mb-3 flex-wrap">
+<span class="px-1.5 py-0.5 rounded bg-[#111418] text-[#9da8b9] text-[10px] border border-border-dark">Backend</span>
+<span class="px-1.5 py-0.5 rounded bg-[#111418] text-[#9da8b9] text-[10px] border border-border-dark">DB</span>
+</div>
+<div class="flex items-center justify-between border-t border-border-dark/50 pt-2 mt-auto">
+<div class="bg-center bg-no-repeat bg-cover rounded-full size-5" data-alt="Assignee Avatar" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuD0ooXVQ7rXCbXRlupMCNvJFENM7TksRU7ogHw-7-xZX_9cUcEFfA9uBkn4oAZGw4sMPuM4PUqzYhqezxfkkC7m7uxzJaSaQZEFN2B6tGoRek8Ijqj9t3OplMdb8Q-taTbCFpzyy4vJmec3R69XzVZWyTJfrCjarSc20nN-vzgtm2-lUWN9oUveC2YB4Cb-KgaoxeFV2LQOSKnr4KTJYzFWf_plm8TH_D10Usjnqw_EURJd-LfT7E793oWW3tBgOVg-IV5kglWs_x0");'></div>
+<div class="flex items-center gap-1 text-primary">
+<span class="material-symbols-outlined text-[14px]">schedule</span>
+<span class="text-[11px]">Today</span>
+</div>
+</div>
+</div>
+<!-- Card -->
+<div class="group bg-card-dark p-3 rounded border border-border-dark hover:border-primary/50 cursor-grab shadow-sm transition-all hover:shadow-md">
+<div class="flex justify-between items-start mb-2">
+<span class="text-[11px] font-mono text-[#6b7280]">TF-133</span>
+<span class="text-[10px] font-bold text-yellow-500 bg-yellow-500/10 px-1.5 py-0.5 rounded uppercase tracking-wider">Med</span>
+</div>
+<p class="text-sm font-medium text-white mb-3 leading-snug group-hover:text-primary transition-colors">Unit testing for payment module A</p>
+<div class="flex items-center justify-between border-t border-border-dark/50 pt-2 mt-auto">
+<div class="bg-center bg-no-repeat bg-cover rounded-full size-5" data-alt="Assignee Avatar" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuByoNNXrJEdJWPuTXNIqw7msBrzQi8TGLYF9lKHOOuuKXERa0AlFJc7QhIvgTe8hf00KttKaIBK_LPa8k1bfeKJWPrjXg77Mng2Wf1P8cTWzYzdyPmxEs3T5EV6axVFUnh9Gei2rDcX0mugv-VAumLL58yPA28vojVA5x4719kZimcDqUrxmSPaBX7KSSsLmtwwAn5g3e33wV2TZhfblZPOFy4CbAYknTvRQclDr9AyrDKU76ZqJwZhwwi-hO4CIJFA6HKl1iCAnd0");'></div>
+<div class="flex items-center gap-1 text-[#6b7280]">
+<span class="material-symbols-outlined text-[14px]">calendar_today</span>
+<span class="text-[11px]">Oct 28</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Column 3: Review -->
+<div class="flex flex-col w-1/4 min-w-[280px] bg-surface-dark rounded-lg h-full border border-border-dark/50">
+<div class="flex items-center justify-between p-3 border-b border-border-dark/50">
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-purple-500"></div>
+<h3 class="text-sm font-semibold text-white">Review</h3>
+<span class="bg-card-dark text-[#9da8b9] text-xs px-2 py-0.5 rounded-full border border-border-dark">1</span>
+</div>
+<span class="material-symbols-outlined text-[#6b7280] hover:text-white cursor-pointer text-[20px]">more_horiz</span>
+</div>
+<div class="flex-1 overflow-y-auto p-2 flex flex-col gap-2">
+<!-- Card -->
+<div class="group bg-card-dark p-3 rounded border border-border-dark hover:border-primary/50 cursor-grab shadow-sm transition-all hover:shadow-md">
+<div class="flex justify-between items-start mb-2">
+<span class="text-[11px] font-mono text-[#6b7280]">TF-110</span>
+<span class="text-[10px] font-bold text-yellow-500 bg-yellow-500/10 px-1.5 py-0.5 rounded uppercase tracking-wider">Med</span>
+</div>
+<p class="text-sm font-medium text-white mb-3 leading-snug group-hover:text-primary transition-colors">PR #402 - Frontend dashboard refactor and cleanup</p>
+<div class="w-full bg-[#111418] rounded h-1.5 mb-3 overflow-hidden">
+<div class="bg-purple-500 h-full rounded w-3/4"></div>
+</div>
+<div class="flex items-center justify-between border-t border-border-dark/50 pt-2 mt-auto">
+<div class="flex -space-x-2">
+<div class="bg-center bg-no-repeat bg-cover rounded-full size-5 ring-2 ring-card-dark" data-alt="Assignee Avatar" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCMoQOw8kQnM0NUKz7hnmSSE5eV9s9GrL3ARjL0-t2ik74feEWl3aVg_DfSLx9oVVlT2mziuSCHMAS_H_klrRkq96vRR0HLaotlfWd1lRYFpsz80oETcs6mgetnh977AFLouaY9MQwA3ATnFeSN6rTin6o71u71jULYaXk8Ck4cS2qSRfCvtN3UjExrP2ZbeEMVULhNOCuI99P-xicrrcgecSJCwVqSAicESmsqkharLqei6rfrRDwfyOK7Mr-YljgjcEoztKk_ZQc");'></div>
+<div class="bg-center bg-no-repeat bg-cover rounded-full size-5 ring-2 ring-card-dark" data-alt="Assignee Avatar" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCo8OuyCntQobtXeCO1atOUwue3d2W_6-OP4KKxnepkTGBE-jNpbhjEbF19oXfJ3OS0oOauORn7JgeUOnJe4TPb2FROX9HR99v7spBUiuCuDGqnU2GiyvY5dfka-mNpBYzyX0q5w9oTv5h_dOjI58c3bdDEvkVl1vJYLV-AtbLrOpzEMuHu-6y0ZomL0sIE5t23u5Eagpgn90FGZsUjXr96EPYI5CIAHrMazm3qNUlzPweqdvOBWruMyu8e6olq6KjUEZsZqstgNJA");'></div>
+</div>
+<div class="flex items-center gap-1 text-[#6b7280]">
+<span class="material-symbols-outlined text-[14px]">forum</span>
+<span class="text-[11px]">3 comments</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Column 4: Done -->
+<div class="flex flex-col w-1/4 min-w-[280px] bg-surface-dark rounded-lg h-full border border-border-dark/50">
+<div class="flex items-center justify-between p-3 border-b border-border-dark/50">
+<div class="flex items-center gap-2">
+<div class="w-2 h-2 rounded-full bg-green-500"></div>
+<h3 class="text-sm font-semibold text-white">Done</h3>
+<span class="bg-card-dark text-[#9da8b9] text-xs px-2 py-0.5 rounded-full border border-border-dark">5</span>
+</div>
+<span class="material-symbols-outlined text-[#6b7280] hover:text-white cursor-pointer text-[20px]">more_horiz</span>
+</div>
+<div class="flex-1 overflow-y-auto p-2 flex flex-col gap-2">
+<!-- Card (Done) -->
+<div class="group bg-card-dark p-3 rounded border border-border-dark hover:border-primary/50 cursor-grab shadow-sm opacity-70 hover:opacity-100 transition-all">
+<div class="flex justify-between items-start mb-2">
+<span class="text-[11px] font-mono text-[#6b7280] line-through">TF-100</span>
+<span class="text-[10px] font-bold text-[#6b7280] bg-[#111418] px-1.5 py-0.5 rounded uppercase tracking-wider">Done</span>
+</div>
+<p class="text-sm font-medium text-[#9da8b9] line-through decoration-slate-600 mb-3 leading-snug">Q3 Sprint Kickoff Meeting</p>
+<div class="flex items-center justify-between border-t border-border-dark/50 pt-2 mt-auto">
+<div class="bg-center bg-no-repeat bg-cover rounded-full size-5 grayscale" data-alt="Assignee Avatar" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDvRkdyd3mYT0lwsPCWmSsn4D3U9nZghifM81z6PR7B_PtGFfd_Zo0KI3RBuj91uzMyC5x63MrNxUeVcnr0IHd7wDIm0DaE2s-JI9_rwCJZ1LwVt1IixrPgbn0ueeGNrni4MlQnUJHyviTMiWAPSzbQqMja4TwEXTrNQQLhV88kEb2-iMPoP-yabyOWvQreCl39K3TJsK_1Cmk1m7Mljq7x3_hW8S8t8hgPQ3vEH50UQ40vD3-ElATW1iXfrirNNIDb849A-NY22X8");'></div>
+<div class="flex items-center gap-1 text-green-500">
+<span class="material-symbols-outlined text-[14px]">check_circle</span>
+<span class="text-[11px]">Oct 01</span>
+</div>
+</div>
+</div>
+<!-- Card (Done) -->
+<div class="group bg-card-dark p-3 rounded border border-border-dark hover:border-primary/50 cursor-grab shadow-sm opacity-70 hover:opacity-100 transition-all">
+<div class="flex justify-between items-start mb-2">
+<span class="text-[11px] font-mono text-[#6b7280] line-through">TF-101</span>
+<span class="text-[10px] font-bold text-[#6b7280] bg-[#111418] px-1.5 py-0.5 rounded uppercase tracking-wider">Done</span>
+</div>
+<p class="text-sm font-medium text-[#9da8b9] line-through decoration-slate-600 mb-3 leading-snug">Repository setup and branch protection rules</p>
+<div class="flex items-center justify-between border-t border-border-dark/50 pt-2 mt-auto">
+<div class="bg-center bg-no-repeat bg-cover rounded-full size-5 grayscale" data-alt="Assignee Avatar" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCTkqMrMJ1SYSc0o1faoQRK3Hi_2hsYIsQ5XaVMX3usE0wwPI1PUfNg3gIVi43j9QeoxXzZUjxLYf8bNhzp2D0sslEdxt_EcOuYDet_XyJ_YCAV_OKJMzdZfM9vwcZRsqfTOKf3wvuzmrm0mbERhg6V0a4Wuexuofm5Yj4sbS_RHh4swZRj0gOVDfe25EhP-B94HM-z5CDGP2XqGC5nZmVOYDSJThKU98BkFKyU0xzCiFlzW-oLTdUkEP48_clWsR2aWF8SsGZC-Nc");'></div>
+<div class="flex items-center gap-1 text-green-500">
+<span class="material-symbols-outlined text-[14px]">check_circle</span>
+<span class="text-[11px]">Oct 02</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</body></html>

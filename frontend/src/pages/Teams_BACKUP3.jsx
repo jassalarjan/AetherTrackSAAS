@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { useTheme } from '../context/ThemeContext';
-import Sidebar from '../components/Sidebar';
+import Navbar from '../components/Navbar';
 import api from '../api/axios';
 import useRealtimeSync from '../hooks/useRealtimeSync';
 import { Plus, X, Users, UserPlus, UserMinus, Trash2, Pin, GripVertical } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
 
 const Teams = () => {
   const { user } = useAuth();
-  const { theme } = useTheme();
+  const { currentTheme, currentColorScheme } = useTheme();
   const [teams, setTeams] = useState([]);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -234,16 +234,14 @@ const Teams = () => {
 
   if (loading) {
     return (
-      <div className={`min-h-screen ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'}`}>
-        <div className="flex">
-          <Sidebar />
-          <div className="flex-1 flex items-center justify-center">
-            <div className="flex flex-col items-center gap-6">
-              <div className="loading-bar-container">
-                <div className="loading-bar bg-[#136dec]"></div>
-              </div>
-              <p className={`${theme === 'dark' ? 'text-white' : 'text-gray-900'} font-medium`}>Loading teams...</p>
+      <div className={`min-h-screen ${currentTheme.background}`}>
+        <Navbar />
+        <div className="flex items-center justify-center h-screen">
+          <div className="flex flex-col items-center gap-6">
+            <div className="loading-bar-container">
+              <div className={`loading-bar ${currentColorScheme.primary}`}></div>
             </div>
+            <p className={`${currentTheme.text} font-medium`}>Loading teams...</p>
           </div>
         </div>
       </div>
@@ -252,13 +250,11 @@ const Teams = () => {
 
   if (!['admin', 'hr', 'team_lead'].includes(user?.role)) {
     return (
-      <div className={`min-h-screen ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'}`}>
-        <div className="flex">
-          <Sidebar />
-          <div className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div className="text-center">
-              <p className={`text-xl ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`}>You don't have permission to access this page.</p>
-            </div>
+      <div className={`min-h-screen ${currentTheme.background}`}>
+        <Navbar />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="text-center">
+            <p className={`text-xl ${currentTheme.textSecondary}`}>You don't have permission to access this page.</p>
           </div>
         </div>
       </div>
@@ -266,16 +262,16 @@ const Teams = () => {
   }
 
   return (
-    <div className={`min-h-screen ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'}`} data-testid="teams-page">
+    <div className={`min-h-screen ${currentTheme.background}`} data-testid="teams-page">
       <div className="flex">
-        <Sidebar />
+        <Navbar />
         <div className="flex-1 p-4 sm:p-6 lg:p-8">
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className={`text-3xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+            <h1 className={`text-3xl font-bold ${currentTheme.text}`}>
               {user?.role === 'team_lead' ? 'My Team' : 'Teams'}
             </h1>
-            <p className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} mt-2`}>
+            <p className={`${currentTheme.textSecondary} mt-2`}>
               {user?.role === 'team_lead' 
                 ? 'Manage your team and members' 
                 : 'Manage your teams and members'}
@@ -284,7 +280,7 @@ const Teams = () => {
           {['admin', 'hr'].includes(user?.role) && (
             <button
               onClick={() => setShowCreateModal(true)}
-              className="px-4 py-2 bg-[#136dec] text-white rounded-[0.125rem] hover:bg-[#1158c7] transition-colors flex items-center space-x-2"
+              className={`btn ${currentColorScheme.primary} text-white ${currentColorScheme.primaryHover} flex items-center space-x-2`}
               data-testid="create-team-btn"
             >
               <Plus className="w-5 h-5" />
@@ -294,14 +290,12 @@ const Teams = () => {
         </div>
 
         {teams.length === 0 ? (
-          <div className={`rounded-[0.125rem] shadow-md p-12 text-center border ${
-            theme === 'dark' ? 'bg-[#1c2027] border-[#282f39]' : 'bg-white border-gray-200'
-          }`}>
-            <Users className={`w-16 h-16 mx-auto mb-4 ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-400'}`} />
-            <h3 className={`text-xl font-semibold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+          <div className={`${currentTheme.surface} rounded-lg shadow-md p-12 text-center`}>
+            <Users className={`w-16 h-16 mx-auto ${currentTheme.textMuted} mb-4`} />
+            <h3 className={`text-xl font-semibold ${currentTheme.text} mb-2`}>
               {user?.role === 'team_lead' ? 'No Team Assigned' : 'No Teams Yet'}
             </h3>
-            <p className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`}>
+            <p className={`${currentTheme.textSecondary}`}>
               {user?.role === 'team_lead' 
                 ? 'You are not currently assigned as a team lead. Please contact an administrator.'
                 : 'Get started by creating your first team.'}
@@ -316,11 +310,9 @@ const Teams = () => {
               onDragStart={(e) => handleDragStart(e, team)}
               onDragOver={handleDragOver}
               onDrop={(e) => handleDrop(e, team)}
-              className={`rounded-[0.125rem] shadow-md p-6 relative border transition-colors ${
-                theme === 'dark' 
-                  ? 'bg-[#1c2027] border-[#282f39] hover:border-[#3e454f]' 
-                  : 'bg-white border-gray-200 hover:border-gray-300'
-              } ${draggedTeam?._id === team._id ? 'opacity-50' : ''} ${['admin', 'hr'].includes(user?.role) ? 'cursor-move' : ''}`}
+              className={`${currentTheme.surface} rounded-lg shadow-md p-6 relative ${
+                draggedTeam?._id === team._id ? 'opacity-50' : ''
+              } ${['admin', 'hr'].includes(user?.role) ? 'cursor-move' : ''}`}
               data-testid="team-card"
             >
               {/* Pin Indicator */}
@@ -333,21 +325,21 @@ const Teams = () => {
               {/* Drag Handle for Admin/HR */}
               {['admin', 'hr'].includes(user?.role) && (
                 <div className="absolute top-2 right-2">
-                  <GripVertical className={`w-5 h-5 ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-400'}`} />
+                  <GripVertical className={`w-5 h-5 ${currentTheme.textMuted}`} />
                 </div>
               )}
 
               <div className="flex items-center justify-between mb-4 mt-4">
-                <h3 className={`text-xl font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{team.name}</h3>
+                <h3 className={`text-xl font-semibold ${currentTheme.text}`}>{team.name}</h3>
                 <div className="flex items-center space-x-2">
-                  <Users className="w-6 h-6 text-[#136dec]" />
+                  <Users className="w-6 h-6 text-blue-600" />
                   {['admin', 'hr'].includes(user?.role) && (
                     <>
                       <button
                         onClick={() => handleTogglePin(team._id)}
-                        className={`hover:text-yellow-600 p-1 transition-colors ${
-                          team.pinned ? 'text-yellow-500' : theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-400'
-                        }`}
+                        className={`${
+                          team.pinned ? 'text-yellow-500' : currentTheme.textSecondary
+                        } hover:text-yellow-600 p-1 transition-colors`}
                         title={team.pinned ? 'Unpin Team' : 'Pin Team'}
                         data-testid="pin-team-btn"
                       >
@@ -368,30 +360,30 @@ const Teams = () => {
 
               <div className="space-y-2 mb-4">
                 <div className="text-sm">
-                  <span className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>HR:</span>
-                  <span className={`ml-2 ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`}>{team.hr_id?.full_name}</span>
+                  <span className={`font-medium ${currentTheme.text}`}>HR:</span>
+                  <span className={`${currentTheme.textSecondary} ml-2`}>{team.hr_id?.full_name}</span>
                 </div>
                 <div className="text-sm">
-                  <span className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Team Lead:</span>
-                  <span className={`ml-2 ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`}>{team.lead_id?.full_name}</span>
+                  <span className={`font-medium ${currentTheme.text}`}>Team Lead:</span>
+                  <span className={`${currentTheme.textSecondary} ml-2`}>{team.lead_id?.full_name}</span>
                 </div>
                 <div className="text-sm">
-                  <span className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Members:</span>
-                  <span className={`ml-2 ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`}>{team.members?.length || 0}</span>
+                  <span className={`font-medium ${currentTheme.text}`}>Members:</span>
+                  <span className={`${currentTheme.textSecondary} ml-2`}>{team.members?.length || 0}</span>
                 </div>
               </div>
 
-              <div className={`border-t pt-4 ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'}`}>
-                <h4 className="text-sm font-medium text-white mb-2">Team Members</h4>
+              <div className="border-t pt-4">
+                <h4 className={`text-sm font-medium ${currentTheme.text} mb-2`}>Team Members</h4>
                 <div className="space-y-2 max-h-40 overflow-y-auto">
                   {team.members && team.members.length > 0 ? (
                     team.members.map((member) => (
                       <div
                         key={member._id}
-                        className={`flex justify-between items-center rounded-[0.125rem] p-2 border ${theme === 'dark' ? 'bg-[#111418] border-[#282f39]' : 'bg-white border-gray-200'}`}
+                        className={`flex justify-between items-center ${currentTheme.surfaceSecondary} rounded p-2`}
                         data-testid="team-member"
                       >
-                        <span className={`text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{member.full_name}</span>
+                        <span className={`text-sm ${currentTheme.text}`}>{member.full_name}</span>
                         {['admin', 'hr'].includes(user?.role) && (
                           <button
                             onClick={() => handleRemoveMember(team._id, member._id)}
@@ -404,7 +396,7 @@ const Teams = () => {
                       </div>
                     ))
                   ) : (
-                    <p className="text-sm text-[#9da8b9]">No members yet</p>
+                    <p className={`text-sm ${currentTheme.textMuted}`}>No members yet</p>
                   )}
                 </div>
               </div>
@@ -415,7 +407,7 @@ const Teams = () => {
                     setSelectedTeam(team);
                     setShowAddMemberModal(true);
                   }}
-                  className="w-full mt-4 px-4 py-2 bg-green-600 text-white rounded-[0.125rem] hover:bg-green-700 transition-colors flex items-center justify-center space-x-2"
+                  className="w-full mt-4 btn bg-green-600 text-white hover:bg-green-700 flex items-center justify-center space-x-2"
                   data-testid="add-member-btn"
                 >
                   <UserPlus className="w-4 h-4" />
@@ -432,12 +424,12 @@ const Teams = () => {
       {/* Create Team Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" data-testid="create-team-modal">
-          <div className="bg-[#1c2027] rounded-[0.125rem] p-8 max-w-md w-full mx-4 border border-[#282f39]">
+          <div className={`${currentTheme.surface} rounded-lg p-8 max-w-md w-full mx-4`}>
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-white">Create New Team</h2>
+              <h2 className={`text-2xl font-bold ${currentTheme.text}`}>Create New Team</h2>
               <button
                 onClick={() => setShowCreateModal(false)}
-                className="text-[#9da8b9] hover:text-white transition-colors"
+                className={`${currentTheme.textMuted} hover:${currentTheme.text}`}
               >
                 <X className="w-6 h-6" />
               </button>
@@ -445,7 +437,7 @@ const Teams = () => {
 
             <form onSubmit={handleCreateTeam} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-white mb-2">
+                <label className={`block text-sm font-medium ${currentTheme.text} mb-2`}>
                   Team Name *
                 </label>
                 <input
@@ -459,7 +451,7 @@ const Teams = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-white mb-2">
+                <label className={`block text-sm font-medium ${currentTheme.text} mb-2`}>
                   HR *
                 </label>
                 <select
@@ -481,7 +473,7 @@ const Teams = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-white mb-2">
+                <label className={`block text-sm font-medium ${currentTheme.text} mb-2`}>
                   Team Lead *
                 </label>
                 <select
@@ -522,9 +514,9 @@ const Teams = () => {
       {/* Add Member Modal */}
       {showAddMemberModal && selectedTeam && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" data-testid="add-member-modal">
-          <div className="bg-[#1c2027] rounded-[0.125rem] p-8 max-w-2xl w-full mx-4 border border-[#282f39]">
+          <div className={`${currentTheme.surface} rounded-lg p-8 max-w-2xl w-full mx-4`}>
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-white">Add Member to {selectedTeam.name}</h2>
+              <h2 className={`text-2xl font-bold ${currentTheme.text}`}>Add Member to {selectedTeam.name}</h2>
               <button
                 onClick={() => {
                   setShowAddMemberModal(false);
@@ -532,7 +524,7 @@ const Teams = () => {
                   setSelectedUserIds([]);
                   setSelectedUserId('');
                 }}
-                className="text-[#9da8b9] hover:text-white transition-colors"
+                className={`${currentTheme.textMuted} hover:${currentTheme.text}`}
               >
                 <X className="w-6 h-6" />
               </button>
@@ -540,8 +532,8 @@ const Teams = () => {
 
             <form onSubmit={handleAddMember} className="space-y-4">
               {/* Toggle Multi-Select Mode */}
-              <div className="flex items-center justify-between p-3 bg-[#136dec]/10 rounded-[0.125rem] border border-[#136dec]/20">
-                <span className="text-sm font-medium text-white">
+              <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                <span className={`text-sm font-medium ${currentTheme.text}`}>
                   {isMultiSelect ? 'Multi-Select Mode' : 'Single Select Mode'}
                 </span>
                 <button
@@ -551,10 +543,10 @@ const Teams = () => {
                     setSelectedUserId('');
                     setSelectedUserIds([]);
                   }}
-                  className={`px-4 py-2 rounded-[0.125rem] text-sm font-medium transition-colors ${
+                  className={`px-4 py-2 rounded-lg text-sm font-medium ${
                     isMultiSelect 
                       ? 'bg-green-600 text-white hover:bg-green-700' 
-                      : 'bg-[#282f39] text-white hover:bg-[#3e454f]'
+                      : 'bg-gray-600 text-white hover:bg-gray-700'
                   }`}
                 >
                   {isMultiSelect ? 'Switch to Single Select' : 'Switch to Multi-Select'}
@@ -565,43 +557,43 @@ const Teams = () => {
                 /* Multi-Select UI */
                 <div>
                   <div className="flex justify-between items-center mb-2">
-                    <label className="block text-sm font-medium text-white">
+                    <label className={`block text-sm font-medium ${currentTheme.text}`}>
                       Select Users ({selectedUserIds.length} selected)
                     </label>
                     <button
                       type="button"
                       onClick={toggleSelectAll}
-                      className="text-sm text-[#136dec] hover:text-[#1158c7]"
+                      className="text-sm text-blue-600 hover:text-blue-800"
                     >
                       {selectedUserIds.length === users.filter((u) => !selectedTeam.members?.some((m) => m._id === u._id)).length
                         ? 'Deselect All'
                         : 'Select All'}
                     </button>
                   </div>
-                  <div className="border border-[#282f39] rounded-[0.125rem] max-h-96 overflow-y-auto">
+                  <div className={`border ${currentTheme.border} rounded-lg max-h-96 overflow-y-auto`}>
                     {users
                       .filter((u) => !selectedTeam.members?.some((m) => m._id === u._id))
                       .map((u) => (
                         <label
                           key={u._id}
-                          className="flex items-center p-3 hover:bg-[#282f39] cursor-pointer border-b border-[#282f39] last:border-b-0 transition-colors"
+                          className={`flex items-center p-3 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer border-b ${currentTheme.border} last:border-b-0`}
                         >
                           <input
                             type="checkbox"
                             checked={selectedUserIds.includes(u._id)}
                             onChange={() => toggleUserSelection(u._id)}
-                            className="w-4 h-4 text-[#136dec] rounded focus:ring-[#136dec] mr-3"
+                            className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 mr-3"
                           />
                           <div className="flex-1">
-                            <div className="font-medium text-white">{u.full_name}</div>
-                            <div className="text-sm text-[#9da8b9]">
+                            <div className={`font-medium ${currentTheme.text}`}>{u.full_name}</div>
+                            <div className={`text-sm ${currentTheme.textSecondary}`}>
                               {u.email} • <span className="capitalize">{u.role}</span>
                             </div>
                           </div>
                         </label>
                       ))}
                     {users.filter((u) => !selectedTeam.members?.some((m) => m._id === u._id)).length === 0 && (
-                      <div className="p-6 text-center text-[#9da8b9]">
+                      <div className={`p-6 text-center ${currentTheme.textMuted}`}>
                         No available users to add
                       </div>
                     )}
@@ -610,7 +602,7 @@ const Teams = () => {
               ) : (
                 /* Single Select UI */
                 <div>
-                  <label className="block text-sm font-medium text-white mb-2">
+                  <label className={`block text-sm font-medium ${currentTheme.text} mb-2`}>
                     Select User *
                   </label>
                   <select

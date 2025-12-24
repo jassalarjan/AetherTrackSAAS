@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Task List View - TaskFlow</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#136dec",
+              "background-light": "#f6f7f8",
+              "background-dark": "#101822", // Main background
+              "surface-dark": "#161b22", // Slightly lighter for sidebar/headers
+              "border-dark": "#282f39", // Borders
+            },
+            fontFamily: {
+              "display": ["Inter", "sans-serif"]
+            },
+            borderRadius: {"DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem"},
+          },
+        },
+      }
+    </script>
+<style>/* Custom scrollbar for dark mode feeling */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px
+    }
+::-webkit-scrollbar-track {
+    background: #101822
+    }
+::-webkit-scrollbar-thumb {
+    background: #282f39;
+    border-radius: 4px
+    }
+.checkbox-custom:checked {
+    background-color: #136dec;
+    border-color: #136dec;
+    background-image: url(https://lh3.googleusercontent.com/aida-public/AB6AXuDq2sqotMoEzT5Dp0ixgC8IPQN40wDm5JfX2L77xiW3iJAE1uvmyeiyI8gRX6JD007-S6rNywykh_PbCYnuUXYbtA2hdsiY5KglQ1b-SA-Yd04SWVejY9x1ZdSkleiz3lvMEK9LibwMcPsYDAYCTEtSHTH40il2s5UvcPgNvvbnurPOjWQn3gfQioeem5AHRvZ-kyY8xVc11JviA41ucGTmPM163YXS-mcwlf3s3QWH015EfNKjjxmoJOFDp85UoanibayJzWJ60QY)
+    }</style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-[#111418] dark:text-white font-display overflow-hidden flex flex-col h-screen">
+<!-- Top Navigation -->
+<header class="flex flex-none items-center justify-between whitespace-nowrap border-b border-solid border-border-dark bg-background-dark px-6 py-3 shrink-0 z-20">
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-3 text-white">
+<div class="size-8 rounded bg-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-[20px]">task_alt</span>
+</div>
+<h2 class="text-white text-lg font-bold leading-tight tracking-tight">TaskFlow</h2>
+</div>
+<!-- Global Search -->
+<label class="hidden md:flex flex-col min-w-[320px] h-9">
+<div class="flex w-full flex-1 items-stretch rounded bg-surface-dark border border-border-dark group focus-within:border-primary transition-colors">
+<div class="text-[#9da8b9] flex items-center justify-center pl-3">
+<span class="material-symbols-outlined text-[20px]">search</span>
+</div>
+<input class="flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded bg-transparent text-white focus:outline-none placeholder:text-[#9da8b9] px-3 text-sm font-normal leading-normal border-none focus:ring-0" placeholder="Search tasks, projects, or people..."/>
+</div>
+</label>
+</div>
+<div class="flex flex-1 justify-end gap-6 items-center">
+<div class="flex gap-1">
+<button class="flex items-center justify-center size-9 rounded-full hover:bg-surface-dark text-[#9da8b9] hover:text-white transition-colors">
+<span class="material-symbols-outlined text-[20px]">notifications</span>
+</button>
+<button class="flex items-center justify-center size-9 rounded-full hover:bg-surface-dark text-[#9da8b9] hover:text-white transition-colors">
+<span class="material-symbols-outlined text-[20px]">help</span>
+</button>
+</div>
+<div class="bg-center bg-no-repeat bg-cover rounded-full size-8 ring-2 ring-border-dark cursor-pointer" data-alt="User profile avatar showing a smiling person" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCn3IFXkExfhlRYRChjG8URVExFsIGd2qfmMgMsv7T_LKMrQ5FTRYGRstza0dOhtnM4NRIQaltkiVbWPWRFszXC_6_j3BJCHBX7YHFMrUfcKFE-jMuBZX5jCPjoyDl33n4ppedTGyJlZqdNyAF-gXNSWhswz14-DKJCQJjbUtz5WhU-oOivEYIESeZL3GfKuG6BF9LVgHfkmZND1sOQAs8rZ3rYuMSz68_UkhZTN3sZp2_YT7Uzxq_G-8GwtLBoEOJlcplh9NSfpQY");'></div>
+</div>
+</header>
+<div class="flex flex-1 overflow-hidden">
+<!-- Side Navigation -->
+<aside class="w-64 bg-background-dark border-r border-border-dark flex-col hidden md:flex shrink-0">
+<div class="flex flex-col gap-1 p-4">
+<div class="px-3 py-2">
+<p class="text-[#9da8b9] text-xs font-bold uppercase tracking-wider">Main</p>
+</div>
+<a class="flex items-center gap-3 px-3 py-2 rounded text-[#9da8b9] hover:bg-surface-dark hover:text-white transition-colors group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-primary">dashboard</span>
+<span class="text-sm font-medium">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded bg-primary/10 text-primary transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px] fill-1">check_circle</span>
+<span class="text-sm font-medium">My Tasks</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded text-[#9da8b9] hover:bg-surface-dark hover:text-white transition-colors group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-primary">group</span>
+<span class="text-sm font-medium">Team Tasks</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded text-[#9da8b9] hover:bg-surface-dark hover:text-white transition-colors group" href="#">
+<span class="material-symbols-outlined text-[20px] group-hover:text-primary">bar_chart</span>
+<span class="text-sm font-medium">Reports</span>
+</a>
+</div>
+<div class="mt-auto p-4 border-t border-border-dark">
+<div class="px-3 py-2">
+<p class="text-[#9da8b9] text-xs font-bold uppercase tracking-wider mb-2">Workspace</p>
+<div class="flex items-center gap-2 text-white text-sm font-medium">
+<div class="size-6 rounded bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center text-[10px]">E</div>
+<span>Engineering Team</span>
+<span class="material-symbols-outlined text-[16px] ml-auto text-[#9da8b9] cursor-pointer">unfold_more</span>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="flex-1 flex flex-col min-w-0 bg-background-dark overflow-hidden">
+<!-- Page Header area -->
+<div class="flex flex-col border-b border-border-dark bg-background-dark shrink-0">
+<div class="px-6 pt-6 pb-2">
+<h1 class="text-white text-2xl font-bold leading-tight">My Tasks</h1>
+</div>
+<!-- Toolbar -->
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-4 px-6 py-3">
+<!-- Search & Quick Filters -->
+<div class="flex flex-1 items-center gap-3 overflow-x-auto no-scrollbar">
+<!-- Local List Search -->
+<div class="relative group">
+<span class="absolute inset-y-0 left-0 flex items-center pl-2 text-[#9da8b9] group-focus-within:text-white">
+<span class="material-symbols-outlined text-[18px]">filter_list</span>
+</span>
+<input class="bg-surface-dark border border-border-dark text-white text-sm rounded h-8 pl-8 pr-3 w-40 md:w-64 focus:ring-1 focus:ring-primary focus:border-primary placeholder:text-[#58606e]" placeholder="Filter by name..." type="text"/>
+</div>
+<div class="h-6 w-px bg-border-dark mx-1"></div>
+<!-- Chip Filters -->
+<div class="flex gap-2">
+<button class="flex h-7 items-center gap-1.5 rounded-full border border-border-dark bg-surface-dark px-3 hover:border-[#4b5563] transition-colors">
+<span class="text-[#9da8b9] text-xs font-medium">Status:</span>
+<span class="text-white text-xs font-medium">All</span>
+<span class="material-symbols-outlined text-[16px] text-[#9da8b9]">expand_more</span>
+</button>
+<button class="flex h-7 items-center gap-1.5 rounded-full border border-border-dark bg-surface-dark px-3 hover:border-[#4b5563] transition-colors">
+<span class="text-[#9da8b9] text-xs font-medium">Priority:</span>
+<span class="text-white text-xs font-medium">High</span>
+<span class="material-symbols-outlined text-[16px] text-[#9da8b9]">expand_more</span>
+</button>
+<button class="flex h-7 items-center gap-1.5 rounded-full border border-dotted border-[#4b5563] px-3 hover:bg-surface-dark transition-colors">
+<span class="material-symbols-outlined text-[16px] text-[#9da8b9]">add</span>
+<span class="text-[#9da8b9] text-xs font-medium">Add Filter</span>
+</button>
+</div>
+</div>
+<!-- Actions -->
+<div class="flex items-center gap-3 shrink-0">
+<button class="p-1.5 text-[#9da8b9] hover:text-white rounded hover:bg-surface-dark" title="Customize Columns">
+<span class="material-symbols-outlined text-[20px]">view_column</span>
+</button>
+<button class="p-1.5 text-[#9da8b9] hover:text-white rounded hover:bg-surface-dark" title="Export">
+<span class="material-symbols-outlined text-[20px]">download</span>
+</button>
+<button class="flex items-center gap-2 h-9 bg-primary hover:bg-blue-600 text-white text-sm font-semibold px-4 rounded transition-colors shadow-lg shadow-blue-900/20">
+<span class="material-symbols-outlined text-[20px]">add</span>
+<span>New Task</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Data Grid / Table -->
+<div class="flex-1 overflow-auto bg-background-dark relative w-full">
+<table class="w-full text-left border-collapse">
+<thead class="bg-surface-dark sticky top-0 z-10 shadow-sm">
+<tr>
+<th class="py-3 pl-6 pr-3 w-10 border-b border-border-dark">
+<input class="checkbox-custom size-4 rounded border-[#4b5563] bg-transparent text-primary focus:ring-offset-0 focus:ring-0 cursor-pointer" type="checkbox"/>
+</th>
+<th class="py-3 px-3 border-b border-border-dark text-xs font-semibold text-[#9da8b9] uppercase tracking-wider w-96 cursor-pointer hover:text-white group">
+<div class="flex items-center gap-1">
+                                    Task Name
+                                    <span class="material-symbols-outlined text-[16px] opacity-0 group-hover:opacity-100 transition-opacity">arrow_downward</span>
+</div>
+</th>
+<th class="py-3 px-3 border-b border-border-dark text-xs font-semibold text-[#9da8b9] uppercase tracking-wider w-32 hidden sm:table-cell">ID</th>
+<th class="py-3 px-3 border-b border-border-dark text-xs font-semibold text-[#9da8b9] uppercase tracking-wider w-32">Priority</th>
+<th class="py-3 px-3 border-b border-border-dark text-xs font-semibold text-[#9da8b9] uppercase tracking-wider w-36">Status</th>
+<th class="py-3 px-3 border-b border-border-dark text-xs font-semibold text-[#9da8b9] uppercase tracking-wider w-40 hidden md:table-cell">Assignee</th>
+<th class="py-3 px-3 border-b border-border-dark text-xs font-semibold text-[#9da8b9] uppercase tracking-wider w-32 hidden lg:table-cell">Due Date</th>
+<th class="py-3 px-3 border-b border-border-dark w-16"></th>
+</tr>
+</thead>
+<tbody class="divide-y divide-border-dark">
+<!-- Row 1 -->
+<tr class="group hover:bg-[#161b22] transition-colors">
+<td class="py-2.5 pl-6 pr-3">
+<input class="checkbox-custom size-4 rounded border-[#4b5563] bg-transparent text-primary focus:ring-offset-0 focus:ring-0 cursor-pointer" type="checkbox"/>
+</td>
+<td class="py-2.5 px-3">
+<div class="flex flex-col">
+<span class="text-sm font-medium text-white group-hover:text-primary cursor-pointer">Update Q3 Financial Projections</span>
+</div>
+</td>
+<td class="py-2.5 px-3 hidden sm:table-cell">
+<span class="text-xs text-[#9da8b9] font-mono">TSK-2942</span>
+</td>
+<td class="py-2.5 px-3">
+<div class="flex items-center gap-2">
+<div class="size-2 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.4)]"></div>
+<span class="text-xs text-[#d1d5db]">High</span>
+</div>
+</td>
+<td class="py-2.5 px-3">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                                    In Progress
+                                </span>
+</td>
+<td class="py-2.5 px-3 hidden md:table-cell">
+<div class="flex items-center gap-2" title="Assigned to Sarah M.">
+<div class="size-6 rounded-full bg-cover bg-center" data-alt="Small avatar of user Sarah" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCNf7XY_W1dZyzuZ-m8j1PjKwr7vG76GQzjkr7_ECpLEELKsMM_g3HluiGXMcm3ePRY1-2c2b24-1eDwnYZ304yhpGQPFBLOP-h8I2a3re5xZ_WLwd7Qnj2DXLxm7mmJLxYL7q8Tr-Q-i_Iid8Ln0d43fgK1TGpGvs0q7bIE4FTa5fs9iPE-LN0oq-k22ToCn7B3AIS8MAEPLpPR1EL1Ns6kiY6jYAdvDiKUuwhzkFeq4IPKc76-dqXqzibaEltt4Ne3AJmiuWcnE0");'></div>
+<span class="text-xs text-[#d1d5db]">Sarah M.</span>
+</div>
+</td>
+<td class="py-2.5 px-3 hidden lg:table-cell">
+<span class="text-xs text-[#9da8b9]">Oct 24, 2023</span>
+</td>
+<td class="py-2.5 px-3 text-right">
+<button class="text-[#9da8b9] hover:text-white opacity-0 group-hover:opacity-100 transition-opacity p-1">
+<span class="material-symbols-outlined text-[18px]">more_horiz</span>
+</button>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="group hover:bg-[#161b22] transition-colors bg-surface-dark/30">
+<td class="py-2.5 pl-6 pr-3">
+<input class="checkbox-custom size-4 rounded border-[#4b5563] bg-transparent text-primary focus:ring-offset-0 focus:ring-0 cursor-pointer" type="checkbox"/>
+</td>
+<td class="py-2.5 px-3">
+<span class="text-sm font-medium text-white group-hover:text-primary cursor-pointer">Review Q2 Marketing Campaign Performance</span>
+</td>
+<td class="py-2.5 px-3 hidden sm:table-cell">
+<span class="text-xs text-[#9da8b9] font-mono">TSK-2943</span>
+</td>
+<td class="py-2.5 px-3">
+<div class="flex items-center gap-2">
+<div class="size-2 rounded-full bg-orange-400"></div>
+<span class="text-xs text-[#d1d5db]">Medium</span>
+</div>
+</td>
+<td class="py-2.5 px-3">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-[#282f39] text-[#9da8b9] border border-[#4b5563]/30">
+                                    To Do
+                                </span>
+</td>
+<td class="py-2.5 px-3 hidden md:table-cell">
+<div class="flex items-center gap-2">
+<div class="size-6 rounded-full bg-cover bg-center" data-alt="Small avatar of user Mike" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBlYXkt2zpG1T4l_yKgdiyymaGfsTRMWqtoxJNLrlrtJN-YMmrooEMlUyqoF_S9us-5TAGSFGA5fFzVl0Nei6Ix5Nja_sdcOJouTn3FUuW8JQUwPilDwKcbHWDW5N58iVq5-Z0E84F7Of5UO5MVaTtkhuqvcEDKLj_-m3BjkTVCHgks1xGnb_03WXcB2R864AgUVzlDKt9D9lCTr7Wi-5Xibyjye9_og-35TeFEBzmXFxvQFoPElxDBruEOK37DqVzzBJpi0SgYxHw");'></div>
+<span class="text-xs text-[#d1d5db]">Mike T.</span>
+</div>
+</td>
+<td class="py-2.5 px-3 hidden lg:table-cell">
+<span class="text-xs text-[#9da8b9]">Oct 25, 2023</span>
+</td>
+<td class="py-2.5 px-3 text-right">
+<button class="text-[#9da8b9] hover:text-white opacity-0 group-hover:opacity-100 transition-opacity p-1">
+<span class="material-symbols-outlined text-[18px]">more_horiz</span>
+</button>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="group hover:bg-[#161b22] transition-colors">
+<td class="py-2.5 pl-6 pr-3">
+<input class="checkbox-custom size-4 rounded border-[#4b5563] bg-transparent text-primary focus:ring-offset-0 focus:ring-0 cursor-pointer" type="checkbox"/>
+</td>
+<td class="py-2.5 px-3">
+<span class="text-sm font-medium text-white group-hover:text-primary cursor-pointer">Fix Navigation Bug on Mobile</span>
+</td>
+<td class="py-2.5 px-3 hidden sm:table-cell">
+<span class="text-xs text-[#9da8b9] font-mono">TSK-2945</span>
+</td>
+<td class="py-2.5 px-3">
+<div class="flex items-center gap-2">
+<div class="size-2 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.4)]"></div>
+<span class="text-xs text-[#d1d5db]">High</span>
+</div>
+</td>
+<td class="py-2.5 px-3">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                    Done
+                                </span>
+</td>
+<td class="py-2.5 px-3 hidden md:table-cell">
+<div class="flex items-center gap-2">
+<div class="size-6 rounded-full bg-primary flex items-center justify-center text-[10px] text-white font-bold">ME</div>
+<span class="text-xs text-[#d1d5db]">Me</span>
+</div>
+</td>
+<td class="py-2.5 px-3 hidden lg:table-cell">
+<span class="text-xs text-[#9da8b9]">Oct 20, 2023</span>
+</td>
+<td class="py-2.5 px-3 text-right">
+<button class="text-[#9da8b9] hover:text-white opacity-0 group-hover:opacity-100 transition-opacity p-1">
+<span class="material-symbols-outlined text-[18px]">more_horiz</span>
+</button>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="group hover:bg-[#161b22] transition-colors bg-surface-dark/30">
+<td class="py-2.5 pl-6 pr-3">
+<input class="checkbox-custom size-4 rounded border-[#4b5563] bg-transparent text-primary focus:ring-offset-0 focus:ring-0 cursor-pointer" type="checkbox"/>
+</td>
+<td class="py-2.5 px-3">
+<span class="text-sm font-medium text-white group-hover:text-primary cursor-pointer">Prepare Board Meeting Slides</span>
+</td>
+<td class="py-2.5 px-3 hidden sm:table-cell">
+<span class="text-xs text-[#9da8b9] font-mono">TSK-2948</span>
+</td>
+<td class="py-2.5 px-3">
+<div class="flex items-center gap-2">
+<div class="size-2 rounded-full bg-slate-500"></div>
+<span class="text-xs text-[#d1d5db]">Low</span>
+</div>
+</td>
+<td class="py-2.5 px-3">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                                    In Progress
+                                </span>
+</td>
+<td class="py-2.5 px-3 hidden md:table-cell">
+<div class="flex items-center gap-2">
+<div class="size-6 rounded-full bg-cover bg-center" data-alt="Small avatar of user Alex" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBeIdIeFmLxlzIYtmmpNmE7816JwW5vW2cGU4swgCghtQHZbxj4BzURDWEHn4wx93hYJocqgKlU_cnFMSb-wgymnIJ2LLk57LeipTKx048V9xVdfie1GUBc2-Ls0tUiZw-HaufoUu9Z_TDXLHfVjVEwfxgwarSTnhv8EeebmVXe7LCfYYhlZG6cokfhcBfErM-VeerUW7d36QRxeiUgCc9R4j9UF54OHvXJZe6gmeKgD2ug2SFibXnjFikPrh6CbyfcJVEnTwGErEE");'></div>
+<span class="text-xs text-[#d1d5db]">Alex R.</span>
+</div>
+</td>
+<td class="py-2.5 px-3 hidden lg:table-cell">
+<span class="text-xs text-[#9da8b9]">Nov 01, 2023</span>
+</td>
+<td class="py-2.5 px-3 text-right">
+<button class="text-[#9da8b9] hover:text-white opacity-0 group-hover:opacity-100 transition-opacity p-1">
+<span class="material-symbols-outlined text-[18px]">more_horiz</span>
+</button>
+</td>
+</tr>
+<!-- Row 5 -->
+<tr class="group hover:bg-[#161b22] transition-colors">
+<td class="py-2.5 pl-6 pr-3">
+<input class="checkbox-custom size-4 rounded border-[#4b5563] bg-transparent text-primary focus:ring-offset-0 focus:ring-0 cursor-pointer" type="checkbox"/>
+</td>
+<td class="py-2.5 px-3">
+<span class="text-sm font-medium text-white group-hover:text-primary cursor-pointer">Conduct User Interviews for v2</span>
+</td>
+<td class="py-2.5 px-3 hidden sm:table-cell">
+<span class="text-xs text-[#9da8b9] font-mono">TSK-2950</span>
+</td>
+<td class="py-2.5 px-3">
+<div class="flex items-center gap-2">
+<div class="size-2 rounded-full bg-orange-400"></div>
+<span class="text-xs text-[#d1d5db]">Medium</span>
+</div>
+</td>
+<td class="py-2.5 px-3">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-[#282f39] text-[#9da8b9] border border-[#4b5563]/30">
+                                    To Do
+                                </span>
+</td>
+<td class="py-2.5 px-3 hidden md:table-cell">
+<div class="flex items-center gap-2">
+<div class="size-6 rounded-full bg-primary flex items-center justify-center text-[10px] text-white font-bold">ME</div>
+<span class="text-xs text-[#d1d5db]">Me</span>
+</div>
+</td>
+<td class="py-2.5 px-3 hidden lg:table-cell">
+<span class="text-xs text-[#9da8b9]">Nov 03, 2023</span>
+</td>
+<td class="py-2.5 px-3 text-right">
+<button class="text-[#9da8b9] hover:text-white opacity-0 group-hover:opacity-100 transition-opacity p-1">
+<span class="material-symbols-outlined text-[18px]">more_horiz</span>
+</button>
+</td>
+</tr>
+<!-- Row 6 -->
+<tr class="group hover:bg-[#161b22] transition-colors bg-surface-dark/30">
+<td class="py-2.5 pl-6 pr-3">
+<input class="checkbox-custom size-4 rounded border-[#4b5563] bg-transparent text-primary focus:ring-offset-0 focus:ring-0 cursor-pointer" type="checkbox"/>
+</td>
+<td class="py-2.5 px-3">
+<span class="text-sm font-medium text-white group-hover:text-primary cursor-pointer">Update API Documentation</span>
+</td>
+<td class="py-2.5 px-3 hidden sm:table-cell">
+<span class="text-xs text-[#9da8b9] font-mono">TSK-2951</span>
+</td>
+<td class="py-2.5 px-3">
+<div class="flex items-center gap-2">
+<div class="size-2 rounded-full bg-slate-500"></div>
+<span class="text-xs text-[#d1d5db]">Low</span>
+</div>
+</td>
+<td class="py-2.5 px-3">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                    Done
+                                </span>
+</td>
+<td class="py-2.5 px-3 hidden md:table-cell">
+<div class="flex items-center gap-2">
+<div class="size-6 rounded-full bg-cover bg-center" data-alt="Small avatar of user David" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBQcRQDzwwmXCvcEAEQIO3AyUftoNiImqAgfKwNgJmwgSdxcWtulL_T9tcVxnyFOeLOD-RsbQIG1uGZCVwfR0_ZW9Lh-tM3cxZY-Nq-exxhqyRCIaoUtFS8OKqP-vO_Hwn6OqRyMcStSMv_M3rx7JEmRhLU2Zi6EgFHpR5PewlbBdpn8ZGyppHMBF2KxvKlV4GkbeFC9eoFAFd5hIKppp6LXOBUXZAf3tkZv8AIfoxG_nOrQXl1gp0iCvYxPWJVlwFLlMD2dRm8Ogg");'></div>
+<span class="text-xs text-[#d1d5db]">David K.</span>
+</div>
+</td>
+<td class="py-2.5 px-3 hidden lg:table-cell">
+<span class="text-xs text-[#9da8b9]">Oct 18, 2023</span>
+</td>
+<td class="py-2.5 px-3 text-right">
+<button class="text-[#9da8b9] hover:text-white opacity-0 group-hover:opacity-100 transition-opacity p-1">
+<span class="material-symbols-outlined text-[18px]">more_horiz</span>
+</button>
+</td>
+</tr>
+<!-- Row 7 -->
+<tr class="group hover:bg-[#161b22] transition-colors">
+<td class="py-2.5 pl-6 pr-3">
+<input class="checkbox-custom size-4 rounded border-[#4b5563] bg-transparent text-primary focus:ring-offset-0 focus:ring-0 cursor-pointer" type="checkbox"/>
+</td>
+<td class="py-2.5 px-3">
+<span class="text-sm font-medium text-white group-hover:text-primary cursor-pointer">Migrate Database to New Cluster</span>
+</td>
+<td class="py-2.5 px-3 hidden sm:table-cell">
+<span class="text-xs text-[#9da8b9] font-mono">TSK-2955</span>
+</td>
+<td class="py-2.5 px-3">
+<div class="flex items-center gap-2">
+<div class="size-2 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.4)]"></div>
+<span class="text-xs text-[#d1d5db]">High</span>
+</div>
+</td>
+<td class="py-2.5 px-3">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-[#282f39] text-[#9da8b9] border border-[#4b5563]/30">
+                                    To Do
+                                </span>
+</td>
+<td class="py-2.5 px-3 hidden md:table-cell">
+<div class="flex items-center gap-2">
+<div class="size-6 rounded-full bg-cover bg-center" data-alt="Small avatar of user James" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDiLIQbtO7cDVBTPZjiRIUQxwE0qBt_qjsvUgWkx1z7fdT4CvG7r7CUr00WkIUDSoHSWW7bTgYwhqFdebdMOoWXcuw0sOixfMVZMVoM5F1cSr6WGDZyedNsFdvkQbKUo6tm0q9vXKZj5pPgT82k3oP0POkfxWOnJuypntBeohdsh7inJDc9SA6uBKVtE14nn7f8cxRkEBqEVrtLUJ3aChHGKzfYVQRfD-hr5qlVHoi5cwnY51jVrYzKH9_RRkuQm50d_tOb-cmLw54");'></div>
+<span class="text-xs text-[#d1d5db]">James L.</span>
+</div>
+</td>
+<td class="py-2.5 px-3 hidden lg:table-cell">
+<span class="text-xs text-[#9da8b9]">Nov 15, 2023</span>
+</td>
+<td class="py-2.5 px-3 text-right">
+<button class="text-[#9da8b9] hover:text-white opacity-0 group-hover:opacity-100 transition-opacity p-1">
+<span class="material-symbols-outlined text-[18px]">more_horiz</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Footer / Pagination -->
+<div class="flex flex-none items-center justify-between border-t border-border-dark bg-surface-dark px-6 py-3 text-xs text-[#9da8b9] shrink-0">
+<div class="flex items-center gap-4">
+<span>1-50 of 2,430 tasks</span>
+<div class="hidden sm:flex items-center gap-2">
+<span>Rows per page:</span>
+<select class="bg-transparent border-none text-white text-xs font-medium focus:ring-0 p-0 pr-6 cursor-pointer">
+<option>50</option>
+<option>100</option>
+<option>200</option>
+</select>
+</div>
+</div>
+<div class="flex items-center gap-1">
+<button class="p-1 rounded hover:bg-[#282f39] hover:text-white disabled:opacity-50">
+<span class="material-symbols-outlined text-[18px]">first_page</span>
+</button>
+<button class="p-1 rounded hover:bg-[#282f39] hover:text-white disabled:opacity-50">
+<span class="material-symbols-outlined text-[18px]">chevron_left</span>
+</button>
+<button class="p-1 rounded hover:bg-[#282f39] hover:text-white disabled:opacity-50">
+<span class="material-symbols-outlined text-[18px]">chevron_right</span>
+</button>
+<button class="p-1 rounded hover:bg-[#282f39] hover:text-white disabled:opacity-50">
+<span class="material-symbols-outlined text-[18px]">last_page</span>
+</button>
+</div>
+</div>
+</main>
+</div>
+</body></html>
