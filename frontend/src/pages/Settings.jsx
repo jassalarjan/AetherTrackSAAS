@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import Sidebar from '../components/Sidebar';
@@ -6,11 +6,12 @@ import ThemeToggle from '../components/ThemeToggle';
 import NotificationSettings from '../components/NotificationSettings';
 import SessionSettings from '../components/SessionSettings';
 import api from '../api/axios';
-import { User, Settings as SettingsIcon, Palette, Monitor, Lock, Eye, EyeOff, Bell, AlertCircle } from 'lucide-react';
+import { User, Settings as SettingsIcon, Palette, Monitor, Lock, Eye, EyeOff, Bell, AlertCircle, Camera, Trash2, Upload } from 'lucide-react';
 
 const Settings = () => {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const { theme } = useTheme();
+  const fileInputRef = useRef(null);
   const [showOldPassword, setShowOldPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -21,6 +22,115 @@ const Settings = () => {
   });
   const [passwordMessage, setPasswordMessage] = useState({ type: '', text: '' });
   const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [isUploadingPicture, setIsUploadingPicture] = useState(false);
+  const [pictureMessage, setPictureMessage] = useState({ type: '', text: '' });
+
+  const handleProfilePictureChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (!validTypes.includes(file.type)) {
+      setPictureMessage({ type: 'error', text: 'Please upload a valid image (JPEG, PNG, GIF, or WebP)' });
+      return;
+    }
+
+    // Validate file size (2MB max)
+    if (file.size > 2 * 1024 * 1024) {
+      setPictureMessage({ type: 'error', text: 'Image too large. Maximum size is 2MB.' });
+      return;
+    }
+
+    setIsUploadingPicture(true);
+    setPictureMessage({ type: '', text: '' });
+
+    try {
+      // Convert to base64
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        try {
+          const base64 = reader.result;
+          const response = await api.post('/users/me/profile-picture', {
+            profile_picture: base64
+          });
+
+          // Update user in context
+          updateUser({ profile_picture: response.data.user.profile_picture });
+          setPictureMessage({ type: 'success', text: 'Profile picture updated successfully!' });
+        } catch (error) {
+          setPictureMessage({ 
+            type: 'error', 
+            text: error.response?.data?.message || 'Failed to upload profile picture' 
+          });
+        } finally {
+          setIsUploadingPicture(false);
+        }
+      };
+      reader.onerror = () => {
+        setPictureMessage({ type: 'error', text: 'Failed to read the image file' });
+        setIsUploadingPicture(false);
+      };
+      reader.readAsDataURL(file);
+    } catch (error) {
+      setPictureMessage({ type: 'error', text: 'Failed to process the image' });
+      setIsUploadingPicture(false);
+    }
+
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const handleRemoveProfilePicture = async () => {
+    if (!user?.profile_picture) return;
+
+    setIsUploadingPicture(true);
+    setPictureMessage({ type: '', text: '' });
+
+    try {
+      await api.delete('/users/me/profile-picture');
+      updateUser({ profile_picture: null });
+      setPictureMessage({ type: 'success', text: 'Profile picture removed successfully!' });
+    } catch (error) {
+      setPictureMessage({ 
+        type: 'error', 
+        text: error.response?.data?.message || 'Failed to remove profile picture' 
+      });
+    } finally {
+      setIsUploadingPicture(false);
+    }
+  };
+
+  // Generate initials from name
+  const getInitials = (name) => {
+    if (!name) return 'U';
+    const parts = name.trim().split(' ');
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
+  };
+
+  // Generate a consistent color based on the name
+  const getColorFromName = (str) => {
+    const colors = [
+      'bg-blue-500',
+      'bg-green-500',
+      'bg-purple-500',
+      'bg-pink-500',
+      'bg-indigo-500',
+      'bg-teal-500',
+      'bg-orange-500',
+      'bg-cyan-500',
+    ];
+    let hash = 0;
+    for (let i = 0; i < (str || '').length; i++) {
+      hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return colors[Math.abs(hash) % colors.length];
+  };
 
   const handlePasswordChange = async (e) => {
     e.preventDefault();
@@ -80,6 +190,81 @@ const Settings = () => {
                 <User className="text-[#136dec]" size={24} />
                 <h3 className={`text-lg font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} uppercase tracking-wider`}>Profile</h3>
               </div>
+
+              {/* Profile Picture Section */}
+              <div className="mb-6">
+                <label className={`block text-xs font-bold ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} uppercase tracking-wider mb-3`}>
+                  Profile Picture
+                </label>
+                <div className="flex items-center gap-6">
+                  {/* Current Avatar */}
+                  <div className="relative">
+                    {user?.profile_picture ? (
+                      <img
+                        src={user.profile_picture}
+                        alt={user?.full_name || 'User'}
+                        className="w-24 h-24 rounded-full object-cover border-4 border-[#136dec]"
+                      />
+                    ) : (
+                      <div className={`w-24 h-24 rounded-full ${getColorFromName(user?.full_name)} flex items-center justify-center text-white text-2xl font-bold border-4 border-[#136dec]`}>
+                        {getInitials(user?.full_name)}
+                      </div>
+                    )}
+                    {isUploadingPicture && (
+                      <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center">
+                        <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Upload Controls */}
+                  <div className="flex flex-col gap-2">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/gif,image/webp"
+                      onChange={handleProfilePictureChange}
+                      className="hidden"
+                      id="profile-picture-input"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isUploadingPicture}
+                      className="flex items-center gap-2 px-4 py-2 bg-[#136dec] text-white rounded hover:bg-[#1158c7] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <Upload size={16} />
+                      <span>{user?.profile_picture ? 'Change Picture' : 'Upload Picture'}</span>
+                    </button>
+                    {user?.profile_picture && (
+                      <button
+                        type="button"
+                        onClick={handleRemoveProfilePicture}
+                        disabled={isUploadingPicture}
+                        className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <Trash2 size={16} />
+                        <span>Remove</span>
+                      </button>
+                    )}
+                    <p className={`text-xs ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-500'}`}>
+                      JPEG, PNG, GIF or WebP. Max 2MB.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Picture Upload Message */}
+                {pictureMessage.text && (
+                  <div className={`mt-3 p-3 rounded border ${
+                    pictureMessage.type === 'success' 
+                      ? 'bg-green-500/10 border-green-500/30 text-green-400' 
+                      : 'bg-red-500/10 border-red-500/30 text-red-400'
+                  }`}>
+                    {pictureMessage.text}
+                  </div>
+                )}
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className={`block text-xs font-bold ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} uppercase tracking-wider mb-2`}>Full Name</label>

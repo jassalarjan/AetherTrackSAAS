@@ -1,7 +1,7 @@
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
-export const ProtectedRoute = ({ children, allowedRoles = [] }) => {
+export const ProtectedRoute = ({ children, allowedRoles = [], requireSystemAdmin = false }) => {
   const { user, loading } = useAuth();
 
   if (loading) {
@@ -21,6 +21,14 @@ export const ProtectedRoute = ({ children, allowedRoles = [] }) => {
 
   if (allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
     return <Navigate to="/dashboard" replace />;
+  }
+
+  // Check if route requires system admin (admin with no workspace)
+  if (requireSystemAdmin) {
+    const isSystemAdmin = user.isSystemAdmin || (!user.workspaceId && user.role === 'admin');
+    if (!isSystemAdmin) {
+      return <Navigate to="/dashboard" replace />;
+    }
   }
 
   return children;

@@ -9,7 +9,11 @@ const router = express.Router();
 // Get comments for a task
 router.get('/:taskId/comments', authenticate, async (req, res) => {
   try {
-    const comments = await Comment.find({ task_id: req.params.taskId })
+    // WORKSPACE SUPPORT: Scope by workspace
+    const comments = await Comment.find({ 
+      task_id: req.params.taskId,
+      workspaceId: req.context.workspaceId
+    })
       .populate('author_id', 'full_name email')
       .sort({ created_at: -1 });
 
@@ -26,8 +30,8 @@ router.post('/:taskId/comments', authenticate, async (req, res) => {
     const { content } = req.body;
     const taskId = req.params.taskId;
 
-    // Check if task exists
-    const task = await Task.findById(taskId);
+    // WORKSPACE SUPPORT: Check if task exists in same workspace
+    const task = await Task.findOne({ _id: taskId, workspaceId: req.context.workspaceId });
     if (!task) {
       return res.status(404).json({ message: 'Task not found' });
     }
@@ -35,7 +39,8 @@ router.post('/:taskId/comments', authenticate, async (req, res) => {
     const comment = new Comment({
       task_id: taskId,
       author_id: req.user._id,
-      content
+      content,
+      workspaceId: req.context.workspaceId
     });
 
     await comment.save();
@@ -49,7 +54,8 @@ router.post('/:taskId/comments', authenticate, async (req, res) => {
           task_id: taskId,
           task_title: task.title,
           comment_by: req.user.full_name
-        }
+        },
+        workspaceId: req.context.workspaceId
       });
     }
 

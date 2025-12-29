@@ -16,6 +16,11 @@ import taskRoutes from './routes/tasks.js';
 import commentRoutes from './routes/comments.js';
 import notificationRoutes from './routes/notifications.js';
 import changelogRoutes from './routes/changelog.js';
+import workspaceRoutes from './routes/workspaces.js';
+
+// Import middleware
+import { authenticate } from './middleware/auth.js';
+import workspaceContext from './middleware/workspaceContext.js';
 
 // Import scheduler
 import { initializeScheduler } from './utils/scheduler.js';
@@ -50,6 +55,9 @@ connectDB();
 
 // Initialize scheduler for automated tasks
 initializeScheduler();
+
+// Trust proxy - required to get real client IP behind reverse proxies (Render, Vercel, Nginx, etc.)
+app.set('trust proxy', true);
 
 // Middleware - Enhanced CORS configuration
 app.use(cors({
@@ -99,13 +107,18 @@ io.on('connection', (socket) => {
 });
 
 // API Routes
+// Auth routes (public, no workspace context needed for login/register)
 app.use('/api/auth', authRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/teams', teamRoutes);
-app.use('/api/tasks', taskRoutes);
-app.use('/api/comments', commentRoutes);
-app.use('/api/notifications', notificationRoutes);
-app.use('/api/changelog', changelogRoutes);
+
+// Protected routes with workspace context
+// Apply authentication and workspace context to all protected routes
+app.use('/api/users', authenticate, workspaceContext, userRoutes);
+app.use('/api/teams', authenticate, workspaceContext, teamRoutes);
+app.use('/api/tasks', authenticate, workspaceContext, taskRoutes);
+app.use('/api/comments', authenticate, workspaceContext, commentRoutes);
+app.use('/api/notifications', authenticate, workspaceContext, notificationRoutes);
+app.use('/api/changelog', authenticate, workspaceContext, changelogRoutes);
+app.use('/api/workspaces', workspaceRoutes); // Workspace routes handle their own auth/context
 
 // Health check
 app.get('/api/health', (req, res) => {

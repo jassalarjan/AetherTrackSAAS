@@ -1,15 +1,19 @@
 import express from 'express';
 import { authenticate } from '../middleware/auth.js';
 import { checkRole } from '../middleware/roleCheck.js';
+import { requireAuditLogs } from '../middleware/workspaceGuard.js';
 import { getChangeLogs, getChangeLogStats, exportChangeLogs } from '../utils/changeLogService.js';
 import ChangeLog from '../models/ChangeLog.js';
 
 const router = express.Router();
 
+// WORKSPACE SUPPORT: All changelog routes require auditLogs feature (CORE only)
+router.use(requireAuditLogs);
+
 /**
  * @route   GET /api/changelog
  * @desc    Get change logs with filters and pagination (Admin only)
- * @access  Private (Admin)
+ * @access  Private (Admin + CORE workspace OR System Admin)
  */
 router.get('/', authenticate, checkRole(['admin']), async (req, res) => {
   try {
@@ -21,8 +25,18 @@ router.get('/', authenticate, checkRole(['admin']), async (req, res) => {
       target_type,
       start_date,
       end_date,
-      search
+      search,
+      workspace_id  // Allow system admins to filter by specific workspace
     } = req.query;
+
+    // System admins can see all logs or filter by workspace
+    // Regular admins can only see their workspace's logs
+    let workspaceFilter = req.context.workspaceId;
+    
+    if (req.context.isSystemAdmin) {
+      // System admin: show all logs, or filter by specific workspace if provided
+      workspaceFilter = workspace_id || null;  // null means all workspaces
+    }
 
     const result = await getChangeLogs({
       page: parseInt(page),
@@ -32,7 +46,9 @@ router.get('/', authenticate, checkRole(['admin']), async (req, res) => {
       target_type,
       start_date,
       end_date,
-      search
+      search,
+      workspaceId: workspaceFilter,
+      includeAllWorkspaces: req.context.isSystemAdmin && !workspace_id  // New flag for system admins
     });
 
     res.json(result);

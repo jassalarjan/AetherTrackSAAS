@@ -9,10 +9,13 @@ A **modern**, **comprehensive**, and **role-based** task management system built
 ### 🔐 Authentication & Security
 - **JWT Authentication** with access and refresh tokens
 - **Role-Based Access Control (RBAC)** - Admin, HR, Team Lead, Member
+- **Multi-Workspace Support** - CORE (enterprise) and COMMUNITY (free tier)
+- **Public Community Registration** - Self-service workspace creation
+- **System Administrator** - Full cross-workspace management
 - **Automatic Session Management** - Configurable session timeouts (30 min - 24 hours)
 - **Auto-Logout Warning** - 5-minute warning before session expires
 - **Secure Password Hashing** with bcrypt
-- **Public Registration Disabled** - Only Admin/HR can create accounts
+- **Workspace Isolation** - Complete data separation between workspaces
 
 ### 👥 User Management
 - **Comprehensive User Profiles** - Full name, email, role, team assignment
@@ -21,6 +24,16 @@ A **modern**, **comprehensive**, and **role-based** task management system built
 - **Automated Welcome Emails** - New users receive credentials via email
 - **Role Management** - Admin/HR can assign and modify user roles
 - **User Activity Tracking** - Monitor user actions via audit logs
+
+### 🏢 Workspace Management (System Admin)
+- **Multi-Workspace Administration** - Manage all workspaces from one interface
+- **Workspace Creation** - Create CORE or COMMUNITY workspaces
+- **Workspace Activation Control** - Activate or deactivate workspaces to restrict access
+- **Usage Monitoring** - Track users, tasks, and teams per workspace
+- **Limit Management** - Configure COMMUNITY workspace limits
+- **Workspace Statistics** - Real-time metrics and completion rates
+- **User Assignment** - Assign workspace owners and admins
+- **Workspace Deletion** - Safe removal with validation checks
 
 ### 🎯 Task Management
 - **Complete Task Lifecycle** - Create, assign, update, track, and complete tasks
@@ -254,22 +267,32 @@ A **modern**, **comprehensive**, and **role-based** task management system built
 
 ## 🎪 Role Capabilities
 
-| Feature | Admin | HR | Team Lead | Member |
-|---------|-------|-----|-----------|---------|
-| Manage Users | ✅ | ✅ | ❌ | ❌ |
-| Bulk User Import | ✅ | ✅ | ❌ | ❌ |
-| Bulk User Delete | ✅ | ✅ | ❌ | ❌ |
-| Create Teams | ✅ | ✅ | ❌ | ❌ |
-| View All Tasks | ✅ | ✅ | Team Only | Own Only |
-| Create Tasks | ✅ | ✅ | ✅ | ✅ |
-| Assign Tasks | ✅ | ✅ | Team Only | Self Only |
-| Delete Tasks | ✅ | ✅ | Own Tasks | ❌ |
-| Manage Teams | ✅ | ✅ | View Only | ❌ |
-| View Analytics | ✅ | ✅ | ✅ | ✅ |
-| View Audit Logs | ✅ | ❌ | ❌ | ❌ |
-| Generate Reports | ✅ | ✅ | ✅ | ✅ |
-| Change Theme | ✅ | ✅ | ✅ | ✅ |
-| Configure Sessions | ✅ | ✅ | ✅ | ✅ |
+| Feature | System Admin | Workspace Admin | Community Admin | HR | Team Lead | Member |
+|---------|--------------|-----------------|-----------------|-----|-----------|--------|
+| Manage Workspaces | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| View All Workspaces | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Manage Users | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
+| Bulk User Import | ✅ | ✅ | ❌ | ✅ | ❌ | ❌ |
+| Bulk User Delete | ✅ | ✅ | ❌ | ✅ | ❌ | ❌ |
+| Create Teams | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
+| View All Tasks | ✅ | ✅ | ✅ | ✅ | Team Only | Own Only |
+| Create Tasks | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Assign Tasks | ✅ | ✅ | ✅ | ✅ | Team Only | Self Only |
+| Delete Tasks | ✅ | ✅ | ✅ | ✅ | Own Tasks | ❌ |
+| Manage Teams | ✅ | ✅ | ✅ | ✅ | View Only | ❌ |
+| View Analytics | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| View Audit Logs | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Generate Reports | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Change Theme | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Configure Sessions | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+
+**Role Descriptions:**
+- **System Admin**: Full platform control, manages all workspaces
+- **Workspace Admin**: Full control within their CORE workspace
+- **Community Admin**: Limited admin for COMMUNITY workspaces (no bulk imports, no audit logs)
+- **HR**: User and team management within workspace
+- **Team Lead**: Team-level task management
+- **Member**: Individual task management
 
 ---
 
@@ -483,11 +506,19 @@ COMPANY_NAME=Your Company
 npm run seed:admin
 ```
 
-This creates a default admin account:
+This creates a default **system administrator** account:
 - **Email**: `admin@taskflow.com`
 - **Password**: `Admin@123`
+- **Type**: System Admin (no workspace required)
+- **Access**: Full system-wide access to all workspaces
 
 ⚠️ **Change this password immediately after first login!**
+
+**System Admin vs Regular Admin:**
+- **System Admin** (no workspace): Can see and manage ALL workspaces and data
+- **Regular Admin** (with workspace): Can only manage their own workspace
+
+You can create workspace-specific admins later through User Management.
 
 #### 7. Start Backend Server
 
@@ -544,12 +575,39 @@ This creates an optimized production build in the `dist/` directory.
 
 ### 🔐 First Time Login
 
+**For System Administrators:**
 1. Open your browser to `http://localhost:3000`
-2. Login with default admin credentials:
+2. Login with default system admin credentials:
    - **Email**: `admin@taskflow.com`
    - **Password**: `Admin@123`
 3. **Immediately change the password** in Settings
-4. Create your first users via User Management
+4. As a system admin, you can:
+   - View and manage ALL workspaces via Workspaces menu
+   - Create CORE or COMMUNITY workspaces
+   - Access all data across the system
+   - Create workspace-specific admins
+
+**For New Community Users:**
+1. Open your browser to `http://localhost:3000`
+2. Click **"Create Community Workspace"** on the login page
+3. Fill in the registration form:
+   - Workspace name (your company/team name)
+   - Your full name
+   - Email address
+   - Password
+4. Your FREE community workspace will be created instantly with:
+   - ✅ Up to 10 users
+   - ✅ Up to 100 tasks
+   - ✅ Up to 3 teams
+   - ✅ All core task management features
+   - ⚠️ Limited admin features (no bulk imports, no audit logs)
+5. You'll be automatically logged in as the **Community Admin**
+6. To upgrade features, contact a System Administrator to upgrade to CORE workspace
+
+**For Invited Users:**
+- Wait for your workspace admin to create your account
+- Check your email for login credentials
+- Use the credentials to log in at `http://localhost:3000`
 
 ---
 
@@ -698,10 +756,22 @@ npm run preview          # Preview production build
 - ✅ Verify service worker is registered
 - ✅ Use supported browser
 
+### Workspace Deactivated Error
+If you see **"Your workspace has been deactivated. Please contact support."**:
+- ✅ Your workspace has been disabled by a system administrator
+- ✅ You cannot access any features while the workspace is inactive
+- ✅ Contact your system administrator to reactivate the workspace
+- ✅ System administrators can reactivate workspaces from the Workspace Management panel
+- ✅ All your data remains intact and will be accessible once reactivated
+
 ---
 
 ## 📚 Additional Documentation
 
+- [**Workspace Quick Start Guide**](./WORKSPACE_QUICK_START.md) - Community registration & workspace management
+- [**Workspace Activation Guide**](./WORKSPACE_ACTIVATION_GUIDE.md) - Activate/deactivate workspaces & access control
+- [System Administrator Access Guide](./SYSTEM_ADMIN_ACCESS.md)
+- [Multi-Workspace Architecture](./FINAL_WORKSPACE_SUMMARY.md)
 - [PWA Notification Documentation](./PWA_NOTIFICATION_DOCUMENTATION.md)
 - [Real-time Sync Implementation](./REALTIME_SYNC_IMPLEMENTATION.md)
 - [Mobile Responsiveness Guide](./MOBILE_RESPONSIVENESS_IMPROVEMENTS.md)
@@ -741,8 +811,12 @@ For issues, questions, or feature requests:
 
 ## 🎉 Features Summary
 
+✅ **Multi-Workspace** - CORE and COMMUNITY workspace types  
+✅ **Community Registration** - Self-service free workspace creation  
+✅ **Workspace Management** - System admin workspace control panel  
 ✅ **Authentication** - JWT with refresh tokens, session management  
-✅ **Authorization** - Role-based access control (4 roles)  
+✅ **Authorization** - Role-based access control (6 roles: System Admin, Workspace Admin, Community Admin, HR, Team Lead, Member)  
+✅ **Data Isolation** - Complete workspace separation  
 ✅ **Task Management** - Complete CRUD with comments  
 ✅ **Team Management** - Teams with leads and members  
 ✅ **User Management** - Bulk import, creation, deletion  
