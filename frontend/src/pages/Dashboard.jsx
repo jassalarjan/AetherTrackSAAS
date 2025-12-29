@@ -72,11 +72,14 @@ const Dashboard = () => {
   const [showInstallBanner, setShowInstallBanner] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
+  const exportDropdownRef = useRef(null);
   
   // ==== ALL EXISTING BUSINESS LOGIC PRESERVED BELOW ====
   
   const fetchTeams = useCallback(async () => {
-    if (!['admin', 'hr', 'team_lead'].includes(user?.role)) {
+    if (!['admin', 'hr', 'team_lead', 'community_admin'].includes(user?.role)) {
       return;
     }
     
@@ -177,6 +180,23 @@ const Dashboard = () => {
       fetchNotificationCount();
     }
   }, [user, fetchNotificationCount]);
+
+  // Click outside to close export dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (exportDropdownRef.current && !exportDropdownRef.current.contains(event.target)) {
+        setShowReportOptions(false);
+      }
+    };
+
+    if (showReportOptions) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showReportOptions]);
 
   // Real-time sync (PRESERVED)
   useRealtimeSync({
@@ -327,6 +347,58 @@ const Dashboard = () => {
     }
   }, [user, fetchDashboardData]);
 
+  // Filter and search tasks
+  const getFilteredTasks = useCallback(() => {
+    let filtered = [...recentTasks];
+
+    // Apply search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(task => 
+        task.title?.toLowerCase().includes(query) ||
+        task.description?.toLowerCase().includes(query) ||
+        task.team_id?.name?.toLowerCase().includes(query) ||
+        task.assigned_to?.some(user => user.full_name?.toLowerCase().includes(query))
+      );
+    }
+
+    // Apply status filter
+    if (filters.status) {
+      filtered = filtered.filter(task => task.status === filters.status);
+    }
+
+    // Apply priority filter
+    if (filters.priority) {
+      filtered = filtered.filter(task => task.priority === filters.priority);
+    }
+
+    // Apply date range filter
+    if (filters.dateRange !== 'all') {
+      const now = new Date();
+      let startDate;
+
+      switch (filters.dateRange) {
+        case 'today':
+          startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+          break;
+        case 'week':
+          startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+          break;
+        case 'month':
+          startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+          break;
+        default:
+          startDate = null;
+      }
+
+      if (startDate) {
+        filtered = filtered.filter(task => new Date(task.created_at) >= startDate);
+      }
+    }
+
+    return filtered;
+  }, [recentTasks, searchQuery, filters]);
+
   // Generate reports (PRESERVED)
   const handleGenerateReport = async (format) => {
     try {
@@ -404,6 +476,45 @@ const Dashboard = () => {
       {/* Unified Sidebar */}
       <Sidebar />
 
+      {/* PWA Install Banner */}
+      {showInstallBanner && !isInstalled && (
+        <div className={`fixed top-4 left-1/2 transform -translate-x-1/2 z-50 ${theme === 'dark' ? 'bg-[#1c2027] border-[#282f39]' : 'bg-white border-gray-200'} border rounded-lg shadow-2xl p-4 max-w-md w-full mx-4`}>
+          <div className="flex items-start gap-4">
+            <div className="flex-shrink-0">
+              <Smartphone className="w-8 h-8 text-[#136dec]" />
+            </div>
+            <div className="flex-1">
+              <h3 className={`text-sm font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-1`}>
+                Install TaskFlow App
+              </h3>
+              <p className={`text-xs ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} mb-3`}>
+                Get quick access and work offline by installing TaskFlow on your device
+              </p>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleInstallClick}
+                  className="flex-1 bg-[#136dec] hover:bg-[#1258c4] text-white text-xs font-bold px-4 py-2 rounded transition-colors"
+                >
+                  Install Now
+                </button>
+                <button
+                  onClick={() => setShowInstallBanner(false)}
+                  className={`px-4 py-2 text-xs font-medium ${theme === 'dark' ? 'text-[#9da8b9] hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}
+                >
+                  Later
+                </button>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowInstallBanner(false)}
+              className={`${theme === 'dark' ? 'text-[#9da8b9] hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Main Content */}
       <main className={`flex-1 flex flex-col h-full min-w-0 overflow-hidden ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'}`}>
         {/* Top Header */}
@@ -422,7 +533,17 @@ const Dashboard = () => {
                 className={`block w-full rounded-[0.125rem] ${theme === 'dark' ? 'bg-[#1c2027] text-white placeholder-[#9da8b9]' : 'bg-gray-100 text-gray-900 placeholder-gray-400'} border-0 py-2 pl-10 pr-3 focus:ring-1 focus:ring-[#136dec] sm:text-sm`}
                 placeholder="Search tasks, projects, or people..."
                 type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
               />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                >
+                  <X className="w-4 h-4 text-[#9da8b9] hover:text-white" />
+                </button>
+              )}
             </div>
 
             {/* Actions */}
@@ -488,43 +609,192 @@ const Dashboard = () => {
 
         {/* Dashboard Content */}
         <div className="flex-1 overflow-y-auto p-6">
+          
+          {/* Analytics Charts Section */}
+          {user?.role !== 'member' && (
+            <div className="mb-8">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className={`${theme === 'dark' ? 'text-white' : 'text-gray-900'} text-lg font-bold leading-tight`}>Performance Overview</h3>
+                <Link
+                  to="/analytics"
+                  className="text-xs text-[#136dec] hover:text-blue-400 font-medium"
+                >
+                  View Detailed Analytics →
+                </Link>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+                {/* Status Distribution Pie Chart */}
+                <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-4`}>
+                  <h4 className={`text-xs font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} uppercase tracking-wider mb-3`}>Status Distribution</h4>
+                  <ResponsiveContainer width="100%" height={200}>
+                    <PieChart>
+                      <Pie
+                        data={analyticsData.statusDistribution}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        label={({ name, percent }) => `${name.split(' ')[0]} ${(percent * 100).toFixed(0)}%`}
+                        outerRadius={60}
+                        fill="#8884d8"
+                        dataKey="value"
+                      >
+                        {analyticsData.statusDistribution.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={
+                            entry.name.toLowerCase().includes('done') ? '#22c55e' :
+                            entry.name.toLowerCase().includes('progress') ? '#136dec' :
+                            entry.name.toLowerCase().includes('review') ? '#a855f7' :
+                            entry.name.toLowerCase().includes('todo') ? '#eab308' :
+                            '#6b7280'
+                          } />
+                        ))}
+                      </Pie>
+                      <Tooltip contentStyle={{ backgroundColor: '#1c2027', border: '1px solid #282f39' }} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* Priority Distribution Bar Chart */}
+                <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-4`}>
+                  <h4 className={`text-xs font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} uppercase tracking-wider mb-3`}>Priority Breakdown</h4>
+                  <ResponsiveContainer width="100%" height={200}>
+                    <BarChart data={analyticsData.priorityDistribution}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#282f39" />
+                      <XAxis dataKey="name" stroke="#9da8b9" tick={{ fontSize: 10 }} />
+                      <YAxis stroke="#9da8b9" tick={{ fontSize: 10 }} />
+                      <Tooltip contentStyle={{ backgroundColor: '#1c2027', border: '1px solid #282f39' }} />
+                      <Bar dataKey="value" fill="#136dec" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* Team Performance */}
+                <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-4`}>
+                  <h4 className={`text-xs font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} uppercase tracking-wider mb-3`}>Team Distribution</h4>
+                  <ResponsiveContainer width="100%" height={200}>
+                    <BarChart data={analyticsData.teamDistribution.slice(0, 5)}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#282f39" />
+                      <XAxis dataKey="name" stroke="#9da8b9" tick={{ fontSize: 9 }} angle={-15} textAnchor="end" height={60} />
+                      <YAxis stroke="#9da8b9" tick={{ fontSize: 10 }} />
+                      <Tooltip contentStyle={{ backgroundColor: '#1c2027', border: '1px solid #282f39' }} />
+                      <Bar dataKey="value" fill="#22c55e">
+                        {analyticsData.teamDistribution.slice(0, 5).map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={`hsl(${index * 50}, 70%, 50%)`} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="flex flex-col xl:flex-row gap-6 h-full">
             {/* LEFT: Main Task Table */}
             <div className="flex-1 flex flex-col min-w-0">
               <div className="flex items-center justify-between mb-4">
                 <h3 className={`${theme === 'dark' ? 'text-white' : 'text-gray-900'} text-lg font-bold leading-tight`}>Active Task Queue</h3>
-                <div className="flex gap-2">
-                  <button className={`flex items-center gap-1 px-2 py-1 text-xs font-medium ${theme === 'dark' ? 'text-[#9da8b9] hover:text-white hover:bg-[#1c2027]' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'} rounded-[0.125rem] transition-colors`}>
+                <div className="flex gap-2 items-center">
+                  <button 
+                    onClick={() => {
+                      setShowFilters(!showFilters);
+                      setShowReportOptions(false); // Close export dropdown when opening filters
+                    }}
+                    className={`flex items-center gap-1 px-2 py-1 text-xs font-medium ${theme === 'dark' ? 'text-[#9da8b9] hover:text-white hover:bg-[#1c2027]' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'} rounded-[0.125rem] transition-colors ${showFilters ? 'bg-[#136dec] text-white' : ''}`}
+                  >
                     <Filter className="w-4 h-4" />
                     Filter
                   </button>
-                  <button
-                    onClick={() => setShowReportOptions(!showReportOptions)}
-                    className={`flex items-center gap-1 px-2 py-1 text-xs font-medium ${theme === 'dark' ? 'text-[#9da8b9] hover:text-white hover:bg-[#1c2027]' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'} rounded-[0.125rem] transition-colors`}
-                  >
-                    <Download className="w-4 h-4" />
-                    Export
-                  </button>
+                  <div className="relative" ref={exportDropdownRef}>
+                    <button
+                      onClick={() => {
+                        setShowReportOptions(!showReportOptions);
+                        setShowFilters(false); // Close filters when opening export dropdown
+                      }}
+                      className={`flex items-center gap-1 px-2 py-1 text-xs font-medium ${theme === 'dark' ? 'text-[#9da8b9] hover:text-white hover:bg-[#1c2027]' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'} rounded-[0.125rem] transition-colors`}
+                    >
+                      <Download className="w-4 h-4" />
+                      Export
+                    </button>
+
+                    {/* Report Options Dropdown */}
+                    {showReportOptions && (
+                      <div className={`absolute right-0 top-full mt-2 ${theme === 'dark' ? 'bg-[#1c2027] border-[#282f39]' : 'bg-white border-gray-200'} border rounded-[0.125rem] shadow-lg p-2 z-50 min-w-[200px]`}>
+                        <button
+                          onClick={() => handleGenerateReport('excel')}
+                          className={`flex items-center gap-2 w-full px-3 py-2 text-sm ${theme === 'dark' ? 'text-white hover:bg-[#282f39]' : 'text-gray-900 hover:bg-gray-100'} rounded-[0.125rem] transition-colors`}
+                        >
+                          <FileSpreadsheet className="w-4 h-4" />
+                          Export as Excel
+                        </button>
+                        <button
+                          onClick={() => handleGenerateReport('pdf')}
+                          className={`flex items-center gap-2 w-full px-3 py-2 text-sm ${theme === 'dark' ? 'text-white hover:bg-[#282f39]' : 'text-gray-900 hover:bg-gray-100'} rounded-[0.125rem] transition-colors`}
+                        >
+                          <FileText className="w-4 h-4" />
+                          Export as PDF
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
-              {/* Report Options Dropdown */}
-              {showReportOptions && (
-                <div className={`absolute right-6 mt-12 ${theme === 'dark' ? 'bg-[#1c2027] border-[#282f39]' : 'bg-white border-gray-200'} border rounded-[0.125rem] shadow-lg p-2 z-50`}>
-                  <button
-                    onClick={() => handleGenerateReport('excel')}
-                    className={`flex items-center gap-2 w-full px-3 py-2 text-sm ${theme === 'dark' ? 'text-white hover:bg-[#282f39]' : 'text-gray-900 hover:bg-gray-100'} rounded-[0.125rem] transition-colors`}
-                  >
-                    <FileSpreadsheet className="w-4 h-4" />
-                    Export as Excel
-                  </button>
-                  <button
-                    onClick={() => handleGenerateReport('pdf')}
-                    className={`flex items-center gap-2 w-full px-3 py-2 text-sm ${theme === 'dark' ? 'text-white hover:bg-[#282f39]' : 'text-gray-900 hover:bg-gray-100'} rounded-[0.125rem] transition-colors`}
-                  >
-                    <FileText className="w-4 h-4" />
-                    Export as PDF
-                  </button>
+              {/* Filter Panel */}
+              {showFilters && (
+                <div className={`${theme === 'dark' ? 'bg-[#1c2027] border-[#282f39]' : 'bg-white border-gray-200'} border rounded-[0.125rem] p-4 mb-4`}>
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className={`text-sm font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Filter Tasks</h4>
+                    <button
+                      onClick={() => {
+                        setFilters({ dateRange: 'all', customStartDate: '', customEndDate: '', status: '', priority: '' });
+                        setSearchQuery('');
+                      }}
+                      className="text-xs text-[#136dec] hover:text-blue-400 font-medium"
+                    >
+                      Clear All
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <select
+                      value={filters.status}
+                      onChange={(e) => setFilters({...filters, status: e.target.value})}
+                      className={`h-9 px-3 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-white'} border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} rounded text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}
+                    >
+                      <option value="">All Statuses</option>
+                      <option value="todo">To Do</option>
+                      <option value="in_progress">In Progress</option>
+                      <option value="review">Review</option>
+                      <option value="done">Done</option>
+                    </select>
+                    <select
+                      value={filters.priority}
+                      onChange={(e) => setFilters({...filters, priority: e.target.value})}
+                      className={`h-9 px-3 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-white'} border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} rounded text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}
+                    >
+                      <option value="">All Priorities</option>
+                      <option value="low">Low</option>
+                      <option value="medium">Medium</option>
+                      <option value="high">High</option>
+                      <option value="critical">Critical</option>
+                    </select>
+                    <select
+                      value={filters.dateRange}
+                      onChange={(e) => setFilters({...filters, dateRange: e.target.value})}
+                      className={`h-9 px-3 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-white'} border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} rounded text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}
+                    >
+                      <option value="all">All Time</option>
+                      <option value="today">Today</option>
+                      <option value="week">This Week</option>
+                      <option value="month">This Month</option>
+                    </select>
+                    <button
+                      onClick={() => setShowFilters(false)}
+                      className="h-9 px-4 bg-[#136dec] text-white text-sm font-medium rounded hover:bg-[#1258c4] transition-colors"
+                    >
+                      Apply Filters
+                    </button>
+                  </div>
                 </div>
               )}
 
@@ -558,7 +828,16 @@ const Dashboard = () => {
                       </tr>
                     </thead>
                     <tbody className={`divide-y ${theme === 'dark' ? 'divide-[#282f39]' : 'divide-gray-200'} text-sm`}>
-                      {recentTasks.slice(0, 5).map((task) => (
+                      {getFilteredTasks().length === 0 ? (
+                        <tr>
+                          <td colSpan="6" className={`px-4 py-8 text-center ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`}>
+                            {searchQuery || filters.status || filters.priority || filters.dateRange !== 'all'
+                              ? 'No tasks match your filters. Try adjusting your search or filters.'
+                              : 'No tasks found. Create your first task to get started!'}
+                          </td>
+                        </tr>
+                      ) : (
+                        getFilteredTasks().slice(0, 5).map((task) => (
                         <tr
                           key={task._id}
                           className={`group ${theme === 'dark' ? 'hover:bg-[#232830]' : 'hover:bg-gray-50'} transition-colors cursor-pointer`}
@@ -599,9 +878,10 @@ const Dashboard = () => {
                             )}
                           </td>
                         </tr>
-                      ))}
+                      ))
+                      )}
 
-                      {recentTasks.length === 0 && (
+                      {recentTasks.length === 0 && !searchQuery && filters.status === '' && filters.priority === '' && filters.dateRange === 'all' && (
                         <tr>
                           <td colSpan="6" className={`px-4 py-8 text-center ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`}>
                             No tasks found. Create your first task to get started!

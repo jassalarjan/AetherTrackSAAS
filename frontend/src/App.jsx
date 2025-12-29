@@ -5,15 +5,19 @@ import { ProtectedRoute } from './routes/ProtectedRoute';
 import useNotifications from './hooks/useNotifications';
 import Login from './pages/Login';
 import Register from './pages/RegisterDisabled';
+import CommunityRegister from './pages/CommunityRegister';
 import Dashboard from './pages/Dashboard';
 import Tasks from './pages/Tasks';
 import Kanban from './pages/Kanban';
 import Teams from './pages/Teams';
 import UserManagement from './pages/UserManagement';
+import CommunityUserManagement from './pages/CommunityUserManagement';
+import WorkspaceManagement from './pages/WorkspaceManagement';
 import Analytics from './pages/Analytics';
 import Settings from './pages/Settings';
 import Calendar from './pages/Calendar';
 import ChangeLog from './pages/ChangeLog';
+import Notifications from './pages/Notifications';
 
 function AppContent() {
   // Initialize notifications
@@ -23,6 +27,7 @@ function AppContent() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/register-community" element={<CommunityRegister />} />
 
       <Route
         path="/dashboard"
@@ -54,7 +59,7 @@ function AppContent() {
       <Route
         path="/teams"
         element={
-          <ProtectedRoute allowedRoles={['admin', 'hr', 'team_lead']}>
+          <ProtectedRoute allowedRoles={['admin', 'hr', 'team_lead', 'community_admin']}>
             <Teams />
           </ProtectedRoute>
         }
@@ -65,6 +70,24 @@ function AppContent() {
         element={
           <ProtectedRoute allowedRoles={['admin', 'hr']}>
             <UserManagement />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/community-users"
+        element={
+          <ProtectedRoute allowedRoles={['community_admin']}>
+            <CommunityUserManagement />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/workspaces"
+        element={
+          <ProtectedRoute allowedRoles={['admin']} requireSystemAdmin={true}>
+            <WorkspaceManagement />
           </ProtectedRoute>
         }
       />
@@ -92,6 +115,15 @@ function AppContent() {
         element={
           <ProtectedRoute>
             <Calendar />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/notifications"
+        element={
+          <ProtectedRoute>
+            <Notifications />
           </ProtectedRoute>
         }
       />

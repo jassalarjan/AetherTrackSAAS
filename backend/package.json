@@ -9,7 +9,8 @@
     "dev": "nodemon server.js",
     "test:email": "node test-email.js",
     "seed:admin": "node scripts/seedAdmin.js",
-    "cleanup:admins": "node scripts/cleanupAdminUsers.js"
+    "cleanup:admins": "node scripts/cleanupAdminUsers.js",
+    "migrate:workspaces": "node scripts/migrateToWorkspaces.js"
   },
   "dependencies": {
     "@fullcalendar/daygrid": "^6.1.19",

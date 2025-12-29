@@ -53,7 +53,7 @@ const Kanban = () => {
 
   useEffect(() => {
     fetchTasks();
-    if (['admin', 'hr', 'team_lead'].includes(user?.role)) {
+    if (['admin', 'hr', 'team_lead', 'community_admin'].includes(user?.role)) {
       fetchUsers();
       fetchTeams();
     }
@@ -325,12 +325,12 @@ const Kanban = () => {
   };
 
   const canEditTask = (task) => {
-    if (['admin', 'hr', 'team_lead'].includes(user?.role)) return true;
+    if (['admin', 'hr', 'team_lead', 'community_admin'].includes(user?.role)) return true;
     return task.created_by._id === user?.id || (task.assigned_to && task.assigned_to.some(u => u._id === user?.id));
   };
 
   const canDeleteTask = (task) => {
-    return ['admin', 'hr', 'team_lead'].includes(user?.role);
+    return ['admin', 'hr', 'team_lead', 'community_admin'].includes(user?.role);
   };
 
   if (loading) {
@@ -625,7 +625,7 @@ const Kanban = () => {
                 />
               </div>
 
-              {['admin', 'hr', 'team_lead'].includes(user?.role) && (
+              {['admin', 'hr', 'team_lead', 'community_admin'].includes(user?.role) && (
                 <>
                   <div>
                     <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2`}>Select Team</label>

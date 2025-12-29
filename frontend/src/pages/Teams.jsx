@@ -28,8 +28,8 @@ const Teams = () => {
   useEffect(() => {
     if (user?.id) {
       fetchTeams();
-      // Only fetch users for admin and HR (team leads don't need all users)
-      if (['admin', 'hr'].includes(user?.role)) {
+      // Only fetch users for admin, HR and community_admin (team leads don't need all users)
+      if (['admin', 'hr', 'community_admin'].includes(user?.role)) {
         fetchUsers();
       }
     }
@@ -47,7 +47,7 @@ const Teams = () => {
       if (user?.id) fetchTeams();
     },
     onUserUpdated: () => {
-      if (['admin', 'hr'].includes(user?.role)) fetchUsers();
+      if (['admin', 'hr', 'community_admin'].includes(user?.role)) fetchUsers();
     },
   });
 
@@ -250,7 +250,7 @@ const Teams = () => {
     );
   }
 
-  if (!['admin', 'hr', 'team_lead'].includes(user?.role)) {
+  if (!['admin', 'hr', 'team_lead', 'community_admin'].includes(user?.role)) {
     return (
       <div className={`min-h-screen ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'}`}>
         <div className="flex">
@@ -281,7 +281,7 @@ const Teams = () => {
                 : 'Manage your teams and members'}
             </p>
           </div>
-          {['admin', 'hr'].includes(user?.role) && (
+          {['admin', 'hr', 'community_admin'].includes(user?.role) && (
             <button
               onClick={() => setShowCreateModal(true)}
               className="px-4 py-2 bg-[#136dec] text-white rounded-[0.125rem] hover:bg-[#1158c7] transition-colors flex items-center space-x-2"
@@ -312,7 +312,7 @@ const Teams = () => {
             {teams.map((team) => (
             <div
               key={team._id}
-              draggable={['admin', 'hr'].includes(user?.role)}
+              draggable={['admin', 'hr', 'community_admin'].includes(user?.role)}
               onDragStart={(e) => handleDragStart(e, team)}
               onDragOver={handleDragOver}
               onDrop={(e) => handleDrop(e, team)}
@@ -320,7 +320,7 @@ const Teams = () => {
                 theme === 'dark' 
                   ? 'bg-[#1c2027] border-[#282f39] hover:border-[#3e454f]' 
                   : 'bg-white border-gray-200 hover:border-gray-300'
-              } ${draggedTeam?._id === team._id ? 'opacity-50' : ''} ${['admin', 'hr'].includes(user?.role) ? 'cursor-move' : ''}`}
+              } ${draggedTeam?._id === team._id ? 'opacity-50' : ''} ${['admin', 'hr', 'community_admin'].includes(user?.role) ? 'cursor-move' : ''}`}
               data-testid="team-card"
             >
               {/* Pin Indicator */}
@@ -330,8 +330,8 @@ const Teams = () => {
                 </div>
               )}
 
-              {/* Drag Handle for Admin/HR */}
-              {['admin', 'hr'].includes(user?.role) && (
+              {/* Drag Handle for Admin/HR/Community Admin */}
+              {['admin', 'hr', 'community_admin'].includes(user?.role) && (
                 <div className="absolute top-2 right-2">
                   <GripVertical className={`w-5 h-5 ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-400'}`} />
                 </div>
@@ -341,7 +341,7 @@ const Teams = () => {
                 <h3 className={`text-xl font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{team.name}</h3>
                 <div className="flex items-center space-x-2">
                   <Users className="w-6 h-6 text-[#136dec]" />
-                  {['admin', 'hr'].includes(user?.role) && (
+                  {['admin', 'hr', 'community_admin'].includes(user?.role) && (
                     <>
                       <button
                         onClick={() => handleTogglePin(team._id)}
@@ -392,7 +392,7 @@ const Teams = () => {
                         data-testid="team-member"
                       >
                         <span className={`text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{member.full_name}</span>
-                        {['admin', 'hr'].includes(user?.role) && (
+                        {['admin', 'hr', 'community_admin'].includes(user?.role) && (
                           <button
                             onClick={() => handleRemoveMember(team._id, member._id)}
                             className="text-red-600 hover:text-red-800"
@@ -409,7 +409,7 @@ const Teams = () => {
                 </div>
               </div>
 
-              {['admin', 'hr'].includes(user?.role) && (
+              {['admin', 'hr', 'community_admin'].includes(user?.role) && (
                 <button
                   onClick={() => {
                     setSelectedTeam(team);

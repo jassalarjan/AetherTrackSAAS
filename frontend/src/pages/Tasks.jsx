@@ -47,7 +47,7 @@ const Tasks = () => {
 
   useEffect(() => {
     fetchTasks();
-    if (['admin', 'hr', 'team_lead'].includes(user?.role)) {
+    if (['admin', 'hr', 'team_lead', 'community_admin'].includes(user?.role)) {
       fetchUsers();
       fetchTeams();
     }
@@ -396,12 +396,12 @@ const Tasks = () => {
   };
 
   const canEditTask = (task) => {
-    if (['admin', 'hr', 'team_lead'].includes(user?.role)) return true;
+    if (['admin', 'hr', 'team_lead', 'community_admin'].includes(user?.role)) return true;
     return task.created_by._id === user?.id || task.assigned_to?._id === user?.id;
   };
 
   const canDeleteTask = (task) => {
-    return ['admin', 'hr', 'team_lead'].includes(user?.role);
+    return ['admin', 'hr', 'team_lead', 'community_admin'].includes(user?.role);
   };
 
   const getUserInitials = (name) => {
@@ -756,7 +756,7 @@ const Tasks = () => {
                 />
               </div>
 
-              {['admin', 'hr', 'team_lead'].includes(user?.role) && (
+              {['admin', 'hr', 'team_lead', 'community_admin'].includes(user?.role) && (
                 <>
                   <div>
                     <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2`}>Select Team</label>
@@ -944,7 +944,7 @@ const Tasks = () => {
                 />
               </div>
 
-              {['admin', 'hr', 'team_lead'].includes(user?.role) && (
+              {['admin', 'hr', 'team_lead', 'community_admin'].includes(user?.role) && (
                 <>
                   <div>
                     <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2`}>Select Team</label>

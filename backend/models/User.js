@@ -19,15 +19,26 @@ const userSchema = new mongoose.Schema({
     required: [true, 'Password is required'],
     minlength: 6
   },
+  profile_picture: {
+    type: String,
+    default: null  // Will store base64 data URL or null
+  },
   role: {
     type: String,
-    enum: ['admin', 'hr', 'team_lead', 'member'],
+    enum: ['admin', 'hr', 'team_lead', 'member', 'community_admin'],
     default: 'member'
   },
   team_id: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Team',
     default: null
+  },
+  // WORKSPACE SUPPORT: All users belong to a workspace (optional for admins)
+  workspaceId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Workspace',
+    required: false,  // Not required - admins can exist without workspace
+    index: true
   },
   created_at: {
     type: Date,
@@ -38,6 +49,10 @@ const userSchema = new mongoose.Schema({
     default: Date.now
   }
 });
+
+// WORKSPACE SUPPORT: Compound index for workspace-scoped queries
+userSchema.index({ workspaceId: 1, email: 1 }, { unique: true });
+userSchema.index({ workspaceId: 1, role: 1 });
 
 // Hash password before saving
 userSchema.pre('save', async function(next) {

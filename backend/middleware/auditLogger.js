@@ -1,4 +1,5 @@
 import { logChange } from '../utils/changeLogService.js';
+import getClientIP from '../utils/getClientIP.js';
 
 /**
  * Middleware to automatically log API requests
@@ -23,7 +24,7 @@ export const auditLogger = (options = {}) => {
     res.json = function(data) {
       // Only log successful requests (2xx status codes)
       if (res.statusCode >= 200 && res.statusCode < 300) {
-        const user_ip = req.ip || req.connection.remoteAddress || req.socket.remoteAddress;
+        const user_ip = getClientIP(req);
 
         // Build log entry
         const logData = {
@@ -125,7 +126,7 @@ const buildDescription = (req, data) => {
  */
 export const logEvent = async (req, options) => {
   try {
-    const user_ip = req.ip || req.connection.remoteAddress || req.socket.remoteAddress;
+    const user_ip = getClientIP(req);
     
     await logChange({
       ...options,

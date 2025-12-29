@@ -1,13 +1,15 @@
 import express from 'express';
 import { authenticate } from '../middleware/auth.js';
 import { checkRole } from '../middleware/roleCheck.js';
+import { checkTeamLimit } from '../middleware/workspaceGuard.js';
 import Team from '../models/Team.js';
 import User from '../models/User.js';
+import Workspace from '../models/Workspace.js';
 
 const router = express.Router();
 
-// Create team (HR & Admin only)
-router.post('/', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
+// Create team (HR, Admin & Community Admin)
+router.post('/', authenticate, checkRole(['admin', 'hr', 'community_admin']), checkTeamLimit, async (req, res) => {
   try {
     const { name, hr_id, lead_id, members } = req.body;
 
@@ -22,35 +24,71 @@ router.post('/', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
       });
     }
 
-    // Verify HR and Lead exist
-    const hr = await User.findById(hr_id);
-    const lead = await User.findById(lead_id);
-
-    if (!hr || !lead) {
-      return res.status(400).json({ message: 'HR or Team Lead not found' });
+    // COMMUNITY WORKSPACE: Simplified team creation
+    // Community admins can create teams without strict HR/Lead role requirements
+    const isCommunityWorkspace = req.context.workspaceType === 'COMMUNITY';
+    
+    // WORKSPACE SUPPORT: Verify HR and Lead exist in workspace (if provided)
+    let hr = null;
+    let lead = null;
+    
+    if (hr_id) {
+      hr = await User.findOne({ 
+        _id: hr_id, 
+        workspaceId: req.context.workspaceId 
+      });
+      if (!hr) {
+        return res.status(400).json({ message: 'HR user not found' });
+      }
+      // For CORE workspaces, enforce HR role. For COMMUNITY, allow any user
+      if (!isCommunityWorkspace && hr.role !== 'hr' && hr.role !== 'admin') {
+        return res.status(400).json({ message: 'Selected HR user must have HR or Admin role' });
+      }
+    }
+    
+    if (lead_id) {
+      lead = await User.findOne({ 
+        _id: lead_id, 
+        workspaceId: req.context.workspaceId 
+      });
+      if (!lead) {
+        return res.status(400).json({ message: 'Team Lead not found' });
+      }
+      // For CORE workspaces, enforce team_lead role. For COMMUNITY, allow any user
+      if (!isCommunityWorkspace && !['team_lead', 'admin'].includes(lead.role)) {
+        return res.status(400).json({ message: 'Selected team lead must have Team Lead or Admin role' });
+      }
     }
 
-    // Validate that HR user has HR role
-    if (hr.role !== 'hr' && hr.role !== 'admin') {
-      return res.status(400).json({ message: 'Selected HR user must have HR or Admin role' });
-    }
+    // For community workspaces, if no HR/Lead specified, use the community admin as both
+    const finalHrId = hr_id || (isCommunityWorkspace ? req.user._id : null);
+    const finalLeadId = lead_id || (isCommunityWorkspace ? req.user._id : null);
 
-    // Validate that Lead has appropriate role
-    if (!['team_lead', 'admin'].includes(lead.role)) {
-      return res.status(400).json({ message: 'Selected team lead must have Team Lead or Admin role' });
+    // Validate required fields for CORE workspaces
+    if (!isCommunityWorkspace && (!finalHrId || !finalLeadId)) {
+      return res.status(400).json({ message: 'HR and Team Lead are required for CORE workspaces' });
     }
 
     const team = new Team({
       name,
-      hr_id,
-      lead_id,
-      members: members || []
+      hr_id: finalHrId,
+      lead_id: finalLeadId,
+      members: members || [],
+      workspaceId: req.context.workspaceId  // WORKSPACE SUPPORT
     });
 
     await team.save();
 
-    // Update team lead's team_id
-    await User.findByIdAndUpdate(lead_id, { team_id: team._id });
+    // Update workspace team count
+    await Workspace.findByIdAndUpdate(
+      req.context.workspaceId,
+      { $inc: { 'usage.teamCount': 1 } }
+    );
+
+    // Update team lead's team_id (if lead exists)
+    if (finalLeadId) {
+      await User.findByIdAndUpdate(finalLeadId, { team_id: team._id });
+    }
 
     // Update members' team_id
     if (members && members.length > 0) {
@@ -78,13 +116,14 @@ router.post('/', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
 });
 
 // Get all teams (HR & Admin)
-router.get('/', authenticate, checkRole(['admin', 'hr', 'team_lead']), async (req, res) => {
+router.get('/', authenticate, checkRole(['admin', 'hr', 'team_lead', 'community_admin']), async (req, res) => {
   try {
-    let query = {};
+    // WORKSPACE SUPPORT: Start with workspace filter
+    let query = { workspaceId: req.context.workspaceId };
     
     // Team leads can only see their own team
     if (req.user.role === 'team_lead') {
-      query = { lead_id: req.user._id };
+      query.lead_id = req.user._id;
     }
 
     const teams = await Team.find(query)
@@ -103,7 +142,8 @@ router.get('/', authenticate, checkRole(['admin', 'hr', 'team_lead']), async (re
 // Get single team
 router.get('/:id', authenticate, async (req, res) => {
   try {
-    const team = await Team.findById(req.params.id)
+    // WORKSPACE SUPPORT: Scope by workspace
+    const team = await Team.findOne({ _id: req.params.id, workspaceId: req.context.workspaceId })
       .populate('hr_id', 'full_name email')
       .populate('lead_id', 'full_name email')
       .populate('members', 'full_name email role');
@@ -119,8 +159,8 @@ router.get('/:id', authenticate, async (req, res) => {
   }
 });
 
-// Update team (HR & Admin only)
-router.patch('/:id', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
+// Update team (HR, Admin & Community Admin)
+router.patch('/:id', authenticate, checkRole(['admin', 'hr', 'community_admin']), async (req, res) => {
   try {
     const { name, lead_id } = req.body;
     const updates = {};
@@ -135,21 +175,24 @@ router.patch('/:id', authenticate, checkRole(['admin', 'hr']), async (req, res) 
 
     if (name) updates.name = name;
     if (lead_id) {
-      const lead = await User.findById(lead_id);
+      // WORKSPACE SUPPORT: Verify lead exists in same workspace
+      const lead = await User.findOne({ _id: lead_id, workspaceId: req.context.workspaceId });
       if (!lead) {
         return res.status(400).json({ message: 'Team lead not found' });
       }
       
-      // Validate lead role
-      if (!['team_lead', 'admin'].includes(lead.role)) {
+      // For CORE workspaces, enforce role. For COMMUNITY, allow any user
+      const isCommunityWorkspace = req.context.workspaceType === 'COMMUNITY';
+      if (!isCommunityWorkspace && !['team_lead', 'admin'].includes(lead.role)) {
         return res.status(400).json({ message: 'Selected user must have Team Lead or Admin role' });
       }
       
       updates.lead_id = lead_id;
     }
 
-    const team = await Team.findByIdAndUpdate(
-      req.params.id,
+    // WORKSPACE SUPPORT: Update team scoped by workspace
+    const team = await Team.findOneAndUpdate(
+      { _id: req.params.id, workspaceId: req.context.workspaceId },
       updates,
       { new: true }
     ).populate('hr_id lead_id members');
@@ -170,12 +213,13 @@ router.patch('/:id', authenticate, checkRole(['admin', 'hr']), async (req, res) 
   }
 });
 
-// Toggle team pin status (Admin & HR only)
-router.patch('/:id/pin', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
+// Toggle team pin status (Admin, HR & Community Admin)
+router.patch('/:id/pin', authenticate, checkRole(['admin', 'hr', 'community_admin']), async (req, res) => {
   try {
     const { id } = req.params;
 
-    const team = await Team.findById(id);
+    // WORKSPACE SUPPORT: Scope by workspace
+    const team = await Team.findOne({ _id: id, workspaceId: req.context.workspaceId });
     if (!team) {
       return res.status(404).json({ message: 'Team not found' });
     }
@@ -183,15 +227,15 @@ router.patch('/:id/pin', authenticate, checkRole(['admin', 'hr']), async (req, r
     // Toggle pinned status
     team.pinned = !team.pinned;
     
-    // If pinning, set priority higher than all other teams
+    // If pinning, set priority higher than all other teams in workspace
     if (team.pinned) {
-      const maxPriority = await Team.findOne().sort({ priority: -1 }).select('priority');
+      const maxPriority = await Team.findOne({ workspaceId: req.context.workspaceId }).sort({ priority: -1 }).select('priority');
       team.priority = maxPriority ? maxPriority.priority + 1 : 1;
     }
 
     await team.save();
 
-    const updatedTeam = await Team.findById(id)
+    const updatedTeam = await Team.findOne({ _id: id, workspaceId: req.context.workspaceId })
       .populate('hr_id', 'full_name email')
       .populate('lead_id', 'full_name email')
       .populate('members', 'full_name email role');
@@ -206,8 +250,8 @@ router.patch('/:id/pin', authenticate, checkRole(['admin', 'hr']), async (req, r
   }
 });
 
-// Update team priority (Admin & HR only)
-router.patch('/:id/priority', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
+// Update team priority (Admin, HR & Community Admin)
+router.patch('/:id/priority', authenticate, checkRole(['admin', 'hr', 'community_admin']), async (req, res) => {
   try {
     const { id } = req.params;
     const { priority } = req.body;
@@ -216,8 +260,9 @@ router.patch('/:id/priority', authenticate, checkRole(['admin', 'hr']), async (r
       return res.status(400).json({ message: 'Priority must be a number' });
     }
 
-    const team = await Team.findByIdAndUpdate(
-      id,
+    // WORKSPACE SUPPORT: Update priority scoped by workspace
+    const team = await Team.findOneAndUpdate(
+      { _id: id, workspaceId: req.context.workspaceId },
       { priority },
       { new: true }
     ).populate('hr_id lead_id members');
@@ -233,8 +278,8 @@ router.patch('/:id/priority', authenticate, checkRole(['admin', 'hr']), async (r
   }
 });
 
-// Reorder teams (Admin & HR only)
-router.post('/reorder', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
+// Reorder teams (Admin, HR & Community Admin)
+router.post('/reorder', authenticate, checkRole(['admin', 'hr', 'community_admin']), async (req, res) => {
   try {
     const { teamOrder } = req.body; // Array of { id, priority }
 
@@ -242,10 +287,10 @@ router.post('/reorder', authenticate, checkRole(['admin', 'hr']), async (req, re
       return res.status(400).json({ message: 'teamOrder must be an array' });
     }
 
-    // Update priorities in bulk
+    // WORKSPACE SUPPORT: Update priorities in bulk scoped by workspace
     const bulkOps = teamOrder.map((item, index) => ({
       updateOne: {
-        filter: { _id: item.id },
+        filter: { _id: item.id, workspaceId: req.context.workspaceId },
         update: { priority: teamOrder.length - index }
       }
     }));
@@ -259,18 +304,20 @@ router.post('/reorder', authenticate, checkRole(['admin', 'hr']), async (req, re
   }
 });
 
-// Add member to team (HR only)
-router.post('/:id/members', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
+// Add member to team (Admin, HR & Community Admin)
+router.post('/:id/members', authenticate, checkRole(['admin', 'hr', 'community_admin']), async (req, res) => {
   try {
     const { userId } = req.body;
     const teamId = req.params.id;
 
-    const user = await User.findById(userId);
+    // WORKSPACE SUPPORT: Verify user exists in same workspace
+    const user = await User.findOne({ _id: userId, workspaceId: req.context.workspaceId });
     if (!user) {
       return res.status(400).json({ message: 'User not found' });
     }
 
-    const team = await Team.findById(teamId);
+    // WORKSPACE SUPPORT: Verify team exists in workspace
+    const team = await Team.findOne({ _id: teamId, workspaceId: req.context.workspaceId });
     if (!team) {
       return res.status(404).json({ message: 'Team not found' });
     }
@@ -284,10 +331,13 @@ router.post('/:id/members', authenticate, checkRole(['admin', 'hr']), async (req
     team.members.push(userId);
     await team.save();
 
-    // Update user's team_id
-    await User.findByIdAndUpdate(userId, { team_id: teamId });
+    // Update user's team_id (already verified user is in same workspace)
+    await User.findOneAndUpdate(
+      { _id: userId, workspaceId: req.context.workspaceId },
+      { team_id: teamId }
+    );
 
-    const updatedTeam = await Team.findById(teamId)
+    const updatedTeam = await Team.findOne({ _id: teamId, workspaceId: req.context.workspaceId })
       .populate('hr_id lead_id members');
 
     res.json({ message: 'Member added to team', team: updatedTeam });
@@ -297,8 +347,8 @@ router.post('/:id/members', authenticate, checkRole(['admin', 'hr']), async (req
   }
 });
 
-// Add multiple members to team (Admin & HR only)
-router.post('/:id/members/bulk', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
+// Add multiple members to team (Admin, HR & Community Admin)
+router.post('/:id/members/bulk', authenticate, checkRole(['admin', 'hr', 'community_admin']), async (req, res) => {
   try {
     const { userIds } = req.body;
     const teamId = req.params.id;
@@ -307,7 +357,8 @@ router.post('/:id/members/bulk', authenticate, checkRole(['admin', 'hr']), async
       return res.status(400).json({ message: 'User IDs array is required' });
     }
 
-    const team = await Team.findById(teamId);
+    // WORKSPACE SUPPORT: Verify team exists in workspace
+    const team = await Team.findOne({ _id: teamId, workspaceId: req.context.workspaceId });
     if (!team) {
       return res.status(404).json({ message: 'Team not found' });
     }
@@ -320,7 +371,8 @@ router.post('/:id/members/bulk', authenticate, checkRole(['admin', 'hr']), async
 
     for (const userId of userIds) {
       try {
-        const user = await User.findById(userId);
+        // WORKSPACE SUPPORT: Verify user exists in same workspace
+        const user = await User.findOne({ _id: userId, workspaceId: req.context.workspaceId });
         if (!user) {
           results.failed.push({ userId, reason: 'User not found' });
           continue;
@@ -336,7 +388,10 @@ router.post('/:id/members/bulk', authenticate, checkRole(['admin', 'hr']), async
         team.members.push(userId);
         
         // Update user's team_id
-        await User.findByIdAndUpdate(userId, { team_id: teamId });
+        await User.findOneAndUpdate(
+          { _id: userId, workspaceId: req.context.workspaceId },
+          { team_id: teamId }
+        );
 
         results.added.push({ userId, name: user.full_name });
       } catch (error) {
@@ -346,7 +401,7 @@ router.post('/:id/members/bulk', authenticate, checkRole(['admin', 'hr']), async
 
     await team.save();
 
-    const updatedTeam = await Team.findById(teamId)
+    const updatedTeam = await Team.findOne({ _id: teamId, workspaceId: req.context.workspaceId })
       .populate('hr_id lead_id members');
 
     res.json({ 
@@ -360,13 +415,14 @@ router.post('/:id/members/bulk', authenticate, checkRole(['admin', 'hr']), async
   }
 });
 
-// Remove member from team (Admin & HR only)
+// Remove member from team (Admin, HR & Community Admin)
 // This route MUST come before DELETE /:id to avoid route conflict
-router.delete('/:id/members/:userId', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
+router.delete('/:id/members/:userId', authenticate, checkRole(['admin', 'hr', 'community_admin']), async (req, res) => {
   try {
     const { id, userId } = req.params;
 
-    const team = await Team.findById(id);
+    // WORKSPACE SUPPORT: Verify team exists in workspace
+    const team = await Team.findOne({ _id: id, workspaceId: req.context.workspaceId });
     if (!team) {
       return res.status(404).json({ message: 'Team not found' });
     }
@@ -375,10 +431,13 @@ router.delete('/:id/members/:userId', authenticate, checkRole(['admin', 'hr']), 
     team.members = team.members.filter(m => m.toString() !== userId);
     await team.save();
 
-    // Update user's team_id
-    await User.findByIdAndUpdate(userId, { team_id: null });
+    // Update user's team_id (scoped by workspace)
+    await User.findOneAndUpdate(
+      { _id: userId, workspaceId: req.context.workspaceId },
+      { team_id: null }
+    );
 
-    const updatedTeam = await Team.findById(id)
+    const updatedTeam = await Team.findOne({ _id: id, workspaceId: req.context.workspaceId })
       .populate('hr_id lead_id members');
 
     res.json({ message: 'Member removed from team', team: updatedTeam });
@@ -388,13 +447,14 @@ router.delete('/:id/members/:userId', authenticate, checkRole(['admin', 'hr']), 
   }
 });
 
-// Delete team (Admin & HR only)
+// Delete team (Admin, HR & Community Admin)
 // This route MUST come after DELETE /:id/members/:userId to avoid route conflict
-router.delete('/:id', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
+router.delete('/:id', authenticate, checkRole(['admin', 'hr', 'community_admin']), async (req, res) => {
   try {
     const { id } = req.params;
 
-    const team = await Team.findById(id);
+    // WORKSPACE SUPPORT: Verify team exists in workspace
+    const team = await Team.findOne({ _id: id, workspaceId: req.context.workspaceId });
     if (!team) {
       return res.status(404).json({ message: 'Team not found' });
     }
@@ -402,14 +462,19 @@ router.delete('/:id', authenticate, checkRole(['admin', 'hr']), async (req, res)
     // Get team name for response
     const teamName = team.name;
 
-    // Remove team reference from all users in this team
+    // Remove team reference from all users in this team (scoped by workspace)
     await User.updateMany(
-      { team_id: id },
+      { team_id: id, workspaceId: req.context.workspaceId },
       { $set: { team_id: null, updated_at: new Date() } }
     );
 
     // Delete the team
-    await Team.findByIdAndDelete(id);
+    await Team.findOneAndDelete({ _id: id, workspaceId: req.context.workspaceId });
+
+    // WORKSPACE SUPPORT: Decrement team usage count
+    await Workspace.findByIdAndUpdate(req.context.workspaceId, {
+      $inc: { 'usage.teams': -1 }
+    });
 
     // Emit socket event for team deletion
     if (req.app.get('io')) {
@@ -431,3 +496,4 @@ router.delete('/:id', authenticate, checkRole(['admin', 'hr']), async (req, res)
 });
 
 export default router;
+

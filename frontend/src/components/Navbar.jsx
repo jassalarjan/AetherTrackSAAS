@@ -1,7 +1,7 @@
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Bell, LogOut, LayoutDashboard, CheckSquare, Users, UserCog, Kanban, Menu, X, ChevronLeft, ChevronRight, BarChart3, Settings, Calendar as CalendarIcon, Activity } from 'lucide-react';
+import { Bell, LogOut, LayoutDashboard, CheckSquare, Users, UserCog, Kanban, Menu, X, ChevronLeft, ChevronRight, BarChart3, Settings, Calendar as CalendarIcon, Activity, Building2 } from 'lucide-react';
 import Avatar from './Avatar';
 import { useState, useEffect } from 'react';
 import api from '../api/axios';
@@ -56,6 +56,7 @@ const Navbar = () => {
   const getRoleBadge = (role) => {
     const badges = {
       admin: 'bg-purple-100 text-purple-800',
+      community_admin: 'bg-teal-100 text-teal-800',
       hr: 'bg-green-100 text-green-800',
       team_lead: 'bg-blue-100 text-blue-800',
       member: 'bg-gray-100 text-gray-800',
@@ -68,43 +69,56 @@ const Navbar = () => {
       name: 'Dashboard',
       href: '/dashboard',
       icon: LayoutDashboard,
-      roles: ['admin', 'hr', 'team_lead', 'member'],
+      roles: ['admin', 'community_admin', 'hr', 'team_lead', 'member'],
     },
     {
       name: 'Tasks',
       href: '/tasks',
       icon: CheckSquare,
-      roles: ['admin', 'hr', 'team_lead', 'member'],
+      roles: ['admin', 'community_admin', 'hr', 'team_lead', 'member'],
     },
     {
       name: 'Kanban',
       href: '/kanban',
       icon: Kanban,
-      roles: ['admin', 'hr', 'team_lead', 'member'],
+      roles: ['admin', 'community_admin', 'hr', 'team_lead', 'member'],
     },
     {
       name: 'Calendar',
       href: '/calendar',
       icon: CalendarIcon,
-      roles: ['admin', 'hr', 'team_lead', 'member'],
+      roles: ['admin', 'community_admin', 'hr', 'team_lead', 'member'],
     },
     {
       name: 'Analytics',
       href: '/analytics',
       icon: BarChart3,
-      roles: ['admin', 'hr', 'team_lead', 'member'],
+      roles: ['admin', 'community_admin', 'hr', 'team_lead', 'member'],
     },
     {
       name: 'Teams',
       href: '/teams',
       icon: Users,
-      roles: ['admin', 'hr', 'team_lead'],
+      roles: ['admin', 'community_admin', 'hr', 'team_lead'],
     },
     {
       name: 'User Management',
       href: '/users',
       icon: UserCog,
       roles: ['admin', 'hr'],
+    },
+    {
+      name: 'Community Users',
+      href: '/community-users',
+      icon: UserCog,
+      roles: ['community_admin'],
+    },
+    {
+      name: 'Workspaces',
+      href: '/workspaces',
+      icon: Building2,
+      roles: ['admin'],
+      systemAdminOnly: true,
     },
     {
       name: 'ChangeLog',
@@ -116,7 +130,7 @@ const Navbar = () => {
       name: 'Settings',
       href: '/settings',
       icon: Settings,
-      roles: ['admin', 'hr', 'team_lead', 'member'],
+      roles: ['admin', 'community_admin', 'hr', 'team_lead', 'member'],
     },
     
   ];
@@ -194,7 +208,18 @@ const Navbar = () => {
           {/* Navigation */}
           <nav className="flex-1 overflow-y-auto px-4 py-6 space-y-2 smooth-scroll">
             {navigationItems
-              .filter(item => item.roles.includes(user?.role))
+              .filter(item => {
+                // Filter by role
+                if (!item.roles.includes(user?.role)) return false;
+                
+                // If systemAdminOnly, check if user is a system admin
+                if (item.systemAdminOnly) {
+                  // System admin has no workspaceId AND is admin role
+                  return user?.isSystemAdmin || (!user?.workspaceId && user?.role === 'admin');
+                }
+                
+                return true;
+              })
               .map((item) => {
                 const Icon = item.icon;
                 return (

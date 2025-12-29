@@ -142,16 +142,19 @@ const Login = () => {
               {loading ? 'Signing in...' : 'Sign in'}
             </button>
 
-            {/* Footer Link */}
-            <div className="pt-2 text-center">
+            {/* Footer Links */}
+            <div className="pt-2 text-center space-y-2">
               <p className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} text-sm font-normal`}>
-                Don't have an account?
+                Need a workspace?
                 <Link
-                  to="#"
-                  className={`${theme === 'dark' ? 'text-white' : 'text-gray-900'} font-medium hover:underline ml-1`}
+                  to="/register-community"
+                  className="text-[#136dec] font-medium hover:underline ml-1"
                 >
-                  Contact administrator
+                  Create Community Workspace
                 </Link>
+              </p>
+              <p className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} text-xs font-normal`}>
+                Already have an invitation? Contact your administrator
               </p>
             </div>
           </form>
