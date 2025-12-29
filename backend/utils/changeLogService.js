@@ -2,6 +2,7 @@ import ChangeLog from '../models/ChangeLog.js';
 
 /**
  * Create a change log entry
+ * WORKSPACE SUPPORT: Now accepts workspaceId parameter
  */
 export const logChange = async ({
   event_type,
@@ -13,7 +14,8 @@ export const logChange = async ({
   action,
   description,
   metadata = {},
-  changes = {}
+  changes = {},
+  workspaceId  // WORKSPACE SUPPORT
 }) => {
   try {
     const logEntry = new ChangeLog({
@@ -29,7 +31,8 @@ export const logChange = async ({
       action,
       description,
       metadata,
-      changes
+      changes,
+      workspaceId  // WORKSPACE SUPPORT
     });
 
     await logEntry.save();
@@ -43,6 +46,7 @@ export const logChange = async ({
 
 /**
  * Get change logs with filters and pagination
+ * WORKSPACE SUPPORT: Now requires workspaceId parameter (or includeAllWorkspaces for system admins)
  */
 export const getChangeLogs = async ({
   page = 1,
@@ -52,10 +56,17 @@ export const getChangeLogs = async ({
   target_type,
   start_date,
   end_date,
-  search
+  search,
+  workspaceId,
+  includeAllWorkspaces = false  // For system admins to view all logs
 }) => {
   try {
+    // WORKSPACE SUPPORT: Start with workspace filter (unless viewing all)
     const query = {};
+    
+    if (!includeAllWorkspaces) {
+      query.workspaceId = workspaceId;
+    }
 
     if (event_type) {
       query.event_type = event_type;

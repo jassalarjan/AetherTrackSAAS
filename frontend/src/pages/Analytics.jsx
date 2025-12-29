@@ -5,7 +5,7 @@ import Sidebar from '../components/Sidebar';
 import api from '../api/axios';
 import useRealtimeSync from '../hooks/useRealtimeSync';
 import { Filter, Calendar, AlertTriangle, TrendingUp, BarChart3, Target, User, Users, Clock, Download, FileSpreadsheet, FileText, X, ChevronDown } from 'lucide-react';
-import { PieChart as RechartsPieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
+import { PieChart as RechartsPieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, LineChart, Line, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Legend } from 'recharts';
 import { generateExcelReport } from '../utils/reportGenerator';
 import { generateComprehensivePDFReport } from '../utils/comprehensiveReportGenerator';
 
@@ -39,6 +39,12 @@ const Analytics = () => {
     overdueByPriority: [],
     completionTrend: [],
     assigneePerformance: [],
+    weeklyProgress: [],
+    hourlyDistribution: [],
+    taskAgeDistribution: [],
+    completionRateByTeam: [],
+    priorityTrend: [],
+    statusTransitions: [],
   });
 
   useEffect(() => {
@@ -140,6 +146,7 @@ const Analytics = () => {
       value: count,
     }));
 
+    // 30-day completion trend
     const completionTrend = [];
     for (let i = 29; i >= 0; i--) {
       const date = new Date();
@@ -153,6 +160,87 @@ const Analytics = () => {
         date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
         created: dayTasks.length,
         completed: dayCompleted.length,
+      });
+    }
+
+    // Weekly progress (last 8 weeks)
+    const weeklyProgress = [];
+    for (let i = 7; i >= 0; i--) {
+      const weekStart = new Date();
+      weekStart.setDate(weekStart.getDate() - (i * 7));
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekEnd.getDate() + 6);
+      
+      const weekTasks = taskList.filter(task => {
+        const taskDate = new Date(task.created_at);
+        return taskDate >= weekStart && taskDate <= weekEnd;
+      });
+      
+      const weekCompleted = weekTasks.filter(t => t.status === 'done').length;
+      const weekInProgress = weekTasks.filter(t => t.status === 'in_progress').length;
+      const weekTodo = weekTasks.filter(t => t.status === 'todo').length;
+      
+      weeklyProgress.push({
+        week: `W${i === 0 ? 'Now' : i}`,
+        completed: weekCompleted,
+        inProgress: weekInProgress,
+        todo: weekTodo,
+        total: weekTasks.length,
+      });
+    }
+
+    // Hourly distribution (when tasks are created)
+    const hourlyDistribution = Array(24).fill(0).map((_, hour) => ({
+      hour: hour === 0 ? '12 AM' : hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`,
+      count: 0,
+    }));
+    
+    taskList.forEach(task => {
+      const hour = new Date(task.created_at).getHours();
+      hourlyDistribution[hour].count++;
+    });
+
+    // Task age distribution (how long tasks remain open)
+    const taskAgeDistribution = [
+      { range: '0-1 days', count: 0 },
+      { range: '1-3 days', count: 0 },
+      { range: '3-7 days', count: 0 },
+      { range: '7-14 days', count: 0 },
+      { range: '14-30 days', count: 0 },
+      { range: '30+ days', count: 0 },
+    ];
+    
+    taskList.forEach(task => {
+      if (task.status !== 'done') {
+        const age = Math.floor((now - new Date(task.created_at)) / (1000 * 60 * 60 * 24));
+        if (age <= 1) taskAgeDistribution[0].count++;
+        else if (age <= 3) taskAgeDistribution[1].count++;
+        else if (age <= 7) taskAgeDistribution[2].count++;
+        else if (age <= 14) taskAgeDistribution[3].count++;
+        else if (age <= 30) taskAgeDistribution[4].count++;
+        else taskAgeDistribution[5].count++;
+      }
+    });
+
+    // Priority trend over time (last 12 weeks)
+    const priorityTrend = [];
+    for (let i = 11; i >= 0; i--) {
+      const weekStart = new Date();
+      weekStart.setDate(weekStart.getDate() - (i * 7));
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekEnd.getDate() + 6);
+      
+      const weekTasks = taskList.filter(task => {
+        const taskDate = new Date(task.created_at);
+        return taskDate >= weekStart && taskDate <= weekEnd;
+      });
+      
+      priorityTrend.push({
+        week: `W${12 - i}`,
+        low: weekTasks.filter(t => t.priority === 'low').length,
+        medium: weekTasks.filter(t => t.priority === 'medium').length,
+        high: weekTasks.filter(t => t.priority === 'high').length,
+        urgent: weekTasks.filter(t => t.priority === 'urgent').length,
       });
     }
 
@@ -192,6 +280,24 @@ const Analytics = () => {
       .map(([team, count]) => ({ name: team, value: count }))
       .sort((a, b) => b.value - a.value);
 
+    // Completion rate by team
+    const completionRateByTeam = Object.entries(
+      taskList.reduce((acc, task) => {
+        const teamName = task.team_id?.name || 'Unassigned';
+        if (!acc[teamName]) {
+          acc[teamName] = { total: 0, completed: 0 };
+        }
+        acc[teamName].total++;
+        if (task.status === 'done') acc[teamName].completed++;
+        return acc;
+      }, {})
+    ).map(([team, stats]) => ({
+      team,
+      rate: stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0,
+      completed: stats.completed,
+      total: stats.total,
+    })).sort((a, b) => b.rate - a.rate);
+
     setAnalyticsData({
       totalTasks: taskList.length,
       overdueTasks: overdueTasks.length,
@@ -203,6 +309,11 @@ const Analytics = () => {
       overdueByPriority: overduePriorityData,
       completionTrend,
       assigneePerformance,
+      weeklyProgress,
+      hourlyDistribution,
+      taskAgeDistribution,
+      completionRateByTeam,
+      priorityTrend,
     });
   }, []);
 
@@ -656,6 +767,95 @@ const Analytics = () => {
                 ) : (
                   <p className={`text-center py-8 ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} text-sm`}>No team data available</p>
                 )}
+              </div>
+
+              {/* NEW CHARTS START HERE */}
+              
+              {/* Weekly Progress Chart */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-6`}>
+                  <h3 className={`text-sm font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} uppercase tracking-wider mb-4`}>Weekly Progress (Last 8 Weeks)</h3>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <LineChart data={analyticsData.weeklyProgress}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#282f39" />
+                      <XAxis dataKey="week" stroke="#9da8b9" tick={{ fontSize: 11 }} />
+                      <YAxis stroke="#9da8b9" tick={{ fontSize: 11 }} />
+                      <Tooltip contentStyle={{ backgroundColor: '#1c2027', border: '1px solid #282f39', borderRadius: '0.125rem' }} />
+                      <Legend />
+                      <Line type="monotone" dataKey="completed" stroke="#22c55e" strokeWidth={2} name="Completed" />
+                      <Line type="monotone" dataKey="inProgress" stroke="#136dec" strokeWidth={2} name="In Progress" />
+                      <Line type="monotone" dataKey="todo" stroke="#6b7280" strokeWidth={2} name="To Do" />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* Hourly Distribution */}
+                <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-6`}>
+                  <h3 className={`text-sm font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} uppercase tracking-wider mb-4`}>Task Creation by Hour</h3>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={analyticsData.hourlyDistribution}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#282f39" />
+                      <XAxis dataKey="hour" stroke="#9da8b9" tick={{ fontSize: 9 }} angle={-45} textAnchor="end" height={80} />
+                      <YAxis stroke="#9da8b9" tick={{ fontSize: 11 }} />
+                      <Tooltip contentStyle={{ backgroundColor: '#1c2027', border: '1px solid #282f39', borderRadius: '0.125rem' }} />
+                      <Bar dataKey="count" fill="#f59e0b" name="Tasks Created" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Task Age Distribution & Priority Trend */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-6`}>
+                  <h3 className={`text-sm font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} uppercase tracking-wider mb-4`}>Open Task Age Distribution</h3>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={analyticsData.taskAgeDistribution} layout="vertical">
+                      <CartesianGrid strokeDasharray="3 3" stroke="#282f39" />
+                      <XAxis type="number" stroke="#9da8b9" tick={{ fontSize: 11 }} />
+                      <YAxis dataKey="range" type="category" stroke="#9da8b9" tick={{ fontSize: 10 }} width={80} />
+                      <Tooltip contentStyle={{ backgroundColor: '#1c2027', border: '1px solid #282f39', borderRadius: '0.125rem' }} />
+                      <Bar dataKey="count" fill="#8b5cf6" name="Tasks" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+
+                <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-6`}>
+                  <h3 className={`text-sm font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} uppercase tracking-wider mb-4`}>Priority Trend (12 Weeks)</h3>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <AreaChart data={analyticsData.priorityTrend}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#282f39" />
+                      <XAxis dataKey="week" stroke="#9da8b9" tick={{ fontSize: 10 }} />
+                      <YAxis stroke="#9da8b9" tick={{ fontSize: 11 }} />
+                      <Tooltip contentStyle={{ backgroundColor: '#1c2027', border: '1px solid #282f39', borderRadius: '0.125rem' }} />
+                      <Legend />
+                      <Area type="monotone" dataKey="urgent" stackId="1" stroke="#ef4444" fill="#ef4444" name="Urgent" />
+                      <Area type="monotone" dataKey="high" stackId="1" stroke="#f97316" fill="#f97316" name="High" />
+                      <Area type="monotone" dataKey="medium" stackId="1" stroke="#f59e0b" fill="#f59e0b" name="Medium" />
+                      <Area type="monotone" dataKey="low" stackId="1" stroke="#10b981" fill="#10b981" name="Low" />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* Team Completion Rate */}
+              <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-6 mb-6`}>
+                <h3 className={`text-sm font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} uppercase tracking-wider mb-4`}>Team Completion Rate</h3>
+                <ResponsiveContainer width="100%" height={350}>
+                  <BarChart data={analyticsData.completionRateByTeam}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#282f39" />
+                    <XAxis dataKey="team" stroke="#9da8b9" tick={{ fontSize: 10 }} angle={-45} textAnchor="end" height={100} />
+                    <YAxis stroke="#9da8b9" tick={{ fontSize: 11 }} label={{ value: 'Completion Rate %', angle: -90, position: 'insideLeft' }} />
+                    <Tooltip 
+                      contentStyle={{ backgroundColor: '#1c2027', border: '1px solid #282f39', borderRadius: '0.125rem' }}
+                      formatter={(value, name, props) => {
+                        if (name === 'rate') return [`${value}%`, 'Completion Rate'];
+                        return [value, name];
+                      }}
+                    />
+                    <Legend />
+                    <Bar dataKey="rate" fill="#06b6d4" name="Completion Rate %" />
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
             </>
           )}

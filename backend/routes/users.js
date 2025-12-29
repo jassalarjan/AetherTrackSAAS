@@ -2,12 +2,15 @@ import express from 'express';
 import { body, validationResult } from 'express-validator';
 import { authenticate } from '../middleware/auth.js';
 import { checkRole } from '../middleware/roleCheck.js';
+import { checkUserLimit, requireBulkImport } from '../middleware/workspaceGuard.js';
 import User from '../models/User.js';
 import Team from '../models/Team.js';
+import Workspace from '../models/Workspace.js';
 import { sendCredentialEmail, sendPasswordResetEmail } from '../utils/emailService.js';
 import { logChange } from '../utils/changeLogService.js';
 import multer from 'multer';
 import xlsx from 'xlsx';
+import getClientIP from '../utils/getClientIP.js';
 
 const router = express.Router();
 
@@ -34,13 +37,17 @@ const validateUserCreation = [
   body('full_name').trim().notEmpty().withMessage('Full name is required'),
   body('email').isEmail().withMessage('Valid email is required'),
   body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
-  body('role').isIn(['admin', 'hr', 'team_lead', 'member']).withMessage('Invalid role')
+  body('role').isIn(['admin', 'hr', 'team_lead', 'member', 'community_admin']).withMessage('Invalid role')
 ];
 
 // Get current user
 router.get('/me', authenticate, async (req, res) => {
   try {
-    const user = await User.findById(req.user._id)
+    // WORKSPACE SUPPORT: Scope by workspace
+    const user = await User.findOne({
+      _id: req.user._id,
+      workspaceId: req.context.workspaceId
+    })
       .select('-password_hash')
       .populate('team_id');
     
@@ -69,6 +76,82 @@ router.patch('/me', authenticate, async (req, res) => {
     res.json({ message: 'Profile updated', user });
   } catch (error) {
     console.error('Update profile error:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// Upload profile picture (authenticated users only)
+router.post('/me/profile-picture', authenticate, async (req, res) => {
+  try {
+    const { profile_picture } = req.body;
+
+    // Validate that it's a valid base64 image
+    if (!profile_picture) {
+      return res.status(400).json({ message: 'Profile picture is required' });
+    }
+
+    // Check if it's a valid data URL format
+    const dataUrlRegex = /^data:image\/(png|jpeg|jpg|gif|webp);base64,/;
+    if (!dataUrlRegex.test(profile_picture)) {
+      return res.status(400).json({ message: 'Invalid image format. Please upload a valid image.' });
+    }
+
+    // Check file size (limit to ~2MB base64 which is about 1.5MB actual file)
+    const base64Data = profile_picture.split(',')[1];
+    const sizeInBytes = (base64Data.length * 3) / 4;
+    const maxSize = 2 * 1024 * 1024; // 2MB
+
+    if (sizeInBytes > maxSize) {
+      return res.status(400).json({ message: 'Image too large. Maximum size is 2MB.' });
+    }
+
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      { profile_picture, updated_at: Date.now() },
+      { new: true }
+    ).select('-password_hash');
+
+    res.json({ 
+      message: 'Profile picture updated successfully', 
+      user: {
+        id: user._id,
+        full_name: user.full_name,
+        email: user.email,
+        role: user.role,
+        profile_picture: user.profile_picture,
+        team_id: user.team_id,
+        workspaceId: user.workspaceId
+      }
+    });
+  } catch (error) {
+    console.error('Upload profile picture error:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// Delete profile picture (authenticated users only)
+router.delete('/me/profile-picture', authenticate, async (req, res) => {
+  try {
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      { profile_picture: null, updated_at: Date.now() },
+      { new: true }
+    ).select('-password_hash');
+
+    res.json({ 
+      message: 'Profile picture removed successfully', 
+      user: {
+        id: user._id,
+        full_name: user.full_name,
+        email: user.email,
+        role: user.role,
+        profile_picture: null,
+        team_id: user.team_id,
+        workspaceId: user.workspaceId
+      }
+    });
+  } catch (error) {
+    console.error('Delete profile picture error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
@@ -111,10 +194,11 @@ router.post('/me/change-password', authenticate, async (req, res) => {
   }
 });
 
-// Get all users (Admin & HR only)
-router.get('/', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
+// Get all users (Admin, HR & Community Admin)
+router.get('/', authenticate, checkRole(['admin', 'hr', 'community_admin']), async (req, res) => {
   try {
-    const users = await User.find()
+    // WORKSPACE SUPPORT: Scope by workspace
+    const users = await User.find({ workspaceId: req.context.workspaceId })
       .select('-password_hash')
       .populate('team_id')
       .sort({ created_at: -1 });
@@ -155,8 +239,8 @@ router.get('/team-members', authenticate, checkRole(['team_lead']), async (req, 
   }
 });
 
-// Get single user by ID (Admin & HR only)
-router.get('/:id', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
+// Get single user by ID (Admin, HR & Community Admin)
+router.get('/:id', authenticate, checkRole(['admin', 'hr', 'community_admin']), async (req, res) => {
   try {
     const user = await User.findById(req.params.id)
       .select('-password_hash')
@@ -173,8 +257,8 @@ router.get('/:id', authenticate, checkRole(['admin', 'hr']), async (req, res) =>
   }
 });
 
-// Create new user (Admin & HR only)
-router.post('/', authenticate, checkRole(['admin', 'hr']), validateUserCreation, async (req, res) => {
+// Create new user (Admin, HR & Community Admin)
+router.post('/', authenticate, checkRole(['admin', 'hr', 'community_admin']), checkUserLimit, validateUserCreation, async (req, res) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -183,8 +267,11 @@ router.post('/', authenticate, checkRole(['admin', 'hr']), validateUserCreation,
 
     const { full_name, email, password, role, team_id } = req.body;
 
-    // Check if user exists
-    const existingUser = await User.findOne({ email });
+    // WORKSPACE SUPPORT: Check if user exists in this workspace
+    const existingUser = await User.findOne({ 
+      email,
+      workspaceId: req.context.workspaceId 
+    });
     if (existingUser) {
       return res.status(400).json({ message: 'Email already registered' });
     }
@@ -203,10 +290,17 @@ router.post('/', authenticate, checkRole(['admin', 'hr']), validateUserCreation,
       email,
       password_hash: password,
       role: role || 'member',
-      team_id: (role === 'admin') ? null : (team_id || null)
+      team_id: (role === 'admin') ? null : (team_id || null),
+      workspaceId: req.context.workspaceId  // WORKSPACE SUPPORT
     });
 
     await user.save();
+
+    // Update workspace user count
+    await Workspace.findByIdAndUpdate(
+      req.context.workspaceId,
+      { $inc: { 'usage.userCount': 1 } }
+    );
 
     // Send credential email with timeout (non-blocking)
     // Don't wait more than 10 seconds for email
@@ -237,7 +331,7 @@ router.post('/', authenticate, checkRole(['admin', 'hr']), validateUserCreation,
       .populate('team_id');
 
     // Log user creation
-    const user_ip = req.ip || req.connection.remoteAddress || req.socket.remoteAddress;
+    const user_ip = getClientIP(req);
     await logChange({
       event_type: 'user_created',
       user: req.user,
@@ -272,7 +366,7 @@ router.post('/', authenticate, checkRole(['admin', 'hr']), validateUserCreation,
 });
 
 // Bulk delete users (Admin only) - MUST be before /:id routes
-router.post('/bulk-delete', authenticate, checkRole(['admin']), async (req, res) => {
+router.post('/bulk-delete', authenticate, checkRole(['admin']), ...requireBulkImport, async (req, res) => {
   try {
     const { userIds } = req.body;
 
@@ -305,8 +399,8 @@ router.post('/bulk-delete', authenticate, checkRole(['admin']), async (req, res)
   }
 });
 
-// Update user (Admin & HR only)
-router.put('/:id', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
+// Update user (Admin, HR & Community Admin)
+router.put('/:id', authenticate, checkRole(['admin', 'hr', 'community_admin']), async (req, res) => {
   try {
     const { full_name, email, role, team_id } = req.body;
     const { id } = req.params;
@@ -403,8 +497,8 @@ router.delete('/:id', authenticate, checkRole(['admin']), async (req, res) => {
   }
 });
 
-// Reset user password (Admin & HR only)
-router.patch('/:id/password', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
+// Reset user password (Admin, HR & Community Admin)
+router.patch('/:id/password', authenticate, checkRole(['admin', 'hr', 'community_admin']), async (req, res) => {
   try {
     const { password } = req.body;
     const { id } = req.params;
@@ -471,7 +565,7 @@ router.patch('/:id/role', authenticate, checkRole(['admin', 'hr']), async (req, 
 // ========== BULK IMPORT ENDPOINTS ==========
 
 // Bulk import users from JSON
-router.post('/bulk-import/json', authenticate, checkRole(['admin', 'hr']), upload.single('file'), async (req, res) => {
+router.post('/bulk-import/json', authenticate, checkRole(['admin', 'hr']), ...requireBulkImport, upload.single('file'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: 'No file uploaded' });
@@ -504,7 +598,7 @@ router.post('/bulk-import/json', authenticate, checkRole(['admin', 'hr']), uploa
 });
 
 // Bulk import users from Excel
-router.post('/bulk-import/excel', authenticate, checkRole(['admin', 'hr']), upload.single('file'), async (req, res) => {
+router.post('/bulk-import/excel', authenticate, checkRole(['admin', 'hr']), ...requireBulkImport, upload.single('file'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: 'No file uploaded' });
@@ -671,7 +765,7 @@ async function processBulkUsers(usersData, currentUser) {
 }
 
 // Download sample Excel template
-router.get('/bulk-import/template', authenticate, checkRole(['admin', 'hr']), (req, res) => {
+router.get('/bulk-import/template', authenticate, checkRole(['admin', 'hr']), ...requireBulkImport, (req, res) => {
   try {
     // Create sample data
     const sampleData = [
@@ -762,3 +856,4 @@ router.get('/bulk-import/template-json', authenticate, checkRole(['admin', 'hr']
 });
 
 export default router;
+

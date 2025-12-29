@@ -14,11 +14,14 @@ import {
   FileText,
   Menu,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  LogOut,
+  User as UserIcon,
+  Building2
 } from 'lucide-react';
 
 const Sidebar = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const { theme, currentTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
@@ -46,8 +49,10 @@ const Sidebar = () => {
   ];
 
   const adminMenuItems = [
-    { path: '/teams', icon: Users, label: 'Teams', roles: ['admin', 'hr', 'team_lead'] },
+    { path: '/teams', icon: Users, label: 'Teams', roles: ['admin', 'hr', 'team_lead', 'community_admin'] },
     { path: '/users', icon: UserCog, label: 'User Management', roles: ['admin', 'hr'] },
+    { path: '/community-users', icon: UserCog, label: 'Community Users', roles: ['community_admin'] },
+    { path: '/workspaces', icon: Building2, label: 'Workspaces', roles: ['admin'], systemAdminOnly: true },
     { path: '/changelog', icon: FileText, label: 'Audit Logs', roles: ['admin'] },
   ];
 
@@ -57,7 +62,14 @@ const Sidebar = () => {
 
   const canAccess = (item) => {
     if (!item.roles) return true;
-    return item.roles.includes(user?.role);
+    if (!item.roles.includes(user?.role)) return false;
+    
+    // If systemAdminOnly, check if user is a system admin
+    if (item.systemAdminOnly) {
+      return user?.isSystemAdmin || (!user?.workspaceId && user?.role === 'admin');
+    }
+    
+    return true;
   };
 
   const isDark = theme === 'dark';
@@ -165,7 +177,7 @@ const Sidebar = () => {
       </div>
 
       {/* Workspace Info */}
-      {!collapsed && user?.team_id && (
+      {!collapsed && (
         <div className={`p-4 border-t ${
           isDark ? 'border-[#282f39]' : 'border-gray-200'
         }`}>
@@ -173,52 +185,158 @@ const Sidebar = () => {
             <p className={`text-xs font-bold uppercase tracking-wider mb-2 ${
               isDark ? 'text-[#9da8b9]' : 'text-gray-500'
             }`}>Workspace</p>
-            <div className={`flex items-center gap-2 text-sm font-medium ${
-              isDark ? 'text-white' : 'text-gray-900'
-            }`}>
-              <div className="size-6 rounded bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center text-[10px] text-white">
-                {getUserInitials(user?.team_id?.name || 'Team')}
+            {/* Show workspace info for community_admin */}
+            {user?.role === 'community_admin' && user?.workspace ? (
+              <div className={`flex items-center gap-2 text-sm font-medium ${
+                isDark ? 'text-white' : 'text-gray-900'
+              }`}>
+                <div className="size-6 rounded bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center text-[10px] text-white font-bold">
+                  {getUserInitials(user.workspace.name)}
+                </div>
+                <div className="flex-1">
+                  <span className="truncate block">{user.workspace.name}</span>
+                  <span className={`text-[10px] ${isDark ? 'text-[#9da8b9]' : 'text-gray-500'}`}>
+                    {user.workspace.type === 'COMMUNITY' ? 'Community' : 'Core'} Workspace
+                  </span>
+                </div>
               </div>
-              <span className="truncate">{user?.team_id?.name || 'My Team'}</span>
-            </div>
+            ) : user?.team_id ? (
+              <div className={`flex items-center gap-2 text-sm font-medium ${
+                isDark ? 'text-white' : 'text-gray-900'
+              }`}>
+                <div className="size-6 rounded bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center text-[10px] text-white font-bold">
+                  {getUserInitials(user.team_id.name)}
+                </div>
+                <span className="truncate">{user.team_id.name}</span>
+              </div>
+            ) : (
+              <div className={`flex items-center gap-2 text-sm ${
+                isDark ? 'text-[#9da8b9]' : 'text-gray-600'
+              }`}>
+                {user?.role === 'admin' ? (
+                  <>
+                    <div className="size-6 rounded bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-[10px] text-white font-bold">
+                      A
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-xs font-medium">Admin - All Teams</p>
+                      <button 
+                        onClick={() => navigate('/teams')}
+                        className="text-[10px] text-[#136dec] hover:underline mt-0.5"
+                      >
+                        Manage Teams →
+                      </button>
+                    </div>
+                  </>
+                ) : user?.workspace ? (
+                  <>
+                    <div className="size-6 rounded bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center text-[10px] text-white font-bold">
+                      {getUserInitials(user.workspace.name)}
+                    </div>
+                    <div className="flex-1">
+                      <span className={`truncate block text-xs font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{user.workspace.name}</span>
+                      <span className={`text-[10px] ${isDark ? 'text-[#9da8b9]' : 'text-gray-500'}`}>
+                        {user.workspace.type === 'COMMUNITY' ? 'Community' : 'Core'} Workspace
+                      </span>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="size-6 rounded bg-gradient-to-br from-gray-400 to-gray-500 flex items-center justify-center text-[10px] text-white font-bold">
+                      ?
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-xs font-medium">No Team Assigned</p>
+                      <p className="text-[10px] mt-0.5">Contact your admin</p>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}
 
-      {/* Settings */}
-      <div className={`p-4 border-t ${
+      {/* User Profile & Actions */}
+      <div className={`border-t ${
         isDark ? 'border-[#282f39]' : 'border-gray-200'
       }`}>
-        {!collapsed && (
-          <div className="px-3 py-2 mb-2">
-            <p className={`text-xs font-bold uppercase tracking-wider ${
-              isDark ? 'text-[#9da8b9]' : 'text-gray-500'
-            }`}>System</p>
+        {/* User Info */}
+        {!collapsed && user && (
+          <div className={`p-4 border-b ${
+            isDark ? 'border-[#282f39]' : 'border-gray-200'
+          }`}>
+            <div className="flex items-center gap-3">
+              {user.profile_picture ? (
+                <img
+                  src={user.profile_picture}
+                  alt={user.full_name}
+                  className="w-10 h-10 rounded-full object-cover"
+                />
+              ) : (
+                <div className="size-10 rounded-full bg-gradient-to-br from-[#136dec] to-blue-600 flex items-center justify-center text-white font-semibold text-sm">
+                  {getUserInitials(user.full_name)}
+                </div>
+              )}
+              <div className="flex-1 min-w-0">
+                <p className={`text-sm font-semibold truncate ${
+                  isDark ? 'text-white' : 'text-gray-900'
+                }`}>{user.full_name}</p>
+                <p className={`text-xs truncate ${
+                  isDark ? 'text-[#9da8b9]' : 'text-gray-600'
+                }`}>{user.email}</p>
+              </div>
+            </div>
           </div>
         )}
-        {bottomMenuItems.map((item) => {
-          const Icon = item.icon;
-          const active = isActive(item.path);
-          return (
-            <button
-              key={item.path}
-              onClick={() => navigate(item.path)}
-              className={`flex items-center gap-3 px-3 py-2 rounded transition-colors group w-full ${
-                active
-                  ? isDark
-                    ? 'bg-[#136dec]/10 text-[#136dec]'
-                    : 'bg-blue-50 text-blue-600'
-                  : isDark
-                    ? 'text-[#9da8b9] hover:bg-[#1c2027] hover:text-white'
-                    : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
-              }`}
-              title={collapsed ? item.label : ''}
-            >
-              <Icon size={20} />
-              {!collapsed && <span className="text-sm font-medium">{item.label}</span>}
-            </button>
-          );
-        })}
+
+        {/* Settings & Logout */}
+        <div className="p-4">
+          {!collapsed && (
+            <div className="px-3 py-2 mb-2">
+              <p className={`text-xs font-bold uppercase tracking-wider ${
+                isDark ? 'text-[#9da8b9]' : 'text-gray-500'
+              }`}>Account</p>
+            </div>
+          )}
+          
+          {/* Profile Button */}
+          <button
+            onClick={() => navigate('/settings')}
+            className={`flex items-center gap-3 px-3 py-2 rounded transition-colors group w-full mb-1 ${
+              isActive('/settings')
+                ? isDark
+                  ? 'bg-[#136dec]/10 text-[#136dec]'
+                  : 'bg-blue-50 text-blue-600'
+                : isDark
+                  ? 'text-[#9da8b9] hover:bg-[#1c2027] hover:text-white'
+                  : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+            }`}
+            title={collapsed ? 'Profile & Settings' : ''}
+          >
+            <UserIcon size={20} />
+            {!collapsed && <span className="text-sm font-medium">Profile & Settings</span>}
+          </button>
+
+          {/* Logout Button */}
+          <button
+            onClick={() => {
+              if (window.confirm('Are you sure you want to logout?')) {
+                logout();
+                navigate('/login');
+              }
+            }}
+            className={`flex items-center gap-3 px-3 py-2 rounded transition-colors group w-full ${
+              isDark
+                ? 'text-red-400 hover:bg-red-500/10 hover:text-red-300'
+                : 'text-red-600 hover:bg-red-50 hover:text-red-700'
+            }`}
+            title={collapsed ? 'Logout' : ''}
+          >
+            <LogOut size={20} />
+            {!collapsed && <span className="text-sm font-medium">Logout</span>}
+          </button>
+        </div>
       </div>
 
       {/* Toggle Button */}

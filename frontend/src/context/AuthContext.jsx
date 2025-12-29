@@ -188,13 +188,19 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       const response = await api.post('/auth/login', { email, password });
-      const { user, accessToken, refreshToken } = response.data;
+      const { user, workspace, accessToken, refreshToken } = response.data;
 
-      localStorage.setItem('user', JSON.stringify(user));
+      // Include workspace info in user object for easy access
+      const userWithWorkspace = {
+        ...user,
+        workspace: workspace
+      };
+
+      localStorage.setItem('user', JSON.stringify(userWithWorkspace));
       localStorage.setItem('accessToken', accessToken);
       localStorage.setItem('refreshToken', refreshToken);
 
-      setUser(user);
+      setUser(userWithWorkspace);
       initializeSocket(user.id);
 
       return { success: true };
@@ -244,6 +250,13 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Update user data (e.g., after profile picture change)
+  const updateUser = (updatedUserData) => {
+    const newUser = { ...user, ...updatedUserData };
+    setUser(newUser);
+    localStorage.setItem('user', JSON.stringify(newUser));
+  };
+
   const value = {
     user,
     loading,
@@ -251,6 +264,7 @@ export const AuthProvider = ({ children }) => {
     login,
     register,
     logout,
+    updateUser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
