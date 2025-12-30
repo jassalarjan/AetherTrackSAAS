@@ -242,9 +242,13 @@ router.get('/team-members', authenticate, checkRole(['team_lead']), async (req, 
 // Get single user by ID (Admin, HR & Community Admin)
 router.get('/:id', authenticate, checkRole(['admin', 'hr', 'community_admin']), async (req, res) => {
   try {
-    const user = await User.findById(req.params.id)
+    // WORKSPACE SUPPORT: Find user only within current workspace
+    const user = await User.findOne({ 
+      _id: req.params.id,
+      workspaceId: req.context.workspaceId 
+    })
       .select('-password_hash')
-      .populate('team_id');
+      .populate('team_id', 'name');
 
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
@@ -411,9 +415,23 @@ router.put('/:id', authenticate, checkRole(['admin', 'hr', 'community_admin']), 
       return res.status(400).json({ message: 'Invalid role' });
     }
 
-    // Check if email is being changed and if it's already taken
-    if (email) {
-      const existingUser = await User.findOne({ email, _id: { $ne: id } });
+    // WORKSPACE SUPPORT: Verify user exists in current workspace
+    const currentUser = await User.findOne({ 
+      _id: id,
+      workspaceId: req.context.workspaceId 
+    });
+    
+    if (!currentUser) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Check if email is being changed and if it's already taken in this workspace
+    if (email && email !== currentUser.email) {
+      const existingUser = await User.findOne({ 
+        email, 
+        workspaceId: req.context.workspaceId,
+        _id: { $ne: id } 
+      });
       if (existingUser) {
         return res.status(400).json({ message: 'Email already in use' });
       }
@@ -428,9 +446,9 @@ router.put('/:id', authenticate, checkRole(['admin', 'hr', 'community_admin']), 
     }
 
     // If changing to admin role, remove team assignment
-    const currentUser = await User.findById(id);
-    if (role === 'admin' && currentUser) {
-      team_id = null;
+    let finalTeamId = team_id;
+    if (role === 'admin') {
+      finalTeamId = null;
     }
 
     const updates = {
@@ -446,13 +464,13 @@ router.put('/:id', authenticate, checkRole(['admin', 'hr', 'community_admin']), 
         updates.team_id = null;
       }
     }
-    if (team_id !== undefined && role !== 'admin') updates.team_id = team_id;
+    if (finalTeamId !== undefined && role !== 'admin') updates.team_id = finalTeamId;
 
-    const user = await User.findByIdAndUpdate(
-      id,
+    const user = await User.findOneAndUpdate(
+      { _id: id, workspaceId: req.context.workspaceId },
       updates,
       { new: true, runValidators: true }
-    ).select('-password_hash').populate('team_id');
+    ).select('-password_hash').populate('team_id', 'name');
 
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
@@ -460,7 +478,7 @@ router.put('/:id', authenticate, checkRole(['admin', 'hr', 'community_admin']), 
 
     // Emit socket event for user update
     if (req.app.get('io')) {
-      req.app.get('io').emit('user:updated', user);
+      req.app.get('io').to(`workspace:${req.context.workspaceId}`).emit('user:updated', user);
     }
 
     res.json({ message: 'User updated successfully', user });
@@ -695,8 +713,11 @@ async function processBulkUsers(usersData, currentUser) {
       if (userData.team || userData.team_name) {
         const teamName = userData.team || userData.team_name;
         
-        // Try to find existing team
-        let team = await Team.findOne({ name: teamName });
+        // Try to find existing team in current user's workspace
+        let team = await Team.findOne({ 
+          name: teamName,
+          workspaceId: currentUser.workspaceId 
+        });
         
         // If team doesn't exist, create it with the importing user as both lead and HR
         if (!team) {
@@ -705,7 +726,8 @@ async function processBulkUsers(usersData, currentUser) {
             description: `Auto-created during bulk user import`,
             hr_id: currentUser._id, // Set importing admin/HR as HR
             lead_id: currentUser._id, // Set importing admin/HR as team lead temporarily
-            members: []
+            members: [],
+            workspaceId: currentUser.workspaceId // Add workspace from current user
           });
           await team.save();
           
@@ -724,7 +746,8 @@ async function processBulkUsers(usersData, currentUser) {
         email: userData.email.toLowerCase(),
         password_hash: userData.password,
         role: role,
-        team_id: teamId
+        team_id: teamId,
+        workspaceId: currentUser.workspaceId // Add workspace from current user
       });
 
       await newUser.save();
