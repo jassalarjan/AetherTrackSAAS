@@ -172,27 +172,39 @@ const Settings = () => {
   };
 
   const handleDeleteWorkspace = async () => {
-    const confirmed = await confirmModal.show({
-      title: 'Delete Workspace & Account',
-      message: `Are you absolutely sure you want to delete your workspace "${user?.workspace?.name}"?\n\nThis will PERMANENTLY DELETE:\n• Your account\n• All users in this workspace\n• All tasks and projects\n• All teams\n• All data and settings\n\nThis action cannot be undone!`,
-      confirmText: 'Yes, Delete Everything',
-      variant: 'danger'
-    });
-
-    if (!confirmed) return;
-
-    // Second confirmation for extra safety
-    const doubleConfirmed = await confirmModal.show({
-      title: '⚠️ FINAL WARNING',
-      message: `Last chance to change your mind!\n\nClicking "Confirm Deletion" will PERMANENTLY and IRREVERSIBLY delete:\n\n• Workspace: ${user?.workspace?.name}\n• Your account: ${user?.email}\n• ${user?.workspace?.type === 'COMMUNITY' ? 'All community' : 'All'} data\n\nThere is NO way to recover this data!`,
-      confirmText: 'Confirm Deletion',
-      variant: 'danger'
-    });
-
-    if (!doubleConfirmed) return;
-
+    console.log('🗑️ Delete workspace initiated');
+    
     try {
-      await api.delete('/workspaces/my-workspace/delete');
+      const confirmed = await confirmModal.show({
+        title: 'Delete Workspace & Account',
+        message: `Are you absolutely sure you want to delete your workspace "${user?.workspace?.name}"?\n\nThis will PERMANENTLY DELETE:\n• Your account\n• All users in this workspace\n• All tasks and projects\n• All teams\n• All data and settings\n\nThis action cannot be undone!`,
+        confirmText: 'Yes, Delete Everything',
+        variant: 'danger'
+      });
+
+      console.log('First confirmation result:', confirmed);
+      if (!confirmed) {
+        console.log('User cancelled first confirmation');
+        return;
+      }
+
+      // Second confirmation for extra safety
+      const doubleConfirmed = await confirmModal.show({
+        title: '⚠️ FINAL WARNING',
+        message: `Last chance to change your mind!\n\nClicking "Confirm Deletion" will PERMANENTLY and IRREVERSIBLY delete:\n\n• Workspace: ${user?.workspace?.name}\n• Your account: ${user?.email}\n• ${user?.workspace?.type === 'COMMUNITY' ? 'All community' : 'All'} data\n\nThere is NO way to recover this data!`,
+        confirmText: 'Confirm Deletion',
+        variant: 'danger'
+      });
+
+      console.log('Second confirmation result:', doubleConfirmed);
+      if (!doubleConfirmed) {
+        console.log('User cancelled second confirmation');
+        return;
+      }
+
+      console.log('✅ Both confirmations passed, deleting workspace...');
+      const response = await api.delete('/workspaces/my-workspace/delete');
+      console.log('Delete response:', response.data);
       
       // Logout and redirect to home page
       await logout();
@@ -202,6 +214,7 @@ const Settings = () => {
         } 
       });
     } catch (error) {
+      console.error('❌ Delete workspace error:', error);
       alert(error.response?.data?.message || 'Failed to delete workspace. Please contact support.');
     }
   };

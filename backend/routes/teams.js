@@ -495,5 +495,50 @@ router.delete('/:id', authenticate, checkRole(['admin', 'hr', 'community_admin']
   }
 });
 
+// Bulk delete all teams (Admin, HR & Community Admin)
+router.delete('/bulk/all', authenticate, checkRole(['admin', 'hr', 'community_admin']), async (req, res) => {
+  try {
+    // Get all teams in current workspace
+    const teams = await Team.find({ workspaceId: req.context.workspaceId });
+    
+    if (teams.length === 0) {
+      return res.status(404).json({ message: 'No teams found to delete' });
+    }
+
+    const teamIds = teams.map(t => t._id);
+    const teamCount = teams.length;
+
+    // Remove team reference from all users in these teams
+    await User.updateMany(
+      { team_id: { $in: teamIds }, workspaceId: req.context.workspaceId },
+      { $set: { team_id: null, updated_at: new Date() } }
+    );
+
+    // Delete all teams in this workspace
+    await Team.deleteMany({ workspaceId: req.context.workspaceId });
+
+    // Update workspace team count to 0
+    await Workspace.findByIdAndUpdate(req.context.workspaceId, {
+      $set: { 'usage.teams': 0 }
+    });
+
+    // Emit socket event for bulk deletion
+    if (req.app.get('io')) {
+      req.app.get('io').to(`workspace:${req.context.workspaceId}`).emit('team:bulk-deleted', {
+        count: teamCount,
+        workspaceId: req.context.workspaceId
+      });
+    }
+
+    res.json({ 
+      message: `Successfully deleted ${teamCount} team(s)`,
+      count: teamCount
+    });
+  } catch (error) {
+    console.error('Bulk delete teams error:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
 export default router;
 
