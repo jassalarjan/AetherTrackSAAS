@@ -6,7 +6,7 @@ import Sidebar from '../components/Sidebar';
 import ConfirmModal from '../components/modals/ConfirmModal';
 import api from '../api/axios';
 import useRealtimeSync from '../hooks/useRealtimeSync';
-import { Plus, X, Users, UserPlus, UserMinus, Trash2, Pin, GripVertical } from 'lucide-react';
+import { Plus, X, Users, UserPlus, UserMinus, Trash2, Pin, GripVertical, Search, Filter } from 'lucide-react';
 
 const Teams = () => {
   const { user } = useAuth();
@@ -27,6 +27,8 @@ const Teams = () => {
   const [selectedUserIds, setSelectedUserIds] = useState([]); // For multi-select
   const [isMultiSelect, setIsMultiSelect] = useState(false); // Toggle multi-select mode
   const [draggedTeam, setDraggedTeam] = useState(null);
+  const [searchQuery, setSearchQuery] = useState(''); // Search query for filtering users
+  const [roleFilter, setRoleFilter] = useState('all'); // Role filter
 
   useEffect(() => {
     if (user?.id) {
@@ -171,24 +173,53 @@ const Teams = () => {
     });
   };
 
-  const handleDeleteTeam = (teamId, teamName) => {
-    confirmModal.show({
+  const handleDeleteTeam = async (teamId, teamName) => {
+    const confirmed = await confirmModal.show({
       title: 'Delete Team',
       message: `Are you sure you want to delete team "${teamName}"? All members will be unassigned from this team and this action cannot be undone.`,
       confirmText: 'Delete Team',
       cancelText: 'Cancel',
       variant: 'danger',
-      onConfirm: async () => {
-        try {
-          await api.delete(`/teams/${teamId}`);
-          fetchTeams();
-          alert('Team deleted successfully');
-        } catch (error) {
-          console.error('Error deleting team:', error);
-          alert(error.response?.data?.message || 'Failed to delete team');
-        }
-      },
     });
+
+    if (confirmed) {
+      try {
+        await api.delete(`/teams/${teamId}`);
+        fetchTeams();
+        alert('Team deleted successfully');
+      } catch (error) {
+        console.error('Error deleting team:', error);
+        alert(error.response?.data?.message || 'Failed to delete team');
+      }
+    }
+  };
+
+  const handleDeleteAllTeams = async () => {
+    if (teams.length === 0) {
+      alert('No teams to delete');
+      return;
+    }
+
+    const confirmed = await confirmModal.show({
+      title: 'Delete All Teams',
+      message: `⚠️ DANGER: You are about to delete ALL ${teams.length} team(s). All members will be unassigned. This action CANNOT be undone. Are you absolutely sure?`,
+      confirmText: `Delete ${teams.length} Team(s)`,
+      cancelText: 'Cancel',
+      variant: 'danger',
+    });
+
+    if (confirmed) {
+      try {
+        setLoading(true);
+        await api.delete('/teams/bulk/all');
+        fetchTeams();
+        alert(`Successfully deleted all teams`);
+      } catch (error) {
+        console.error('Error deleting all teams:', error);
+        alert(error.response?.data?.message || 'Failed to delete teams');
+        setLoading(false);
+      }
+    }
   };
 
   const handleTogglePin = async (teamId) => {
@@ -297,14 +328,24 @@ const Teams = () => {
             </p>
           </div>
           {['admin', 'hr', 'community_admin'].includes(user?.role) && (
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="px-4 py-2 bg-[#136dec] text-white rounded-[0.125rem] hover:bg-[#1158c7] transition-colors flex items-center space-x-2"
-              data-testid="create-team-btn"
-            >
-              <Plus className="w-5 h-5" />
-              <span>Create Team</span>
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleDeleteAllTeams}
+                className="px-4 py-2 bg-red-600 text-white rounded-[0.125rem] hover:bg-red-700 transition-colors flex items-center space-x-2"
+                title="Delete all teams"
+              >
+                <Trash2 className="w-5 h-5" />
+                <span>Delete All</span>
+              </button>
+              <button
+                onClick={() => setShowCreateModal(true)}
+                className="px-4 py-2 bg-[#136dec] text-white rounded-[0.125rem] hover:bg-[#1158c7] transition-colors flex items-center space-x-2"
+                data-testid="create-team-btn"
+              >
+                <Plus className="w-5 h-5" />
+                <span>Create Team</span>
+              </button>
+            </div>
           )}
         </div>
 
@@ -534,120 +575,207 @@ const Teams = () => {
         </div>
       )}
 
-      {/* Add Member Modal */}
-      {showAddMemberModal && selectedTeam && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" data-testid="add-member-modal">
-          <div className="bg-[#1c2027] rounded-[0.125rem] p-8 max-w-2xl w-full mx-4 border border-[#282f39]">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-white">Add Member to {selectedTeam.name}</h2>
-              <button
-                onClick={() => {
-                  setShowAddMemberModal(false);
-                  setIsMultiSelect(false);
-                  setSelectedUserIds([]);
-                  setSelectedUserId('');
-                }}
-                className="text-[#9da8b9] hover:text-white transition-colors"
-              >
-                <X className="w-6 h-6" />
-              </button>
-            </div>
+      {/* Add Member Modal - Enhanced with Search */}
+      {showAddMemberModal && selectedTeam && (() => {
+        // Filter available users (not already in team)
+        const availableUsers = users.filter((u) => !selectedTeam.members?.some((m) => m._id === u._id));
+        
+        // Apply search and role filters
+        const filteredUsers = availableUsers.filter(u => {
+          const matchesSearch = searchQuery === '' || 
+            u.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            u.email.toLowerCase().includes(searchQuery.toLowerCase());
+          const matchesRole = roleFilter === 'all' || u.role === roleFilter;
+          return matchesSearch && matchesRole;
+        });
 
-            <form onSubmit={handleAddMember} className="space-y-4">
-              {/* Toggle Multi-Select Mode */}
-              <div className="flex items-center justify-between p-3 bg-[#136dec]/10 rounded-[0.125rem] border border-[#136dec]/20">
-                <span className="text-sm font-medium text-white">
-                  {isMultiSelect ? 'Multi-Select Mode' : 'Single Select Mode'}
-                </span>
+        return (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" data-testid="add-member-modal">
+            <div className="bg-[#1c2027] rounded-[0.125rem] p-8 max-w-3xl w-full mx-4 border border-[#282f39] max-h-[90vh] overflow-y-auto">
+              <div className="flex justify-between items-center mb-6">
+                <div>
+                  <h2 className="text-2xl font-bold text-white">Add Members to {selectedTeam.name}</h2>
+                  <p className="text-sm text-[#9da8b9] mt-1">
+                    {availableUsers.length} user(s) available • {selectedTeam.members?.length || 0} current member(s)
+                  </p>
+                </div>
                 <button
-                  type="button"
                   onClick={() => {
-                    setIsMultiSelect(!isMultiSelect);
-                    setSelectedUserId('');
+                    setShowAddMemberModal(false);
+                    setIsMultiSelect(false);
                     setSelectedUserIds([]);
+                    setSelectedUserId('');
+                    setSearchQuery('');
+                    setRoleFilter('all');
                   }}
-                  className={`px-4 py-2 rounded-[0.125rem] text-sm font-medium transition-colors ${
-                    isMultiSelect 
-                      ? 'bg-green-600 text-white hover:bg-green-700' 
-                      : 'bg-[#282f39] text-white hover:bg-[#3e454f]'
-                  }`}
+                  className="text-[#9da8b9] hover:text-white transition-colors"
                 >
-                  {isMultiSelect ? 'Switch to Single Select' : 'Switch to Multi-Select'}
+                  <X className="w-6 h-6" />
                 </button>
               </div>
 
-              {isMultiSelect ? (
-                /* Multi-Select UI */
-                <div>
-                  <div className="flex justify-between items-center mb-2">
-                    <label className="block text-sm font-medium text-white">
-                      Select Users ({selectedUserIds.length} selected)
-                    </label>
-                    <button
-                      type="button"
-                      onClick={toggleSelectAll}
-                      className="text-sm text-[#136dec] hover:text-[#1158c7]"
-                    >
-                      {selectedUserIds.length === users.filter((u) => !selectedTeam.members?.some((m) => m._id === u._id)).length
-                        ? 'Deselect All'
-                        : 'Select All'}
-                    </button>
+              <form onSubmit={handleAddMember} className="space-y-5">
+                {/* Search and Filter Bar */}
+                <div className="space-y-3">
+                  {/* Search Input */}
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[#9da8b9]" />
+                    <input
+                      type="text"
+                      placeholder="Search by name or email..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full pl-10 pr-4 py-3 bg-[#111418] border border-[#282f39] rounded-[0.125rem] text-white placeholder-[#9da8b9] focus:border-[#136dec] focus:outline-none transition-colors"
+                    />
                   </div>
-                  <div className="border border-[#282f39] rounded-[0.125rem] max-h-96 overflow-y-auto">
-                    {users
-                      .filter((u) => !selectedTeam.members?.some((m) => m._id === u._id))
-                      .map((u) => (
+
+                  {/* Filter Row */}
+                  <div className="flex flex-wrap gap-3 items-center">
+                    <div className="flex items-center gap-2">
+                      <Filter className="w-4 h-4 text-[#9da8b9]" />
+                      <span className="text-sm text-[#9da8b9]">Filter by role:</span>
+                    </div>
+                    {['all', 'admin', 'hr', 'team_lead', 'member'].map(role => (
+                      <button
+                        key={role}
+                        type="button"
+                        onClick={() => setRoleFilter(role)}
+                        className={`px-3 py-1.5 rounded-[0.125rem] text-xs font-medium transition-colors ${
+                          roleFilter === role
+                            ? 'bg-[#136dec] text-white'
+                            : 'bg-[#282f39] text-[#9da8b9] hover:bg-[#3e454f] hover:text-white'
+                        }`}
+                      >
+                        {role === 'all' ? 'All Roles' : role.replace('_', ' ').toUpperCase()}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Multi-Select Toggle */}
+                <div className="flex items-center justify-between p-4 bg-gradient-to-r from-[#136dec]/10 to-transparent rounded-[0.125rem] border border-[#136dec]/20">
+                  <div>
+                    <span className="text-sm font-semibold text-white block">
+                      {isMultiSelect ? '✓ Multi-Select Mode Active' : 'Single Select Mode'}
+                    </span>
+                    <span className="text-xs text-[#9da8b9]">
+                      {isMultiSelect ? `${selectedUserIds.length} user(s) selected` : 'Select one user at a time'}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsMultiSelect(!isMultiSelect);
+                      setSelectedUserId('');
+                      setSelectedUserIds([]);
+                    }}
+                    className={`px-5 py-2.5 rounded-[0.125rem] text-sm font-medium transition-all ${
+                      isMultiSelect 
+                        ? 'bg-green-600 text-white hover:bg-green-700 shadow-lg shadow-green-600/25' 
+                        : 'bg-[#136dec] text-white hover:bg-[#1158c7] shadow-lg shadow-[#136dec]/25'
+                    }`}
+                  >
+                    {isMultiSelect ? '← Single Select' : 'Multi-Select →'}
+                  </button>
+                </div>
+
+                {/* User List */}
+                {isMultiSelect ? (
+                  /* Multi-Select UI */
+                  <div>
+                    <div className="flex justify-between items-center mb-3 px-1">
+                      <label className="text-sm font-medium text-white">
+                        {filteredUsers.length} user(s) • {selectedUserIds.length} selected
+                      </label>
+                      <button
+                        type="button"
+                        onClick={toggleSelectAll}
+                        className="text-sm font-medium text-[#136dec] hover:text-[#1158c7] transition-colors"
+                      >
+                        {selectedUserIds.length === filteredUsers.length && filteredUsers.length > 0
+                          ? '✗ Deselect All'
+                          : '✓ Select All'}
+                      </button>
+                    </div>
+                    <div className="border border-[#282f39] rounded-[0.125rem] max-h-96 overflow-y-auto bg-[#111418]">
+                      {filteredUsers.length > 0 ? filteredUsers.map((u) => (
                         <label
                           key={u._id}
-                          className="flex items-center p-3 hover:bg-[#282f39] cursor-pointer border-b border-[#282f39] last:border-b-0 transition-colors"
+                          className="flex items-center p-4 hover:bg-[#1c2027] cursor-pointer border-b border-[#282f39] last:border-b-0 transition-colors group"
                         >
                           <input
                             type="checkbox"
                             checked={selectedUserIds.includes(u._id)}
                             onChange={() => toggleUserSelection(u._id)}
-                            className="w-4 h-4 text-[#136dec] rounded focus:ring-[#136dec] mr-3"
+                            className="w-5 h-5 text-[#136dec] rounded focus:ring-[#136dec] mr-4 cursor-pointer"
                           />
-                          <div className="flex-1">
-                            <div className="font-medium text-white">{u.full_name}</div>
-                            <div className="text-sm text-[#9da8b9]">
-                              {u.email} • <span className="capitalize">{u.role}</span>
+                          <div className="flex-1 min-w-0">
+                            <div className="font-semibold text-white group-hover:text-[#136dec] transition-colors">{u.full_name}</div>
+                            <div className="text-sm text-[#9da8b9] truncate">
+                              {u.email}
                             </div>
                           </div>
+                          <div className="ml-3">
+                            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-[#282f39] text-[#9da8b9] capitalize">
+                              {u.role.replace('_', ' ')}
+                            </span>
+                          </div>
                         </label>
-                      ))}
-                    {users.filter((u) => !selectedTeam.members?.some((m) => m._id === u._id)).length === 0 && (
-                      <div className="p-6 text-center text-[#9da8b9]">
-                        No available users to add
+                      )) : (
+                        <div className="p-8 text-center">
+                          <Users className="w-12 h-12 mx-auto mb-3 text-[#9da8b9]" />
+                          <p className="text-[#9da8b9] font-medium">No users found</p>
+                          <p className="text-sm text-[#9da8b9] mt-1">Try adjusting your search or filters</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  /* Single Select UI - Improved */
+                  <div>
+                    <label className="block text-sm font-medium text-white mb-3">
+                      Select User *
+                    </label>
+                    {filteredUsers.length > 0 ? (
+                      <div className="border border-[#282f39] rounded-[0.125rem] max-h-96 overflow-y-auto bg-[#111418]">
+                        {filteredUsers.map((u) => (
+                          <label
+                            key={u._id}
+                            className="flex items-center p-4 hover:bg-[#1c2027] cursor-pointer border-b border-[#282f39] last:border-b-0 transition-colors group"
+                          >
+                            <input
+                              type="radio"
+                              name="selectedUser"
+                              value={u._id}
+                              checked={selectedUserId === u._id}
+                              onChange={(e) => setSelectedUserId(e.target.value)}
+                              className="w-5 h-5 text-[#136dec] focus:ring-[#136dec] mr-4 cursor-pointer"
+                            />
+                            <div className="flex-1 min-w-0">
+                              <div className="font-semibold text-white group-hover:text-[#136dec] transition-colors">{u.full_name}</div>
+                              <div className="text-sm text-[#9da8b9] truncate">
+                                {u.email}
+                              </div>
+                            </div>
+                            <div className="ml-3">
+                              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-[#282f39] text-[#9da8b9] capitalize">
+                                {u.role.replace('_', ' ')}
+                              </span>
+                            </div>
+                          </label>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="border border-[#282f39] rounded-[0.125rem] p-8 text-center bg-[#111418]">
+                        <Users className="w-12 h-12 mx-auto mb-3 text-[#9da8b9]" />
+                        <p className="text-[#9da8b9] font-medium">No users found</p>
+                        <p className="text-sm text-[#9da8b9] mt-1">Try adjusting your search or filters</p>
                       </div>
                     )}
                   </div>
-                </div>
-              ) : (
-                /* Single Select UI */
-                <div>
-                  <label className="block text-sm font-medium text-white mb-2">
-                    Select User *
-                  </label>
-                  <select
-                    value={selectedUserId}
-                    onChange={(e) => setSelectedUserId(e.target.value)}
-                    className="input"
-                    required
-                    data-testid="select-user-input"
-                  >
-                    <option value="">Select a user</option>
-                    {users
-                      .filter((u) => !selectedTeam.members?.some((m) => m._id === u._id))
-                      .map((u) => (
-                        <option key={u._id} value={u._id}>
-                          {u.full_name} ({u.role})
-                        </option>
-                      ))}
-                  </select>
-                </div>
-              )}
+                )}
 
-              <div className="flex justify-end space-x-4 pt-4">
+              <div className="flex justify-end space-x-4 pt-6 border-t border-[#282f39] mt-2">
                 <button
                   type="button"
                   onClick={() => {
@@ -655,17 +783,20 @@ const Teams = () => {
                     setIsMultiSelect(false);
                     setSelectedUserIds([]);
                     setSelectedUserId('');
+                    setSearchQuery('');
+                    setRoleFilter('all');
                   }}
-                  className="btn btn-secondary"
+                  className="px-5 py-2.5 bg-[#282f39] text-white rounded-[0.125rem] hover:bg-[#3e454f] transition-colors font-medium"
                 >
                   Cancel
                 </button>
                 <button 
                   type="submit" 
-                  className="btn btn-primary" 
+                  className="px-5 py-2.5 bg-[#136dec] text-white rounded-[0.125rem] hover:bg-[#1158c7] transition-colors font-medium shadow-lg shadow-[#136dec]/25 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2" 
                   data-testid="submit-add-member"
                   disabled={isMultiSelect ? selectedUserIds.length === 0 : !selectedUserId}
                 >
+                  <UserPlus className="w-4 h-4" />
                   {isMultiSelect 
                     ? `Add ${selectedUserIds.length} Member${selectedUserIds.length !== 1 ? 's' : ''}`
                     : 'Add Member'}
@@ -674,7 +805,8 @@ const Teams = () => {
             </form>
           </div>
         </div>
-      )}
+      );
+      })()}
 
       {/* Confirm Modal */}
       <ConfirmModal

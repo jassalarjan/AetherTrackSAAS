@@ -267,7 +267,7 @@ router.put('/:id', requireAdmin, async (req, res) => {
 });
 
 // Delete own workspace and account (Community Admin only)
-router.delete('/my-workspace/delete', async (req, res) => {
+router.delete('/my-workspace/delete', authenticate, async (req, res) => {
   try {
     // Only community admins can delete their own workspace
     if (req.user.role !== 'community_admin') {
