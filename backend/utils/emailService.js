@@ -16,6 +16,11 @@ const getBrevoClient = () => {
 // Send email using Brevo API (preferred method)
 const sendWithBrevoAPI = async (to, subject, htmlContent, from = { email: 'updates.codecatalyst@gmail.com', name: 'TaskFlow' }) => {
   try {
+    console.log('🔍 Checking Brevo API configuration...');
+    console.log('   API Key present:', !!process.env.BREVO_API_KEY);
+    console.log('   API Key length:', process.env.BREVO_API_KEY?.length);
+    console.log('   Sender email:', from.email);
+    
     const client = getBrevoClient();
     if (!client) {
       throw new Error('Brevo API client not configured');
@@ -27,6 +32,7 @@ const sendWithBrevoAPI = async (to, subject, htmlContent, from = { email: 'updat
     sendSmtpEmail.subject = subject;
     sendSmtpEmail.htmlContent = htmlContent;
 
+    console.log('📤 Attempting to send email via Brevo API...');
     const result = await client.sendTransacEmail(sendSmtpEmail);
     console.log('✅ Email sent via Brevo API:', result.response.statusCode);
     return {
@@ -36,7 +42,11 @@ const sendWithBrevoAPI = async (to, subject, htmlContent, from = { email: 'updat
       provider: 'brevo-api'
     };
   } catch (error) {
-    console.error('❌ Brevo API error:', error.message);
+    console.error('❌ Brevo API error details:');
+    console.error('   Message:', error.message);
+    console.error('   Status:', error.response?.status);
+    console.error('   Status Text:', error.response?.statusText);
+    console.error('   Response Body:', JSON.stringify(error.response?.body || error.response?.data));
     return {
       success: false,
       status: 'failed',
