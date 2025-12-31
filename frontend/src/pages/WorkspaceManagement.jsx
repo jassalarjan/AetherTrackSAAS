@@ -8,33 +8,34 @@ import {
   Building2, 
   Users, 
   CheckSquare, 
-  Layers,
   Plus,
   Edit,
   Trash2,
   Eye,
-  AlertCircle,
-  Database,
-  RefreshCw,
-  Search,
-  X
+  Power,
+  PowerOff,
+  X,
+  Loader,
+  CheckCircle,
+  AlertCircle
 } from 'lucide-react';
 
 export default function WorkspaceManagement() {
   const { theme } = useTheme();
   const confirmModal = useConfirmModal();
+  const isDark = theme === 'dark';
+  
   const [workspaces, setWorkspaces] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [showDetailsModal, setShowDetailsModal] = useState(false);
-  const [showUsersModal, setShowUsersModal] = useState(false);
-  const [showTasksModal, setShowTasksModal] = useState(false);
+  const [showDeletePrompt, setShowDeletePrompt] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [modalMessage, setModalMessage] = useState('');
   const [selectedWorkspace, setSelectedWorkspace] = useState(null);
-  const [workspaceUsers, setWorkspaceUsers] = useState([]);
-  const [workspaceTasks, setWorkspaceTasks] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [stats, setStats] = useState(null);
+  const [processing, setProcessing] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
   
   const [formData, setFormData] = useState({
     name: '',
@@ -44,188 +45,164 @@ export default function WorkspaceManagement() {
 
   const [editData, setEditData] = useState({
     name: '',
-    type: 'COMMUNITY',
-    limits: {
-      maxUsers: 10,
-      maxTasks: 100,
-      maxTeams: 3
-    }
+    type: 'COMMUNITY'
   });
 
+  // Fetch workspaces on mount
   useEffect(() => {
     fetchWorkspaces();
-    fetchStats();
   }, []);
+
+  const showSuccess = (message) => {
+    setModalMessage(message);
+    setShowSuccessModal(true);
+    setTimeout(() => setShowSuccessModal(false), 3000);
+  };
+
+  const showError = (message) => {
+    setModalMessage(message);
+    setShowErrorModal(true);
+  };
 
   const fetchWorkspaces = async () => {
     try {
+      console.log('📋 Fetching workspaces...');
       setLoading(true);
       const response = await axios.get('/workspaces');
+      console.log('✅ Workspaces fetched:', response.data);
       setWorkspaces(response.data);
     } catch (error) {
-      console.error('Error fetching workspaces:', error);
-      alert('Failed to fetch workspaces');
+      console.error('❌ Error fetching workspaces:', error);
+      showError('Failed to fetch workspaces: ' + (error.response?.data?.message || error.message));
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchStats = async () => {
-    try {
-      const response = await axios.get('/workspaces/stats/summary');
-      setStats(response.data);
-    } catch (error) {
-      console.error('Error fetching stats:', error);
-    }
-  };
-
-  const fetchWorkspaceDetails = async (id) => {
-    try {
-      const response = await axios.get(`/workspaces/${id}`);
-      setSelectedWorkspace(response.data);
-      setShowDetailsModal(true);
-    } catch (error) {
-      console.error('Error fetching workspace details:', error);
-      alert('Failed to fetch workspace details');
-    }
-  };
-
-  const fetchWorkspaceUsers = async (workspace) => {
-    try {
-      const response = await axios.get(`/workspaces/${workspace._id}/users`);
-      setSelectedWorkspace(workspace);
-      setWorkspaceUsers(response.data.users);
-      setShowUsersModal(true);
-    } catch (error) {
-      console.error('Error fetching workspace users:', error);
-      alert('Failed to fetch workspace users');
-    }
-  };
-
-  const fetchWorkspaceTasks = async (workspace) => {
-    try {
-      const response = await axios.get(`/workspaces/${workspace._id}/tasks`);
-      setSelectedWorkspace(workspace);
-      setWorkspaceTasks(response.data.tasks);
-      setShowTasksModal(true);
-    } catch (error) {
-      console.error('Error fetching workspace tasks:', error);
-      alert('Failed to fetch workspace tasks');
-    }
-  };
-
   const handleCreate = async (e) => {
     e.preventDefault();
+    
+    if (!formData.name.trim()) {
+      showError('Please enter a workspace name');
+      return;
+    }
+
     try {
-      await axios.post('/workspaces', formData);
-      alert('Workspace created successfully');
+      console.log('📝 Creating workspace:', formData);
+      setProcessing(true);
+      
+      const response = await axios.post('/workspaces', formData);
+      console.log('✅ Workspace created:', response.data);
+      
       setShowCreateModal(false);
       setFormData({ name: '', type: 'COMMUNITY', ownerEmail: '' });
+      showSuccess('Workspace created successfully!');
       fetchWorkspaces();
-      fetchStats();
     } catch (error) {
-      console.error('Error creating workspace:', error);
-      alert(error.response?.data?.message || 'Failed to create workspace');
+      console.error('❌ Error creating workspace:', error);
+      showError('Failed to create workspace: ' + (error.response?.data?.message || error.message));
+    } finally {
+      setProcessing(false);
     }
   };
 
   const handleEdit = async (e) => {
     e.preventDefault();
+    
+    if (!editData.name.trim()) {
+      showError('Please enter a workspace name');
+      return;
+    }
+
     try {
-      await axios.put(`/workspaces/${selectedWorkspace._id}`, editData);
-      alert('Workspace updated successfully');
+      console.log('📝 Updating workspace:', selectedWorkspace._id, editData);
+      setProcessing(true);
+      
+      const response = await axios.put(`/workspaces/${selectedWorkspace._id}`, editData);
+      console.log('✅ Workspace updated:', response.data);
+      
       setShowEditModal(false);
+      setSelectedWorkspace(null);
+      showSuccess('Workspace updated successfully!');
       fetchWorkspaces();
     } catch (error) {
-      console.error('Error updating workspace:', error);
-      alert(error.response?.data?.message || 'Failed to update workspace');
+      console.error('❌ Error updating workspace:', error);
+      showError('Failed to update workspace: ' + (error.response?.data?.message || error.message));
+    } finally {
+      setProcessing(false);
     }
   };
 
-  const handleDelete = async (id, name) => {
-    const confirmMsg = `⚠️ DELETE WORKSPACE AND ALL DATA?
-
-Workspace: "${name}"
-
-This will permanently delete:
-• All users in this workspace
-• All tasks in this workspace
-• All teams in this workspace
-
-This action CANNOT be undone!`;
-    
-    confirmModal.show({
-      title: '⚠️ Delete Workspace',
-      message: confirmMsg,
-      confirmText: 'Delete Workspace',
-      cancelText: 'Cancel',
-      variant: 'danger',
-      onConfirm: async () => {
-        const confirmation = prompt("Type 'DELETE' to confirm:");
-        if (confirmation !== 'DELETE') {
-          alert('Deletion cancelled');
-          return;
-        }
-
-        try {
-          const response = await axios.delete(`/workspaces/${id}`);
-          const deleted = response.data.deleted || {};
-          alert(`✅ Workspace deleted successfully\n\nDeleted:\n• ${deleted.users || 0} users\n• ${deleted.tasks || 0} tasks\n• ${deleted.teams || 0} teams`);
-          fetchWorkspaces();
-          fetchStats();
-        } catch (error) {
-          console.error('Error deleting workspace:', error);
-          alert(error.response?.data?.message || 'Failed to delete workspace');
-        }
-      },
-    });
+  const handleDelete = async (workspace) => {
+    setSelectedWorkspace(workspace);
+    setDeleteConfirmText('');
+    setShowDeletePrompt(true);
   };
 
-  const handleToggleStatus = (id, name, currentStatus) => {
-    const action = currentStatus ? 'deactivate' : 'activate';
-    confirmModal.show({
+  const confirmDelete = async () => {
+    if (deleteConfirmText !== 'DELETE') {
+      showError('Please type "DELETE" to confirm');
+      return;
+    }
+
+    try {
+      console.log('🗑️ Deleting workspace:', selectedWorkspace._id);
+      setProcessing(true);
+      setShowDeletePrompt(false);
+      
+      const response = await axios.delete(`/workspaces/${selectedWorkspace._id}`);
+      console.log('✅ Workspace deleted:', response.data);
+      
+      const deleted = response.data.deleted || {};
+      showSuccess(`Workspace deleted successfully!\n\nDeleted:\n• ${deleted.users || 0} users\n• ${deleted.tasks || 0} tasks\n• ${deleted.teams || 0} teams`);
+      fetchWorkspaces();
+    } catch (error) {
+      console.error('❌ Error deleting workspace:', error);
+      showError('Failed to delete workspace: ' + (error.response?.data?.message || error.message));
+    } finally {
+      setProcessing(false);
+      setSelectedWorkspace(null);
+      setDeleteConfirmText('');
+    }
+  };
+
+  const handleToggleStatus = async (workspace) => {
+    const action = workspace.isActive ? 'deactivate' : 'activate';
+    const confirmed = await confirmModal.show({
       title: `${action === 'activate' ? 'Activate' : 'Deactivate'} Workspace`,
-      message: `Are you sure you want to ${action} workspace "${name}"? Users in this workspace will ${action === 'deactivate' ? 'lose access until it is reactivated' : 'regain access'}.`,
+      message: `Are you sure you want to ${action} workspace "${workspace.name}"? Users in this workspace will ${action === 'deactivate' ? 'lose access until it is reactivated' : 'regain access'}.`,
       confirmText: action === 'activate' ? 'Activate' : 'Deactivate',
       cancelText: 'Cancel',
-      variant: action === 'deactivate' ? 'warning' : 'info',
-      onConfirm: async () => {
-        try {
-          const response = await axios.patch(`/workspaces/${id}/toggle-status`);
-          const message = response.data.message || `Workspace ${action}d successfully`;
-          const note = response.data.note || '';
-          
-          alert(`${message}\n\n⚠️ IMPORTANT: ${note || 'Users in this workspace must log out and log back in to see the change.'}`);
-          fetchWorkspaces();
-          fetchStats();
-        } catch (error) {
-          console.error('Error toggling workspace status:', error);
-          alert(error.response?.data?.message || 'Failed to toggle workspace status');
-        }
-      },
+      variant: action === 'deactivate' ? 'warning' : 'info'
     });
+
+    if (!confirmed) return;
+
+    try {
+      console.log(`🔄 ${action}ing workspace:`, workspace._id);
+      setProcessing(true);
+      
+      const response = await axios.patch(`/workspaces/${workspace._id}/toggle-status`);
+      console.log(`✅ Workspace ${action}d:`, response.data);
+      
+      showSuccess(`Workspace ${action}d successfully!`);
+      fetchWorkspaces();
+    } catch (error) {
+      console.error(`❌ Error ${action}ing workspace:`, error);
+      showErrorle.error(`❌ Error ${action}ing workspace:`, error);
+      alert(`Failed to ${action} workspace: ` + (error.response?.data?.message || error.message));
+    } finally {
+      setProcessing(false);
+    }
   };
 
   const openEditModal = (workspace) => {
     setSelectedWorkspace(workspace);
     setEditData({
       name: workspace.name,
-      type: workspace.type,
-      limits: workspace.limits || { maxUsers: 10, maxTasks: 100, maxTeams: 3 }
+      type: workspace.type
     });
     setShowEditModal(true);
-  };
-
-  const filteredWorkspaces = workspaces.filter(ws =>
-    ws.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const isDark = theme === 'dark';
-
-  const getTypeColor = (type) => {
-    return type === 'CORE' 
-      ? isDark ? 'bg-purple-900/30 text-purple-300' : 'bg-purple-100 text-purple-800'
-      : isDark ? 'bg-blue-900/30 text-blue-300' : 'bg-blue-100 text-blue-800';
   };
 
   if (loading) {
@@ -233,7 +210,7 @@ This action CANNOT be undone!`;
       <div className={`flex h-screen ${isDark ? 'bg-[#0f1419]' : 'bg-gray-50'}`}>
         <Sidebar />
         <div className="flex-1 flex items-center justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+          <Loader className="w-8 h-8 animate-spin text-purple-600" />
         </div>
       </div>
     );
@@ -242,688 +219,465 @@ This action CANNOT be undone!`;
   return (
     <div className={`flex h-screen ${isDark ? 'bg-[#0f1419]' : 'bg-gray-50'}`}>
       <Sidebar />
-      <div className="flex-1 overflow-y-auto">
-        <div className="p-6 max-w-7xl mx-auto">
-          {/* Header */}
-          <div className="mb-8">
-            <h1 className={`text-3xl font-bold mb-2 flex items-center gap-3 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+      
+      <div className="flex-1 overflow-y-auto p-8">
+        {/* Header */}
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <h1 className={`text-3xl font-bold flex items-center gap-3 ${isDark ? 'text-white' : 'text-gray-900'}`}>
               <Building2 className="w-8 h-8 text-purple-600" />
               Workspace Management
             </h1>
-            <p className={isDark ? 'text-[#9da8b9]' : 'text-gray-600'}>
+            <p className={`mt-2 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
               Manage all workspaces in the system
             </p>
           </div>
+          
+          <button
+            onClick={() => setShowCreateModal(true)}
+            disabled={processing}
+            className="flex items-center gap-2 px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors disabled:opacity-50"
+          >
+            <Plus className="w-5 h-5" />
+            Create Workspace
+          </button>
+        </div>
 
-          {/* Statistics Cards */}
-          {stats && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              {/* Total Workspaces */}
-              <div className={`rounded-lg shadow-md p-6 ${isDark ? 'bg-[#111418]' : 'bg-white'}`}>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className={`text-sm ${isDark ? 'text-[#9da8b9]' : 'text-gray-600'}`}>Total Workspaces</p>
-                    <p className={`text-3xl font-bold mt-1 ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                      {stats.totalWorkspaces}
-                    </p>
+        {/* Workspaces Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {workspaces.map((workspace) => (
+            <div
+              key={workspace._id}
+              className={`rounded-xl p-6 ${
+                isDark ? 'bg-[#1a1f2e] border border-gray-800' : 'bg-white border border-gray-200'
+              } hover:shadow-xl transition-shadow`}
+            >
+              {/* Header */}
+              <div className="flex justify-between items-start mb-4">
+                <div>
+                  <h3 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                    {workspace.name}
+                  </h3>
+                  <div className="flex items-center gap-2 mt-2">
+                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                      workspace.type === 'CORE'
+                        ? 'bg-purple-900/30 text-purple-400'
+                        : 'bg-blue-900/30 text-blue-400'
+                    }`}>
+                      {workspace.type}
+                    </span>
+                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                      workspace.isActive
+                        ? 'bg-green-900/30 text-green-400'
+                        : 'bg-red-900/30 text-red-400'
+                    }`}>
+                      {workspace.isActive ? 'Active' : 'Inactive'}
+                    </span>
                   </div>
-                  <Database className="w-12 h-12 text-purple-600 opacity-20" />
-                </div>
-                <div className="mt-4 flex gap-3 text-sm flex-wrap">
-                  <span className={isDark ? 'text-green-400' : 'text-green-600'}>
-                    ✓ {stats.activeWorkspaces} Active
-                  </span>
-                  <span className={isDark ? 'text-red-400' : 'text-red-600'}>
-                    ✗ {stats.inactiveWorkspaces} Inactive
-                  </span>
                 </div>
               </div>
 
-              {/* Workspace Types */}
-              <div className={`rounded-lg shadow-md p-6 ${isDark ? 'bg-[#111418]' : 'bg-white'}`}>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className={`text-sm ${isDark ? 'text-[#9da8b9]' : 'text-gray-600'}`}>Workspace Types</p>
-                    <p className={`text-3xl font-bold mt-1 ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                      {stats.coreWorkspaces + stats.communityWorkspaces}
-                    </p>
-                  </div>
-                  <Layers className="w-12 h-12 text-blue-600 opacity-20" />
+              {/* Stats */}
+              <div className={`grid grid-cols-3 gap-4 mb-4 p-4 rounded-lg ${
+                isDark ? 'bg-[#0f1419]' : 'bg-gray-50'
+              }`}>
+                <div className="text-center">
+                  <Users className="w-5 h-5 mx-auto mb-1 text-purple-500" />
+                  <p className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                    {workspace.stats?.userCount || 0}
+                  </p>
+                  <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-600'}`}>Users</p>
                 </div>
-                <div className="mt-4 flex gap-4 text-sm">
-                  <span className={isDark ? 'text-purple-400' : 'text-purple-600'}>
-                    {stats.coreWorkspaces} CORE
-                  </span>
-                  <span className={isDark ? 'text-blue-400' : 'text-blue-600'}>
-                    {stats.communityWorkspaces} COMMUNITY
-                  </span>
+                <div className="text-center">
+                  <CheckSquare className="w-5 h-5 mx-auto mb-1 text-blue-500" />
+                  <p className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                    {workspace.stats?.taskCount || 0}
+                  </p>
+                  <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-600'}`}>Tasks</p>
                 </div>
-              </div>
-
-              {/* Total Users */}
-              <div className={`rounded-lg shadow-md p-6 ${isDark ? 'bg-[#111418]' : 'bg-white'}`}>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className={`text-sm ${isDark ? 'text-[#9da8b9]' : 'text-gray-600'}`}>Total Users</p>
-                    <p className={`text-3xl font-bold mt-1 ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                      {stats.totalUsers}
-                    </p>
-                  </div>
-                  <Users className="w-12 h-12 text-green-600 opacity-20" />
+                <div className="text-center">
+                  <Building2 className="w-5 h-5 mx-auto mb-1 text-green-500" />
+                  <p className={`text-sm font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                    {workspace.stats?.teamCount || 0}
+                  </p>
+                  <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-600'}`}>Teams</p>
                 </div>
               </div>
 
-              {/* Total Tasks */}
-              <div className={`rounded-lg shadow-md p-6 ${isDark ? 'bg-[#111418]' : 'bg-white'}`}>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className={`text-sm ${isDark ? 'text-[#9da8b9]' : 'text-gray-600'}`}>Total Tasks</p>
-                    <p className={`text-3xl font-bold mt-1 ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                      {stats.totalTasks}
-                    </p>
-                  </div>
-                  <CheckSquare className="w-12 h-12 text-blue-600 opacity-20" />
-                </div>
+              {/* Actions */}
+              <div className="flex gap-2">
+                <button
+                  onClick={() => openEditModal(workspace)}
+                  disabled={processing}
+                  className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                    isDark
+                      ? 'bg-blue-900/30 hover:bg-blue-900/50 text-blue-400'
+                      : 'bg-blue-100 hover:bg-blue-200 text-blue-600'
+                  } disabled:opacity-50`}
+                  title="Edit"
+                >
+                  <Edit className="w-4 h-4" />
+                </button>
+                
+                <button
+                  onClick={() => handleToggleStatus(workspace)}
+                  disabled={processing}
+                  className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                    workspace.isActive
+                      ? isDark
+                        ? 'bg-orange-900/30 hover:bg-orange-900/50 text-orange-400'
+                        : 'bg-orange-100 hover:bg-orange-200 text-orange-600'
+                      : isDark
+                        ? 'bg-green-900/30 hover:bg-green-900/50 text-green-400'
+                        : 'bg-green-100 hover:bg-green-200 text-green-600'
+                  } disabled:opacity-50`}
+                  title={workspace.isActive ? 'Deactivate' : 'Activate'}
+                >
+                  {workspace.isActive ? <PowerOff className="w-4 h-4" /> : <Power className="w-4 h-4" />}
+                </button>
+                
+                <button
+                  onClick={() => handleDelete(workspace)}
+                  disabled={processing}
+                  className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                    isDark
+                      ? 'bg-red-900/30 hover:bg-red-900/50 text-red-400'
+                      : 'bg-red-100 hover:bg-red-200 text-red-600'
+                  } disabled:opacity-50`}
+                  title="Delete"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
               </div>
             </div>
-          )}
-
-          {/* Actions Bar */}
-          <div className="flex flex-col sm:flex-row gap-4 mb-6">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${isDark ? 'text-[#9da8b9]' : 'text-gray-400'}`} />
-                <input
-                  type="text"
-                  placeholder="Search workspaces..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className={`w-full pl-10 pr-4 py-2 border rounded-lg ${
-                    isDark 
-                      ? 'bg-[#111418] border-[#282f39] text-white placeholder-[#9da8b9]' 
-                      : 'bg-white border-gray-300 text-gray-900'
-                  }`}
-                />
-              </div>
-            </div>
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg flex items-center gap-2 transition-colors"
-            >
-              <Plus className="w-5 h-5" />
-              Create Workspace
-            </button>
-            <button
-              onClick={() => { fetchWorkspaces(); fetchStats(); }}
-              className={`px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ${
-                isDark 
-                  ? 'bg-[#111418] hover:bg-[#1c2027] text-white' 
-                  : 'bg-gray-600 hover:bg-gray-700 text-white'
-              }`}
-            >
-              <RefreshCw className="w-5 h-5" />
-              Refresh
-            </button>
-          </div>
-
-          {/* Workspaces Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {filteredWorkspaces.map((workspace) => (
-              <div
-                key={workspace._id}
-                className={`rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow ${isDark ? 'bg-[#111418]' : 'bg-white'}`}
-              >
-                {/* Workspace Header */}
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2 flex-wrap">
-                      <h3 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                        {workspace.name}
-                      </h3>
-                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getTypeColor(workspace.type)}`}>
-                        {workspace.type}
-                      </span>
-                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                        workspace.isActive 
-                          ? isDark ? 'bg-green-900/30 text-green-300' : 'bg-green-100 text-green-800'
-                          : isDark ? 'bg-red-900/30 text-red-300' : 'bg-red-100 text-red-800'
-                      }`}>
-                        {workspace.isActive ? '🟢 Active' : '🔴 Inactive'}
-                      </span>
-                    </div>
-                    <p className={`text-sm ${isDark ? 'text-[#9da8b9]' : 'text-gray-600'}`}>
-                      Created {new Date(workspace.createdAt).toLocaleDateString()}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Statistics */}
-                <div className="grid grid-cols-3 gap-4 mb-4">
-                  <div className="text-center">
-                    <Users className={`w-5 h-5 mx-auto mb-1 ${isDark ? 'text-[#9da8b9]' : 'text-gray-400'}`} />
-                    <p className={`text-lg font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                      {workspace.stats?.userCount || 0}
-                    </p>
-                    <p className={`text-xs ${isDark ? 'text-[#9da8b9]' : 'text-gray-600'}`}>Users</p>
-                  </div>
-                  <div className="text-center">
-                    <CheckSquare className={`w-5 h-5 mx-auto mb-1 ${isDark ? 'text-[#9da8b9]' : 'text-gray-400'}`} />
-                    <p className={`text-lg font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                      {workspace.stats?.taskCount || 0}
-                    </p>
-                    <p className={`text-xs ${isDark ? 'text-[#9da8b9]' : 'text-gray-600'}`}>Tasks</p>
-                  </div>
-                  <div className="text-center">
-                    <Layers className={`w-5 h-5 mx-auto mb-1 ${isDark ? 'text-[#9da8b9]' : 'text-gray-400'}`} />
-                    <p className={`text-lg font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                      {workspace.stats?.teamCount || 0}
-                    </p>
-                    <p className={`text-xs ${isDark ? 'text-[#9da8b9]' : 'text-gray-600'}`}>Teams</p>
-                  </div>
-                </div>
-
-                {/* Actions */}
-                <div className={`grid grid-cols-3 gap-2 pt-4 border-t ${isDark ? 'border-[#282f39]' : 'border-gray-200'}`}>
-                  <button
-                    onClick={() => fetchWorkspaceDetails(workspace._id)}
-                    className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg flex items-center justify-center gap-2 transition-colors text-sm"
-                  >
-                    <Eye className="w-4 h-4" />
-                    Details
-                  </button>
-                  <button
-                    onClick={() => fetchWorkspaceUsers(workspace)}
-                    className="px-3 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg flex items-center justify-center gap-2 transition-colors text-sm"
-                  >
-                    <Users className="w-4 h-4" />
-                    Users
-                  </button>
-                  <button
-                    onClick={() => fetchWorkspaceTasks(workspace)}
-                    className="px-3 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg flex items-center justify-center gap-2 transition-colors text-sm"
-                  >
-                    <CheckSquare className="w-4 h-4" />
-                    Tasks
-                  </button>
-                  <button
-                    onClick={() => openEditModal(workspace)}
-                    className="px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg flex items-center justify-center gap-2 transition-colors text-sm"
-                  >
-                    <Edit className="w-4 h-4" />
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleToggleStatus(workspace._id, workspace.name, workspace.isActive)}
-                    className={`px-3 py-2 ${
-                      workspace.isActive 
-                        ? 'bg-orange-600 hover:bg-orange-700' 
-                        : 'bg-green-600 hover:bg-green-700'
-                    } text-white rounded-lg flex items-center justify-center gap-2 transition-colors text-sm`}
-                  >
-                    <AlertCircle className="w-4 h-4" />
-                    {workspace.isActive ? 'Deactivate' : 'Activate'}
-                  </button>
-                  <button
-                    onClick={() => handleDelete(workspace._id, workspace.name)}
-                    className="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg flex items-center justify-center gap-2 transition-colors text-sm"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    Delete
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {filteredWorkspaces.length === 0 && (
-            <div className="text-center py-12">
-              <Database className={`w-16 h-16 mx-auto mb-4 ${isDark ? 'text-[#9da8b9]' : 'text-gray-400'}`} />
-              <p className={isDark ? 'text-[#9da8b9]' : 'text-gray-600'}>
-                {searchTerm ? 'No workspaces found matching your search' : 'No workspaces created yet'}
+          ))}
+          
+          {workspaces.length === 0 && (
+            <div className="col-span-full text-center py-12">
+              <Building2 className={`w-16 h-16 mx-auto mb-4 ${isDark ? 'text-gray-700' : 'text-gray-300'}`} />
+              <p className={`text-lg ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                No workspaces found. Create one to get started!
               </p>
             </div>
           )}
+        </div>
 
-          {/* Create Modal */}
-          {showCreateModal && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-              <div className={`rounded-lg max-w-md w-full p-6 ${isDark ? 'bg-[#111418]' : 'bg-white'}`}>
-                <h2 className={`text-2xl font-bold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                  Create New Workspace
+        {/* Create Modal */}
+        {showCreateModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className={`rounded-xl p-6 w-full max-w-md ${isDark ? 'bg-[#1a1f2e]' : 'bg-white'}`}>
+              <div className="flex justify-between items-center mb-6">
+                <h2 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                  Create Workspace
                 </h2>
-                <form onSubmit={handleCreate}>
-                  <div className="mb-4">
-                    <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-[#9da8b9]' : 'text-gray-700'}`}>
-                      Workspace Name
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className={`w-full px-3 py-2 border rounded-lg ${
-                        isDark 
-                          ? 'bg-[#0f1419] border-[#282f39] text-white' 
-                          : 'bg-white border-gray-300 text-gray-900'
-                      }`}
-                      placeholder="e.g., Acme Corporation"
-                    />
-                  </div>
-
-                  <div className="mb-4">
-                    <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-[#9da8b9]' : 'text-gray-700'}`}>
-                      Workspace Type
-                    </label>
-                    <select
-                      value={formData.type}
-                      onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                      className={`w-full px-3 py-2 border rounded-lg ${
-                        isDark 
-                          ? 'bg-[#0f1419] border-[#282f39] text-white' 
-                          : 'bg-white border-gray-300 text-gray-900'
-                      }`}
-                    >
-                      <option value="COMMUNITY">COMMUNITY (Free - Limited)</option>
-                      <option value="CORE">CORE (Unlimited)</option>
-                    </select>
-                    <p className={`text-xs mt-1 ${isDark ? 'text-[#9da8b9]' : 'text-gray-600'}`}>
-                      {formData.type === 'COMMUNITY' 
-                        ? 'Limited to 10 users, 100 tasks, 3 teams'
-                        : 'Unlimited users, tasks, and teams with full features'}
-                    </p>
-                  </div>
-
-                  <div className="mb-6">
-                    <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-[#9da8b9]' : 'text-gray-700'}`}>
-                      Owner Email (Optional)
-                    </label>
-                    <input
-                      type="email"
-                      value={formData.ownerEmail}
-                      onChange={(e) => setFormData({ ...formData, ownerEmail: e.target.value })}
-                      className={`w-full px-3 py-2 border rounded-lg ${
-                        isDark 
-                          ? 'bg-[#0f1419] border-[#282f39] text-white' 
-                          : 'bg-white border-gray-300 text-gray-900'
-                      }`}
-                      placeholder="owner@example.com"
-                    />
-                    <p className={`text-xs mt-1 ${isDark ? 'text-[#9da8b9]' : 'text-gray-600'}`}>
-                      Assign an existing user as workspace admin
-                    </p>
-                  </div>
-
-                  <div className="flex gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setShowCreateModal(false)}
-                      className={`flex-1 px-4 py-2 rounded-lg ${
-                        isDark 
-                          ? 'bg-[#1c2027] hover:bg-[#282f39] text-white' 
-                          : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
-                      }`}
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      className="flex-1 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg"
-                    >
-                      Create
-                    </button>
-                  </div>
-                </form>
+                <button
+                  onClick={() => setShowCreateModal(false)}
+                  disabled={processing}
+                  className={`p-2 rounded-lg ${isDark ? 'hover:bg-gray-800' : 'hover:bg-gray-100'}`}
+                >
+                  <X className="w-5 h-5" />
+                </button>
               </div>
-            </div>
-          )}
 
-          {/* Edit Modal - Similar structure with editData */}
-          {showEditModal && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-              <div className={`rounded-lg max-w-md w-full p-6 ${isDark ? 'bg-[#111418]' : 'bg-white'}`}>
-                <h2 className={`text-2xl font-bold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+              <form onSubmit={handleCreate} className="space-y-4">
+                <div>
+                  <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                    Workspace Name *
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className={`w-full px-4 py-2 rounded-lg border ${
+                      isDark
+                        ? 'bg-[#0f1419] border-gray-700 text-white'
+                        : 'bg-white border-gray-300 text-gray-900'
+                    } focus:ring-2 focus:ring-purple-500 focus:border-transparent`}
+                    placeholder="e.g., Acme Corporation"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                    Type *
+                  </label>
+                  <select
+                    value={formData.type}
+                    onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                    className={`w-full px-4 py-2 rounded-lg border ${
+                      isDark
+                        ? 'bg-[#0f1419] border-gray-700 text-white'
+                        : 'bg-white border-gray-300 text-gray-900'
+                    } focus:ring-2 focus:ring-purple-500 focus:border-transparent`}
+                  >
+                    <option value="COMMUNITY">COMMUNITY (Free - Limited)</option>
+                    <option value="CORE">CORE (Enterprise - Unlimited)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                    Owner Email (Optional)
+                  </label>
+                  <input
+                    type="email"
+                    value={formData.ownerEmail}
+                    onChange={(e) => setFormData({ ...formData, ownerEmail: e.target.value })}
+                    className={`w-full px-4 py-2 rounded-lg border ${
+                      isDark
+                        ? 'bg-[#0f1419] border-gray-700 text-white'
+                        : 'bg-white border-gray-300 text-gray-900'
+                    } focus:ring-2 focus:ring-purple-500 focus:border-transparent`}
+                    placeholder="admin@example.com"
+                  />
+                </div>
+
+                <div className="flex gap-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setShowCreateModal(false)}
+                    disabled={processing}
+                    className={`flex-1 px-4 py-2 rounded-lg ${
+                      isDark
+                        ? 'bg-gray-800 hover:bg-gray-700 text-white'
+                        : 'bg-gray-200 hover:bg-gray-300 text-gray-900'
+                    } disabled:opacity-50`}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={processing}
+                    className="flex-1 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {processing ? (
+                      <>
+                        <Loader className="w-4 h-4 animate-spin" />
+                        Creating...
+                      </>
+                    ) : (
+                      'Create Workspace'
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Edit Modal */}
+        {showEditModal && selectedWorkspace && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className={`rounded-xl p-6 w-full max-w-md ${isDark ? 'bg-[#1a1f2e]' : 'bg-white'}`}>
+              <div className="flex justify-between items-center mb-6">
+                <h2 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
                   Edit Workspace
                 </h2>
-                <form onSubmit={handleEdit}>
-                  <div className="mb-4">
-                    <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-[#9da8b9]' : 'text-gray-700'}`}>
-                      Workspace Name
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={editData.name}
-                      onChange={(e) => setEditData({ ...editData, name: e.target.value })}
-                      className={`w-full px-3 py-2 border rounded-lg ${
-                        isDark 
-                          ? 'bg-[#0f1419] border-[#282f39] text-white' 
-                          : 'bg-white border-gray-300 text-gray-900'
-                      }`}
-                    />
-                  </div>
-
-                  {editData.type === 'COMMUNITY' && (
-                    <div className="mb-4 space-y-3">
-                      <label className={`block text-sm font-medium ${isDark ? 'text-[#9da8b9]' : 'text-gray-700'}`}>
-                        Limits
-                      </label>
-                      <input
-                        type="number"
-                        value={editData.limits.maxUsers}
-                        onChange={(e) => setEditData({ 
-                          ...editData, 
-                          limits: { ...editData.limits, maxUsers: parseInt(e.target.value) }
-                        })}
-                        className={`w-full px-3 py-2 border rounded-lg ${
-                          isDark 
-                            ? 'bg-[#0f1419] border-[#282f39] text-white' 
-                            : 'bg-white border-gray-300 text-gray-900'
-                        }`}
-                        placeholder="Max Users"
-                      />
-                      <input
-                        type="number"
-                        value={editData.limits.maxTasks}
-                        onChange={(e) => setEditData({ 
-                          ...editData, 
-                          limits: { ...editData.limits, maxTasks: parseInt(e.target.value) }
-                        })}
-                        className={`w-full px-3 py-2 border rounded-lg ${
-                          isDark 
-                            ? 'bg-[#0f1419] border-[#282f39] text-white' 
-                            : 'bg-white border-gray-300 text-gray-900'
-                        }`}
-                        placeholder="Max Tasks"
-                      />
-                      <input
-                        type="number"
-                        value={editData.limits.maxTeams}
-                        onChange={(e) => setEditData({ 
-                          ...editData, 
-                          limits: { ...editData.limits, maxTeams: parseInt(e.target.value) }
-                        })}
-                        className={`w-full px-3 py-2 border rounded-lg ${
-                          isDark 
-                            ? 'bg-[#0f1419] border-[#282f39] text-white' 
-                            : 'bg-white border-gray-300 text-gray-900'
-                        }`}
-                        placeholder="Max Teams"
-                      />
-                    </div>
-                  )}
-
-                  <div className="flex gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setShowEditModal(false)}
-                      className={`flex-1 px-4 py-2 rounded-lg ${
-                        isDark 
-                          ? 'bg-[#1c2027] hover:bg-[#282f39] text-white' 
-                          : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
-                      }`}
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      className="flex-1 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg"
-                    >
-                      Save Changes
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          )}
-
-          {/* Details Modal */}
-          {showDetailsModal && selectedWorkspace && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-              <div className={`rounded-lg max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto ${isDark ? 'bg-[#111418]' : 'bg-white'}`}>
-                <div className="flex justify-between items-start mb-6">
-                  <h2 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                    {selectedWorkspace.name}
-                  </h2>
-                  <button
-                    onClick={() => setShowDetailsModal(false)}
-                    className={`p-2 rounded-lg ${isDark ? 'hover:bg-[#1c2027]' : 'hover:bg-gray-100'}`}
-                  >
-                    <X className={`w-5 h-5 ${isDark ? 'text-[#9da8b9]' : 'text-gray-600'}`} />
-                  </button>
-                </div>
-
-                <div className="space-y-4">
-                  <div>
-                    <p className={`text-sm font-semibold ${isDark ? 'text-[#9da8b9]' : 'text-gray-600'}`}>Type</p>
-                    <p className={`text-lg ${isDark ? 'text-white' : 'text-gray-900'}`}>{selectedWorkspace.type}</p>
-                  </div>
-                  <div>
-                    <p className={`text-sm font-semibold ${isDark ? 'text-[#9da8b9]' : 'text-gray-600'}`}>Status</p>
-                    <p className={`text-lg ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                      {selectedWorkspace.isActive ? '🟢 Active' : '🔴 Inactive'}
-                    </p>
-                  </div>
-                  <div>
-                    <p className={`text-sm font-semibold ${isDark ? 'text-[#9da8b9]' : 'text-gray-600'}`}>Statistics</p>
-                    <div className="grid grid-cols-3 gap-4 mt-2">
-                      <div>
-                        <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                          {selectedWorkspace.stats?.userCount || 0}
-                        </p>
-                        <p className={`text-sm ${isDark ? 'text-[#9da8b9]' : 'text-gray-600'}`}>Users</p>
-                      </div>
-                      <div>
-                        <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                          {selectedWorkspace.stats?.taskCount || 0}
-                        </p>
-                        <p className={`text-sm ${isDark ? 'text-[#9da8b9]' : 'text-gray-600'}`}>Tasks</p>
-                      </div>
-                      <div>
-                        <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                          {selectedWorkspace.stats?.teamCount || 0}
-                        </p>
-                        <p className={`text-sm ${isDark ? 'text-[#9da8b9]' : 'text-gray-600'}`}>Teams</p>
-                      </div>
-                    </div>
-                  </div>
-                  {selectedWorkspace.type === 'COMMUNITY' && (
-                    <div>
-                      <p className={`text-sm font-semibold mb-2 ${isDark ? 'text-[#9da8b9]' : 'text-gray-600'}`}>Limits</p>
-                      <div className="space-y-2">
-                        <p className={isDark ? 'text-white' : 'text-gray-900'}>
-                          Max Users: {selectedWorkspace.limits?.maxUsers || 10}
-                        </p>
-                        <p className={isDark ? 'text-white' : 'text-gray-900'}>
-                          Max Tasks: {selectedWorkspace.limits?.maxTasks || 100}
-                        </p>
-                        <p className={isDark ? 'text-white' : 'text-gray-900'}>
-                          Max Teams: {selectedWorkspace.limits?.maxTeams || 3}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
                 <button
-                  onClick={() => setShowDetailsModal(false)}
-                  className={`w-full mt-6 px-4 py-2 rounded-lg ${
-                    isDark 
-                      ? 'bg-[#1c2027] hover:bg-[#282f39] text-white' 
-                      : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
-                  }`}
+                  onClick={() => setShowEditModal(false)}
+                  disabled={processing}
+                  className={`p-2 rounded-lg ${isDark ? 'hover:bg-gray-800' : 'hover:bg-gray-100'}`}
                 >
-                  Close
+                  <X className="w-5 h-5" />
                 </button>
               </div>
-            </div>
-          )}
 
-          {/* Users Modal */}
-          {showUsersModal && selectedWorkspace && (
-            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-              <div className={`${isDark ? 'bg-[#111418]' : 'bg-white'} rounded-xl p-6 max-w-4xl w-full max-h-[80vh] overflow-auto`}>
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                    Users in "{selectedWorkspace.name}"
-                  </h3>
-                  <button
-                    onClick={() => setShowUsersModal(false)}
-                    className={`p-2 rounded-lg ${isDark ? 'hover:bg-[#1c2027]' : 'hover:bg-gray-100'}`}
+              <form onSubmit={handleEdit} className="space-y-4">
+                <div>
+                  <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                    Workspace Name *
+                  </label>
+                  <input
+                    type="text"
+                    value={editData.name}
+                    onChange={(e) => setEditData({ ...editData, name: e.target.value })}
+                    className={`w-full px-4 py-2 rounded-lg border ${
+                      isDark
+                        ? 'bg-[#0f1419] border-gray-700 text-white'
+                        : 'bg-white border-gray-300 text-gray-900'
+                    } focus:ring-2 focus:ring-purple-500 focus:border-transparent`}
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className={`block text-sm font-medium mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                    Type *
+                  </label>
+                  <select
+                    value={editData.type}
+                    onChange={(e) => setEditData({ ...editData, type: e.target.value })}
+                    className={`w-full px-4 py-2 rounded-lg border ${
+                      isDark
+                        ? 'bg-[#0f1419] border-gray-700 text-white'
+                        : 'bg-white border-gray-300 text-gray-900'
+                    } focus:ring-2 focus:ring-purple-500 focus:border-transparent`}
                   >
-                    <X className={isDark ? 'text-gray-400' : 'text-gray-600'} />
+                    <option value="COMMUNITY">COMMUNITY</option>
+                    <option value="CORE">CORE</option>
+                  </select>
+                </div>
+
+                <div className="flex gap-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setShowEditModal(false)}
+                    disabled={processing}
+                    className={`flex-1 px-4 py-2 rounded-lg ${
+                      isDark
+                        ? 'bg-gray-800 hover:bg-gray-700 text-white'
+                        : 'bg-gray-200 hover:bg-gray-300 text-gray-900'
+                    } disabled:opacity-50`}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={processing}
+                    className="flex-1 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {processing ? (
+                      <>
+                        <Loader className="w-4 h-4 animate-spin" />
+                        Updating...
+                      </>
+                    ) : (
+                      'Update Workspace'
+                    )}
                   </button>
                 </div>
-
-                <div className={`text-sm mb-4 ${isDark ? 'text-[#9da8b9]' : 'text-gray-600'}`}>
-                  Total: {workspaceUsers.length} users
-                </div>
-
-                {workspaceUsers.length === 0 ? (
-                  <div className={`text-center py-8 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                    No users in this workspace
-                  </div>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead>
-                        <tr className={isDark ? 'border-b border-[#282f39]' : 'border-b border-gray-200'}>
-                          <th className={`text-left py-3 px-4 ${isDark ? 'text-[#9da8b9]' : 'text-gray-600'}`}>Name</th>
-                          <th className={`text-left py-3 px-4 ${isDark ? 'text-[#9da8b9]' : 'text-gray-600'}`}>Email</th>
-                          <th className={`text-left py-3 px-4 ${isDark ? 'text-[#9da8b9]' : 'text-gray-600'}`}>Role</th>
-                          <th className={`text-left py-3 px-4 ${isDark ? 'text-[#9da8b9]' : 'text-gray-600'}`}>Team</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {workspaceUsers.map((user) => (
-                          <tr key={user._id} className={isDark ? 'border-b border-[#282f39] hover:bg-[#1c2027]' : 'border-b border-gray-100 hover:bg-gray-50'}>
-                            <td className={`py-3 px-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>{user.full_name}</td>
-                            <td className={`py-3 px-4 ${isDark ? 'text-[#9da8b9]' : 'text-gray-600'}`}>{user.email}</td>
-                            <td className="py-3 px-4">
-                              <span className={`px-2 py-1 rounded text-xs font-medium ${
-                                user.role === 'admin' ? 'bg-red-500/20 text-red-400' :
-                                user.role === 'hr' ? 'bg-purple-500/20 text-purple-400' :
-                                user.role === 'team_lead' ? 'bg-blue-500/20 text-blue-400' :
-                                user.role === 'community_admin' ? 'bg-orange-500/20 text-orange-400' :
-                                'bg-green-500/20 text-green-400'
-                              }`}>
-                                {user.role.replace('_', ' ').toUpperCase()}
-                              </span>
-                            </td>
-                            <td className={`py-3 px-4 ${isDark ? 'text-[#9da8b9]' : 'text-gray-600'}`}>
-                              {user.team_id?.name || '-'}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-
-                <button
-                  onClick={() => setShowUsersModal(false)}
-                  className={`w-full mt-6 px-4 py-2 rounded-lg ${
-                    isDark 
-                      ? 'bg-[#1c2027] hover:bg-[#282f39] text-white' 
-                      : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
-                  }`}
-                >
-                  Close
-                </button>
-              </div>
+              </form>
             </div>
-          )}
-
-          {/* Tasks Modal */}
-          {showTasksModal && selectedWorkspace && (
-            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-              <div className={`${isDark ? 'bg-[#111418]' : 'bg-white'} rounded-xl p-6 max-w-4xl w-full max-h-[80vh] overflow-auto`}>
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                    Tasks in "{selectedWorkspace.name}"
-                  </h3>
-                  <button
-                    onClick={() => setShowTasksModal(false)}
-                    className={`p-2 rounded-lg ${isDark ? 'hover:bg-[#1c2027]' : 'hover:bg-gray-100'}`}
-                  >
-                    <X className={isDark ? 'text-gray-400' : 'text-gray-600'} />
-                  </button>
-                </div>
-
-                <div className={`text-sm mb-4 ${isDark ? 'text-[#9da8b9]' : 'text-gray-600'}`}>
-                  Showing: {workspaceTasks.length} tasks
-                </div>
-
-                {workspaceTasks.length === 0 ? (
-                  <div className={`text-center py-8 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                    No tasks in this workspace
-                  </div>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead>
-                        <tr className={isDark ? 'border-b border-[#282f39]' : 'border-b border-gray-200'}>
-                          <th className={`text-left py-3 px-4 ${isDark ? 'text-[#9da8b9]' : 'text-gray-600'}`}>Title</th>
-                          <th className={`text-left py-3 px-4 ${isDark ? 'text-[#9da8b9]' : 'text-gray-600'}`}>Status</th>
-                          <th className={`text-left py-3 px-4 ${isDark ? 'text-[#9da8b9]' : 'text-gray-600'}`}>Priority</th>
-                          <th className={`text-left py-3 px-4 ${isDark ? 'text-[#9da8b9]' : 'text-gray-600'}`}>Assigned To</th>
-                          <th className={`text-left py-3 px-4 ${isDark ? 'text-[#9da8b9]' : 'text-gray-600'}`}>Created</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {workspaceTasks.map((task) => (
-                          <tr key={task._id} className={isDark ? 'border-b border-[#282f39] hover:bg-[#1c2027]' : 'border-b border-gray-100 hover:bg-gray-50'}>
-                            <td className={`py-3 px-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                              <div className="max-w-xs truncate">{task.title}</div>
-                            </td>
-                            <td className="py-3 px-4">
-                              <span className={`px-2 py-1 rounded text-xs font-medium ${
-                                task.status === 'completed' ? 'bg-green-500/20 text-green-400' :
-                                task.status === 'in_progress' ? 'bg-blue-500/20 text-blue-400' :
-                                task.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400' :
-                                'bg-gray-500/20 text-gray-400'
-                              }`}>
-                                {task.status?.replace('_', ' ').toUpperCase() || 'TODO'}
-                              </span>
-                            </td>
-                            <td className="py-3 px-4">
-                              <span className={`px-2 py-1 rounded text-xs font-medium ${
-                                task.priority === 'high' ? 'bg-red-500/20 text-red-400' :
-                                task.priority === 'medium' ? 'bg-orange-500/20 text-orange-400' :
-                                'bg-gray-500/20 text-gray-400'
-                              }`}>
-                                {task.priority?.toUpperCase() || 'LOW'}
-                              </span>
-                            </td>
-                            <td className={`py-3 px-4 ${isDark ? 'text-[#9da8b9]' : 'text-gray-600'}`}>
-                              {task.assigned_to?.full_name || '-'}
-                            </td>
-                            <td className={`py-3 px-4 ${isDark ? 'text-[#9da8b9]' : 'text-gray-600'}`}>
-                              {new Date(task.created_at).toLocaleDateString()}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-
-                <button
-                  onClick={() => setShowTasksModal(false)}
-                  className={`w-full mt-6 px-4 py-2 rounded-lg ${
-                    isDark 
-                      ? 'bg-[#1c2027] hover:bg-[#282f39] text-white' 
-                      : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
-                  }`}
-                >
-                  Close
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
-      {/* Confirm Modal */}
+      {/* Success Modal */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 animate-fade-in">
+          <div className={`rounded-xl p-6 w-full max-w-md ${isDark ? 'bg-[#1a1f2e]' : 'bg-white'} animate-scale-in`}>
+            <div className="flex items-center gap-4 mb-4">
+              <div className="p-3 rounded-full bg-green-500/10">
+                <CheckCircle className="w-6 h-6 text-green-500" />
+              </div>
+              <h3 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                Success!
+              </h3>
+            </div>
+            <p className={`${isDark ? 'text-gray-300' : 'text-gray-700'} whitespace-pre-line`}>
+              {modalMessage}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Error Modal */}
+      {showErrorModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className={`rounded-xl p-6 w-full max-w-md ${isDark ? 'bg-[#1a1f2e]' : 'bg-white'}`}>
+            <div className="flex items-center gap-4 mb-4">
+              <div className="p-3 rounded-full bg-red-500/10">
+                <AlertCircle className="w-6 h-6 text-red-500" />
+              </div>
+              <h3 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                Error
+              </h3>
+            </div>
+            <p className={`mb-6 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+              {modalMessage}
+            </p>
+            <button
+              onClick={() => setShowErrorModal(false)}
+              className="w-full px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeletePrompt && selectedWorkspace && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className={`rounded-xl p-6 w-full max-w-md ${isDark ? 'bg-[#1a1f2e]' : 'bg-white'}`}>
+            <div className="flex items-center gap-4 mb-4">
+              <div className="p-3 rounded-full bg-red-500/10">
+                <Trash2 className="w-6 h-6 text-red-500" />
+              </div>
+              <h3 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                Delete Workspace
+              </h3>
+            </div>
+
+            <div className={`mb-6 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+              <p className="mb-4">
+                ⚠️ You are about to delete workspace <strong>"{selectedWorkspace.name}"</strong>
+              </p>
+              <p className="mb-4">
+                This will permanently delete ALL data:
+              </p>
+              <ul className="list-disc list-inside space-y-1 mb-4">
+                <li>All users in this workspace</li>
+                <li>All tasks in this workspace</li>
+                <li>All teams in this workspace</li>
+              </ul>
+              <p className="text-red-500 font-semibold mb-4">
+                This action CANNOT be undone!
+              </p>
+              <p className="mb-2">
+                Type <strong className="text-red-500">DELETE</strong> to confirm:
+              </p>
+              <input
+                type="text"
+                value={deleteConfirmText}
+                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                className={`w-full px-4 py-2 rounded-lg border ${
+                  isDark
+                    ? 'bg-[#0f1419] border-gray-700 text-white'
+                    : 'bg-white border-gray-300 text-gray-900'
+                } focus:ring-2 focus:ring-red-500 focus:border-transparent`}
+                placeholder="Type DELETE here"
+                autoFocus
+              />
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowDeletePrompt(false);
+                  setSelectedWorkspace(null);
+                  setDeleteConfirmText('');
+                }}
+                disabled={processing}
+                className={`flex-1 px-4 py-2 rounded-lg ${
+                  isDark
+                    ? 'bg-gray-800 hover:bg-gray-700 text-white'
+                    : 'bg-gray-200 hover:bg-gray-300 text-gray-900'
+                } disabled:opacity-50`}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                disabled={processing || deleteConfirmText !== 'DELETE'}
+                className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {processing ? (
+                  <>
+                    <Loader className="w-4 h-4 animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  'Delete Workspace'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirm Modal (for toggle status) */}
       <ConfirmModal
         isOpen={confirmModal.isOpen}
         onClose={confirmModal.onClose}
@@ -938,4 +692,3 @@ This action CANNOT be undone!`;
     </div>
   );
 }
-

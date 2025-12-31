@@ -158,15 +158,18 @@ router.get('/:id', requireAdmin, async (req, res) => {
 router.post('/', requireAdmin, async (req, res) => {
   try {
     const { name, type, ownerEmail } = req.body;
+    console.log('📝 Creating workspace:', { name, type, ownerEmail });
 
     // Validation
     if (!name || !type) {
+      console.log('❌ Validation failed: Missing name or type');
       return res.status(400).json({ 
         message: 'Workspace name and type are required' 
       });
     }
 
     if (!['CORE', 'COMMUNITY'].includes(type)) {
+      console.log('❌ Validation failed: Invalid type:', type);
       return res.status(400).json({ 
         message: 'Workspace type must be CORE or COMMUNITY' 
       });
@@ -175,6 +178,7 @@ router.post('/', requireAdmin, async (req, res) => {
     // Check if workspace name already exists
     const existingWorkspace = await Workspace.findOne({ name });
     if (existingWorkspace) {
+      console.log('❌ Workspace already exists:', name);
       return res.status(400).json({ 
         message: 'A workspace with this name already exists' 
       });
@@ -205,6 +209,7 @@ router.post('/', requireAdmin, async (req, res) => {
     });
 
     await workspace.save();
+    console.log('✅ Workspace saved to database:', workspace._id);
 
     // If owner email provided, assign workspace to owner
     if (ownerId) {
@@ -215,6 +220,7 @@ router.post('/', requireAdmin, async (req, res) => {
           owner.role = 'admin';
         }
         await owner.save();
+        console.log('✅ Owner assigned:', owner.email);
       }
     }
 
@@ -232,6 +238,7 @@ router.post('/', requireAdmin, async (req, res) => {
       workspaceId: null // System-level action, no workspace
     });
 
+    console.log('✅ Workspace created successfully:', workspace.name);
     res.status(201).json({
       message: 'Workspace created successfully',
       workspace
@@ -242,14 +249,15 @@ router.post('/', requireAdmin, async (req, res) => {
   }
 });
 
-// Update workspace (System Admin only)
 // Update workspace settings (Admin only)
 router.put('/:id', requireAdmin, async (req, res) => {
   try {
     const { name, type, settings, limits } = req.body;
+    console.log('📝 Updating workspace:', req.params.id, { name, type });
 
     const workspace = await Workspace.findById(req.params.id);
     if (!workspace) {
+      console.log('❌ Workspace not found:', req.params.id);
       return res.status(404).json({ message: 'Workspace not found' });
     }
 
@@ -279,6 +287,7 @@ router.put('/:id', requireAdmin, async (req, res) => {
     }
 
     await workspace.save();
+    console.log('✅ Workspace updated in database:', workspace._id);
 
     // Log workspace update
     await logChange({
@@ -392,8 +401,10 @@ router.delete('/my-workspace/delete', authenticate, async (req, res) => {
 // Delete workspace (Admin only)
 router.delete('/:id', requireAdmin, async (req, res) => {
   try {
+    console.log('🗑️ Deleting workspace:', req.params.id);
     const workspace = await Workspace.findById(req.params.id);
     if (!workspace) {
+      console.log('❌ Workspace not found:', req.params.id);
       return res.status(404).json({ message: 'Workspace not found' });
     }
 
