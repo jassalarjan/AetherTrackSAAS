@@ -142,12 +142,12 @@ const Login = () => {
                   Remember for 30 days
                 </span>
               </label>
-              <a
-                href="#"
+              <Link
+                to="/forgot-password"
                 className="text-[#136dec] text-sm font-medium hover:text-blue-400 hover:underline transition-colors"
               >
                 Forgot password?
-              </a>
+              </Link>
             </div>
 
             {/* Error Message */}

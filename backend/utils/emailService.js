@@ -1602,4 +1602,80 @@ export default {
   sendWeeklyReport
 };
 
+// Send password reset token email
+export const sendPasswordResetLink = async (full_name, email, resetToken) => {
+  try {
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: linear-gradient(135deg, #136dec 0%, #0b4fb5 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+          .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+          .token-box { background: white; border: 2px solid #136dec; border-radius: 8px; padding: 20px; text-align: center; margin: 20px 0; }
+          .token { font-size: 36px; font-weight: bold; color: #136dec; letter-spacing: 8px; font-family: 'Courier New', monospace; }
+          .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }
+          .warning { background: #fff3cd; border-left: 4px solid #ffc107; padding: 12px; margin: 15px 0; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>🔐 Password Reset Request</h1>
+          </div>
+          <div class="content">
+            <p>Hello ${full_name},</p>
+            <p>We received a request to reset your password for your TaskFlow account. Use the code below to reset your password:</p>
+            <div class="token-box">
+              <p style="margin: 0; color: #666; font-size: 14px; margin-bottom: 10px;">Your Reset Code</p>
+              <div class="token">${resetToken}</div>
+            </div>
+            <p style="text-align: center; color: #666; font-size: 14px;">Enter this code on the password reset page</p>
+            <div class="warning">
+              <strong>⚠️ Important:</strong>
+              <ul style="margin: 10px 0;">
+                <li>This code will expire in 1 hour</li>
+                <li>Do not share this code with anyone</li>
+                <li>If you didn't request this, please ignore this email</li>
+              </ul>
+            </div>
+            <p>If you're having trouble, contact your administrator for assistance.</p>
+            <p>Best regards,<br>TaskFlow Team</p>
+          </div>
+          <div class="footer">
+            <p>This is an automated email. Please do not reply.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
 
+    // Try Brevo API first (preferred for production)
+    if (process.env.BREVO_API_KEY) {
+      const result = await sendWithBrevoAPI(email, 'Reset Your Password - TaskFlow', htmlContent);
+      if (result.success) {
+        console.log(`✅ Password reset email sent successfully to ${email} via Brevo API`);
+        return result;
+      }
+      console.warn('⚠️ Brevo API failed, falling back to SMTP...');
+    }
+
+    // Fallback to SMTP
+    const transporter = createTransporter();
+    const mailOptions = {
+      from: `"TaskFlow" <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`,
+      to: email,
+      subject: 'Reset Your Password - TaskFlow',
+      html: htmlContent
+    };
+
+    sendEmailAsync(transporter, mailOptions);
+    console.log(`✅ Password reset email queued for ${email}`);
+    return { success: true, status: 'queued', message: 'Password reset email is being sent' };
+  } catch (error) {
+    console.error(`❌ Error sending password reset email to ${email}:`, error);
+    return { success: false, error: error.message };
+  }
+};

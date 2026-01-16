@@ -8,7 +8,7 @@ import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '.
 import { logChange } from '../utils/changeLogService.js';
 import { authenticate } from '../middleware/auth.js';
 import getClientIP from '../utils/getClientIP.js';
-import { sendVerificationEmail } from '../utils/emailService.js';
+import { sendVerificationEmail, sendPasswordResetLink } from '../utils/emailService.js';
 
 const router = express.Router();
 
@@ -458,6 +458,133 @@ router.post('/logout', authenticate, async (req, res) => {
 
   // In a production app, you might want to blacklist the token
   res.json({ message: 'Logged out successfully' });
+});
+
+// Forgot Password - Send reset link
+router.post('/forgot-password', [
+  body('email').isEmail().withMessage('Valid email is required')
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { email } = req.body;
+
+    // Find user by email
+    const user = await User.findOne({ email: email.toLowerCase() });
+    
+    // Always return success to prevent email enumeration
+    if (!user) {
+      return res.json({ 
+        message: 'If an account exists with that email, a password reset code has been sent.' 
+      });
+    }
+
+    // Generate 6-digit reset token
+    const resetToken = crypto.randomInt(100000, 999999).toString();
+    const resetExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+    console.log('🔐 Password reset requested for:', user.email);
+    console.log('   Generated token:', resetToken);
+    console.log('   Token expires:', resetExpiry);
+
+    // Save token to user (updates existing token if any)
+    user.resetPasswordToken = resetToken;
+    user.resetPasswordExpiry = resetExpiry;
+    await user.save();
+
+    console.log('✅ Token saved to database');
+
+    // Send reset email
+    await sendPasswordResetLink(user.full_name, user.email, resetToken);
+
+    console.log('📧 Reset email sent to:', user.email);
+
+    // Log password reset request
+    const user_ip = getClientIP(req);
+    await logChange({
+      event_type: 'password_reset_request',
+      user: user,
+      user_ip,
+      action: 'Password reset requested',
+      description: `Password reset requested for ${user.email}`,
+      workspaceId: user.workspaceId
+    });
+
+    res.json({ 
+      message: 'If an account exists with that email, a password reset code has been sent.' 
+    });
+  } catch (error) {
+    console.error('Forgot password error:', error);
+    res.status(500).json({ message: 'Server error. Please try again later.' });
+  }
+});
+
+// Reset Password - Verify token and set new password
+router.post('/reset-password', [
+  body('email').isEmail().withMessage('Valid email is required'),
+  body('token').notEmpty().withMessage('Reset token is required'),
+  body('newPassword').isLength({ min: 6 }).withMessage('Password must be at least 6 characters')
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
+    const { email, token, newPassword } = req.body;
+
+    console.log('🔐 Password reset attempt');
+    console.log('   Email:', email);
+    console.log('   Token received:', token);
+
+    // Find user with valid token and email
+    const user = await User.findOne({
+      email: email.toLowerCase(),
+      resetPasswordToken: token,
+      resetPasswordExpiry: { $gt: Date.now() }
+    });
+
+    console.log('   User found:', user ? `${user.email} (${user._id})` : 'NO USER FOUND');
+    if (user) {
+      console.log('   Stored token:', user.resetPasswordToken);
+      console.log('   Token expires:', user.resetPasswordExpiry);
+      console.log('   Current time:', new Date());
+    }
+
+    if (!user) {
+      console.log('❌ Invalid or expired token');
+      return res.status(400).json({ 
+        message: 'Invalid or expired reset code. Please request a new password reset.' 
+      });
+    }
+
+    // Update password
+    user.password_hash = newPassword; // Will be hashed by pre-save hook
+    user.resetPasswordToken = null;
+    user.resetPasswordExpiry = null;
+    await user.save();
+
+    console.log('✅ Password reset successful for:', user.email);
+
+    // Log password reset
+    const user_ip = getClientIP(req);
+    await logChange({
+      event_type: 'password_reset',
+      user: user,
+      user_ip,
+      action: 'Password reset completed',
+      description: `Password successfully reset for ${user.email}`,
+      workspaceId: user.workspaceId
+    });
+
+    res.json({ message: 'Password reset successfully. You can now login with your new password.' });
+  } catch (error) {
+    console.error('Reset password error:', error);
+    res.status(500).json({ message: 'Server error. Please try again later.' });
+  }
 });
 
 export default router;

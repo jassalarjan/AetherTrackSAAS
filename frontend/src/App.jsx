@@ -8,6 +8,8 @@ import Login from './pages/Login';
 import Register from './pages/RegisterDisabled';
 import CommunityRegister from './pages/CommunityRegister';
 import VerifyEmail from './pages/VerifyEmail';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 import Dashboard from './pages/Dashboard';
 import Tasks from './pages/Tasks';
 import Kanban from './pages/Kanban';
@@ -34,6 +36,8 @@ function AppContent() {
       <Route path="/register" element={<CommunityRegister />} />
       <Route path="/register-community" element={<CommunityRegister />} />
       <Route path="/verify-email" element={<VerifyEmail />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
 
       <Route
         path="/dashboard"

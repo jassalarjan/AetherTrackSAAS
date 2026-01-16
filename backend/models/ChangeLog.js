@@ -28,6 +28,8 @@ const changeLogSchema = new mongoose.Schema({
       'comment_updated',
       'comment_deleted',
       'bulk_import',
+      'password_reset_request',
+      'password_reset',
       'system_event'
     ]
   },
