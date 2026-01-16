@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTheme } from '../context/ThemeContext';
+import { useSidebar } from '../context/SidebarContext';
 import { useConfirmModal } from '../hooks/useConfirmModal';
 import Sidebar from '../components/Sidebar';
 import ConfirmModal from '../components/modals/ConfirmModal';
@@ -17,11 +18,13 @@ import {
   X,
   Loader,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  Menu
 } from 'lucide-react';
 
 export default function WorkspaceManagement() {
   const { theme } = useTheme();
+  const { toggleMobileSidebar } = useSidebar();
   const confirmModal = useConfirmModal();
   const isDark = theme === 'dark';
   
@@ -189,8 +192,7 @@ export default function WorkspaceManagement() {
       fetchWorkspaces();
     } catch (error) {
       console.error(`❌ Error ${action}ing workspace:`, error);
-      showErrorle.error(`❌ Error ${action}ing workspace:`, error);
-      alert(`Failed to ${action} workspace: ` + (error.response?.data?.message || error.message));
+      showError(`Failed to ${action} workspace: ` + (error.response?.data?.message || error.message));
     } finally {
       setProcessing(false);
     }
@@ -223,14 +225,24 @@ export default function WorkspaceManagement() {
       <div className="flex-1 overflow-y-auto p-8">
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className={`text-3xl font-bold flex items-center gap-3 ${isDark ? 'text-white' : 'text-gray-900'}`}>
-              <Building2 className="w-8 h-8 text-purple-600" />
-              Workspace Management
-            </h1>
-            <p className={`mt-2 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-              Manage all workspaces in the system
-            </p>
+          <div className="flex items-center gap-4">
+            {/* Mobile Menu Button */}
+            <button
+              onClick={toggleMobileSidebar}
+              className={`lg:hidden ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}
+              aria-label="Toggle menu"
+            >
+              <Menu size={24} />
+            </button>
+            <div>
+              <h1 className={`text-3xl font-bold flex items-center gap-3 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                <Building2 className="w-8 h-8 text-purple-600" />
+                Workspace Management
+              </h1>
+              <p className={`mt-2 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                Manage all workspaces in the system
+              </p>
+            </div>
           </div>
           
           <button

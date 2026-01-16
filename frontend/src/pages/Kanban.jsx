@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { useSidebar } from '../context/SidebarContext';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 import useRealtimeSync from '../hooks/useRealtimeSync';
@@ -9,12 +10,13 @@ import Sidebar from '../components/Sidebar';
 import ConfirmModal from '../components/modals/ConfirmModal';
 import { 
   Plus, X, Search, Settings, UserPlus, Calendar as CalendarIcon,
-  MoreHorizontal, MessageSquare
+  MoreHorizontal, MessageSquare, Menu
 } from 'lucide-react';
 
 const Kanban = () => {
   const { user, socket } = useAuth();
   const { theme } = useTheme();
+  const { toggleMobileSidebar } = useSidebar();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const confirmModal = useConfirmModal();
@@ -363,47 +365,57 @@ const Kanban = () => {
   }
 
   return (
-    <div className={`flex h-screen w-full overflow-hidden ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'}`}>
+    <div className={`flex h-screen w-full ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'}`}>
       {/* Unified Sidebar */}
       <Sidebar />
 
       {/* Main Content */}
-      <main className={`flex-1 flex flex-col h-full min-w-0 ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'}`}>
+      <main className={`flex-1 flex flex-col h-full w-full min-w-0 ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'} overflow-hidden`}>
         {/* Header Section */}
         <header className={`border-b ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'} shrink-0`}>
           {/* Top Row: Title and Actions */}
-          <div className="flex items-center justify-between px-6 py-4">
-            <div>
-              <h2 className={`${theme === 'dark' ? 'text-white' : 'text-gray-900'} text-xl font-bold leading-tight`}>Kanban Board</h2>
-              <p className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} text-xs mt-1`}>Visual task workflow with drag & drop</p>
+          <div className="flex items-center justify-between px-3 sm:px-6 py-3 sm:py-4">
+            <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
+              {/* Mobile Menu Button */}
+              <button
+                onClick={toggleMobileSidebar}
+                className={`lg:hidden ${theme === 'dark' ? 'text-[#9da8b9] hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors flex-shrink-0`}
+                aria-label="Toggle menu"
+              >
+                <Menu size={24} />
+              </button>
+              <div className="min-w-0">
+                <h2 className={`${theme === 'dark' ? 'text-white' : 'text-gray-900'} text-base sm:text-xl font-bold leading-tight truncate`}>Kanban Board</h2>
+                <p className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} text-xs mt-0.5 sm:mt-1 hidden sm:block`}>Visual task workflow with drag & drop</p>
+              </div>
             </div>
-            <div className="flex gap-3">
+            <div className="flex gap-2 sm:gap-3 flex-shrink-0">
               <button 
                 onClick={() => navigate('/settings')}
-                className={`flex items-center justify-center rounded h-9 px-3 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-white'} ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} ${theme === 'dark' ? 'hover:text-white' : 'hover:text-gray-900'} border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} ${theme === 'dark' ? 'hover:border-[#5a6472]' : 'hover:border-gray-300'} transition-colors`}
+                className={`hidden sm:flex items-center justify-center rounded h-9 px-3 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-white'} ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} ${theme === 'dark' ? 'hover:text-white' : 'hover:text-gray-900'} border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} ${theme === 'dark' ? 'hover:border-[#5a6472]' : 'hover:border-gray-300'} transition-colors`}
               >
                 <Settings size={20} />
               </button>
               <button 
                 onClick={() => navigate('/teams')}
-                className={`flex items-center justify-center rounded h-9 px-3 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-white'} ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} ${theme === 'dark' ? 'hover:text-white' : 'hover:text-gray-900'} border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} ${theme === 'dark' ? 'hover:border-[#5a6472]' : 'hover:border-gray-300'} transition-colors`}
+                className={`hidden lg:flex items-center justify-center rounded h-9 px-3 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-white'} ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} ${theme === 'dark' ? 'hover:text-white' : 'hover:text-gray-900'} border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} ${theme === 'dark' ? 'hover:border-[#5a6472]' : 'hover:border-gray-300'} transition-colors`}
               >
                 <UserPlus size={20} />
               </button>
               <button
                 onClick={() => setShowCreateModal(true)}
-                className="flex items-center justify-center rounded h-9 px-4 bg-[#136dec] text-white gap-2 text-sm font-bold hover:bg-blue-600 transition-colors shadow-sm shadow-blue-900/20"
+                className="flex items-center justify-center rounded h-9 px-3 sm:px-4 bg-[#136dec] text-white gap-2 text-sm font-bold hover:bg-blue-600 transition-colors shadow-sm shadow-blue-900/20"
               >
                 <Plus size={20} />
-                <span>Create Task</span>
+                <span className="hidden sm:inline">Create Task</span>
               </button>
             </div>
           </div>
 
           {/* Bottom Row: Filters */}
-          <div className="flex items-center gap-4 px-6 pb-4 overflow-x-auto">
-            <div className={`relative flex items-center h-9 w-64 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-white'} rounded border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} focus-within:border-[#136dec]/50 transition-colors`}>
-              <Search className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} ml-3`} size={20} />
+          <div className="flex items-center gap-2 sm:gap-4 px-3 sm:px-6 pb-3 sm:pb-4 overflow-x-auto scrollbar-thin">
+            <div className={`relative flex items-center h-9 w-full sm:w-64 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-white'} rounded border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} focus-within:border-[#136dec]/50 transition-colors flex-shrink-0`}>
+              <Search className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} ml-3 flex-shrink-0`} size={18} />
               <input
                 value={filters.search}
                 onChange={(e) => setFilters({ ...filters, search: e.target.value })}
@@ -411,22 +423,22 @@ const Kanban = () => {
                 placeholder="Search tasks..."
               />
             </div>
-            <div className="w-px h-6 bg-[#3e454f] mx-2"></div>
+            <div className="hidden sm:block w-px h-6 bg-[#3e454f] mx-2"></div>
 
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-nowrap">
               {filters.showMyTasksOnly && (
                 <button
                   onClick={() => setFilters({ ...filters, showMyTasksOnly: false })}
-                  className="flex h-7 items-center gap-2 rounded-full bg-[#136dec]/20 border border-[#136dec]/30 px-3 text-[#136dec] hover:bg-[#136dec]/30 transition-colors"
+                  className="flex h-7 items-center gap-1.5 sm:gap-2 rounded-full bg-[#136dec]/20 border border-[#136dec]/30 px-2.5 sm:px-3 text-[#136dec] hover:bg-[#136dec]/30 transition-colors whitespace-nowrap flex-shrink-0"
                 >
-                  <span className="text-xs font-medium">Only My Tasks</span>
+                  <span className="text-xs font-medium">My Tasks</span>
                   <X size={14} />
                 </button>
               )}
               {!filters.showMyTasksOnly && (
                 <button
                   onClick={() => setFilters({ ...filters, showMyTasksOnly: true })}
-                  className={`flex h-7 items-center gap-2 rounded-full ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-white'} border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} px-3 ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} ${theme === 'dark' ? 'hover:text-white' : 'hover:text-gray-900'} ${theme === 'dark' ? 'hover:border-[#5a6472]' : 'hover:border-gray-300'} transition-colors`}
+                  className={`flex h-7 items-center gap-1.5 sm:gap-2 rounded-full ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-white'} border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} px-2.5 sm:px-3 ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} ${theme === 'dark' ? 'hover:text-white' : 'hover:text-gray-900'} ${theme === 'dark' ? 'hover:border-[#5a6472]' : 'hover:border-gray-300'} transition-colors whitespace-nowrap flex-shrink-0`}
                 >
                   <span className="text-xs font-medium">My Tasks</span>
                 </button>
@@ -434,9 +446,9 @@ const Kanban = () => {
               {filters.priority && (
                 <button
                   onClick={() => setFilters({ ...filters, priority: '' })}
-                  className="flex h-7 items-center gap-2 rounded-full bg-orange-500/20 border border-orange-500/30 px-3 text-orange-400 hover:bg-orange-500/30 transition-colors"
+                  className="flex h-7 items-center gap-1.5 sm:gap-2 rounded-full bg-orange-500/20 border border-orange-500/30 px-2.5 sm:px-3 text-orange-400 hover:bg-orange-500/30 transition-colors whitespace-nowrap flex-shrink-0"
                 >
-                  <span className="text-xs font-medium">{filters.priority.charAt(0).toUpperCase() + filters.priority.slice(1)} Priority</span>
+                  <span className="text-xs font-medium">{filters.priority.charAt(0).toUpperCase() + filters.priority.slice(1)}</span>
                   <X size={14} />
                 </button>
               )}
@@ -445,8 +457,13 @@ const Kanban = () => {
         </header>
 
         {/* Kanban Board Area */}
-        <div className="flex-1 overflow-x-auto overflow-y-hidden p-6">
-          <div className="flex h-full gap-4 min-w-[1000px]">
+        <div className="flex-1 overflow-x-auto overflow-y-hidden p-3 sm:p-6">
+          {/* Mobile hint */}
+          <div className="lg:hidden mb-2 flex items-center gap-2 text-xs text-[#9da8b9]">
+            <span>← Swipe to see more columns →</span>
+          </div>
+          
+          <div className="flex h-full gap-3 sm:gap-4 pb-4" style={{ minWidth: 'max-content' }}>
             {columns.map((column) => {
               const columnTasks = getTasksByStatus(column.id);
               const isDragOver = dragOverColumn === column.id;
@@ -454,26 +471,26 @@ const Kanban = () => {
               return (
                 <div
                   key={column.id}
-                  className={`flex flex-col w-1/4 min-w-[280px] ${theme === 'dark' ? 'bg-[#1c2128]' : 'bg-white'} rounded-lg h-full border transition-colors ${
-                    isDragOver ? 'border-[#136dec] bg-[#136dec]/5' : `${theme === 'dark' ? 'border-[#3e454f]/50' : 'border-gray-200'}`
+                  className={`flex flex-col w-[280px] sm:w-[320px] lg:w-1/4 lg:min-w-[280px] ${theme === 'dark' ? 'bg-[#1c2128]' : 'bg-white'} rounded-xl h-full border transition-all duration-200 ${
+                    isDragOver ? 'border-[#136dec] bg-[#136dec]/5 scale-[1.02]' : `${theme === 'dark' ? 'border-[#3e454f]/50' : 'border-gray-200'}`
                   }`}
                   onDragOver={handleDragOver}
                   onDragEnter={(e) => handleDragEnter(e, column.id)}
                   onDragLeave={handleDragLeave}
                   onDrop={(e) => handleDrop(e, column.id)}
                 >
-                  <div className={`flex items-center justify-between p-3 border-b ${theme === 'dark' ? 'border-[#3e454f]/50' : 'border-gray-200'} relative overflow-hidden ${column.hasTopBorder ? 'border-t-2 border-t-[#136dec]' : ''}`}>
-                    <div className="flex items-center gap-2">
-                      <div className={`w-2 h-2 rounded-full ${column.dotColor}`}></div>
-                      <h3 className={`text-sm font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{column.title}</h3>
-                      <span className={`${theme === 'dark' ? 'bg-[#282f39]' : 'bg-gray-100'} ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} text-xs px-2 py-0.5 rounded-full border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'}`}>
+                  <div className={`flex items-center justify-between p-3 sm:p-4 border-b ${theme === 'dark' ? 'border-[#3e454f]/50' : 'border-gray-200'} relative overflow-hidden ${column.hasTopBorder ? 'border-t-2 border-t-[#136dec]' : ''}`}>
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <div className={`w-2 h-2 rounded-full ${column.dotColor} flex-shrink-0`}></div>
+                      <h3 className={`text-sm font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} truncate`}>{column.title}</h3>
+                      <span className={`${theme === 'dark' ? 'bg-[#282f39]' : 'bg-gray-100'} ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} text-xs px-2 py-0.5 rounded-full border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} font-medium flex-shrink-0`}>
                         {columnTasks.length}
                       </span>
                     </div>
-                    <MoreHorizontal className="text-[#6b7280] hover:text-white cursor-pointer" size={20} />
+                    <MoreHorizontal className="text-[#6b7280] hover:text-white cursor-pointer flex-shrink-0" size={18} />
                   </div>
 
-                  <div className="flex-1 overflow-y-auto p-2 flex flex-col gap-2">
+                  <div className="flex-1 overflow-y-auto p-2 sm:p-3 flex flex-col gap-2 sm:gap-3 scrollbar-thin scrollbar-thumb-[#3e454f] scrollbar-track-transparent">
                     {columnTasks.map((task) => {
                       const priorityBadge = getPriorityBadge(task.priority);
                       const isDone = task.status === 'done';
@@ -484,7 +501,7 @@ const Kanban = () => {
                           draggable={canEditTask(task)}
                           onDragStart={(e) => handleDragStart(e, task)}
                           onDragEnd={handleDragEnd}
-                          className={`group ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-gray-50'} p-3 rounded border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} hover:border-[#136dec]/50 cursor-grab shadow-sm transition-all hover:shadow-md ${
+                          className={`group ${theme === 'dark' ? 'bg-gradient-to-br from-[#282f39] to-[#242a35]' : 'bg-gradient-to-br from-gray-50 to-white'} p-3 sm:p-4 rounded-lg border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} hover:border-[#136dec]/50 cursor-grab active:cursor-grabbing shadow-sm hover:shadow-lg transition-all duration-200 hover:-translate-y-0.5 ${
                             isDone ? 'opacity-70 hover:opacity-100' : ''
                           }`}
                           onClick={() => setSelectedTask(task)}

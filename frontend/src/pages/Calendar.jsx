@@ -3,10 +3,11 @@ import { Calendar as BigCalendar, momentLocalizer } from 'react-big-calendar';
 import moment from 'moment';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { useSidebar } from '../context/SidebarContext';
 import api from '../api/axios';
 import useRealtimeSync from '../hooks/useRealtimeSync';
 import Sidebar from '../components/Sidebar';
-import { Plus, X, Calendar as CalendarIcon, Filter, Settings } from 'lucide-react';
+import { Plus, X, Calendar as CalendarIcon, Filter, Settings, Menu } from 'lucide-react';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 
 const localizer = momentLocalizer(moment);
@@ -14,6 +15,7 @@ const localizer = momentLocalizer(moment);
 const Calendar = () => {
   const { user } = useAuth();
   const { theme } = useTheme();
+  const { toggleMobileSidebar } = useSidebar();
   const [tasks, setTasks] = useState([]);
   const [events, setEvents] = useState([]);
   const [selectedTask, setSelectedTask] = useState(null);
@@ -131,16 +133,26 @@ const Calendar = () => {
   };
 
   return (
-    <div className={`flex h-screen w-full overflow-hidden ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'}`}>
+    <div className={`flex h-screen w-full ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'}`}>
       <Sidebar />
 
-      <main className={`flex-1 flex flex-col h-full min-w-0 ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'}`}>
+      <main className={`flex-1 flex flex-col h-full w-full min-w-0 ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'} overflow-hidden`}>
         {/* Header Section */}
         <header className={`border-b ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'} shrink-0`}>
           <div className="flex items-center justify-between px-6 py-4">
-            <div>
-              <h2 className={`${theme === 'dark' ? 'text-white' : 'text-gray-900'} text-xl font-bold leading-tight`}>Calendar View</h2>
-              <p className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} text-xs mt-1`}>Visualize tasks by due date</p>
+            <div className="flex items-center gap-4">
+              {/* Mobile Menu Button */}
+              <button
+                onClick={toggleMobileSidebar}
+                className={`lg:hidden ${theme === 'dark' ? 'text-[#9da8b9] hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}
+                aria-label="Toggle menu"
+              >
+                <Menu size={24} />
+              </button>
+              <div>
+                <h2 className={`${theme === 'dark' ? 'text-white' : 'text-gray-900'} text-xl font-bold leading-tight`}>Calendar View</h2>
+                <p className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} text-xs mt-1`}>Visualize tasks by due date</p>
+              </div>
             </div>
             <div className="flex gap-3">
               <button

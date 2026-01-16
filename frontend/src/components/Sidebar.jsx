@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { useSidebar } from '../context/SidebarContext';
 import { useConfirmModal } from '../hooks/useConfirmModal';
 import ConfirmModal from './modals/ConfirmModal';
 import { 
@@ -19,16 +20,25 @@ import {
   ChevronRight,
   LogOut,
   User as UserIcon,
-  Building2
+  Building2,
+  X
 } from 'lucide-react';
 
 const Sidebar = () => {
   const { user, logout } = useAuth();
   const { theme, currentTheme } = useTheme();
+  const { isMobileOpen, isMobile, closeMobileSidebar, isCollapsed, toggleCollapse } = useSidebar();
   const navigate = useNavigate();
   const location = useLocation();
-  const [collapsed, setCollapsed] = useState(false);
   const confirmModal = useConfirmModal();
+
+  // Close sidebar when clicking on navigation item on mobile
+  const handleNavigation = (path) => {
+    navigate(path);
+    if (isMobile) {
+      closeMobileSidebar();
+    }
+  };
 
   const getUserInitials = (name) => {
     if (!name) return 'U';
@@ -78,14 +88,39 @@ const Sidebar = () => {
   const isDark = theme === 'dark';
 
   return (
-    <aside className={`${collapsed ? 'w-16' : 'w-64'} ${
-      isDark ? 'bg-[#111418] border-[#282f39]' : 'bg-white border-gray-200'
-    } border-r flex flex-col shrink-0 transition-all duration-300 relative`}>
+    <>
+      {/* Mobile/Tablet Overlay */}
+      {isMobile && isMobileOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={closeMobileSidebar}
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside className={`
+        ${isCollapsed ? 'w-16' : 'w-64'} 
+        ${isDark ? 'bg-[#111418] border-[#282f39]' : 'bg-white border-gray-200'} 
+        border-r flex flex-col shrink-0 transition-all duration-300
+        ${isMobile ? 'fixed' : 'relative'} inset-y-0 left-0 z-50
+        ${isMobile ? (isMobileOpen ? 'translate-x-0' : '-translate-x-full') : 'translate-x-0'}
+      `}>
+        {/* Mobile/Tablet Close Button */}
+        {isMobile && isMobileOpen && (
+          <button
+            onClick={closeMobileSidebar}
+            className={`absolute top-4 right-4 z-10 ${
+              isDark ? 'text-[#9da8b9] hover:text-white' : 'text-gray-600 hover:text-gray-900'
+            } lg:hidden`}
+          >
+            <X size={24} />
+          </button>
+        )}
       {/* Logo Section */}
-      <div className={`${collapsed ? 'p-3' : 'p-4'} border-b ${
+      <div className={`${isCollapsed ? 'p-3' : 'p-4'} border-b ${
         isDark ? 'border-[#282f39]' : 'border-gray-200'
       } flex items-center justify-center`}>
-        {!collapsed ? (
+        {!isCollapsed ? (
           <div className="flex items-center gap-3 w-full px-2">
             <img 
               src="/logo.png" 
@@ -109,9 +144,9 @@ const Sidebar = () => {
       </div>
 
       {/* Main Navigation */}
-      <div className="flex flex-col gap-1 p-4 flex-1 overflow-y-auto">
-        {!collapsed && (
-          <div className="px-3 py-2">
+      <div className="flex flex-col gap-1 p-2 lg:p-4 flex-1 overflow-y-auto">
+        {!isCollapsed && (
+          <div className="px-3 py-2 hidden lg:block">
             <p className={`text-xs font-bold uppercase tracking-wider ${
               isDark ? 'text-[#9da8b9]' : 'text-gray-500'
             }`}>Main</p>
@@ -124,7 +159,7 @@ const Sidebar = () => {
           return (
             <button
               key={item.path}
-              onClick={() => navigate(item.path)}
+              onClick={() => handleNavigation(item.path)}
               className={`flex items-center gap-3 px-3 py-2 rounded transition-colors group ${
                 active
                   ? isDark
@@ -134,10 +169,10 @@ const Sidebar = () => {
                     ? 'text-[#9da8b9] hover:bg-[#1c2027] hover:text-white'
                     : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
               }`}
-              title={collapsed ? item.label : ''}
+              title={isCollapsed ? item.label : ''}
             >
               <Icon size={20} className={active ? 'fill-current' : ''} />
-              {!collapsed && <span className="text-sm font-medium">{item.label}</span>}
+              {!isCollapsed && <span className="text-sm font-medium">{item.label}</span>}
             </button>
           );
         })}
@@ -145,8 +180,8 @@ const Sidebar = () => {
         {/* Admin Section */}
         {adminMenuItems.some(canAccess) && (
           <>
-            {!collapsed && (
-              <div className="px-3 py-2 mt-4">
+            {!isCollapsed && (
+              <div className="px-3 py-2 mt-4 hidden lg:block">
                 <p className={`text-xs font-bold uppercase tracking-wider ${
                   isDark ? 'text-[#9da8b9]' : 'text-gray-500'
                 }`}>Management</p>
@@ -158,7 +193,7 @@ const Sidebar = () => {
               return (
                 <button
                   key={item.path}
-                  onClick={() => navigate(item.path)}
+                  onClick={() => handleNavigation(item.path)}
                   className={`flex items-center gap-3 px-3 py-2 rounded transition-colors group ${
                     active
                       ? isDark
@@ -168,10 +203,10 @@ const Sidebar = () => {
                         ? 'text-[#9da8b9] hover:bg-[#1c2027] hover:text-white'
                         : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
                   }`}
-                  title={collapsed ? item.label : ''}
+                  title={isCollapsed ? item.label : ''}
                 >
                   <Icon size={20} className={active ? 'fill-current' : ''} />
-                  {!collapsed && <span className="text-sm font-medium">{item.label}</span>}
+                  {!isCollapsed && <span className="text-sm font-medium">{item.label}</span>}
                 </button>
               );
             })}
@@ -180,8 +215,8 @@ const Sidebar = () => {
       </div>
 
       {/* Workspace Info */}
-      {!collapsed && (
-        <div className={`p-4 border-t ${
+      {!isCollapsed && (
+        <div className={`p-4 border-t hidden lg:block ${
           isDark ? 'border-[#282f39]' : 'border-gray-200'
         }`}>
           <div className="px-3 py-2">
@@ -265,11 +300,11 @@ const Sidebar = () => {
         isDark ? 'border-[#282f39]' : 'border-gray-200'
       }`}>
         {/* User Info */}
-        {!collapsed && user && (
-          <div className={`p-4 border-b ${
+        {!isCollapsed && user && (
+          <div className={`p-3 lg:p-4 border-b ${
             isDark ? 'border-[#282f39]' : 'border-gray-200'
           }`}>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 lg:gap-3">
               {user.profile_picture ? (
                 <img
                   src={user.profile_picture}
@@ -294,9 +329,9 @@ const Sidebar = () => {
         )}
 
         {/* Settings & Logout */}
-        <div className="p-4">
-          {!collapsed && (
-            <div className="px-3 py-2 mb-2">
+        <div className="p-3 lg:p-4">
+          {!isCollapsed && (
+            <div className="px-3 py-2 mb-2 hidden lg:block">
               <p className={`text-xs font-bold uppercase tracking-wider ${
                 isDark ? 'text-[#9da8b9]' : 'text-gray-500'
               }`}>Account</p>
@@ -305,7 +340,7 @@ const Sidebar = () => {
           
           {/* Profile Button */}
           <button
-            onClick={() => navigate('/settings')}
+            onClick={() => handleNavigation('/settings')}
             className={`flex items-center gap-3 px-3 py-2 rounded transition-colors group w-full mb-1 ${
               isActive('/settings')
                 ? isDark
@@ -315,10 +350,10 @@ const Sidebar = () => {
                   ? 'text-[#9da8b9] hover:bg-[#1c2027] hover:text-white'
                   : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
             }`}
-            title={collapsed ? 'Profile & Settings' : ''}
+            title={isCollapsed ? 'Profile & Settings' : ''}
           >
             <UserIcon size={20} />
-            {!collapsed && <span className="text-sm font-medium">Profile & Settings</span>}
+            {!isCollapsed && <span className="text-sm font-medium">Profile & Settings</span>}
           </button>
 
           {/* Logout Button */}
@@ -342,25 +377,25 @@ const Sidebar = () => {
                 ? 'text-red-400 hover:bg-red-500/10 hover:text-red-300'
                 : 'text-red-600 hover:bg-red-50 hover:text-red-700'
             }`}
-            title={collapsed ? 'Logout' : ''}
+            title={isCollapsed ? 'Logout' : ''}
           >
             <LogOut size={20} />
-            {!collapsed && <span className="text-sm font-medium">Logout</span>}
+            {!isCollapsed && <span className="text-sm font-medium">Logout</span>}
           </button>
         </div>
       </div>
 
-      {/* Toggle Button */}
+      {/* Toggle Button - Show on Tablet and Desktop */}
       <button
-        onClick={() => setCollapsed(!collapsed)}
-        className={`p-3 border-t flex items-center justify-center transition-colors ${
+        onClick={toggleCollapse}
+        className={`p-3 border-t flex items-center justify-center transition-colors hidden md:flex ${
           isDark
             ? 'text-[#9da8b9] hover:text-white border-[#282f39] hover:bg-[#1c2027]'
             : 'text-gray-600 hover:text-gray-900 border-gray-200 hover:bg-gray-100'
         }`}
-        title={collapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
+        title={isCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
       >
-        {collapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
+        {isCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
       </button>
 
       {/* Confirm Modal */}
@@ -376,6 +411,7 @@ const Sidebar = () => {
         isLoading={confirmModal.isLoading}
       />
     </aside>
+    </>
   );
 };
 

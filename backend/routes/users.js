@@ -366,6 +366,15 @@ router.post('/', authenticate, checkRole(['admin', 'hr', 'community_admin']), ch
     });
   } catch (error) {
     console.error('Create user error:', error);
+    
+    // Handle duplicate email error
+    if (error.code === 11000 && error.keyPattern?.email) {
+      return res.status(400).json({ 
+        message: 'Email already registered',
+        error: 'A user with this email address already exists in the system'
+      });
+    }
+    
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });

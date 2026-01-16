@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { useSidebar } from '../context/SidebarContext';
 import Sidebar from '../components/Sidebar';
 import api from '../api/axios';
 import useRealtimeSync from '../hooks/useRealtimeSync';
-import { Filter, Calendar, AlertTriangle, TrendingUp, BarChart3, Target, User, Users, Clock, Download, FileSpreadsheet, FileText, X, ChevronDown } from 'lucide-react';
+import { Filter, Calendar, AlertTriangle, TrendingUp, BarChart3, Target, User, Users, Clock, Download, FileSpreadsheet, FileText, X, ChevronDown, Menu } from 'lucide-react';
 import { PieChart as RechartsPieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, LineChart, Line, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Legend } from 'recharts';
 import { generateExcelReport } from '../utils/reportGenerator';
 import { generateComprehensivePDFReport } from '../utils/comprehensiveReportGenerator';
@@ -12,6 +13,7 @@ import { generateComprehensivePDFReport } from '../utils/comprehensiveReportGene
 const Analytics = () => {
   const { user } = useAuth();
   const { theme } = useTheme();
+  const { toggleMobileSidebar } = useSidebar();
   const [tasks, setTasks] = useState([]);
   const [filteredTasks, setFilteredTasks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -28,6 +30,7 @@ const Analytics = () => {
   const [users, setUsers] = useState([]);
   const [reportPeriod, setReportPeriod] = useState('all');
   const [showReportOptions, setShowReportOptions] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
   const [analyticsData, setAnalyticsData] = useState({
     totalTasks: 0,
     overdueTasks: 0,
@@ -437,28 +440,38 @@ const Analytics = () => {
   }
 
   return (
-    <div className={`flex h-screen w-full overflow-hidden ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'}`}>
+    <div className={`flex h-screen w-full ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'}`}>
       <Sidebar />
 
-      <main className={`flex-1 flex flex-col h-full min-w-0 ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'}`}>
+      <main className={`flex-1 flex flex-col h-full w-full min-w-0 ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'} overflow-hidden`}>
         {/* Header Section */}
         <header className={`border-b ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'} shrink-0`}>
-          <div className="flex items-center justify-between px-6 py-4">
-            <div>
-              <h2 className={`${theme === 'dark' ? 'text-white' : 'text-gray-900'} text-xl font-bold leading-tight`}>Analytics & Reports</h2>
-              <p className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} text-xs mt-1`}>
-                {user?.role === 'member' 
-                  ? 'View your personal task statistics' 
-                  : user?.role === 'team_lead'
-                  ? 'Overview of your team performance'
-                  : 'Track team performance, task velocity, and operational metrics'}
-              </p>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between px-3 sm:px-6 py-3 sm:py-4 gap-3 sm:gap-0">
+            <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
+              {/* Mobile Menu Button */}
+              <button
+                onClick={toggleMobileSidebar}
+                className={`lg:hidden flex-shrink-0 ${theme === 'dark' ? 'text-[#9da8b9] hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}
+                aria-label="Toggle menu"
+              >
+                <Menu size={24} />
+              </button>
+              <div className="min-w-0">
+                <h2 className={`${theme === 'dark' ? 'text-white' : 'text-gray-900'} text-base sm:text-lg md:text-xl font-bold leading-tight truncate`}>Analytics & Reports</h2>
+                <p className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} text-[10px] sm:text-xs mt-0.5 sm:mt-1 line-clamp-2`}>
+                  {user?.role === 'member' 
+                    ? 'View your personal task statistics' 
+                    : user?.role === 'team_lead'
+                    ? 'Overview of your team performance'
+                    : 'Track team performance, task velocity, and operational metrics'}
+                </p>
+              </div>
             </div>
             {['admin', 'hr'].includes(user?.role) && (
-              <div className="flex gap-3">
+              <div className="flex gap-2 sm:gap-3 flex-shrink-0">
                 <button
                   onClick={handleExportExcel}
-                  className="flex items-center justify-center rounded h-9 px-4 bg-green-600 text-white gap-2 text-sm font-bold hover:bg-green-700 transition-colors"
+                  className="flex items-center justify-center rounded h-9 px-3 sm:px-4 bg-green-600 text-white gap-2 text-sm font-bold hover:bg-green-700 transition-colors"
                   title="Export comprehensive Excel report"
                 >
                   <FileSpreadsheet size={18} />
@@ -467,12 +480,12 @@ const Analytics = () => {
                 <div className="relative">
                   <button
                     onClick={() => setShowReportOptions(!showReportOptions)}
-                    className="flex items-center justify-center rounded h-9 px-4 bg-red-600 text-white gap-2 text-sm font-bold hover:bg-red-700 transition-colors"
+                    className="flex items-center justify-center rounded h-9 px-3 sm:px-4 bg-red-600 text-white gap-2 text-sm font-bold hover:bg-red-700 transition-colors"
                     title="Export PDF report"
                   >
                     <FileText size={18} />
                     <span className="hidden sm:inline">PDF</span>
-                    <ChevronDown size={16} />
+                    <ChevronDown size={16} className="hidden sm:block" />
                   </button>
                   {showReportOptions && (
                     <div className={`absolute right-0 mt-2 w-56 rounded ${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} shadow-lg z-10`}>
@@ -511,26 +524,35 @@ const Analytics = () => {
           </div>
 
           {/* Filters Row */}
-          <div className="px-6 pb-4">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <Filter size={16} className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`} />
-                <span className={`text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'} font-medium`}>Filters</span>
-              </div>
+          <div className="px-3 sm:px-6 pb-3 sm:pb-4">
+            <div className="flex items-center justify-between mb-2 sm:mb-3">
               <button
-                onClick={() => setFilters({ status: '', priority: '', team: '', user: '', dateRange: 'all', customStartDate: '', customEndDate: '' })}
-                className="text-xs text-[#136dec] hover:text-blue-400 font-medium"
+                onClick={() => setShowFilters(!showFilters)}
+                className="flex items-center gap-2 sm:hover:bg-[#282f39]/30 sm:px-2 sm:py-1 sm:rounded transition-colors lg:pointer-events-none"
               >
-                Reset All
+                <Filter size={14} className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`} />
+                <span className={`text-xs sm:text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'} font-medium`}>Filters</span>
+                <ChevronDown 
+                  size={16} 
+                  className={`lg:hidden transition-transform ${showFilters ? 'rotate-180' : ''} ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`}
+                />
               </button>
+              {showFilters && (
+                <button
+                  onClick={() => setFilters({ status: '', priority: '', team: '', user: '', dateRange: 'all', customStartDate: '', customEndDate: '' })}
+                  className="text-[10px] sm:text-xs text-[#136dec] hover:text-blue-400 font-medium"
+                >
+                  Reset All
+                </button>
+              )}
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+            <div className={`grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3 transition-all duration-300 overflow-hidden ${showFilters ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0 lg:max-h-[500px] lg:opacity-100'}`}>
               <select
                 value={filters.status}
                 onChange={(e) => setFilters({...filters, status: e.target.value})}
-                className={`h-9 px-3 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-white'} border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} rounded text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'} focus:ring-2 focus:ring-[#136dec] focus:border-transparent`}
+                className={`h-9 px-2 sm:px-3 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-white'} border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} rounded text-xs sm:text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'} focus:ring-2 focus:ring-[#136dec] focus:border-transparent`}
               >
-                <option value="">All Statuses</option>
+                <option value="">All Status</option>
                 <option value="todo">To Do</option>
                 <option value="in_progress">In Progress</option>
                 <option value="review">Review</option>
@@ -541,9 +563,9 @@ const Analytics = () => {
               <select
                 value={filters.priority}
                 onChange={(e) => setFilters({...filters, priority: e.target.value})}
-                className={`h-9 px-3 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-white'} border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} rounded text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'} focus:ring-2 focus:ring-[#136dec] focus:border-transparent`}
+                className={`h-9 px-2 sm:px-3 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-white'} border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} rounded text-xs sm:text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'} focus:ring-2 focus:ring-[#136dec] focus:border-transparent`}
               >
-                <option value="">All Priorities</option>
+                <option value="">All Priority</option>
                 <option value="low">Low</option>
                 <option value="medium">Medium</option>
                 <option value="high">High</option>
@@ -555,19 +577,19 @@ const Analytics = () => {
                   <select
                     value={filters.dateRange}
                     onChange={(e) => setFilters({...filters, dateRange: e.target.value})}
-                    className={`h-9 px-3 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-white'} border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} rounded text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'} focus:ring-2 focus:ring-[#136dec] focus:border-transparent`}
+                    className={`h-9 px-2 sm:px-3 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-white'} border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} rounded text-xs sm:text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'} focus:ring-2 focus:ring-[#136dec] focus:border-transparent`}
                   >
                     <option value="all">All Time</option>
                     <option value="today">Today</option>
                     <option value="week">Last 7 Days</option>
                     <option value="month">This Month</option>
-                    <option value="custom">Custom Range</option>
+                    <option value="custom">Custom</option>
                   </select>
 
                   <select
                     value={filters.team}
                     onChange={(e) => setFilters({...filters, team: e.target.value})}
-                    className={`h-9 px-3 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-white'} border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} rounded text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'} focus:ring-2 focus:ring-[#136dec] focus:border-transparent`}
+                    className={`h-9 px-2 sm:px-3 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-white'} border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} rounded text-xs sm:text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'} focus:ring-2 focus:ring-[#136dec] focus:border-transparent`}
                   >
                     <option value="">All Teams</option>
                     {teams.map(team => (
@@ -578,7 +600,7 @@ const Analytics = () => {
                   <select
                     value={filters.user}
                     onChange={(e) => setFilters({...filters, user: e.target.value})}
-                    className={`h-9 px-3 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-white'} border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} rounded text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'} focus:ring-2 focus:ring-[#136dec] focus:border-transparent`}
+                    className={`h-9 px-2 sm:px-3 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-white'} border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} rounded text-xs sm:text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'} focus:ring-2 focus:ring-[#136dec] focus:border-transparent`}
                   >
                     <option value="">All Users</option>
                     <option value="unassigned">Unassigned</option>
@@ -590,19 +612,19 @@ const Analytics = () => {
               )}
             </div>
 
-            {filters.dateRange === 'custom' && (
-              <div className="grid grid-cols-2 gap-3 mt-3">
+            {filters.dateRange === 'custom' && showFilters && (
+              <div className="grid grid-cols-2 gap-2 sm:gap-3 mt-2 sm:mt-3 lg:block lg:grid">
                 <input
                   type="date"
                   value={filters.customStartDate}
                   onChange={(e) => setFilters({...filters, customStartDate: e.target.value})}
-                  className={`h-9 px-3 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-white'} border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} rounded text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'} focus:ring-2 focus:ring-[#136dec] focus:border-transparent`}
+                  className={`h-9 px-2 sm:px-3 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-white'} border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} rounded text-xs sm:text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'} focus:ring-2 focus:ring-[#136dec] focus:border-transparent`}
                 />
                 <input
                   type="date"
                   value={filters.customEndDate}
                   onChange={(e) => setFilters({...filters, customEndDate: e.target.value})}
-                  className={`h-9 px-3 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-white'} border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} rounded text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'} focus:ring-2 focus:ring-[#136dec] focus:border-transparent`}
+                  className={`h-9 px-2 sm:px-3 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-white'} border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} rounded text-xs sm:text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'} focus:ring-2 focus:ring-[#136dec] focus:border-transparent`}
                 />
               </div>
             )}
@@ -610,89 +632,93 @@ const Analytics = () => {
         </header>
 
         {/* Main Content Area */}
-        <div className="flex-1 overflow-auto p-6">
+        <div className="flex-1 overflow-auto p-3 sm:p-6">
           {/* Key Metrics */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-4`}>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} text-xs uppercase tracking-wider font-medium`}>Total Tasks</p>
-                  <p className={`text-3xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mt-2`}>{analyticsData.totalTasks}</p>
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-6">
+            <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded-lg border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-3 sm:p-4`}>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between gap-2">
+                <div className="w-full">
+                  <p className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} text-[10px] sm:text-xs uppercase tracking-wider font-medium`}>Total Tasks</p>
+                  <p className={`text-2xl sm:text-3xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mt-1 sm:mt-2`}>{analyticsData.totalTasks}</p>
                 </div>
-                <BarChart3 className="text-[#136dec]" size={40} />
+                <BarChart3 className="text-[#136dec] hidden sm:block" size={40} />
               </div>
             </div>
 
-            <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-4`}>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} text-xs uppercase tracking-wider font-medium`}>Overdue</p>
-                  <p className="text-3xl font-bold text-red-500 mt-2">{analyticsData.overdueTasks}</p>
+            <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded-lg border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-3 sm:p-4`}>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between gap-2">
+                <div className="w-full">
+                  <p className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} text-[10px] sm:text-xs uppercase tracking-wider font-medium`}>Overdue</p>
+                  <p className="text-2xl sm:text-3xl font-bold text-red-500 mt-1 sm:mt-2">{analyticsData.overdueTasks}</p>
                 </div>
-                <AlertTriangle className="text-red-500" size={40} />
+                <AlertTriangle className="text-red-500 hidden sm:block" size={40} />
               </div>
             </div>
 
-            <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-4`}>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} text-xs uppercase tracking-wider font-medium`}>Completed</p>
-                  <p className="text-3xl font-bold text-green-500 mt-2">{analyticsData.completedTasks}</p>
+            <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded-lg border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-3 sm:p-4`}>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between gap-2">
+                <div className="w-full">
+                  <p className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} text-[10px] sm:text-xs uppercase tracking-wider font-medium`}>Completed</p>
+                  <p className="text-2xl sm:text-3xl font-bold text-green-500 mt-1 sm:mt-2">{analyticsData.completedTasks}</p>
                 </div>
-                <TrendingUp className="text-green-500" size={40} />
+                <TrendingUp className="text-green-500 hidden sm:block" size={40} />
               </div>
             </div>
 
-            <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-4`}>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} text-xs uppercase tracking-wider font-medium`}>In Progress</p>
-                  <p className="text-3xl font-bold text-yellow-500 mt-2">{analyticsData.inProgressTasks}</p>
+            <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded-lg border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-3 sm:p-4`}>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between gap-2">
+                <div className="w-full">
+                  <p className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} text-[10px] sm:text-xs uppercase tracking-wider font-medium`}>In Progress</p>
+                  <p className="text-2xl sm:text-3xl font-bold text-yellow-500 mt-1 sm:mt-2">{analyticsData.inProgressTasks}</p>
                 </div>
-                <Clock className="text-yellow-500" size={40} />
+                <Clock className="text-yellow-500 hidden sm:block" size={40} />
               </div>
             </div>
           </div>
 
           {/* Charts Grid */}
           {user?.role !== 'member' && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
               {/* Status Distribution */}
-              <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-6`}>
-                <h3 className={`text-sm font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} uppercase tracking-wider mb-4`}>Task Status Distribution</h3>
-                <ResponsiveContainer width="100%" height={300}>
-                  <RechartsPieChart>
-                    <Pie
-                      data={analyticsData.statusDistribution}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                      outerRadius={80}
-                      fill="#8884d8"
-                      dataKey="value"
-                    >
+              <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded-lg border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-3 sm:p-6`}>
+                <h3 className={`text-xs sm:text-sm font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} uppercase tracking-wider mb-3 sm:mb-4`}>Task Status Distribution</h3>
+                <div style={{ width: '100%', minWidth: '200px' }}>
+                  <ResponsiveContainer width="100%" aspect={1.8} minWidth={200}>
+                    <RechartsPieChart>
+                      <Pie
+                        data={analyticsData.statusDistribution}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        label={({ name, percent }) => window.innerWidth < 640 ? `${(percent * 100).toFixed(0)}%` : `${name} ${(percent * 100).toFixed(0)}%`}
+                        outerRadius="55%"
+                        fill="#8884d8"
+                        dataKey="value"
+                      >
                       {analyticsData.statusDistribution.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
-                    <Tooltip contentStyle={{ backgroundColor: '#1c2027', border: '1px solid #282f39', borderRadius: '0.125rem' }} />
+                    <Tooltip contentStyle={{ backgroundColor: '#1c2027', border: '1px solid #282f39', borderRadius: '0.5rem' }} />
                   </RechartsPieChart>
                 </ResponsiveContainer>
+                </div>
               </div>
 
               {/* Priority Distribution */}
-              <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-6`}>
-                <h3 className={`text-sm font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} uppercase tracking-wider mb-4`}>Task Priority Distribution</h3>
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={analyticsData.priorityDistribution}>
+              <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded-lg border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-3 sm:p-6`}>
+                <h3 className={`text-xs sm:text-sm font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} uppercase tracking-wider mb-3 sm:mb-4`}>Task Priority Distribution</h3>
+                <div style={{ width: '100%', minWidth: '200px' }}>
+                  <ResponsiveContainer width="100%" aspect={1.8} minWidth={200}>
+                    <BarChart data={analyticsData.priorityDistribution}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#282f39" />
-                    <XAxis dataKey="name" stroke="#9da8b9" tick={{ fontSize: 11 }} />
-                    <YAxis stroke="#9da8b9" tick={{ fontSize: 11 }} />
-                    <Tooltip contentStyle={{ backgroundColor: '#1c2027', border: '1px solid #282f39', borderRadius: '0.125rem' }} />
+                    <XAxis dataKey="name" stroke="#9da8b9" tick={{ fontSize: 10 }} />
+                    <YAxis stroke="#9da8b9" tick={{ fontSize: 10 }} />
+                    <Tooltip contentStyle={{ backgroundColor: '#1c2027', border: '1px solid #282f39', borderRadius: '0.5rem' }} />
                     <Bar dataKey="value" fill="#136dec" />
                   </BarChart>
                 </ResponsiveContainer>
+                </div>
               </div>
             </div>
           )}
@@ -700,63 +726,70 @@ const Analytics = () => {
           {/* Advanced Charts - Admin/HR Only */}
           {['admin', 'hr'].includes(user?.role) && (
             <>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
                 {/* Overdue by Priority */}
-                <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-6`}>
-                  <h3 className="text-sm font-bold text-red-500 uppercase tracking-wider mb-4">Overdue Tasks by Priority</h3>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={analyticsData.overdueByPriority}>
+                <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded-lg border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-3 sm:p-6`}>
+                  <h3 className="text-xs sm:text-sm font-bold text-red-500 uppercase tracking-wider mb-3 sm:mb-4">Overdue Tasks by Priority</h3>
+                  <div style={{ width: '100%', minWidth: '200px' }}>
+                    <ResponsiveContainer width="100%" aspect={1.8} minWidth={200}>
+                      <BarChart data={analyticsData.overdueByPriority}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#282f39" />
-                      <XAxis dataKey="name" stroke="#9da8b9" tick={{ fontSize: 11 }} />
-                      <YAxis stroke="#9da8b9" tick={{ fontSize: 11 }} />
-                      <Tooltip contentStyle={{ backgroundColor: '#1c2027', border: '1px solid #282f39', borderRadius: '0.125rem' }} />
+                      <XAxis dataKey="name" stroke="#9da8b9" tick={{ fontSize: 10 }} />
+                      <YAxis stroke="#9da8b9" tick={{ fontSize: 10 }} />
+                      <Tooltip contentStyle={{ backgroundColor: '#1c2027', border: '1px solid #282f39', borderRadius: '0.5rem' }} />
                       <Bar dataKey="value" fill="#ef4444" />
                     </BarChart>
                   </ResponsiveContainer>
+                  </div>
                 </div>
 
                 {/* Completion Trend */}
-                <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-6`}>
-                  <h3 className={`text-sm font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} uppercase tracking-wider mb-4`}>Completion Trend (30 Days)</h3>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <AreaChart data={analyticsData.completionTrend}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#282f39" />
-                      <XAxis dataKey="date" stroke="#9da8b9" tick={{ fontSize: 9 }} angle={-45} textAnchor="end" height={60} />
-                      <YAxis stroke="#9da8b9" tick={{ fontSize: 11 }} />
-                      <Tooltip contentStyle={{ backgroundColor: '#1c2027', border: '1px solid #282f39', borderRadius: '0.125rem' }} />
+                <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded-lg border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-3 sm:p-6`}>
+                  <h3 className={`text-xs sm:text-sm font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} uppercase tracking-wider mb-3 sm:mb-4`}>Completion Trend (30 Days)</h3>
+                  <div style={{ width: '100%', minWidth: '200px' }}>
+                    <ResponsiveContainer width="100%" aspect={1.8} minWidth={200}>
+                      <AreaChart data={analyticsData.completionTrend}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#282f39" />
+                        <XAxis dataKey="date" stroke="#9da8b9" tick={{ fontSize: 7 }} angle={-60} textAnchor="end" height={50} />
+                        <YAxis stroke="#9da8b9" tick={{ fontSize: 9 }} />
+                      <Tooltip contentStyle={{ backgroundColor: '#1c2027', border: '1px solid #282f39', borderRadius: '0.5rem' }} />
                       <Area type="monotone" dataKey="created" stackId="1" stroke="#136dec" fill="#136dec" />
                       <Area type="monotone" dataKey="completed" stackId="2" stroke="#22c55e" fill="#22c55e" />
                     </AreaChart>
                   </ResponsiveContainer>
+                  </div>
                 </div>
               </div>
 
               {/* User Performance */}
-              <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-6 mb-6`}>
-                <h3 className={`text-sm font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} uppercase tracking-wider mb-4`}>User Performance</h3>
-                <ResponsiveContainer width="100%" height={350}>
+              <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded-lg border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-3 sm:p-6 mb-4 sm:mb-6`}>
+                <h3 className={`text-xs sm:text-sm font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} uppercase tracking-wider mb-3 sm:mb-4`}>User Performance</h3>
+                <div style={{ width: '100%', minWidth: '200px' }}>
+                  <ResponsiveContainer width="100%" aspect={1.5} minWidth={200}>
                   <BarChart data={analyticsData.assigneePerformance}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#282f39" />
-                    <XAxis dataKey="name" stroke="#9da8b9" tick={{ fontSize: 10 }} angle={-45} textAnchor="end" height={100} />
-                    <YAxis stroke="#9da8b9" tick={{ fontSize: 11 }} />
-                    <Tooltip contentStyle={{ backgroundColor: '#1c2027', border: '1px solid #282f39', borderRadius: '0.125rem' }} />
+                    <XAxis dataKey="name" stroke="#9da8b9" tick={{ fontSize: 7 }} angle={-60} textAnchor="end" height={70} />
+                    <YAxis stroke="#9da8b9" tick={{ fontSize: 10 }} />
+                    <Tooltip contentStyle={{ backgroundColor: '#1c2027', border: '1px solid #282f39', borderRadius: '0.5rem' }} />
                     <Bar dataKey="total" fill="#136dec" name="Total Tasks" />
                     <Bar dataKey="completed" fill="#22c55e" name="Completed" />
                     <Bar dataKey="overdue" fill="#ef4444" name="Overdue" />
                   </BarChart>
                 </ResponsiveContainer>
+                </div>
               </div>
 
               {/* Team Distribution */}
-              <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-6 mb-6`}>
-                <h3 className={`text-sm font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} uppercase tracking-wider mb-4`}>Tasks by Team</h3>
+              <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded-lg border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-3 sm:p-6 mb-4 sm:mb-6`}>
+                <h3 className={`text-xs sm:text-sm font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} uppercase tracking-wider mb-3 sm:mb-4`}>Tasks by Team</h3>
                 {analyticsData.teamDistribution && analyticsData.teamDistribution.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={400}>
+                  <div style={{ width: '100%', minWidth: '200px' }}>
+                    <ResponsiveContainer width="100%" aspect={1.5} minWidth={200}>
                     <BarChart data={analyticsData.teamDistribution}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#282f39" />
-                      <XAxis dataKey="name" stroke="#9da8b9" tick={{ fontSize: 10 }} angle={-45} textAnchor="end" height={120} interval={0} />
-                      <YAxis stroke="#9da8b9" tick={{ fontSize: 11 }} />
-                      <Tooltip contentStyle={{ backgroundColor: '#1c2027', border: '1px solid #282f39', borderRadius: '0.125rem' }} />
+                      <XAxis dataKey="name" stroke="#9da8b9" tick={{ fontSize: 7 }} angle={-60} textAnchor="end" height={80} interval={0} />
+                      <YAxis stroke="#9da8b9" tick={{ fontSize: 10 }} />
+                      <Tooltip contentStyle={{ backgroundColor: '#1c2027', border: '1px solid #282f39', borderRadius: '0.5rem' }} />
                       <Bar dataKey="value" fill="#22c55e" name="Tasks">
                         {analyticsData.teamDistribution.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={`hsl(${index * 40}, 70%, 50%)`} />
@@ -764,6 +797,7 @@ const Analytics = () => {
                       </Bar>
                     </BarChart>
                   </ResponsiveContainer>
+                  </div>
                 ) : (
                   <p className={`text-center py-8 ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} text-sm`}>No team data available</p>
                 )}
@@ -772,75 +806,83 @@ const Analytics = () => {
               {/* NEW CHARTS START HERE */}
               
               {/* Weekly Progress Chart */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-                <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-6`}>
-                  <h3 className={`text-sm font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} uppercase tracking-wider mb-4`}>Weekly Progress (Last 8 Weeks)</h3>
-                  <ResponsiveContainer width="100%" height={300}>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
+                <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded-lg border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-3 sm:p-6`}>
+                  <h3 className={`text-xs sm:text-sm font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} uppercase tracking-wider mb-3 sm:mb-4`}>Weekly Progress (Last 8 Weeks)</h3>
+                  <div style={{ width: '100%', minWidth: '200px' }}>
+                    <ResponsiveContainer width="100%" aspect={1.8} minWidth={200}>
                     <LineChart data={analyticsData.weeklyProgress}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#282f39" />
-                      <XAxis dataKey="week" stroke="#9da8b9" tick={{ fontSize: 11 }} />
-                      <YAxis stroke="#9da8b9" tick={{ fontSize: 11 }} />
-                      <Tooltip contentStyle={{ backgroundColor: '#1c2027', border: '1px solid #282f39', borderRadius: '0.125rem' }} />
-                      <Legend />
+                      <XAxis dataKey="week" stroke="#9da8b9" tick={{ fontSize: 9 }} />
+                      <YAxis stroke="#9da8b9" tick={{ fontSize: 10 }} />
+                      <Tooltip contentStyle={{ backgroundColor: '#1c2027', border: '1px solid #282f39', borderRadius: '0.5rem' }} />
+                      <Legend wrapperStyle={{ fontSize: '11px' }} />
                       <Line type="monotone" dataKey="completed" stroke="#22c55e" strokeWidth={2} name="Completed" />
                       <Line type="monotone" dataKey="inProgress" stroke="#136dec" strokeWidth={2} name="In Progress" />
                       <Line type="monotone" dataKey="todo" stroke="#6b7280" strokeWidth={2} name="To Do" />
                     </LineChart>
                   </ResponsiveContainer>
+                  </div>
                 </div>
 
                 {/* Hourly Distribution */}
-                <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-6`}>
-                  <h3 className={`text-sm font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} uppercase tracking-wider mb-4`}>Task Creation by Hour</h3>
-                  <ResponsiveContainer width="100%" height={300}>
+                <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded-lg border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-3 sm:p-6`}>
+                  <h3 className={`text-xs sm:text-sm font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} uppercase tracking-wider mb-3 sm:mb-4`}>Task Creation by Hour</h3>
+                  <div style={{ width: '100%', minWidth: '200px' }}>
+                    <ResponsiveContainer width="100%" aspect={1.8} minWidth={200}>
                     <BarChart data={analyticsData.hourlyDistribution}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#282f39" />
-                      <XAxis dataKey="hour" stroke="#9da8b9" tick={{ fontSize: 9 }} angle={-45} textAnchor="end" height={80} />
-                      <YAxis stroke="#9da8b9" tick={{ fontSize: 11 }} />
-                      <Tooltip contentStyle={{ backgroundColor: '#1c2027', border: '1px solid #282f39', borderRadius: '0.125rem' }} />
+                      <XAxis dataKey="hour" stroke="#9da8b9" tick={{ fontSize: 6 }} angle={-60} textAnchor="end" height={55} />
+                      <YAxis stroke="#9da8b9" tick={{ fontSize: 10 }} />
+                      <Tooltip contentStyle={{ backgroundColor: '#1c2027', border: '1px solid #282f39', borderRadius: '0.5rem' }} />
                       <Bar dataKey="count" fill="#f59e0b" name="Tasks Created" />
                     </BarChart>
                   </ResponsiveContainer>
+                  </div>
                 </div>
               </div>
 
               {/* Task Age Distribution & Priority Trend */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-                <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-6`}>
-                  <h3 className={`text-sm font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} uppercase tracking-wider mb-4`}>Open Task Age Distribution</h3>
-                  <ResponsiveContainer width="100%" height={300}>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
+                <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded-lg border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-3 sm:p-6`}>
+                  <h3 className={`text-xs sm:text-sm font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} uppercase tracking-wider mb-3 sm:mb-4`}>Open Task Age Distribution</h3>
+                  <div style={{ width: '100%', minWidth: '200px' }}>
+                    <ResponsiveContainer width="100%" aspect={1.8} minWidth={200}>
                     <BarChart data={analyticsData.taskAgeDistribution} layout="vertical">
                       <CartesianGrid strokeDasharray="3 3" stroke="#282f39" />
-                      <XAxis type="number" stroke="#9da8b9" tick={{ fontSize: 11 }} />
-                      <YAxis dataKey="range" type="category" stroke="#9da8b9" tick={{ fontSize: 10 }} width={80} />
-                      <Tooltip contentStyle={{ backgroundColor: '#1c2027', border: '1px solid #282f39', borderRadius: '0.125rem' }} />
+                      <XAxis type="number" stroke="#9da8b9" tick={{ fontSize: 9 }} />
+                      <YAxis dataKey="range" type="category" stroke="#9da8b9" tick={{ fontSize: 8 }} width={60} />
+                      <Tooltip contentStyle={{ backgroundColor: '#1c2027', border: '1px solid #282f39', borderRadius: '0.5rem' }} />
                       <Bar dataKey="count" fill="#8b5cf6" name="Tasks" />
                     </BarChart>
                   </ResponsiveContainer>
+                  </div>
                 </div>
 
-                <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-6`}>
-                  <h3 className={`text-sm font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} uppercase tracking-wider mb-4`}>Priority Trend (12 Weeks)</h3>
-                  <ResponsiveContainer width="100%" height={300}>
+                <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded-lg border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-3 sm:p-6`}>
+                  <h3 className={`text-xs sm:text-sm font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} uppercase tracking-wider mb-3 sm:mb-4`}>Priority Trend (12 Weeks)</h3>
+                  <div style={{ width: '100%', minWidth: '200px' }}>
+                    <ResponsiveContainer width="100%" aspect={1.8} minWidth={200}>
                     <AreaChart data={analyticsData.priorityTrend}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#282f39" />
-                      <XAxis dataKey="week" stroke="#9da8b9" tick={{ fontSize: 10 }} />
-                      <YAxis stroke="#9da8b9" tick={{ fontSize: 11 }} />
-                      <Tooltip contentStyle={{ backgroundColor: '#1c2027', border: '1px solid #282f39', borderRadius: '0.125rem' }} />
-                      <Legend />
+                      <XAxis dataKey="week" stroke="#9da8b9" tick={{ fontSize: 8 }} />
+                      <YAxis stroke="#9da8b9" tick={{ fontSize: 9 }} />
+                      <Tooltip contentStyle={{ backgroundColor: '#1c2027', border: '1px solid #282f39', borderRadius: '0.5rem' }} />
+                      <Legend wrapperStyle={{ fontSize: '9px' }} />
                       <Area type="monotone" dataKey="urgent" stackId="1" stroke="#ef4444" fill="#ef4444" name="Urgent" />
                       <Area type="monotone" dataKey="high" stackId="1" stroke="#f97316" fill="#f97316" name="High" />
                       <Area type="monotone" dataKey="medium" stackId="1" stroke="#f59e0b" fill="#f59e0b" name="Medium" />
                       <Area type="monotone" dataKey="low" stackId="1" stroke="#10b981" fill="#10b981" name="Low" />
                     </AreaChart>
                   </ResponsiveContainer>
+                  </div>
                 </div>
               </div>
 
               {/* Team Completion Rate */}
               <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-6 mb-6`}>
                 <h3 className={`text-sm font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} uppercase tracking-wider mb-4`}>Team Completion Rate</h3>
-                <ResponsiveContainer width="100%" height={350}>
+                <ResponsiveContainer width="100%" height={350} minWidth={200} minHeight={350}>
                   <BarChart data={analyticsData.completionRateByTeam}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#282f39" />
                     <XAxis dataKey="team" stroke="#9da8b9" tick={{ fontSize: 10 }} angle={-45} textAnchor="end" height={100} />

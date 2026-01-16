@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { useSidebar } from '../context/SidebarContext';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import useRealtimeSync from '../hooks/useRealtimeSync';
 import api from '../api/axios';
@@ -9,7 +10,7 @@ import Sidebar from '../components/Sidebar';
 import { 
   Plus, Users, CheckSquare, TrendingUp, Clock, FileSpreadsheet, FileText, 
   AlertTriangle, Calendar, Filter, X, Download, Smartphone, Search,
-  Bell, HelpCircle, Settings
+  Bell, HelpCircle, Settings, Menu
 } from 'lucide-react';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
 import { generateExcelReport } from '../utils/reportGenerator';
@@ -18,6 +19,7 @@ import { generateComprehensivePDFReport } from '../utils/comprehensiveReportGene
 const Dashboard = () => {
   const { user, logout } = useAuth();
   const { theme } = useTheme();
+  const { toggleMobileSidebar } = useSidebar();
   const navigate = useNavigate();
   const location = useLocation();
   
@@ -472,7 +474,7 @@ const Dashboard = () => {
   }
 
   return (
-    <div className={`flex h-screen w-full overflow-hidden ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'}`}>
+    <div className={`flex h-screen w-full ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'}`}>
       {/* Unified Sidebar */}
       <Sidebar />
 
@@ -516,11 +518,19 @@ const Dashboard = () => {
       )}
 
       {/* Main Content */}
-      <main className={`flex-1 flex flex-col h-full min-w-0 overflow-hidden ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'}`}>
+      <main className={`flex-1 flex flex-col h-full w-full min-w-0 ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'} overflow-hidden`}>
         {/* Top Header */}
-        <header className={`h-16 flex items-center justify-between px-6 border-b ${theme === 'dark' ? 'border-[#282f39] bg-[#111418]' : 'border-gray-200 bg-white'} shrink-0 z-20`}>
+        <header className={`h-16 flex items-center justify-between px-4 sm:px-6 border-b ${theme === 'dark' ? 'border-[#282f39] bg-[#111418]' : 'border-gray-200 bg-white'} shrink-0 z-20`}>
           <div className="flex items-center gap-4">
-            <h2 className={`${theme === 'dark' ? 'text-white' : 'text-gray-900'} text-lg font-bold leading-tight tracking-tight`}>Dashboard</h2>
+            {/* Mobile Menu Button */}
+            <button
+              onClick={toggleMobileSidebar}
+              className={`lg:hidden ${theme === 'dark' ? 'text-[#9da8b9] hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}
+              aria-label="Toggle menu"
+            >
+              <Menu size={24} />
+            </button>
+            <h2 className={`${theme === 'dark' ? 'text-white' : 'text-gray-900'} text-base sm:text-lg font-bold leading-tight tracking-tight`}>Dashboard</h2>
           </div>
 
           <div className="flex items-center gap-6">
@@ -547,10 +557,10 @@ const Dashboard = () => {
             </div>
 
             {/* Actions */}
-            <div className={`flex items-center gap-4 border-l ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} pl-6`}>
+            <div className={`flex items-center gap-2 sm:gap-4 border-l ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} pl-2 sm:pl-6`}>
               <button 
                 onClick={() => navigate('/notifications')}
-                className={`${theme === 'dark' ? 'text-[#9da8b9] hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors relative`}
+                className={`${theme === 'dark' ? 'text-[#9da8b9] hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors relative p-2`}
               >
                 <Bell className="w-5 h-5" />
                 {unreadNotifications > 0 && (
@@ -559,14 +569,14 @@ const Dashboard = () => {
               </button>
               <button 
                 onClick={() => navigate('/')}
-                className={`${theme === 'dark' ? 'text-[#9da8b9] hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}
+                className={`${theme === 'dark' ? 'text-[#9da8b9] hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors hidden sm:block p-2`}
                 title="Help & Documentation"
               >
                 <HelpCircle className="w-5 h-5" />
               </button>
               <button 
                 onClick={() => navigate('/settings')}
-                className={`${theme === 'dark' ? 'text-[#9da8b9] hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}
+                className={`${theme === 'dark' ? 'text-[#9da8b9] hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors p-2`}
               >
                 <Settings className="w-5 h-5" />
               </button>
@@ -575,44 +585,45 @@ const Dashboard = () => {
         </header>
 
         {/* KPI Ribbon */}
-        <div className={`${theme === 'dark' ? 'bg-[#111418] border-[#282f39]' : 'bg-white border-gray-200'} border-b px-6 py-4 shrink-0`}>
-          <div className="flex items-center gap-8 text-sm">
+        <div className={`${theme === 'dark' ? 'bg-[#111418] border-[#282f39]' : 'bg-white border-gray-200'} border-b px-4 sm:px-6 py-4 shrink-0 overflow-x-auto`}>
+          <div className="flex items-center gap-4 sm:gap-8 text-sm min-w-max">
             <div className="flex items-baseline gap-2">
-              <span className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} tracking-tight`}>{stats.totalTasks}</span>
-              <span className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} font-medium uppercase text-xs tracking-wide`}>Total Tasks</span>
+              <span className={`text-xl sm:text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} tracking-tight`}>{stats.totalTasks}</span>
+              <span className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} font-medium uppercase text-[10px] sm:text-xs tracking-wide whitespace-nowrap`}>Total Tasks</span>
             </div>
             <div className={`h-8 w-px ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-gray-200'}`}></div>
             <div className="flex items-baseline gap-2">
-              <span className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} tracking-tight`}>{stats.myTasks}</span>
-              <span className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} font-medium uppercase text-xs tracking-wide`}>Assigned to Me</span>
+              <span className={`text-xl sm:text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} tracking-tight`}>{stats.myTasks}</span>
+              <span className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} font-medium uppercase text-[10px] sm:text-xs tracking-wide whitespace-nowrap`}>Assigned to Me</span>
             </div>
             <div className={`h-8 w-px ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-gray-200'}`}></div>
             <div className="flex items-baseline gap-2">
-              <span className="text-2xl font-bold text-red-400 tracking-tight">{stats.overdueTasks}</span>
-              <span className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} font-medium uppercase text-xs tracking-wide`}>Overdue</span>
+              <span className="text-xl sm:text-2xl font-bold text-red-400 tracking-tight">{stats.overdueTasks}</span>
+              <span className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} font-medium uppercase text-[10px] sm:text-xs tracking-wide whitespace-nowrap`}>Overdue</span>
             </div>
             <div className={`h-8 w-px ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-gray-200'}`}></div>
             <div className="flex items-baseline gap-2">
-              <span className="text-2xl font-bold text-[#136dec] tracking-tight">
+              <span className="text-xl sm:text-2xl font-bold text-[#136dec] tracking-tight">
                 {stats.totalTasks > 0 ? Math.round((stats.inProgress / stats.totalTasks) * 100) : 0}%
               </span>
-              <span className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} font-medium uppercase text-xs tracking-wide`}>Team Capacity</span>
+              <span className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} font-medium uppercase text-[10px] sm:text-xs tracking-wide whitespace-nowrap`}>Team Capacity</span>
             </div>
             <div className="ml-auto flex items-center gap-3">
-              <span className={`text-xs ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`}>Last updated: Just now</span>
+              <span className={`text-xs ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} hidden sm:inline`}>Last updated: Just now</span>
               <Link
                 to="/tasks"
-                className="flex items-center gap-2 bg-[#136dec] hover:bg-[#1258c4] text-white text-xs font-bold px-3 py-2 rounded-[0.125rem] transition-colors"
+                className="flex items-center gap-2 bg-[#136dec] hover:bg-[#1258c4] text-white text-xs font-bold px-3 py-2 rounded-[0.125rem] transition-colors whitespace-nowrap"
               >
                 <Plus className="w-4 h-4" />
-                New Task
+                <span className="hidden sm:inline">New Task</span>
+                <span className="sm:hidden">New</span>
               </Link>
             </div>
           </div>
         </div>
 
         {/* Dashboard Content */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6">
           
           {/* Analytics Charts Section */}
           {user?.role !== 'member' && (
@@ -627,22 +638,26 @@ const Dashboard = () => {
                 </Link>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6">
                 {/* Status Distribution Pie Chart */}
-                <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-4`}>
-                  <h4 className={`text-xs font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} uppercase tracking-wider mb-3`}>Status Distribution</h4>
-                  <ResponsiveContainer width="100%" height={200}>
-                    <PieChart>
-                      <Pie
-                        data={analyticsData.statusDistribution}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        label={({ name, percent }) => `${name.split(' ')[0]} ${(percent * 100).toFixed(0)}%`}
-                        outerRadius={60}
-                        fill="#8884d8"
-                        dataKey="value"
-                      >
+                <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-4 sm:p-6`}>
+                  <h4 className={`text-sm sm:text-base font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-4`}>Status Distribution</h4>
+                  <div className="h-[280px] sm:h-[300px] w-full" style={{ minHeight: '280px', minWidth: '200px' }}>
+                    <ResponsiveContainer width="100%" height="100%" minWidth={200} minHeight={280}>
+                      <PieChart>
+                        <Pie
+                          data={analyticsData.statusDistribution}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={false}
+                          label={({ name, percent }) => {
+                            if (percent < 0.05) return null;
+                            return `${name.split(' ')[0]} ${(percent * 100).toFixed(0)}%`;
+                          }}
+                          outerRadius="70%"
+                          fill="#8884d8"
+                          dataKey="value"
+                        >
                         {analyticsData.statusDistribution.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={
                             entry.name.toLowerCase().includes('done') ? '#22c55e' :
@@ -653,51 +668,99 @@ const Dashboard = () => {
                           } />
                         ))}
                       </Pie>
-                      <Tooltip contentStyle={{ backgroundColor: '#1c2027', border: '1px solid #282f39' }} />
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: theme === 'dark' ? '#1c2027' : '#ffffff', 
+                          border: `1px solid ${theme === 'dark' ? '#282f39' : '#e5e7eb'}`,
+                          borderRadius: '4px',
+                          fontSize: '14px'
+                        }} 
+                      />
                     </PieChart>
                   </ResponsiveContainer>
+                  </div>
                 </div>
 
                 {/* Priority Distribution Bar Chart */}
-                <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-4`}>
-                  <h4 className={`text-xs font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} uppercase tracking-wider mb-3`}>Priority Breakdown</h4>
-                  <ResponsiveContainer width="100%" height={200}>
-                    <BarChart data={analyticsData.priorityDistribution}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#282f39" />
-                      <XAxis dataKey="name" stroke="#9da8b9" tick={{ fontSize: 10 }} />
-                      <YAxis stroke="#9da8b9" tick={{ fontSize: 10 }} />
-                      <Tooltip contentStyle={{ backgroundColor: '#1c2027', border: '1px solid #282f39' }} />
-                      <Bar dataKey="value" fill="#136dec" />
-                    </BarChart>
-                  </ResponsiveContainer>
+                <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-4 sm:p-6`}>
+                  <h4 className={`text-sm sm:text-base font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-4`}>Priority Breakdown</h4>
+                  <div className="h-[280px] sm:h-[300px] w-full" style={{ minHeight: '280px', minWidth: '200px' }}>
+                    <ResponsiveContainer width="100%" height="100%" minWidth={200} minHeight={280}>
+                      <BarChart data={analyticsData.priorityDistribution} margin={{ top: 10, right: 10, left: 0, bottom: 10 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke={theme === 'dark' ? '#282f39' : '#e5e7eb'} />
+                        <XAxis 
+                          dataKey="name" 
+                          stroke={theme === 'dark' ? '#9da8b9' : '#6b7280'} 
+                          tick={{ fontSize: 13 }}
+                          tickLine={{ stroke: theme === 'dark' ? '#9da8b9' : '#6b7280' }}
+                        />
+                        <YAxis 
+                          stroke={theme === 'dark' ? '#9da8b9' : '#6b7280'} 
+                          tick={{ fontSize: 13 }}
+                          tickLine={{ stroke: theme === 'dark' ? '#9da8b9' : '#6b7280' }}
+                        />
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: theme === 'dark' ? '#1c2027' : '#ffffff', 
+                            border: `1px solid ${theme === 'dark' ? '#282f39' : '#e5e7eb'}`,
+                            borderRadius: '4px',
+                            fontSize: '14px'
+                          }} 
+                        />
+                        <Bar dataKey="value" fill="#136dec" radius={[8, 8, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
                 </div>
 
                 {/* Team Performance */}
-                <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-4`}>
-                  <h4 className={`text-xs font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} uppercase tracking-wider mb-3`}>Team Distribution</h4>
-                  <ResponsiveContainer width="100%" height={200}>
-                    <BarChart data={analyticsData.teamDistribution.slice(0, 5)}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#282f39" />
-                      <XAxis dataKey="name" stroke="#9da8b9" tick={{ fontSize: 9 }} angle={-15} textAnchor="end" height={60} />
-                      <YAxis stroke="#9da8b9" tick={{ fontSize: 10 }} />
-                      <Tooltip contentStyle={{ backgroundColor: '#1c2027', border: '1px solid #282f39' }} />
-                      <Bar dataKey="value" fill="#22c55e">
-                        {analyticsData.teamDistribution.slice(0, 5).map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={`hsl(${index * 50}, 70%, 50%)`} />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
+                <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-4 sm:p-6`}>
+                  <h4 className={`text-sm sm:text-base font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-4`}>Team Distribution</h4>
+                  <div className="h-[280px] sm:h-[300px] w-full" style={{ minHeight: '280px', minWidth: '200px' }}>
+                    <ResponsiveContainer width="100%" height="100%" minWidth={200} minHeight={280}>
+                      <BarChart data={analyticsData.teamDistribution.slice(0, 5)} margin={{ top: 10, right: 10, left: 0, bottom: 60 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke={theme === 'dark' ? '#282f39' : '#e5e7eb'} />
+                        <XAxis 
+                          dataKey="name" 
+                          stroke={theme === 'dark' ? '#9da8b9' : '#6b7280'} 
+                          tick={{ fontSize: 12 }} 
+                          angle={-35} 
+                          textAnchor="end" 
+                          height={80}
+                          interval={0}
+                          tickLine={{ stroke: theme === 'dark' ? '#9da8b9' : '#6b7280' }}
+                        />
+                        <YAxis 
+                          stroke={theme === 'dark' ? '#9da8b9' : '#6b7280'} 
+                          tick={{ fontSize: 13 }}
+                          tickLine={{ stroke: theme === 'dark' ? '#9da8b9' : '#6b7280' }}
+                        />
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: theme === 'dark' ? '#1c2027' : '#ffffff', 
+                            border: `1px solid ${theme === 'dark' ? '#282f39' : '#e5e7eb'}`,
+                            borderRadius: '4px',
+                            fontSize: '14px'
+                          }} 
+                        />
+                        <Bar dataKey="value" fill="#22c55e" radius={[8, 8, 0, 0]}>
+                          {analyticsData.teamDistribution.slice(0, 5).map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={`hsl(${index * 50}, 70%, 50%)`} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
                 </div>
               </div>
             </div>
           )}
 
-          <div className="flex flex-col xl:flex-row gap-6 h-full">
+          <div className="flex flex-col xl:flex-row gap-3 sm:gap-4 md:gap-6 h-full">
             {/* LEFT: Main Task Table */}
             <div className="flex-1 flex flex-col min-w-0">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className={`${theme === 'dark' ? 'text-white' : 'text-gray-900'} text-lg font-bold leading-tight`}>Active Task Queue</h3>
+              <div className="flex items-center justify-between mb-3 sm:mb-4">
+                <h3 className={`${theme === 'dark' ? 'text-white' : 'text-gray-900'} text-sm sm:text-base md:text-lg font-bold leading-tight`}>Active Task Queue</h3>
                 <div className="flex gap-2 items-center">
                   <button 
                     onClick={() => {
@@ -759,7 +822,7 @@ const Dashboard = () => {
                       Clear All
                     </button>
                   </div>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
                     <select
                       value={filters.status}
                       onChange={(e) => setFilters({...filters, status: e.target.value})}

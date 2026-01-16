@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { useSidebar } from '../context/SidebarContext';
 import Sidebar from '../components/Sidebar';
 import api from '../api/axios';
-import { Bell, Check, CheckCheck, Trash2, Filter, Calendar, User, AlertCircle } from 'lucide-react';
+import { Bell, Check, CheckCheck, Trash2, Filter, Calendar, User, AlertCircle, Menu } from 'lucide-react';
 
 const Notifications = () => {
   const { user } = useAuth();
   const { theme } = useTheme();
+  const { toggleMobileSidebar } = useSidebar();
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all'); // all, unread, read
@@ -129,7 +131,7 @@ const Notifications = () => {
 
   if (loading) {
     return (
-      <div className={`flex h-screen w-full overflow-hidden ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'}`}>
+      <div className={`flex h-screen w-full ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'}`}>
         <Sidebar />
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
@@ -142,18 +144,28 @@ const Notifications = () => {
   }
 
   return (
-    <div className={`flex h-screen w-full overflow-hidden ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'}`}>
+    <div className={`flex h-screen w-full ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'}`}>
       <Sidebar />
 
-      <main className={`flex-1 flex flex-col h-full min-w-0 overflow-hidden ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'}`}>
+      <main className={`flex-1 flex flex-col h-full w-full min-w-0 ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'} overflow-hidden`}>
         {/* Header */}
         <header className={`border-b ${theme === 'dark' ? 'border-[#282f39] bg-[#111418]' : 'border-gray-200 bg-white'} shrink-0`}>
           <div className="flex items-center justify-between px-6 py-4">
-            <div>
-              <h2 className={`${theme === 'dark' ? 'text-white' : 'text-gray-900'} text-xl font-bold leading-tight`}>Notifications</h2>
-              <p className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} text-xs mt-1`}>
-                {unreadCount > 0 ? `${unreadCount} unread notification${unreadCount !== 1 ? 's' : ''}` : 'All caught up!'}
-              </p>
+            <div className="flex items-center gap-4">
+              {/* Mobile Menu Button */}
+              <button
+                onClick={toggleMobileSidebar}
+                className={`lg:hidden ${theme === 'dark' ? 'text-[#9da8b9] hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}
+                aria-label="Toggle menu"
+              >
+                <Menu size={24} />
+              </button>
+              <div>
+                <h2 className={`${theme === 'dark' ? 'text-white' : 'text-gray-900'} text-xl font-bold leading-tight`}>Notifications</h2>
+                <p className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} text-xs mt-1`}>
+                  {unreadCount > 0 ? `${unreadCount} unread notification${unreadCount !== 1 ? 's' : ''}` : 'All caught up!'}
+                </p>
+              </div>
             </div>
             {unreadCount > 0 && (
               <button

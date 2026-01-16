@@ -1,16 +1,18 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { useSidebar } from '../context/SidebarContext';
 import { useConfirmModal } from '../hooks/useConfirmModal';
 import api from '../api/axios';
 import Sidebar from '../components/Sidebar';
 import ConfirmModal from '../components/modals/ConfirmModal';
 import useRealtimeSync from '../hooks/useRealtimeSync';
-import { Search, Users as UsersIcon, User, Trash2, Edit2, Key, Plus, X } from 'lucide-react';
+import { Search, Users as UsersIcon, User, Trash2, Edit2, Key, Plus, X, Menu } from 'lucide-react';
 
 export default function CommunityUserManagement() {
   const { user } = useAuth();
   const { theme } = useTheme();
+  const { toggleMobileSidebar } = useSidebar();
   const isDark = theme === 'dark';
   const confirmModal = useConfirmModal();
   
@@ -231,12 +233,24 @@ export default function CommunityUserManagement() {
         <div className="p-8">
           {/* Header */}
           <div className="mb-6">
-            <h1 className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-              Community User Management
-            </h1>
-            <p className={`mt-2 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-              Manage users in your community workspace
-            </p>
+            <div className="flex items-center gap-4">
+              {/* Mobile Menu Button */}
+              <button
+                onClick={toggleMobileSidebar}
+                className={`lg:hidden ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}
+                aria-label="Toggle menu"
+              >
+                <Menu size={24} />
+              </button>
+              <div>
+                <h1 className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                  Community User Management
+                </h1>
+                <p className={`mt-2 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                  Manage users in your community workspace
+                </p>
+              </div>
+            </div>
           </div>
 
           {/* Alerts */}

@@ -1,16 +1,18 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { useSidebar } from '../context/SidebarContext';
 import { useConfirmModal } from '../hooks/useConfirmModal';
 import Sidebar from '../components/Sidebar';
 import ConfirmModal from '../components/modals/ConfirmModal';
 import api from '../api/axios';
 import useRealtimeSync from '../hooks/useRealtimeSync';
-import { Plus, X, Users, UserPlus, UserMinus, Trash2, Pin, GripVertical, Search, Filter } from 'lucide-react';
+import { Plus, X, Users, UserPlus, UserMinus, Trash2, Pin, GripVertical, Search, Filter, Menu } from 'lucide-react';
 
 const Teams = () => {
   const { user } = useAuth();
   const { theme } = useTheme();
+  const { toggleMobileSidebar } = useSidebar();
   const confirmModal = useConfirmModal();
   const [teams, setTeams] = useState([]);
   const [users, setUsers] = useState([]);
@@ -317,15 +319,25 @@ const Teams = () => {
         <Sidebar />
         <div className="flex-1 p-4 sm:p-6 lg:p-8">
         <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className={`text-3xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-              {user?.role === 'team_lead' ? 'My Team' : 'Teams'}
-            </h1>
-            <p className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} mt-2`}>
-              {user?.role === 'team_lead' 
-                ? 'Manage your team and members' 
-                : 'Manage your teams and members'}
-            </p>
+          <div className="flex items-center gap-4">
+            {/* Mobile Menu Button */}
+            <button
+              onClick={toggleMobileSidebar}
+              className={`lg:hidden ${theme === 'dark' ? 'text-[#9da8b9] hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}
+              aria-label="Toggle menu"
+            >
+              <Menu size={24} />
+            </button>
+            <div>
+              <h1 className={`text-3xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                {user?.role === 'team_lead' ? 'My Team' : 'Teams'}
+              </h1>
+              <p className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} mt-2`}>
+                {user?.role === 'team_lead' 
+                  ? 'Manage your team and members' 
+                  : 'Manage your teams and members'}
+              </p>
+            </div>
           </div>
           {['admin', 'hr', 'community_admin'].includes(user?.role) && (
             <div className="flex items-center gap-3">
