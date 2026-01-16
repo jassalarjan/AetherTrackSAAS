@@ -2,19 +2,21 @@ import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { useSidebar } from '../context/SidebarContext';
 import { useConfirmModal } from '../hooks/useConfirmModal';
 import Sidebar from '../components/Sidebar';
 import ThemeToggle from '../components/ThemeToggle';
 import NotificationSettings from '../components/NotificationSettings';
-import SessionSettings from '../components/SessionSettings';
+
 import ConfirmModal from '../components/modals/ConfirmModal';
 import api from '../api/axios';
-import { User, Settings as SettingsIcon, Palette, Monitor, Lock, Eye, EyeOff, Bell, AlertCircle, Camera, Trash2, Upload, AlertTriangle } from 'lucide-react';
+import { User, Settings as SettingsIcon, Palette, Monitor, Lock, Eye, EyeOff, Bell, AlertCircle, Camera, Trash2, Upload, AlertTriangle, Menu } from 'lucide-react';
 
 const Settings = () => {
   const navigate = useNavigate();
   const { user, updateUser, logout } = useAuth();
   const { theme } = useTheme();
+  const { toggleMobileSidebar } = useSidebar();
   const confirmModal = useConfirmModal();
   const fileInputRef = useRef(null);
   const [showOldPassword, setShowOldPassword] = useState(false);
@@ -220,16 +222,26 @@ const Settings = () => {
   };
 
   return (
-    <div className={`flex h-screen w-full overflow-hidden ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'}`}>
+    <div className={`flex h-screen w-full ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'}`}>
       <Sidebar />
 
-      <main className={`flex-1 flex flex-col h-full min-w-0 ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'}`}>
+      <main className={`flex-1 flex flex-col h-full w-full min-w-0 ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'} overflow-hidden`}>
         {/* Header */}
         <header className={`border-b ${theme === 'dark' ? 'border-[#282f39] bg-[#111418]' : 'border-gray-200 bg-white'} shrink-0`}>
           <div className="flex items-center justify-between px-6 py-4">
-            <div>
-              <h2 className={`${theme === 'dark' ? 'text-white' : 'text-gray-900'} text-xl font-bold leading-tight`}>Settings</h2>
-              <p className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} text-xs mt-1`}>Customize your TaskFlow experience</p>
+            <div className="flex items-center gap-4">
+              {/* Mobile Menu Button */}
+              <button
+                onClick={toggleMobileSidebar}
+                className={`lg:hidden ${theme === 'dark' ? 'text-[#9da8b9] hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}
+                aria-label="Toggle menu"
+              >
+                <Menu size={24} />
+              </button>
+              <div>
+                <h2 className={`${theme === 'dark' ? 'text-white' : 'text-gray-900'} text-xl font-bold leading-tight`}>Settings</h2>
+                <p className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} text-xs mt-1`}>Customize your TaskFlow experience</p>
+              </div>
             </div>
           </div>
         </header>
@@ -520,11 +532,6 @@ const Settings = () => {
                 <h3 className={`text-lg font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} uppercase tracking-wider`}>Notifications</h3>
               </div>
               <NotificationSettings />
-            </div>
-
-            {/* Session Timeout Settings */}
-            <div className={`${theme === 'dark' ? 'bg-[#1c2027] border-[#282f39]' : 'bg-white border-gray-200'} rounded border p-6`}>
-              <SessionSettings />
             </div>
 
             {/* Debug Info - Admin Only */}

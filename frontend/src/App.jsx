@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { SidebarProvider } from './context/SidebarContext';
 import { ProtectedRoute } from './routes/ProtectedRoute';
 import useNotifications from './hooks/useNotifications';
 import Login from './pages/Login';
@@ -152,9 +153,11 @@ function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <BrowserRouter>
-          <AppContent />
-        </BrowserRouter>
+        <SidebarProvider>
+          <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+            <AppContent />
+          </BrowserRouter>
+        </SidebarProvider>
       </AuthProvider>
     </ThemeProvider>
   );

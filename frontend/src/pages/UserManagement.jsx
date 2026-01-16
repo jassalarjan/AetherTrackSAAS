@@ -1,16 +1,18 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { useSidebar } from '../context/SidebarContext';
 import { useConfirmModal } from '../hooks/useConfirmModal';
 import api from '../api/axios';
 import Sidebar from '../components/Sidebar';
 import ConfirmModal from '../components/modals/ConfirmModal';
 import useRealtimeSync from '../hooks/useRealtimeSync';
-import { Upload, Download, FileJson, FileSpreadsheet, X, Search, Filter, Users as UsersIcon, User, Shield, Trash2, Edit2, Key, Plus } from 'lucide-react';
+import { Upload, Download, FileJson, FileSpreadsheet, X, Search, Filter, Users as UsersIcon, User, Shield, Trash2, Edit2, Key, Plus, Menu } from 'lucide-react';
 
 export default function UserManagement() {
   const { user } = useAuth();
   const { theme } = useTheme();
+  const { toggleMobileSidebar } = useSidebar();
   const confirmModal = useConfirmModal();
   const [users, setUsers] = useState([]);
   const [teams, setTeams] = useState([]);
@@ -19,6 +21,8 @@ export default function UserManagement() {
   const [success, setSuccess] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [showBulkImportModal, setShowBulkImportModal] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passwordResetData, setPasswordResetData] = useState({ userId: '', userEmail: '', newPassword: '' });
   const [bulkImportFile, setBulkImportFile] = useState(null);
   const [bulkImportLoading, setBulkImportLoading] = useState(false);
   const [bulkImportResults, setBulkImportResults] = useState(null);
@@ -206,17 +210,26 @@ export default function UserManagement() {
   };
 
   const handleResetPassword = async (userId, userEmail) => {
-    const newPassword = prompt(`Enter new password for ${userEmail}:`);
-    if (!newPassword) return;
+    setPasswordResetData({ userId, userEmail, newPassword: '' });
+    setShowPasswordModal(true);
+  };
+
+  const handlePasswordResetSubmit = async (e) => {
+    e.preventDefault();
+    const { userId, newPassword } = passwordResetData;
+    
     if (newPassword.length < 6) {
       setError('Password must be at least 6 characters');
       setTimeout(() => setError(''), 3000);
       return;
     }
+    
     try {
       await api.patch(`/users/${userId}/password`, { password: newPassword });
       setSuccess('Password reset successfully');
       setTimeout(() => setSuccess(''), 3000);
+      setShowPasswordModal(false);
+      setPasswordResetData({ userId: '', userEmail: '', newPassword: '' });
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to reset password');
       setTimeout(() => setError(''), 3000);
@@ -291,7 +304,7 @@ export default function UserManagement() {
 
   if (!hasPermission) {
     return (
-      <div className={`flex h-screen w-full overflow-hidden ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'}`}>
+      <div className={`flex h-screen w-full ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'}`}>
         <Sidebar />
         <main className={`flex-1 flex items-center justify-center ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'}`}>
           <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} p-8 rounded border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'}`}>
@@ -320,87 +333,103 @@ export default function UserManagement() {
   }
 
   return (
-    <div className={`flex h-screen w-full overflow-hidden ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'}`}>
+    <div className={`flex h-screen w-full ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'}`}>
       <Sidebar />
 
-      <main className={`flex-1 flex flex-col h-full min-w-0 ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'}`}>
+      <main className={`flex-1 flex flex-col h-full w-full min-w-0 ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'} overflow-hidden`}>
         {/* Header */}
         <header className={`border-b ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'} shrink-0`}>
-          <div className="flex items-center justify-between px-6 py-4">
-            <div>
-              <h2 className={`${theme === 'dark' ? 'text-white' : 'text-gray-900'} text-xl font-bold leading-tight`}>User & Team Management</h2>
-              <p className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} text-xs mt-1`}>{users.length} users • {teams.length} teams</p>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between px-3 sm:px-4 md:px-6 py-3 sm:py-4 gap-2 sm:gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
+              {/* Mobile/Tablet Menu Button */}
+              <button
+                onClick={toggleMobileSidebar}
+                className={`lg:hidden ${theme === 'dark' ? 'text-[#9da8b9] hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}
+                aria-label="Toggle menu"
+              >
+                <Menu size={20} className="sm:w-6 sm:h-6" />
+              </button>
+              <div>
+                <h2 className={`${theme === 'dark' ? 'text-white' : 'text-gray-900'} text-base sm:text-lg md:text-xl font-bold leading-tight`}>User & Team Management</h2>
+                <p className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} text-[10px] sm:text-xs mt-0.5 sm:mt-1`}>{users.length} users • {teams.length} teams</p>
+              </div>
             </div>
-            <div className="flex gap-3">
+            <div className="flex gap-1.5 sm:gap-2">
               <button
                 onClick={() => setShowBulkImportModal(true)}
-                className="flex items-center justify-center rounded h-9 px-4 bg-green-600 text-white gap-2 text-sm font-bold hover:bg-green-700 transition-colors"
+                className="flex items-center justify-center rounded h-7 sm:h-8 md:h-9 px-2 sm:px-3 md:px-4 bg-green-600 text-white gap-1 sm:gap-1.5 text-[10px] sm:text-xs md:text-sm font-bold hover:bg-green-700 transition-colors"
               >
-                <Upload size={18} />
+                <Upload size={14} className="sm:w-4 sm:h-4" />
                 <span className="hidden sm:inline">Bulk Import</span>
+                <span className="sm:hidden">Import</span>
               </button>
               <button
                 onClick={openCreateModal}
-                className="flex items-center justify-center rounded h-9 px-4 bg-[#136dec] text-white gap-2 text-sm font-bold hover:bg-blue-600 transition-colors"
+                className="flex items-center justify-center rounded h-7 sm:h-8 md:h-9 px-2 sm:px-3 md:px-4 bg-[#136dec] text-white gap-1 sm:gap-1.5 text-[10px] sm:text-xs md:text-sm font-bold hover:bg-blue-600 transition-colors"
               >
-                <Plus size={18} />
-                <span>Create User</span>
+                <Plus size={14} className="sm:w-4 sm:h-4" />
+                <span className="hidden sm:inline">Create User</span>
+                <span className="sm:hidden">Create</span>
               </button>
             </div>
           </div>
 
           {/* Filters */}
-          <div className="px-6 pb-4">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-              <div className="relative col-span-1 md:col-span-2">
-                <Search className={`absolute left-3 top-1/2 -translate-y-1/2 ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`} size={18} />
+          <div className="px-1 sm:px-4 md:px-6 pb-1 sm:pb-3 md:pb-4">
+            <div className="flex flex-col gap-0.5 sm:gap-2 md:gap-3">
+              <div className="relative">
+                <Search className={`absolute left-1 sm:left-3 top-1/2 -translate-y-1/2 ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`} size={11} />
                 <input
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className={`w-full h-9 pl-10 pr-4 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-white'} border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} rounded text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'} placeholder-[#6b7280] focus:ring-2 focus:ring-[#136dec] focus:border-transparent`}
-                  placeholder="Search users by name, email, or team..."
+                  className={`w-full h-5 sm:h-8 md:h-9 lg:h-10 pl-5 sm:pl-8 md:pl-10 pr-1 sm:pr-3 md:pr-4 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-white'} border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} rounded text-[9px] sm:text-xs md:text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'} placeholder-[#6b7280] focus:ring-1 focus:ring-[#136dec] focus:border-transparent`}
+                  placeholder="Search..."
                 />
               </div>
-              <select
-                value={roleFilter}
-                onChange={(e) => setRoleFilter(e.target.value)}
-                className={`h-9 px-3 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-white'} border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} rounded text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'} focus:ring-2 focus:ring-[#136dec] focus:border-transparent`}
-              >
-                <option value="all">All Roles</option>
-                <option value="admin">Admin</option>
-                <option value="hr">HR</option>
-                <option value="team_lead">Team Lead</option>
-                <option value="member">Member</option>
-              </select>
-              <select
-                value={teamFilter}
-                onChange={(e) => setTeamFilter(e.target.value)}
-                className={`h-9 px-3 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-white'} border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} rounded text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'} focus:ring-2 focus:ring-[#136dec] focus:border-transparent`}
-              >
-                <option value="all">All Teams</option>
-                <option value="no_team">No Team</option>
-                {teams.map(team => (
-                  <option key={team._id} value={team._id}>{team.name}</option>
-                ))}
-              </select>
+              <div className="grid grid-cols-2 gap-0.5 sm:gap-2 md:gap-3">
+                <select
+                  value={roleFilter}
+                  onChange={(e) => setRoleFilter(e.target.value)}
+                  className={`h-5 sm:h-8 md:h-9 lg:h-10 px-0.5 sm:px-2 md:px-3 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-white'} border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} rounded text-[8px] sm:text-xs md:text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'} focus:ring-1 focus:ring-[#136dec] focus:border-transparent overflow-hidden`}
+                  style={{ textOverflow: 'ellipsis' }}
+                >
+                  <option value="all">All</option>
+                  <option value="admin">Admin</option>
+                  <option value="hr">HR</option>
+                  <option value="team_lead">Lead</option>
+                  <option value="member">Member</option>
+                </select>
+                <select
+                  value={teamFilter}
+                  onChange={(e) => setTeamFilter(e.target.value)}
+                  className={`h-5 sm:h-8 md:h-9 lg:h-10 px-0.5 sm:px-2 md:px-3 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-white'} border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} rounded text-[8px] sm:text-xs md:text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'} focus:ring-1 focus:ring-[#136dec] focus:border-transparent overflow-hidden`}
+                  style={{ textOverflow: 'ellipsis' }}
+                >
+                  <option value="all">All Teams</option>
+                  <option value="no_team">No Team</option>
+                  {teams.map(team => (
+                    <option key={team._id} value={team._id}>{team.name}</option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
 
           {/* Bulk Actions */}
           {selectedUserIds.length > 0 && (
-            <div className="px-6 pb-4">
-              <div className="bg-[#136dec]/10 border border-[#136dec]/30 rounded p-3 flex items-center justify-between">
-                <span className="text-sm text-white font-medium">{selectedUserIds.length} user(s) selected</span>
+            <div className="px-4 sm:px-6 pb-4">
+              <div className={`${theme === 'dark' ? 'bg-[#136dec]/10 border-[#136dec]/30' : 'bg-blue-50 border-blue-200'} border rounded p-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3`}>
+                <span className={`text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'} font-medium`}>{selectedUserIds.length} user(s) selected</span>
                 <div className="flex gap-2">
                   <button
                     onClick={() => setSelectedUserIds([])}
-                    className="text-xs text-[#9da8b9] hover:text-white transition-colors"
+                    className={`text-xs ${theme === 'dark' ? 'text-[#9da8b9] hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors px-2 py-1`}
                   >
                     Clear Selection
                   </button>
                   <button
                     onClick={handleBulkDelete}
-                    className="flex items-center gap-2 px-3 py-1.5 bg-red-600 text-white rounded text-xs font-medium hover:bg-red-700 transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-red-600 text-white rounded text-xs font-medium hover:bg-red-700 transition-colors"
                   >
                     <Trash2 size={14} />
                     Delete Selected
@@ -412,7 +441,7 @@ export default function UserManagement() {
         </header>
 
         {/* Main Content */}
-        <div className="flex-1 overflow-auto p-6">
+        <div className="flex-1 overflow-auto p-4 sm:p-6">
           {error && (
             <div className="bg-red-500/10 border border-red-500/30 rounded p-3 mb-4 flex items-center justify-between">
               <span className="text-sm text-red-400">{error}</span>
@@ -431,8 +460,8 @@ export default function UserManagement() {
             </div>
           )}
 
-          {/* Users Table */}
-          <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} overflow-hidden`}>
+          {/* Desktop Table View */}
+          <div className={`hidden md:block ${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} overflow-hidden`}>
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className={`${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'}`}>
@@ -447,7 +476,7 @@ export default function UserManagement() {
                     </th>
                     <th className={`px-4 py-3 text-left text-[10px] font-bold ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} uppercase tracking-wider`}>User</th>
                     <th className={`px-4 py-3 text-left text-[10px] font-bold ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} uppercase tracking-wider`}>Role</th>
-                    <th className={`px-4 py-3 text-left text-[10px] font-bold ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} uppercase tracking-wider hidden md:table-cell`}>Team</th>
+                    <th className={`px-4 py-3 text-left text-[10px] font-bold ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} uppercase tracking-wider`}>Team</th>
                     <th className={`px-4 py-3 text-left text-[10px] font-bold ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} uppercase tracking-wider hidden lg:table-cell`}>Created</th>
                     <th className={`px-4 py-3 text-right text-[10px] font-bold ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} uppercase tracking-wider`}>Actions</th>
                   </tr>
@@ -482,7 +511,7 @@ export default function UserManagement() {
                               {badge.label}
                             </span>
                           </td>
-                          <td className={`px-4 py-3 text-sm ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} hidden md:table-cell`}>
+                          <td className={`px-4 py-3 text-sm ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`}>
                             {usr.team_id?.name || 'No Team'}
                           </td>
                           <td className={`px-4 py-3 text-sm ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} hidden lg:table-cell`}>
@@ -507,7 +536,7 @@ export default function UserManagement() {
                               {usr._id !== user.id && (
                                 <button
                                   onClick={() => handleDelete(usr._id, usr.email)}
-                                  className="p-1.5 text-[#9da8b9] hover:text-red-500 hover:bg-red-500/10 rounded transition-colors"
+                                  className={`p-1.5 ${theme === 'dark' ? 'text-[#9da8b9] hover:text-red-500 hover:bg-red-500/10' : 'text-gray-600 hover:text-red-600 hover:bg-red-50'} rounded transition-colors`}
                                   title="Delete User"
                                 >
                                   <Trash2 size={16} />
@@ -523,19 +552,86 @@ export default function UserManagement() {
               </table>
             </div>
           </div>
+
+          {/* Mobile Card View */}
+          <div className="md:hidden space-y-3">
+            {filteredUsers.length === 0 ? (
+              <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-8 text-center ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`}>
+                No users found
+              </div>
+            ) : (
+              filteredUsers.map((usr) => {
+                const badge = getRoleBadge(usr.role);
+                return (
+                  <div key={usr._id} className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-4`}>
+                    <div className="flex items-start gap-3">
+                      <input
+                        type="checkbox"
+                        checked={selectedUserIds.includes(usr._id)}
+                        onChange={() => toggleSelectUser(usr._id)}
+                        disabled={usr._id === user.id}
+                        className="mt-1 rounded border-[#4b5563] text-[#136dec] focus:ring-[#136dec] disabled:opacity-50"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <div className="flex-1 min-w-0">
+                            <h3 className={`text-sm font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} truncate`}>{usr.full_name}</h3>
+                            <p className={`text-xs ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} truncate mt-0.5`}>{usr.email}</p>
+                          </div>
+                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded ${badge.bg} ${badge.text} shrink-0`}>
+                            {badge.label}
+                          </span>
+                        </div>
+                        <div className={`text-xs ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} mb-3`}>
+                          <div className="flex items-center gap-1.5">
+                            <UsersIcon size={12} />
+                            <span>{usr.team_id?.name || 'No Team'}</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => openEditModal(usr)}
+                            className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-gray-100'} ${theme === 'dark' ? 'text-white' : 'text-gray-900'} rounded text-xs font-medium transition-colors`}
+                          >
+                            <Edit2 size={14} />
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleResetPassword(usr._id, usr.email)}
+                            className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-gray-100'} ${theme === 'dark' ? 'text-white' : 'text-gray-900'} rounded text-xs font-medium transition-colors`}
+                          >
+                            <Key size={14} />
+                            Reset
+                          </button>
+                          {usr._id !== user.id && (
+                            <button
+                              onClick={() => handleDelete(usr._id, usr.email)}
+                              className="px-3 py-2 bg-red-500/10 text-red-500 rounded text-xs font-medium hover:bg-red-500/20 transition-colors"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
         </div>
       </main>
 
       {/* Create/Edit Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-          <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-8 max-w-md w-full`}>
-            <div className="flex justify-between items-center mb-6">
-              <h2 className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+          <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-5 sm:p-8 max-w-md w-full max-h-[90vh] overflow-y-auto`}>
+            <div className="flex justify-between items-center mb-4 sm:mb-6">
+              <h2 className={`text-lg sm:text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                 {modalMode === 'create' ? 'Create New User' : 'Edit User'}
               </h2>
               <button onClick={() => setShowModal(false)} className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} ${theme === 'dark' ? 'hover:text-white' : 'hover:text-gray-900'}`}>
-                <X size={24} />
+                <X size={20} />
               </button>
             </div>
 
@@ -623,17 +719,17 @@ export default function UserManagement() {
                 </div>
               )}
 
-              <div className="flex justify-end space-x-4 pt-4">
+              <div className="flex flex-col sm:flex-row sm:justify-end gap-2 sm:gap-4 pt-4">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className={`px-6 py-2 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-gray-200'} ${theme === 'dark' ? 'text-white' : 'text-gray-900'} rounded ${theme === 'dark' ? 'hover:bg-[#3a4454]' : 'hover:bg-gray-300'} transition-colors`}
+                  className={`px-4 sm:px-6 py-2.5 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-gray-200'} ${theme === 'dark' ? 'text-white' : 'text-gray-900'} rounded ${theme === 'dark' ? 'hover:bg-[#3a4454]' : 'hover:bg-gray-300'} transition-colors text-sm sm:text-base`}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2 bg-[#136dec] text-white rounded hover:bg-blue-600 transition-colors font-semibold"
+                  className="px-4 sm:px-6 py-2.5 bg-[#136dec] text-white rounded hover:bg-blue-600 transition-colors font-semibold text-sm sm:text-base"
                 >
                   {modalMode === 'create' ? 'Create User' : 'Update User'}
                 </button>
@@ -646,42 +742,42 @@ export default function UserManagement() {
       {/* Bulk Import Modal */}
       {showBulkImportModal && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-          <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto`}>
-            <div className="flex justify-between items-center mb-6">
-              <h2 className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Bulk Import Users</h2>
+          <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-5 sm:p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto`}>
+            <div className="flex justify-between items-center mb-4 sm:mb-6">
+              <h2 className={`text-lg sm:text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Bulk Import Users</h2>
               <button onClick={() => { setShowBulkImportModal(false); setBulkImportFile(null); setBulkImportResults(null); }} className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} ${theme === 'dark' ? 'hover:text-white' : 'hover:text-gray-900'}`}>
-                <X size={24} />
+                <X size={20} />
               </button>
             </div>
 
-            <div className="space-y-6">
+            <div className="space-y-5 sm:space-y-6">
               <div>
-                <h3 className={`text-sm font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} uppercase tracking-wider mb-3`}>Step 1: Download Template</h3>
-                <div className="flex gap-3">
+                <h3 className={`text-xs sm:text-sm font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} uppercase tracking-wider mb-3`}>Step 1: Download Template</h3>
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                   <button
                     onClick={() => downloadTemplate('excel')}
-                    className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
+                    className="flex items-center justify-center gap-2 px-4 py-2.5 bg-green-600 text-white rounded hover:bg-green-700 transition-colors text-sm"
                   >
-                    <FileSpreadsheet size={18} />
+                    <FileSpreadsheet size={16} />
                     Excel Template
                   </button>
                   <button
                     onClick={() => downloadTemplate('json')}
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                    className="flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-sm"
                   >
-                    <FileJson size={18} />
+                    <FileJson size={16} />
                     JSON Template
                   </button>
                 </div>
               </div>
 
               <div>
-                <h3 className={`text-sm font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} uppercase tracking-wider mb-3`}>Step 2: Upload File</h3>
+                <h3 className={`text-xs sm:text-sm font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} uppercase tracking-wider mb-3`}>Step 2: Upload File</h3>
                 <input
                   type="file"
                   accept=".json,.xlsx,.xls"
                   onChange={handleFileSelect}
-                  className={`w-full px-4 py-2 ${theme === 'dark' ? 'bg-[#111418]' : 'bg-white'} border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} rounded ${theme === 'dark' ? 'text-white' : 'text-gray-900'} file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-[#136dec] file:text-white file:cursor-pointer hover:file:bg-blue-600`}
+                  className={`w-full px-3 py-2 text-sm ${theme === 'dark' ? 'bg-[#111418]' : 'bg-white'} border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} rounded ${theme === 'dark' ? 'text-white' : 'text-gray-900'} file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:bg-[#136dec] file:text-white file:cursor-pointer file:text-sm hover:file:bg-blue-600`}
                 />
                 {bulkImportFile && (
                   <p className={`text-sm ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} mt-2`}>Selected: {bulkImportFile.name}</p>
@@ -690,7 +786,7 @@ export default function UserManagement() {
 
               {bulkImportResults && (
                 <div className="space-y-3">
-                  <h3 className={`text-sm font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} uppercase tracking-wider`}>Import Results</h3>
+                  <h3 className={`text-xs sm:text-sm font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} uppercase tracking-wider`}>Import Results</h3>
                   <div className="space-y-2">
                     <div className="bg-green-500/10 border border-green-500/30 rounded p-3">
                       <p className="text-sm text-green-400">✓ Successfully imported: {bulkImportResults.successful.length} users</p>
@@ -709,17 +805,17 @@ export default function UserManagement() {
                 </div>
               )}
 
-              <div className="flex justify-end gap-3 pt-4">
+              <div className="flex flex-col sm:flex-row sm:justify-end gap-2 sm:gap-3 pt-4">
                 <button
                   onClick={() => { setShowBulkImportModal(false); setBulkImportFile(null); setBulkImportResults(null); }}
-                  className={`px-6 py-2 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-gray-200'} ${theme === 'dark' ? 'text-white' : 'text-gray-900'} rounded ${theme === 'dark' ? 'hover:bg-[#3a4454]' : 'hover:bg-gray-300'} transition-colors`}
+                  className={`px-4 sm:px-6 py-2.5 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-gray-200'} ${theme === 'dark' ? 'text-white' : 'text-gray-900'} rounded ${theme === 'dark' ? 'hover:bg-[#3a4454]' : 'hover:bg-gray-300'} transition-colors text-sm sm:text-base`}
                 >
                   Close
                 </button>
                 <button
                   onClick={handleBulkImport}
                   disabled={!bulkImportFile || bulkImportLoading}
-                  className="px-6 py-2 bg-[#136dec] text-white rounded hover:bg-blue-600 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-4 sm:px-6 py-2.5 bg-[#136dec] text-white rounded hover:bg-blue-600 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
                 >
                   {bulkImportLoading ? 'Importing...' : 'Import Users'}
                 </button>
@@ -741,6 +837,55 @@ export default function UserManagement() {
         variant={confirmModal.variant}
         isLoading={confirmModal.isLoading}
       />
+
+      {/* Password Reset Modal */}
+      {showPasswordModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded-lg shadow-xl max-w-md w-full p-6`}>
+            <h3 className={`text-xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-4`}>
+              Reset Password
+            </h3>
+            <p className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} mb-4 text-sm`}>
+              Enter new password for <span className="font-semibold">{passwordResetData.userEmail}</span>
+            </p>
+            <form onSubmit={handlePasswordResetSubmit}>
+              <div className="mb-4">
+                <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2`}>
+                  New Password *
+                </label>
+                <input
+                  type="password"
+                  value={passwordResetData.newPassword}
+                  onChange={(e) => setPasswordResetData({ ...passwordResetData, newPassword: e.target.value })}
+                  placeholder="Enter new password (min 6 characters)"
+                  className={`w-full p-3 ${theme === 'dark' ? 'bg-[#111418] border-[#282f39] text-white placeholder:text-[#58606e]' : 'bg-white border-gray-300 text-gray-900'} border rounded-lg focus:ring-2 focus:ring-[#136dec] focus:border-transparent`}
+                  required
+                  minLength={6}
+                  autoFocus
+                />
+              </div>
+              <div className="flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowPasswordModal(false);
+                    setPasswordResetData({ userId: '', userEmail: '', newPassword: '' });
+                  }}
+                  className={`px-4 py-2 ${theme === 'dark' ? 'bg-[#282f39] hover:bg-[#3a4454]' : 'bg-gray-200 hover:bg-gray-300'} ${theme === 'dark' ? 'text-white' : 'text-gray-900'} rounded transition-colors`}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-[#136dec] text-white rounded hover:bg-blue-600 transition-colors font-semibold"
+                >
+                  Reset Password
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

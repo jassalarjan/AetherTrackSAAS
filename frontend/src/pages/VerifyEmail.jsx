@@ -71,11 +71,13 @@ const VerifyEmail = () => {
 
     setResending(true);
     setError('');
+    setSuccess(false);
 
     try {
       await api.post('/auth/resend-verification', { email });
       setError('');
-      alert('Verification code resent! Please check your email inbox.');
+      setSuccess(true);
+      setMessage('Verification code resent! Please check your email inbox.');
     } catch (error) {
       console.error('Resend error:', error);
       setError(

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { useSidebar } from '../context/SidebarContext';
 import { useNavigate } from 'react-router-dom';
 import { useConfirmModal } from '../hooks/useConfirmModal';
 import Sidebar from '../components/Sidebar';
@@ -20,12 +21,14 @@ import {
   Clock,
   ChevronLeft,
   ChevronRight,
-  AlertCircle
+  AlertCircle,
+  Menu
 } from 'lucide-react';
 
 const ChangeLog = () => {
   const { user } = useAuth();
   const { theme } = useTheme();
+  const { toggleMobileSidebar } = useSidebar();
   const navigate = useNavigate();
   const confirmModal = useConfirmModal();
   const [logs, setLogs] = useState([]);
@@ -285,6 +288,13 @@ const ChangeLog = () => {
           <div className="mb-8">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center space-x-3">
+                <button
+                  onClick={toggleMobileSidebar}
+                  className={`lg:hidden ${theme === 'dark' ? 'text-[#9da8b9] hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}
+                  aria-label="Toggle menu"
+                >
+                  <Menu size={24} />
+                </button>
                 <Activity className="w-8 h-8 text-[#136dec]" />
                 <h1 className={`text-3xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Change Log</h1>
               </div>

@@ -1,0 +1,280 @@
+/* ========================================
+   COMPREHENSIVE MOBILE RESPONSIVE FIXES
+   ======================================== */
+
+/* Mobile-First Base Styles */
+@media (max-width: 767px) {
+  /* Ensure no horizontal overflow */
+  html, body {
+    overflow-x: hidden !important;
+    width: 100% !important;
+  }
+
+  /* Responsive Typography */
+  h1 {
+    font-size: 1.5rem !important;
+    line-height: 2rem !important;
+  }
+
+  h2 {
+    font-size: 1.25rem !important;
+    line-height: 1.75rem !important;
+  }
+
+  h3 {
+    font-size: 1.125rem !important;
+    line-height: 1.5rem !important;
+  }
+
+  h4 {
+    font-size: 1rem !important;
+    line-height: 1.5rem !important;
+  }
+
+  /* Tailwind text classes override */
+  .text-2xl {
+    font-size: 1.25rem !important;
+  }
+
+  .text-xl {
+    font-size: 1.125rem !important;
+  }
+
+  .text-lg {
+    font-size: 1rem !important;
+  }
+
+  .text-base {
+    font-size: 0.875rem !important;
+  }
+
+  /* Responsive Spacing */
+  .p-8 {
+    padding: 1rem !important;
+  }
+
+  .p-6 {
+    padding: 0.75rem !important;
+  }
+
+  .p-4 {
+    padding: 0.5rem !important;
+  }
+
+  .px-8 {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+
+  .px-6 {
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+  }
+
+  .py-6 {
+    padding-top: 0.75rem !important;
+    padding-bottom: 0.75rem !important;
+  }
+
+  .py-4 {
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+  }
+
+  /* Responsive Margins */
+  .mb-8 {
+    margin-bottom: 1.5rem !important;
+  }
+
+  .mb-6 {
+    margin-bottom: 1rem !important;
+  }
+
+  .mb-4 {
+    margin-bottom: 0.75rem !important;
+  }
+
+  /* Responsive Gaps */
+  .gap-8 {
+    gap: 1rem !important;
+  }
+
+  .gap-6 {
+    gap: 0.75rem !important;
+  }
+
+  .gap-4 {
+    gap: 0.5rem !important;
+  }
+
+  /* Card/Panel Responsiveness */
+  .rounded-lg {
+    border-radius: 0.375rem !important;
+  }
+
+  /* Chart containers - Recharts */
+  .recharts-wrapper {
+    height: 220px !important;
+  }
+
+  .recharts-responsive-container {
+    min-height: 220px !important;
+    max-height: 250px !important;
+  }
+
+  /* Table Responsiveness */
+  table {
+    font-size: 0.75rem !important;
+  }
+
+  table td,
+  table th {
+    padding: 0.4rem !important;
+    font-size: 0.75rem !important;
+  }
+
+  /* Button Sizing */
+  button:not(.no-resize) {
+    font-size: 0.875rem !important;
+    padding: 0.5rem 0.75rem !important;
+  }
+
+  /* Input Fields - Prevent iOS zoom */
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+
+  /* Modal Responsiveness */
+  .fixed > div:not(.sidebar) {
+    margin: 0.5rem !important;
+    max-width: calc(100vw - 1rem) !important;
+    max-height: calc(100vh - 1rem) !important;
+  }
+
+  /* Grid Adjustments - Force single column */
+  .grid-cols-2,
+  .grid-cols-3,
+  .grid-cols-4,
+  .md\\:grid-cols-2,
+  .md\\:grid-cols-3,
+  .md\\:grid-cols-4,
+  .lg\\:grid-cols-2,
+  .lg\\:grid-cols-3,
+  .lg\\:grid-cols-4 {
+    grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
+  }
+
+  /* Widget/Card Sizing - Force full width */
+  .w-80,
+  .w-96,
+  .w-64,
+  .xl\\:w-80 {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .max-w-7xl,
+  .max-w-6xl,
+  .max-w-5xl,
+  .max-w-4xl,
+  .max-w-3xl,
+  .max-w-2xl,
+  .max-w-xl {
+    max-width: 100% !important;
+  }
+
+  /* Flexbox - Stack vertically */
+  .xl\\:flex-row {
+    flex-direction: column !important;
+  }
+
+  /* Hide decorative or non-essential elements */
+  .hidden-mobile {
+    display: none !important;
+  }
+
+  /* Stat numbers - keep them visible but slightly smaller */
+  .text-2xl {
+    font-size: 1.5rem !important;
+  }
+}
+
+/* Small Mobile Devices (< 375px) */
+@media (max-width: 374px) {
+  h1 {
+    font-size: 1.25rem !important;
+  }
+
+  h2 {
+    font-size: 1.125rem !important;
+  }
+
+  .text-2xl {
+    font-size: 1.25rem !important;
+  }
+
+  .text-xl {
+    font-size: 1rem !important;
+  }
+
+  .text-lg {
+    font-size: 0.875rem !important;
+  }
+
+  .text-base {
+    font-size: 0.8125rem !important;
+  }
+
+  .text-sm {
+    font-size: 0.75rem !important;
+  }
+
+  button {
+    padding: 0.375rem 0.6rem !important;
+    font-size: 0.8125rem !important;
+  }
+
+  .p-4 {
+    padding: 0.375rem !important;
+  }
+
+  .px-4 {
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+  }
+
+  /* Even smaller charts on tiny screens */
+  .recharts-wrapper {
+    height: 180px !important;
+  }
+}
+
+/* Landscape Mobile */
+@media (max-width: 767px) and (orientation: landscape) {
+  header,
+  .h-16 {
+    height: 3rem !important;
+  }
+
+  .py-4 {
+    padding-top: 0.375rem !important;
+    padding-bottom: 0.375rem !important;
+  }
+}
+
+/* Tablet Range */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .lg\\:grid-cols-3 {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .lg\\:grid-cols-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .xl\\:w-80 {
+    width: 18rem !important;
+  }
+}
