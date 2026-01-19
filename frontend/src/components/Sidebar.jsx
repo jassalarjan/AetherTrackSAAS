@@ -5,11 +5,11 @@ import { useTheme } from '../context/ThemeContext';
 import { useSidebar } from '../context/SidebarContext';
 import { useConfirmModal } from '../hooks/useConfirmModal';
 import ConfirmModal from './modals/ConfirmModal';
-import { 
-  LayoutDashboard, 
-  CheckSquare, 
-  Users, 
-  BarChart3, 
+import {
+  LayoutDashboard,
+  CheckSquare,
+  Users,
+  BarChart3,
   Calendar,
   Grid3x3,
   Settings,
@@ -18,6 +18,8 @@ import {
   Menu,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
   LogOut,
   User as UserIcon,
   Building2,
@@ -34,6 +36,20 @@ const Sidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const confirmModal = useConfirmModal();
+
+  // Dropdown state management
+  const [openDropdowns, setOpenDropdowns] = useState({
+    main: true, // Main section starts open
+    hr: false,
+    management: false
+  });
+
+  const toggleDropdown = (section) => {
+    setOpenDropdowns(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
+  };
 
   // Close sidebar when clicking on navigation item on mobile
   const handleNavigation = (path) => {
@@ -66,11 +82,11 @@ const Sidebar = () => {
 
   const hrMenuItems = [
     { path: '/hr/dashboard', icon: LayoutDashboard, label: 'HR Dashboard', roles: ['admin', 'hr'] },
+    { path: '/teams', icon: Users, label: 'Teams', roles: ['admin', 'hr', 'team_lead', 'community_admin'] },
+    { path: '/users', icon: UserCog, label: 'User Management', roles: ['admin', 'hr'] },
   ];
 
   const adminMenuItems = [
-    { path: '/teams', icon: Users, label: 'Teams', roles: ['admin', 'hr', 'team_lead', 'community_admin'] },
-    { path: '/users', icon: UserCog, label: 'User Management', roles: ['admin', 'hr'] },
     { path: '/community-users', icon: UserCog, label: 'Community Users', roles: ['community_admin'] },
     { path: '/workspaces', icon: Building2, label: 'Workspaces', roles: ['admin'] },
     { path: '/changelog', icon: FileText, label: 'Audit Logs', roles: ['admin'] },
@@ -106,8 +122,8 @@ const Sidebar = () => {
 
       {/* Sidebar */}
       <aside className={`
-        ${isCollapsed ? 'w-16' : 'w-64'} 
-        ${isDark ? 'bg-[#111418] border-[#282f39]' : 'bg-white border-gray-200'} 
+        ${isCollapsed ? 'w-16' : 'w-64'}
+        ${isDark ? 'bg-[#111418] border-[#282f39] shadow-xl' : 'bg-white border-gray-200 shadow-lg'}
         border-r flex flex-col shrink-0 transition-all duration-300
         ${isMobile ? 'fixed' : 'relative'} inset-y-0 left-0 z-50
         ${isMobile ? (isMobileOpen ? 'translate-x-0' : '-translate-x-full') : 'translate-x-0'}
@@ -125,8 +141,10 @@ const Sidebar = () => {
         )}
       {/* Logo Section */}
       <div className={`${isCollapsed ? 'p-3' : 'p-4'} border-b ${
-        isDark ? 'border-[#282f39]' : 'border-gray-200'
-      } flex items-center justify-center`}>
+        isDark ? 'border-[#282f39]/70' : 'border-gray-200/70'
+      } flex items-center justify-center bg-gradient-to-r ${
+        isDark ? 'from-[#111418] to-[#1a1d23]' : 'from-white to-gray-50/50'
+      }`}>
         {!isCollapsed ? (
           <div className="flex items-center gap-3 w-full px-2">
             <img 
@@ -151,118 +169,166 @@ const Sidebar = () => {
       </div>
 
       {/* Main Navigation */}
-      <div className="flex flex-col gap-1 p-2 lg:p-4 flex-1 overflow-y-auto">
+      <div className="flex flex-col flex-1 overflow-y-auto max-h-full">
+        {/* Main Section Dropdown */}
         {!isCollapsed && (
-          <div className="px-3 py-2 hidden lg:block">
-            <p className={`text-xs font-bold uppercase tracking-wider ${
-              isDark ? 'text-[#9da8b9]' : 'text-gray-500'
-            }`}>Main</p>
+          <div className={`border-b ${
+            isDark ? 'border-[#282f39]/50' : 'border-gray-200/50'
+          } mx-2 mb-2`}>
+            <button
+              onClick={() => toggleDropdown('main')}
+              className={`w-full flex items-center justify-between py-3 px-1 text-left transition-colors group hidden lg:flex ${
+                isDark ? 'text-[#9da8b9] hover:text-white' : 'text-gray-600 hover:text-gray-800'
+              }`}
+            >
+              <p className="text-xs font-semibold uppercase tracking-wider">Main</p>
+              {openDropdowns.main ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+            </button>
           </div>
         )}
-        
-        {mainMenuItems.map((item) => {
-          const Icon = item.icon;
-          const active = isActive(item.path);
-          return (
-            <button
-              key={item.path}
-              onClick={() => handleNavigation(item.path)}
-              className={`flex items-center gap-3 px-3 py-2 rounded transition-colors group ${
-                active
-                  ? isDark
-                    ? 'bg-[#136dec]/10 text-[#136dec]'
-                    : 'bg-blue-50 text-blue-600'
-                  : isDark
-                    ? 'text-[#9da8b9] hover:bg-[#1c2027] hover:text-white'
-                    : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
-              }`}
-              title={isCollapsed ? item.label : ''}
-            >
-              <Icon size={20} className={active ? 'fill-current' : ''} />
-              {!isCollapsed && <span className="text-sm font-medium">{item.label}</span>}
-            </button>
-          );
-        })}
 
-        {/* HR Dashboard Section */}
+        {/* Main Menu Items */}
+        <div className={`transition-all duration-200 overflow-hidden ${
+          isCollapsed || openDropdowns.main ? 'max-h-64 opacity-100' : 'max-h-0 opacity-0'
+        }`}>
+          <div className="max-h-60 overflow-y-auto">
+            {mainMenuItems.map((item) => {
+              const Icon = item.icon;
+              const active = isActive(item.path);
+              return (
+                <button
+                  key={item.path}
+                  onClick={() => handleNavigation(item.path)}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 text-left rounded-md transition-colors group ${
+                    active
+                      ? isDark
+                        ? 'bg-[#136dec]/10 text-[#136dec]'
+                        : 'bg-blue-50 text-blue-600'
+                      : isDark
+                        ? 'text-[#9da8b9] hover:bg-[#1c2027] hover:text-white'
+                        : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                  }`}
+                  title={isCollapsed ? item.label : ''}
+                >
+                  <Icon size={18} className={active ? 'fill-current' : ''} />
+                  {!isCollapsed && <span className="text-sm font-medium">{item.label}</span>}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* HR Management Section Dropdown */}
         {hrMenuItems.some(canAccess) && (
           <>
             {!isCollapsed && (
-              <div className="px-3 py-2 mt-4 hidden lg:block">
-                <p className={`text-xs font-bold uppercase tracking-wider ${
-                  isDark ? 'text-[#9da8b9]' : 'text-gray-500'
-                }`}>HR Dashboard</p>
+              <div className={`border-b ${
+                isDark ? 'border-[#282f39]/50' : 'border-gray-200/50'
+              } mx-2 mb-2`}>
+                <button
+                  onClick={() => toggleDropdown('hr')}
+                  className={`w-full flex items-center justify-between py-3 px-1 text-left transition-colors group hidden lg:flex ${
+                    isDark ? 'text-[#9da8b9] hover:text-white' : 'text-gray-600 hover:text-gray-800'
+                  }`}
+                >
+                  <p className="text-xs font-semibold uppercase tracking-wider">HR Management</p>
+                  {openDropdowns.hr ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                </button>
               </div>
             )}
-            {hrMenuItems.filter(canAccess).map((item) => {
-              const Icon = item.icon;
-              const active = isActive(item.path);
-              return (
-                <button
-                  key={item.path}
-                  onClick={() => handleNavigation(item.path)}
-                  className={`flex items-center gap-3 px-3 py-2 rounded transition-colors group ${
-                    active
-                      ? isDark
-                        ? 'bg-[#136dec]/10 text-[#136dec]'
-                        : 'bg-blue-50 text-blue-600'
-                      : isDark
-                        ? 'text-[#9da8b9] hover:bg-[#1c2027] hover:text-white'
-                        : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
-                  }`}
-                  title={isCollapsed ? item.label : ''}
-                >
-                  <Icon size={20} className={active ? 'fill-current' : ''} />
-                  {!isCollapsed && <span className="text-sm font-medium">{item.label}</span>}
-                </button>
-              );
-            })}
+
+            {/* HR Menu Items */}
+            <div className={`transition-all duration-200 overflow-hidden ${
+              isCollapsed || openDropdowns.hr ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
+            }`}>
+              <div className="max-h-60 overflow-y-auto">
+                {hrMenuItems.filter(canAccess).map((item) => {
+                  const Icon = item.icon;
+                  const active = isActive(item.path);
+                  return (
+                    <button
+                      key={item.path}
+                      onClick={() => handleNavigation(item.path)}
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 text-left rounded-md transition-colors group ${
+                        active
+                          ? isDark
+                            ? 'bg-[#136dec]/10 text-[#136dec]'
+                            : 'bg-blue-50 text-blue-600'
+                          : isDark
+                            ? 'text-[#9da8b9] hover:bg-[#1c2027] hover:text-white'
+                            : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                      }`}
+                      title={isCollapsed ? item.label : ''}
+                    >
+                      <Icon size={18} className={active ? 'fill-current' : ''} />
+                      {!isCollapsed && <span className="text-sm font-medium">{item.label}</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </>
         )}
 
-        {/* Admin Section */}
+        {/* Management Section Dropdown */}
         {adminMenuItems.some(canAccess) && (
           <>
             {!isCollapsed && (
-              <div className="px-3 py-2 mt-4 hidden lg:block">
-                <p className={`text-xs font-bold uppercase tracking-wider ${
-                  isDark ? 'text-[#9da8b9]' : 'text-gray-500'
-                }`}>Management</p>
+              <div className={`border-b ${
+                isDark ? 'border-[#282f39]/50' : 'border-gray-200/50'
+              } mx-2 mb-2`}>
+                <button
+                  onClick={() => toggleDropdown('management')}
+                  className={`w-full flex items-center justify-between py-3 px-1 text-left transition-colors group hidden lg:flex ${
+                    isDark ? 'text-[#9da8b9] hover:text-white' : 'text-gray-600 hover:text-gray-800'
+                  }`}
+                >
+                  <p className="text-xs font-semibold uppercase tracking-wider">Management</p>
+                  {openDropdowns.management ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                </button>
               </div>
             )}
-            {adminMenuItems.filter(canAccess).map((item) => {
-              const Icon = item.icon;
-              const active = isActive(item.path);
-              return (
-                <button
-                  key={item.path}
-                  onClick={() => handleNavigation(item.path)}
-                  className={`flex items-center gap-3 px-3 py-2 rounded transition-colors group ${
-                    active
-                      ? isDark
-                        ? 'bg-[#136dec]/10 text-[#136dec]'
-                        : 'bg-blue-50 text-blue-600'
-                      : isDark
-                        ? 'text-[#9da8b9] hover:bg-[#1c2027] hover:text-white'
-                        : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
-                  }`}
-                  title={isCollapsed ? item.label : ''}
-                >
-                  <Icon size={20} className={active ? 'fill-current' : ''} />
-                  {!isCollapsed && <span className="text-sm font-medium">{item.label}</span>}
-                </button>
-              );
-            })}
+
+            {/* Management Menu Items */}
+            <div className={`transition-all duration-200 overflow-hidden ${
+              isCollapsed || openDropdowns.management ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
+            }`}>
+              <div className="max-h-60 overflow-y-auto">
+                {adminMenuItems.filter(canAccess).map((item) => {
+                  const Icon = item.icon;
+                  const active = isActive(item.path);
+                  return (
+                    <button
+                      key={item.path}
+                      onClick={() => handleNavigation(item.path)}
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 text-left rounded-md transition-colors group ${
+                        active
+                          ? isDark
+                            ? 'bg-[#136dec]/10 text-[#136dec]'
+                            : 'bg-blue-50 text-blue-600'
+                          : isDark
+                            ? 'text-[#9da8b9] hover:bg-[#1c2027] hover:text-white'
+                            : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                      }`}
+                      title={isCollapsed ? item.label : ''}
+                    >
+                      <Icon size={18} className={active ? 'fill-current' : ''} />
+                      {!isCollapsed && <span className="text-sm font-medium">{item.label}</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </>
         )}
       </div>
 
       {/* Workspace Info */}
       {!isCollapsed && (
-        <div className={`p-4 border-t hidden lg:block ${
+        <div className={`p-2 border-t hidden lg:block ${
           isDark ? 'border-[#282f39]' : 'border-gray-200'
         }`}>
-          <div className="px-3 py-2">
+          <div className="px-2 py-1.5">
             <p className={`text-xs font-bold uppercase tracking-wider mb-2 ${
               isDark ? 'text-[#9da8b9]' : 'text-gray-500'
             }`}>Workspace</p>
@@ -344,10 +410,10 @@ const Sidebar = () => {
       }`}>
         {/* User Info */}
         {!isCollapsed && user && (
-          <div className={`p-3 lg:p-4 border-b ${
+          <div className={`p-2 border-b ${
             isDark ? 'border-[#282f39]' : 'border-gray-200'
           }`}>
-            <div className="flex items-center gap-2 lg:gap-3">
+            <div className="flex items-center gap-2">
               {user.profile_picture ? (
                 <img
                   src={user.profile_picture}
@@ -372,19 +438,21 @@ const Sidebar = () => {
         )}
 
         {/* Settings & Logout */}
-        <div className="p-3 lg:p-4">
+        <div className="p-2">
           {!isCollapsed && (
-            <div className="px-3 py-2 mb-2 hidden lg:block">
-              <p className={`text-xs font-bold uppercase tracking-wider ${
-                isDark ? 'text-[#9da8b9]' : 'text-gray-500'
+            <div className={`border-t pt-3 mb-2 hidden lg:block ${
+              isDark ? 'border-[#282f39]/50' : 'border-gray-200/50'
+            }`}>
+              <p className={`text-xs font-semibold uppercase tracking-wider mb-2 ${
+                isDark ? 'text-[#9da8b9]' : 'text-gray-600'
               }`}>Account</p>
             </div>
           )}
-          
+
           {/* Profile Button */}
           <button
             onClick={() => handleNavigation('/settings')}
-            className={`flex items-center gap-3 px-3 py-2 rounded transition-colors group w-full mb-1 ${
+            className={`w-full flex items-center gap-3 px-3 py-2.5 text-left rounded-md transition-colors group mb-2 ${
               isActive('/settings')
                 ? isDark
                   ? 'bg-[#136dec]/10 text-[#136dec]'
@@ -395,7 +463,7 @@ const Sidebar = () => {
             }`}
             title={isCollapsed ? 'Profile & Settings' : ''}
           >
-            <UserIcon size={20} />
+            <UserIcon size={18} />
             {!isCollapsed && <span className="text-sm font-medium">Profile & Settings</span>}
           </button>
 
@@ -409,20 +477,20 @@ const Sidebar = () => {
                 cancelText: 'Stay Logged In',
                 variant: 'logout',
               });
-              
+
               if (confirmed) {
                 logout();
                 navigate('/login');
               }
             }}
-            className={`flex items-center gap-3 px-3 py-2 rounded transition-colors group w-full ${
+            className={`w-full flex items-center gap-3 px-3 py-2.5 text-left rounded-md transition-colors group ${
               isDark
                 ? 'text-red-400 hover:bg-red-500/10 hover:text-red-300'
                 : 'text-red-600 hover:bg-red-50 hover:text-red-700'
             }`}
             title={isCollapsed ? 'Logout' : ''}
           >
-            <LogOut size={20} />
+            <LogOut size={18} />
             {!isCollapsed && <span className="text-sm font-medium">Logout</span>}
           </button>
         </div>
