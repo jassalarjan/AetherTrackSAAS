@@ -11,11 +11,22 @@ class BrevoEmailService {
   }
 
   initClient() {
-    if (process.env.BREVO_API_KEY) {
-      const apiInstance = new brevoAPI.TransactionalEmailsApi();
-      apiInstance.setApiKey(brevoAPI.TransactionalEmailsApiApiKeys.apiKey, process.env.BREVO_API_KEY);
-      this.client = apiInstance;
+    // Lazy initialization - only initialize when needed
+    return;
+  }
+
+  getClient() {
+    if (!this.client && process.env.BREVO_API_KEY) {
+      try {
+        const apiInstance = new brevoAPI.TransactionalEmailsApi();
+        apiInstance.setApiKey(brevoAPI.TransactionalEmailsApiApiKeys.apiKey, process.env.BREVO_API_KEY);
+        this.client = apiInstance;
+      } catch (error) {
+        console.error('❌ Failed to initialize Brevo client:', error.message);
+        this.client = null;
+      }
     }
+    return this.client;
   }
 
   /**
@@ -30,7 +41,8 @@ class BrevoEmailService {
    */
   async send({ to, subject, htmlContent, params = {}, from = { email: 'updates.codecatalyst@gmail.com', name: 'TaskFlow' } }) {
     try {
-      if (!this.client) {
+      const client = this.getClient();
+      if (!client) {
         throw new Error('Brevo API client not configured');
       }
 
@@ -44,14 +56,17 @@ class BrevoEmailService {
       sendSmtpEmail.subject = interpolatedSubject;
       sendSmtpEmail.htmlContent = interpolatedHtml;
 
-      console.log('📤 Sending transactional email via Brevo API...');
-      const result = await this.client.sendTransacEmail(sendSmtpEmail);
+      const result = await client.sendTransacEmail(sendSmtpEmail);
 
-      console.log('✅ Email sent successfully:', result.response.statusCode);
+      // Handle different response structures
+      let messageId = null;
+      if (result.body) {
+        messageId = result.body.messageId || result.body.id;
+      }
 
       return {
         success: true,
-        messageId: result.response.body.messageId,
+        messageId: messageId,
         status: 'sent',
         provider: 'brevo-api'
       };
