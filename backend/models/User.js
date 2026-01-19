@@ -28,6 +28,11 @@ const userSchema = new mongoose.Schema({
     enum: ['admin', 'hr', 'team_lead', 'member', 'community_admin'],
     default: 'member'
   },
+  employmentStatus: {
+    type: String,
+    enum: ['ACTIVE', 'INACTIVE', 'ON_NOTICE', 'EXITED'],
+    default: 'ACTIVE'
+  },
   team_id: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Team',

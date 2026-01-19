@@ -1,0 +1,412 @@
+import { useState, useEffect } from 'react';
+import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
+import { useSidebar } from '../context/SidebarContext';
+import api from '../api/axios';
+import ResponsivePageLayout from '../components/layouts/ResponsivePageLayout';
+import { Briefcase, Plus, Calendar, CheckCircle, XCircle, Clock, Menu, X } from 'lucide-react';
+
+export default function LeavesPage() {
+  const { user } = useAuth();
+  const { theme, currentTheme, currentColorScheme } = useTheme();
+  const { toggleMobileSidebar } = useSidebar();
+  const [leaveRequests, setLeaveRequests] = useState([]);
+  const [leaveBalances, setLeaveBalances] = useState([]);
+  const [leaveTypes, setLeaveTypes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [rejectingRequestId, setRejectingRequestId] = useState(null);
+  const [rejectionReason, setRejectionReason] = useState('');
+  const [formData, setFormData] = useState({
+    leaveTypeId: '',
+    startDate: '',
+    endDate: '',
+    days: 1,
+    reason: ''
+  });
+
+  const isAdmin = user && (user.role === 'admin' || user.role === 'hr');
+
+  const handleApproveReject = async (id, status, reason = '') => {
+    try {
+      const response = await api.patch(`/hr/leaves/${id}/status`, {
+        status,
+        rejectionReason: reason
+      });
+
+      if (response.data.success) {
+        fetchData(); // Refresh the list
+      }
+    } catch (error) {
+      console.error('Error updating leave status:', error);
+      alert('Failed to update leave status');
+    }
+  };
+
+  const handleRejectSubmit = () => {
+    if (rejectionReason.trim()) {
+      handleApproveReject(rejectingRequestId, 'rejected', rejectionReason);
+      setShowRejectModal(false);
+      setRejectingRequestId(null);
+      setRejectionReason('');
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const balanceEndpoint = isAdmin ? '/hr/leaves/balances' : '/hr/leaves/balance';
+      const [requestsRes, balancesRes, typesRes] = await Promise.all([
+        api.get('/hr/leaves'),
+        api.get(balanceEndpoint),
+        api.get('/hr/leave-types')
+      ]);
+
+      setLeaveRequests(requestsRes.data.requests);
+      setLeaveBalances(balancesRes.data.balances);
+      setLeaveTypes(typesRes.data.leaveTypes);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const calculateDays = (start, end) => {
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+    const diffTime = Math.abs(endDate - startDate);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+    return diffDays;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const days = calculateDays(formData.startDate, formData.endDate);
+      await api.post('/hr/leaves', { ...formData, days });
+      setShowModal(false);
+      setFormData({ leaveTypeId: '', startDate: '', endDate: '', days: 1, reason: '' });
+      fetchData();
+      alert('Leave request submitted successfully!');
+    } catch (error) {
+      alert(error.response?.data?.message || 'Failed to submit leave request');
+    }
+  };
+
+
+  const getStatusColor = (status) => {
+    const colors = {
+      pending: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
+      approved: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+      rejected: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
+      cancelled: 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
+    };
+    return colors[status] || 'bg-gray-100 text-gray-800';
+  };
+
+  return (
+    <div>
+      <ResponsivePageLayout
+        title="Leave Management"
+        actions={!isAdmin ? (
+          <button
+            onClick={() => setShowModal(true)}
+            className={`px-4 py-2 ${currentTheme.primary} text-white ${currentTheme.primaryHover} flex items-center gap-2`}
+          >
+            <Plus className="w-5 h-5" />
+            Apply Leave
+          </button>
+        ) : null}
+      >
+          {/* Leave Balance Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            {leaveBalances.map((balance) => (
+              <div key={balance._id} className={`${currentTheme.surface} rounded-lg p-4 border ${currentTheme.border}`}>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className={`text-sm font-semibold ${currentTheme.text}`}>
+                    {balance.leaveTypeId?.name}
+                  </h3>
+                  <div
+                    className="w-3 h-3 rounded-full"
+                    style={{ backgroundColor: balance.leaveTypeId?.color }}
+                  ></div>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className={`${currentTheme.textSecondary}`}>Total:</span>
+                    <span className={`font-semibold ${currentTheme.text}`}>{balance.totalQuota}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className={`${currentTheme.textSecondary}`}>Used:</span>
+                    <span className="font-semibold text-red-600 dark:text-red-400">{balance.used}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className={`${currentTheme.textSecondary}`}>Pending:</span>
+                    <span className="font-semibold text-yellow-600 dark:text-yellow-400">{balance.pending}</span>
+                  </div>
+                  <div className={`flex justify-between text-sm pt-2 border-t ${currentTheme.border}`}>
+                    <span className={`${currentTheme.textSecondary}`}>Available:</span>
+                    <span className="font-bold text-green-600 dark:text-green-400">{balance.available}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Leave Requests Table */}
+          <div className={`${currentTheme.surface} rounded-lg border ${currentTheme.border} overflow-hidden`}>
+            <div className={`px-6 py-4 border-b ${currentTheme.border}`}>
+              <h2 className={`text-lg font-semibold ${currentTheme.text}`}>
+                {isAdmin ? 'All Leave Requests' : 'My Leave Requests'}
+              </h2>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className={`${currentTheme.surfaceSecondary}`}>
+                  <tr>
+                    {isAdmin && <th className={`px-6 py-3 text-left text-xs font-medium ${currentTheme.textSecondary} uppercase tracking-wider`}>Employee</th>}
+                    <th className={`px-6 py-3 text-left text-xs font-medium ${currentTheme.textSecondary} uppercase tracking-wider`}>Leave Type</th>
+                    <th className={`px-6 py-3 text-left text-xs font-medium ${currentTheme.textSecondary} uppercase tracking-wider`}>Start Date</th>
+                    <th className={`px-6 py-3 text-left text-xs font-medium ${currentTheme.textSecondary} uppercase tracking-wider`}>End Date</th>
+                    <th className={`px-6 py-3 text-left text-xs font-medium ${currentTheme.textSecondary} uppercase tracking-wider`}>Days</th>
+                    <th className={`px-6 py-3 text-left text-xs font-medium ${currentTheme.textSecondary} uppercase tracking-wider`}>Status</th>
+                    <th className={`px-6 py-3 text-left text-xs font-medium ${currentTheme.textSecondary} uppercase tracking-wider`}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody className={`divide-y ${currentTheme.border}`}>
+                  {loading ? (
+                    <tr>
+                      <td colSpan={isAdmin ? 7 : 6} className={`px-6 py-4 text-center ${currentTheme.textSecondary}`}>
+                        Loading...
+                      </td>
+                    </tr>
+                  ) : leaveRequests.length === 0 ? (
+                    <tr>
+                      <td colSpan={isAdmin ? 7 : 6} className={`px-6 py-4 text-center ${currentTheme.textSecondary}`}>
+                        No leave requests found
+                      </td>
+                    </tr>
+                  ) : (
+                    leaveRequests.map((request) => (
+                      <tr key={request._id} className={`${currentTheme.hover}`}>
+                        {isAdmin && (
+                          <td className={`px-6 py-4 whitespace-nowrap text-sm ${currentTheme.text}`}>
+                            {request.userId?.full_name}
+                          </td>
+                        )}
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center gap-2">
+                            <div
+                              className="w-3 h-3 rounded-full"
+                              style={{ backgroundColor: request.leaveTypeId?.color }}
+                            ></div>
+                            <span className={`text-sm ${currentTheme.text}`}>
+                              {request.leaveTypeId?.name}
+                            </span>
+                          </div>
+                        </td>
+                        <td className={`px-6 py-4 whitespace-nowrap text-sm ${currentTheme.text}`}>
+                          {new Date(request.startDate).toLocaleDateString()}
+                        </td>
+                        <td className={`px-6 py-4 whitespace-nowrap text-sm ${currentTheme.text}`}>
+                          {new Date(request.endDate).toLocaleDateString()}
+                        </td>
+                        <td className={`px-6 py-4 whitespace-nowrap text-sm ${currentTheme.text}`}>
+                          {request.days}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(request.status)}`}>
+                            {request.status.toUpperCase()}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          {isAdmin && request.status === 'pending' ? (
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => handleApproveReject(request._id, 'approved')}
+                                className="px-3 py-1 bg-green-600 dark:bg-green-500 text-white text-xs rounded hover:bg-green-700 dark:hover:bg-green-600 transition-colors"
+                              >
+                                Approve
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setRejectingRequestId(request._id);
+                                  setRejectionReason('');
+                                  setShowRejectModal(true);
+                                }}
+                                className="px-3 py-1 bg-red-600 dark:bg-red-500 text-white text-xs rounded hover:bg-red-700 dark:hover:bg-red-600 transition-colors"
+                              >
+                                Reject
+                              </button>
+                            </div>
+                          ) : (
+                            <span className="text-gray-400">-</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+      </ResponsivePageLayout>
+
+      {/* Apply Leave Modal */}
+      {showModal && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen px-4">
+            <div className="fixed inset-0 bg-black opacity-50" onClick={() => setShowModal(false)}></div>
+
+            <div className={`relative ${currentTheme.surface} rounded-lg max-w-md w-full p-6`}>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className={`text-lg font-semibold ${currentTheme.text}`}>Apply for Leave</h3>
+                <button
+                  onClick={() => setShowModal(false)}
+                  className={`${currentTheme.textSecondary} hover:${currentTheme.text}`}
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <label className={`block text-sm font-medium ${currentTheme.text} mb-1`}>
+                    Leave Type
+                  </label>
+                  <select
+                    value={formData.leaveTypeId}
+                    onChange={(e) => setFormData({ ...formData, leaveTypeId: e.target.value })}
+                    className={`w-full px-3 py-2 border ${currentTheme.border} rounded-lg ${currentTheme.surface} ${currentTheme.text}`}
+                    required
+                  >
+                    <option value="">Select leave type</option>
+                    {leaveTypes.map(type => (
+                      <option key={type._id} value={type._id}>{type.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className={`block text-sm font-medium ${currentTheme.text} mb-1`}>
+                    Start Date
+                  </label>
+                  <input
+                    type="date"
+                    value={formData.startDate}
+                    onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                    className={`w-full px-3 py-2 border ${currentTheme.border} rounded-lg ${currentTheme.surface} ${currentTheme.text}`}
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className={`block text-sm font-medium ${currentTheme.text} mb-1`}>
+                    End Date
+                  </label>
+                  <input
+                    type="date"
+                    value={formData.endDate}
+                    onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+                    className={`w-full px-3 py-2 border ${currentTheme.border} rounded-lg ${currentTheme.surface} ${currentTheme.text}`}
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className={`block text-sm font-medium ${currentTheme.text} mb-1`}>
+                    Reason
+                  </label>
+                  <textarea
+                    value={formData.reason}
+                    onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
+                    className={`w-full px-3 py-2 border ${currentTheme.border} rounded-lg ${currentTheme.surface} ${currentTheme.text}`}
+                    rows="3"
+                    required
+                  />
+                </div>
+
+                <div className="flex gap-3 justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setShowModal(false)}
+                    className={`px-4 py-2 border ${currentTheme.border} rounded-lg ${currentTheme.textSecondary} ${currentTheme.hover}`}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className={`px-4 py-2 ${currentTheme.primary} text-white ${currentTheme.primaryHover} rounded-lg`}
+                  >
+                    Submit Request
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reject Leave Modal */}
+      {showRejectModal && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen px-4">
+            <div className="fixed inset-0 bg-black opacity-50" onClick={() => setShowRejectModal(false)}></div>
+
+            <div className={`relative ${currentTheme.surface} rounded-lg max-w-md w-full p-6`}>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className={`text-lg font-semibold ${currentTheme.text}`}>Reject Leave Request</h3>
+                <button
+                  onClick={() => setShowRejectModal(false)}
+                  className={`${currentTheme.textSecondary} hover:${currentTheme.text}`}
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className={`block text-sm font-medium ${currentTheme.text} mb-1`}>
+                    Rejection Reason *
+                  </label>
+                  <textarea
+                    value={rejectionReason}
+                    onChange={(e) => setRejectionReason(e.target.value)}
+                    className={`w-full px-3 py-2 border ${currentTheme.border} rounded-lg ${currentTheme.surface} ${currentTheme.text}`}
+                    rows="3"
+                    placeholder="Please provide a reason for rejection..."
+                    required
+                  />
+                </div>
+
+                <div className="flex gap-3 justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setShowRejectModal(false)}
+                    className={`px-4 py-2 border ${currentTheme.border} rounded-lg ${currentTheme.textSecondary} ${currentTheme.hover}`}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleRejectSubmit}
+                    disabled={!rejectionReason.trim()}
+                    className={`px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed`}
+                  >
+                    Reject Request
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
