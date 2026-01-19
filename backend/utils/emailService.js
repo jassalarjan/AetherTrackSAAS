@@ -1595,11 +1595,93 @@ TaskFlow Team
   }
 };
 
+// Template rendering helper for HR module
+export const renderTemplate = (templateCode, variables) => {
+  const templates = {
+    'LEAVE_REQUEST_SUBMITTED': `
+      <p>A new leave request has been submitted:</p>
+      <ul>
+        <li><strong>Employee:</strong> ${variables.employeeName}</li>
+        <li><strong>Leave Type:</strong> ${variables.leaveType}</li>
+        <li><strong>Start Date:</strong> ${variables.startDate}</li>
+        <li><strong>End Date:</strong> ${variables.endDate}</li>
+        <li><strong>Days:</strong> ${variables.days}</li>
+        <li><strong>Reason:</strong> ${variables.reason}</li>
+      </ul>
+      <p>Please review and approve/reject this request.</p>
+    `,
+    'LEAVE_APPROVED': `
+      <p>Dear ${variables.employeeName},</p>
+      <p>Your leave request has been <strong style="color: green;">APPROVED</strong>.</p>
+      <ul>
+        <li><strong>Leave Type:</strong> ${variables.leaveType}</li>
+        <li><strong>Start Date:</strong> ${variables.startDate}</li>
+        <li><strong>End Date:</strong> ${variables.endDate}</li>
+        <li><strong>Days:</strong> ${variables.days}</li>
+      </ul>
+      <p>Enjoy your time off!</p>
+    `,
+    'LEAVE_REJECTED': `
+      <p>Dear ${variables.employeeName},</p>
+      <p>Your leave request has been <strong style="color: red;">REJECTED</strong>.</p>
+      <ul>
+        <li><strong>Leave Type:</strong> ${variables.leaveType}</li>
+        <li><strong>Start Date:</strong> ${variables.startDate}</li>
+        <li><strong>End Date:</strong> ${variables.endDate}</li>
+        <li><strong>Days:</strong> ${variables.days}</li>
+        <li><strong>Rejection Reason:</strong> ${variables.rejectionReason}</li>
+      </ul>
+      <p>Please contact HR for more information.</p>
+    `,
+    'ATTENDANCE_REMINDER': `
+      <p>Dear ${variables.employeeName},</p>
+      <p>This is a reminder that you have not checked in/out today.</p>
+      <p><strong>Date:</strong> ${variables.date}</p>
+      <p>Please ensure you mark your attendance regularly.</p>
+    `
+  };
+
+  return templates[templateCode] || '';
+};
+
 export default {
   sendCredentialEmail,
   sendPasswordResetEmail,
+  renderTemplate,
   sendOverdueTaskReminder,
   sendWeeklyReport
+};
+
+// Generic email sending function
+export const sendEmail = async (to, subject, htmlContent, from = { email: 'updates.codecatalyst@gmail.com', name: 'TaskFlow' }) => {
+  try {
+    // Try Brevo API first (preferred)
+    if (process.env.BREVO_API_KEY) {
+      console.log('📧 Sending email via Brevo API to:', to);
+      const result = await sendWithBrevoAPI(to, subject, htmlContent, from);
+      if (result.success) {
+        return result;
+      }
+      console.log('⚠️ Brevo API failed, falling back to SMTP...');
+    }
+
+    // Fallback to SMTP
+    const transporter = createTransporter();
+    const mailOptions = {
+      from: from,
+      to: to,
+      subject: subject,
+      html: htmlContent,
+      // Plain text fallback
+      text: htmlContent.replace(/<[^>]*>/g, '') // Strip HTML tags for plain text
+    };
+
+    const result = await sendEmailSync(transporter, mailOptions);
+    return result;
+  } catch (error) {
+    console.error('❌ Error in sendEmail:', error);
+    return { success: false, status: 'error', error: error.message };
+  }
 };
 
 // Send password reset token email

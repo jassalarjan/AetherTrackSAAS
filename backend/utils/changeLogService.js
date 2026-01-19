@@ -4,36 +4,58 @@ import ChangeLog from '../models/ChangeLog.js';
  * Create a change log entry
  * WORKSPACE SUPPORT: Now accepts workspaceId parameter
  */
-export const logChange = async ({
-  event_type,
-  user,
-  user_ip,
-  target_type,
-  target_id,
-  target_name,
-  action,
-  description,
-  metadata = {},
-  changes = {},
-  workspaceId  // WORKSPACE SUPPORT
-}) => {
+export const logChange = async (params) => {
   try {
-    const logEntry = new ChangeLog({
-      event_type,
-      user_id: user?._id,
-      user_email: user?.email,
-      user_name: user?.full_name,
-      user_role: user?.role,
-      user_ip,
-      target_type,
-      target_id,
-      target_name,
-      action,
-      description,
-      metadata,
-      changes,
-      workspaceId  // WORKSPACE SUPPORT
-    });
+    // Handle both parameter patterns
+    let logData = {};
+
+    if (params.event_type) {
+      // Direct event_type pattern (used in auth.js, users.js, etc.)
+      logData = {
+        event_type: params.event_type,
+        user_id: params.user?._id,
+        user_email: params.user?.email,
+        user_name: params.user?.full_name,
+        user_role: params.user?.role,
+        user_ip: params.user_ip,
+        target_type: params.target_type,
+        target_id: params.target_id,
+        target_name: params.target_name,
+        action: params.action,
+        description: params.description,
+        metadata: params.metadata || {},
+        changes: params.changes || {},
+        workspaceId: params.workspaceId
+      };
+    } else {
+      // Alternative pattern (used in attendance.js, leaves.js, etc.)
+      const { userId, workspaceId, action, entity, entityId, details, ipAddress } = params;
+
+      // Map entity to event_type
+      const eventTypeMap = {
+        attendance: 'user_action',
+        leave_request: 'leave_action',
+        leave_type: 'leave_type_action',
+        holiday: 'holiday_action',
+        email_template: 'email_action',
+        user: 'user_action',
+        task: 'task_action'
+      };
+
+      logData = {
+        event_type: eventTypeMap[entity] || 'system_event',
+        user_id: userId,
+        user_ip: ipAddress,
+        target_type: entity,
+        target_id: entityId,
+        action: action,
+        description: `${action} ${entity}: ${JSON.stringify(details || {})}`,
+        metadata: details || {},
+        workspaceId: workspaceId
+      };
+    }
+
+    const logEntry = new ChangeLog(logData);
 
     await logEntry.save();
     return logEntry;

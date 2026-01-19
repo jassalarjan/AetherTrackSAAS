@@ -11,7 +11,7 @@ import { Upload, Download, FileJson, FileSpreadsheet, X, Search, Filter, Users a
 
 export default function UserManagement() {
   const { user } = useAuth();
-  const { theme } = useTheme();
+  const { theme, currentTheme } = useTheme();
   const { toggleMobileSidebar } = useSidebar();
   const confirmModal = useConfirmModal();
   const [users, setUsers] = useState([]);
@@ -302,12 +302,22 @@ export default function UserManagement() {
     return badges[role] || badges.member;
   };
 
+  const getEmploymentStatusBadge = (status) => {
+    const badges = {
+      ACTIVE: { bg: 'bg-green-500/20', text: 'text-green-400', label: 'Active' },
+      INACTIVE: { bg: 'bg-red-500/20', text: 'text-red-400', label: 'Inactive' },
+      ON_NOTICE: { bg: 'bg-yellow-500/20', text: 'text-yellow-400', label: 'On Notice' },
+      EXITED: { bg: 'bg-gray-500/20', text: 'text-gray-400', label: 'Exited' }
+    };
+    return badges[status] || { bg: 'bg-green-500/20', text: 'text-green-400', label: 'Active' };
+  };
+
   if (!hasPermission) {
     return (
-      <div className={`flex h-screen w-full ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'}`}>
+      <div className={`flex h-screen w-full ${currentTheme.background}`}>
         <Sidebar />
-        <main className={`flex-1 flex items-center justify-center ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'}`}>
-          <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} p-8 rounded border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'}`}>
+        <main className={`flex-1 flex items-center justify-center ${currentTheme.background}`}>
+          <div className={`${currentTheme.surface} p-8 rounded border ${currentTheme.border}`}>
             <h2 className="text-2xl font-bold text-red-500 mb-4">Access Denied</h2>
             <p className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`}>You don't have permission to access user management.</p>
             <p className="text-[#6b7280] mt-2">Only Admin and HR can manage users.</p>
@@ -333,12 +343,12 @@ export default function UserManagement() {
   }
 
   return (
-    <div className={`flex h-screen w-full ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'}`}>
+    <div className={`flex h-screen w-full ${currentTheme.background}`}>
       <Sidebar />
 
-      <main className={`flex-1 flex flex-col h-full w-full min-w-0 ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'} overflow-hidden`}>
+      <main className={`flex-1 flex flex-col h-full w-full min-w-0 ${currentTheme.background} overflow-hidden`}>
         {/* Header */}
-        <header className={`border-b ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'} shrink-0`}>
+        <header className={`border-b ${currentTheme.border} ${currentTheme.background} shrink-0`}>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between px-3 sm:px-4 md:px-6 py-3 sm:py-4 gap-2 sm:gap-3">
             <div className="flex items-center gap-2 sm:gap-3">
               {/* Mobile/Tablet Menu Button */}
@@ -382,7 +392,7 @@ export default function UserManagement() {
                 <input
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className={`w-full h-5 sm:h-8 md:h-9 lg:h-10 pl-5 sm:pl-8 md:pl-10 pr-1 sm:pr-3 md:pr-4 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-white'} border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} rounded text-[9px] sm:text-xs md:text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'} placeholder-[#6b7280] focus:ring-1 focus:ring-[#136dec] focus:border-transparent`}
+                  className={`w-full h-5 sm:h-8 md:h-9 lg:h-10 pl-5 sm:pl-8 md:pl-10 pr-1 sm:pr-3 md:pr-4 ${currentTheme.surface} border ${currentTheme.border} rounded text-[9px] sm:text-xs md:text-sm ${currentTheme.text} placeholder-[#6b7280] focus:ring-1 focus:ring-[#136dec] focus:border-transparent`}
                   placeholder="Search..."
                 />
               </div>
@@ -390,7 +400,7 @@ export default function UserManagement() {
                 <select
                   value={roleFilter}
                   onChange={(e) => setRoleFilter(e.target.value)}
-                  className={`h-5 sm:h-8 md:h-9 lg:h-10 px-0.5 sm:px-2 md:px-3 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-white'} border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} rounded text-[8px] sm:text-xs md:text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'} focus:ring-1 focus:ring-[#136dec] focus:border-transparent overflow-hidden`}
+                  className={`h-5 sm:h-8 md:h-9 lg:h-10 px-0.5 sm:px-2 md:px-3 ${currentTheme.surface} border ${currentTheme.border} rounded text-[8px] sm:text-xs md:text-sm ${currentTheme.text} focus:ring-1 focus:ring-[#136dec] focus:border-transparent overflow-hidden`}
                   style={{ textOverflow: 'ellipsis' }}
                 >
                   <option value="all">All</option>
@@ -402,7 +412,7 @@ export default function UserManagement() {
                 <select
                   value={teamFilter}
                   onChange={(e) => setTeamFilter(e.target.value)}
-                  className={`h-5 sm:h-8 md:h-9 lg:h-10 px-0.5 sm:px-2 md:px-3 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-white'} border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} rounded text-[8px] sm:text-xs md:text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'} focus:ring-1 focus:ring-[#136dec] focus:border-transparent overflow-hidden`}
+                  className={`h-5 sm:h-8 md:h-9 lg:h-10 px-0.5 sm:px-2 md:px-3 ${currentTheme.surface} border ${currentTheme.border} rounded text-[8px] sm:text-xs md:text-sm ${currentTheme.text} focus:ring-1 focus:ring-[#136dec] focus:border-transparent overflow-hidden`}
                   style={{ textOverflow: 'ellipsis' }}
                 >
                   <option value="all">All Teams</option>
@@ -461,10 +471,10 @@ export default function UserManagement() {
           )}
 
           {/* Desktop Table View */}
-          <div className={`hidden md:block ${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} overflow-hidden`}>
+          <div className={`hidden md:block ${currentTheme.surface} rounded border ${currentTheme.border} overflow-hidden`}>
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className={`${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'}`}>
+                <thead className={`${currentTheme.surfaceSecondary}`}>
                   <tr>
                     <th className="px-4 py-3 text-left">
                       <input
@@ -476,23 +486,25 @@ export default function UserManagement() {
                     </th>
                     <th className={`px-4 py-3 text-left text-[10px] font-bold ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} uppercase tracking-wider`}>User</th>
                     <th className={`px-4 py-3 text-left text-[10px] font-bold ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} uppercase tracking-wider`}>Role</th>
+                    <th className={`px-4 py-3 text-left text-[10px] font-bold ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} uppercase tracking-wider`}>Status</th>
                     <th className={`px-4 py-3 text-left text-[10px] font-bold ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} uppercase tracking-wider`}>Team</th>
                     <th className={`px-4 py-3 text-left text-[10px] font-bold ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} uppercase tracking-wider hidden lg:table-cell`}>Created</th>
                     <th className={`px-4 py-3 text-right text-[10px] font-bold ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} uppercase tracking-wider`}>Actions</th>
                   </tr>
                 </thead>
-                <tbody className={`divide-y ${theme === 'dark' ? 'divide-[#282f39]' : 'divide-gray-200'}`}>
+                <tbody className={`divide-y ${currentTheme.border}`}>
                   {filteredUsers.length === 0 ? (
                     <tr>
-                      <td colSpan="6" className={`px-4 py-8 text-center ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`}>
+                      <td colSpan="7" className={`px-4 py-8 text-center ${currentTheme.textSecondary}`}>
                         No users found
                       </td>
                     </tr>
                   ) : (
                     filteredUsers.map((usr) => {
                       const badge = getRoleBadge(usr.role);
+                      const statusBadge = getEmploymentStatusBadge(usr.employmentStatus);
                       return (
-                        <tr key={usr._id} className={`${theme === 'dark' ? 'hover:bg-[#282f39]/50' : 'hover:bg-gray-50'} transition-colors`}>
+                        <tr key={usr._id} className={`${currentTheme.hover} transition-colors`}>
                           <td className="px-4 py-3">
                             <input
                               type="checkbox"
@@ -509,6 +521,11 @@ export default function UserManagement() {
                           <td className="px-4 py-3">
                             <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded ${badge.bg} ${badge.text}`}>
                               {badge.label}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded ${statusBadge.bg} ${statusBadge.text}`}>
+                              {statusBadge.label}
                             </span>
                           </td>
                           <td className={`px-4 py-3 text-sm ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`}>
@@ -556,14 +573,14 @@ export default function UserManagement() {
           {/* Mobile Card View */}
           <div className="md:hidden space-y-3">
             {filteredUsers.length === 0 ? (
-              <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-8 text-center ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`}>
+              <div className={`${currentTheme.surface} rounded border ${currentTheme.border} p-8 text-center ${currentTheme.textSecondary}`}>
                 No users found
               </div>
             ) : (
               filteredUsers.map((usr) => {
                 const badge = getRoleBadge(usr.role);
                 return (
-                  <div key={usr._id} className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-4`}>
+                  <div key={usr._id} className={`${currentTheme.surface} rounded border ${currentTheme.border} p-4`}>
                     <div className="flex items-start gap-3">
                       <input
                         type="checkbox"

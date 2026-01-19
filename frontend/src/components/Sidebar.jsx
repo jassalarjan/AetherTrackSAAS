@@ -21,7 +21,10 @@ import {
   LogOut,
   User as UserIcon,
   Building2,
-  X
+  X,
+  Clock,
+  CalendarDays,
+  Briefcase
 } from 'lucide-react';
 
 const Sidebar = () => {
@@ -54,11 +57,15 @@ const Sidebar = () => {
   };
 
   const mainMenuItems = [
-    { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+    { path: user?.role === 'admin' || user?.role === 'hr' ? '/hr/dashboard' : '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { path: '/tasks', icon: CheckSquare, label: 'My Tasks' },
     { path: '/kanban', icon: Grid3x3, label: 'Kanban Board' },
     { path: '/calendar', icon: Calendar, label: 'Calendar' },
     { path: '/analytics', icon: BarChart3, label: 'Analytics' },
+  ];
+
+  const hrMenuItems = [
+    { path: '/hr/dashboard', icon: LayoutDashboard, label: 'HR Dashboard', roles: ['admin', 'hr'] },
   ];
 
   const adminMenuItems = [
@@ -176,6 +183,42 @@ const Sidebar = () => {
             </button>
           );
         })}
+
+        {/* HR Dashboard Section */}
+        {hrMenuItems.some(canAccess) && (
+          <>
+            {!isCollapsed && (
+              <div className="px-3 py-2 mt-4 hidden lg:block">
+                <p className={`text-xs font-bold uppercase tracking-wider ${
+                  isDark ? 'text-[#9da8b9]' : 'text-gray-500'
+                }`}>HR Dashboard</p>
+              </div>
+            )}
+            {hrMenuItems.filter(canAccess).map((item) => {
+              const Icon = item.icon;
+              const active = isActive(item.path);
+              return (
+                <button
+                  key={item.path}
+                  onClick={() => handleNavigation(item.path)}
+                  className={`flex items-center gap-3 px-3 py-2 rounded transition-colors group ${
+                    active
+                      ? isDark
+                        ? 'bg-[#136dec]/10 text-[#136dec]'
+                        : 'bg-blue-50 text-blue-600'
+                      : isDark
+                        ? 'text-[#9da8b9] hover:bg-[#1c2027] hover:text-white'
+                        : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                  }`}
+                  title={isCollapsed ? item.label : ''}
+                >
+                  <Icon size={20} className={active ? 'fill-current' : ''} />
+                  {!isCollapsed && <span className="text-sm font-medium">{item.label}</span>}
+                </button>
+              );
+            })}
+          </>
+        )}
 
         {/* Admin Section */}
         {adminMenuItems.some(canAccess) && (

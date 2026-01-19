@@ -24,6 +24,10 @@ import ChangeLog from './pages/ChangeLog';
 import Notifications from './pages/Notifications';
 import Landing from './pages/Landing';
 import ScreenshotDemo from './pages/ScreenshotDemo';
+import AttendancePage from './pages/AttendancePage';
+import HRCalendar from './pages/HRCalendar';
+import LeavesPage from './pages/LeavesPage';
+import HRDashboard from './pages/HRDashboard';
 
 function AppContent() {
   // Initialize notifications
@@ -71,6 +75,43 @@ function AppContent() {
         element={
           <ProtectedRoute allowedRoles={['admin', 'hr', 'team_lead', 'community_admin']}>
             <Teams />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Unified HR Dashboard */}
+      <Route
+        path="/hr/dashboard"
+        element={
+          <ProtectedRoute allowedRoles={['admin', 'hr']}>
+            <HRDashboard />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/hr/attendance"
+        element={
+          <ProtectedRoute allowedRoles={['admin', 'hr', 'team_lead', 'member']}>
+            <AttendancePage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/hr/calendar"
+        element={
+          <ProtectedRoute allowedRoles={['admin', 'hr', 'team_lead', 'member']}>
+            <HRCalendar />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/hr/leaves"
+        element={
+          <ProtectedRoute allowedRoles={['admin', 'hr', 'team_lead', 'member']}>
+            <LeavesPage />
           </ProtectedRoute>
         }
       />
