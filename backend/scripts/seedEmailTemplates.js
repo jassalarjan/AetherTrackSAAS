@@ -1054,6 +1054,7 @@ const predefinedTemplates = [
     subject: 'Thank You for Applying',
     category: 'hiring',
     isPredefined: true,
+    senderName: 'Code Catalyst HR',
     variables: [
       { name: 'candidateName', description: 'Candidate\'s full name', example: 'John Doe' },
       { name: 'websiteUrl', description: 'Company website URL', example: 'https://code-catalyst.pages.dev/' },
@@ -1061,47 +1062,18 @@ const predefinedTemplates = [
       { name: 'linkedinUrl', description: 'LinkedIn page URL', example: 'https://www.linkedin.com/company/code-catalyst-s/' }
     ],
     htmlContent: `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Thank You for Applying</title>
-  <style>
-    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-    .header { background: #667eea; color: white; padding: 20px; text-align: center; }
-    .content { padding: 20px; background: #f9f9f9; }
-    .footer { text-align: center; padding: 20px; font-size: 12px; color: #666; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <h1>Thank You for Applying</h1>
-    </div>
-    <div class="content">
-      <p>Hi {{candidateName}},</p>
       <p>Thank you for showing interest in joining the Code Catalyst Community and for submitting your details through our Hiring Form. 🎉</p>
       <p>We have successfully received your response and our HR/Recruitment team will carefully review your application. If your profile aligns with our current requirements, you will be shortlisted for the next stage of the selection process, which may include an interview or additional assessments.</p>
-      <p>🔹 What Happens Next?</p>
+      
+      <h2>🔹 What Happens Next?</h2>
       <p>Shortlisted candidates will receive an email with interview details and Google Meet link.</p>
       <p>Please keep an eye on your inbox for further updates.</p>
-      <p>In the meantime, feel free to stay connected with us:</p>
-      <ul>
-        <li>🌐 Website: {{websiteUrl}}</li>
-        <li>💬 Discord Community: {{discordUrl}}</li>
-        <li>🔗 LinkedIn: {{linkedinUrl}}</li>
-      </ul>
+      
+      <div class="highlight">
+        In the meantime, feel free to stay connected with us through our website, Discord community, and LinkedIn.
+      </div>
+
       <p>We truly appreciate the time and effort you've taken to apply, and we look forward to the possibility of working together to grow and innovate as part of Code Catalyst.</p>
-      <p>Best regards,<br>HR<br>Code Catalyst</p>
-    </div>
-    <div class="footer">
-      <p>This is an automated message. Please do not reply to this email.</p>
-    </div>
-  </div>
-</body>
-</html>
     `
   },
   {
@@ -1110,6 +1082,7 @@ const predefinedTemplates = [
     subject: 'Interview Schedule – Code Catalyst Recruitment',
     category: 'interview',
     isPredefined: true,
+    senderName: 'Code Catalyst Recruitment',
     variables: [
       { name: 'candidateName', description: 'Candidate\'s full name', example: 'John Doe' },
       { name: 'date', description: 'Interview date', example: '29/10/2025' },
@@ -1120,58 +1093,41 @@ const predefinedTemplates = [
       { name: 'designation', description: 'HR designation', example: 'HR Lead' }
     ],
     htmlContent: `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Interview Schedule</title>
-  <style>
-    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-    .header { background: #10b981; color: white; padding: 20px; text-align: center; }
-    .content { padding: 20px; background: #f9f9f9; }
-    .interview-details { background: white; padding: 15px; border-left: 4px solid #10b981; margin: 20px 0; }
-    .footer { text-align: center; padding: 20px; font-size: 12px; color: #666; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <h1>Interview Schedule – Code Catalyst Recruitment</h1>
-    </div>
-    <div class="content">
-      <p>Hi {{candidateName}},</p>
       <p>We are pleased to inform you that you have been shortlisted for the Code Catalyst recruitment process. The next step will be your interview round, details of which are provided below:</p>
 
-      <div class="interview-details">
-        <p><strong>Interview Mode:</strong> Online (Google Meet)</p>
-        <p><strong>Date:</strong> {{date}}</p>
-        <p><strong>Time:</strong> {{time}}</p>
-        <p><strong>Google Meet Link:</strong> <a href="{{meetLink}}">{{meetLink}}</a></p>
-        <p><strong>Interviewer:</strong> {{interviewers}}</p>
+      <div class="details-card">
+        <table class="details-table">
+          <tr>
+            <td class="label">📅 Date</td>
+            <td class="value">{{date}}</td>
+          </tr>
+          <tr>
+            <td class="label">🕐 Time</td>
+            <td class="value">{{time}}</td>
+          </tr>
+          <tr>
+            <td class="label">📍 Mode</td>
+            <td class="value">Online (Google Meet)</td>
+          </tr>
+          <tr>
+            <td class="label">🔗 Link</td>
+            <td class="value"><a href="{{meetLink}}">{{meetLink}}</a></td>
+          </tr>
+          <tr>
+            <td class="label">👥 Team</td>
+            <td class="value">{{interviewers}}</td>
+          </tr>
+        </table>
       </div>
 
-      <h3>Important Instructions:</h3>
+      <h3>📌 Important Instructions:</h3>
       <ul>
         <li>Please ensure you join the call on time.</li>
-        <li>Please wait till you are allowed to enter the meeting.</li>
-        <li>Keep your camera and microphone turned on throughout the interview for smooth coordination.</li>
-        <li>Maintain a professional environment (quiet background, stable internet connection).</li>
-        <li>Be prepared to discuss your background, skills, and interest in contributing to the Code Catalyst Community.</li>
+        <li>Keep your camera and microphone turned on for smooth coordination.</li>
+        <li>Maintain a professional environment and stable internet connection.</li>
       </ul>
 
-      <p>Kindly reply to this email to confirm your availability or let us know if you require rescheduling.</p>
-      <p>We look forward to meeting you and learning more about your aspirations.</p>
-
-      <p>Best regards,<br>{{hrName}}<br>{{designation}}<br>Code Catalyst</p>
-    </div>
-    <div class="footer">
-      <p>This is an automated message. Please do not reply to this email.</p>
-    </div>
-  </div>
-</body>
-</html>
+      <p>Kindly reply to this email to confirm your availability. We look forward to meeting you!</p>
     `
   },
   {
@@ -1180,6 +1136,7 @@ const predefinedTemplates = [
     subject: 'You are Hired, we\'re Excited to Have You on Our Team!',
     category: 'onboarding',
     isPredefined: true,
+    senderName: 'Code Catalyst Onboarding',
     variables: [
       { name: 'candidateName', description: 'Candidate\'s full name', example: 'John Doe' },
       { name: 'domainName', description: 'Assigned domain/team', example: 'Project Management' },
@@ -1189,69 +1146,26 @@ const predefinedTemplates = [
       { name: 'linkedinPageUrl', description: 'LinkedIn page URL', example: 'https://www.linkedin.com/company/code-catalyst-s/' }
     ],
     htmlContent: `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>You are Hired!</title>
-  <style>
-    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-    .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; }
-    .content { padding: 20px; background: #f9f9f9; }
-    .congrats { background: white; padding: 20px; border-radius: 10px; text-align: center; margin: 20px 0; }
-    .footer { text-align: center; padding: 20px; font-size: 12px; color: #666; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <h1>🎉 Congratulations! 🎉</h1>
-    </div>
-    <div class="content">
-      <div class="congrats">
-        <h2>You are Hired!</h2>
-        <p>We're excited to have you on our team!</p>
+      <h2>Congratulations! You are Hired! 🎉</h2>
+      <p>We are delighted to officially welcome you to the Code Catalyst Community. Your skills, passion, and dedication have earned you this opportunity, and we're excited to see the impact you will create as part of our growing network of innovators.</p>
+
+      <div class="highlight">
+        We're thrilled to inform you that you've officially been selected as the <strong>{{domainName}} Team Member</strong> at Code Catalyst. Welcome aboard!
       </div>
 
-      <p>Hi {{candidateName}},</p>
-      <p>Congratulations! We are delighted to officially welcome you to the Code Catalyst Community. Your skills, passion, and dedication have earned you this opportunity, and we're excited to see the impact you will create as part of our growing network of innovators.</p>
-
-      <p>We're thrilled to inform you that you've officially been selected as the <strong>{{domainName}} Team Member</strong> at Code Catalyst. Your profile stood out, and we're confident that you'll be a great addition to our growing team. Welcome aboard!</p>
-
       <p>To get started, please join our official Discord server where all important communication, onboarding, and team interactions take place:</p>
-      <p><strong>Join here: <a href="{{discordLink}}">{{discordLink}}</a></strong></p>
+      <div class="button-container">
+        <a href="{{discordLink}}" class="button">Join Discord Server</a>
+      </div>
       <p><em>Note: The joining link is valid only for 24 hours so make sure to join on priority.</em></p>
 
-      <p>Feel free to introduce yourself in the introduction channel once you're in. One of our team members will guide you through the next steps.</p>
+      <p>Attached to this email, you will find your Offer Letter. Please review the document carefully and confirm your acceptance by replying to this email.</p>
 
-      <p>If you have any questions, you can reach out directly via Discord or reply to this email.</p>
-
-      <p>Attached to this email, you will find your Offer Letter, which outlines your role, responsibilities, and the values we uphold at Code Catalyst. Please review the document carefully and confirm your acceptance by replying to this email.</p>
-
-      <h3>Next Step – Share Your Achievement</h3>
-      <p>We would love for you to share this milestone on LinkedIn to celebrate your selection and showcase your achievement with your network. This will also help you establish your professional presence and highlight your association with the Code Catalyst community.</p>
-
-      <p>Here's a suggested format for your post:</p>
-      <blockquote>
-        Excited to share that I have officially joined Code Catalyst as a [Your Role]! Looking forward to contributing to amazing projects, learning with inspiring peers, and making an impact in the community.<br>
-        #CodeCatalyst #Community #Innovation #Learning #Collaboration
-      </blockquote>
-
-      <p>Don't forget to tag "Code Catalyst" in your post so we can reshare it on our official page.<br>
-      LinkedIn Page Link - <a href="{{linkedinPageUrl}}">{{linkedinPageUrl}}</a></p>
+      <h3>📌 Share Your Achievement</h3>
+      <p>We would love for you to share this milestone on LinkedIn! Don't forget to tag "Code Catalyst" in your post so we can reshare it.</p>
+      <p>LinkedIn Page Link: <a href="{{linkedinPageUrl}}">{{linkedinPageUrl}}</a></p>
 
       <p>Once again, congratulations and welcome aboard! Let's build, learn, and grow together.</p>
-
-      <p>Best regards,<br>{{hrName}}<br>{{designation}}<br>Code Catalyst Team</p>
-    </div>
-    <div class="footer">
-      <p>This is an automated message. Please do not reply to this email.</p>
-    </div>
-  </div>
-</body>
-</html>
     `
   },
   {
@@ -2028,18 +1942,16 @@ async function seedEmailTemplates() {
 
     console.log('🌱 Seeding predefined email templates...');
 
-    for (const templateData of predefinedTemplates) {
-      const existingTemplate = await EmailTemplate.findOne({ code: templateData.code });
-
-      if (existingTemplate) {
-        console.log(`⏭️  Template ${templateData.code} already exists, skipping...`);
-        continue;
+      for (const templateData of predefinedTemplates) {
+        // Use findOneAndUpdate to create or update
+        await EmailTemplate.findOneAndUpdate(
+          { code: templateData.code },
+          { $set: templateData },
+          { upsert: true, new: true }
+        );
+        console.log(`✅ Processed template: ${templateData.name} (${templateData.code})`);
       }
 
-      const template = new EmailTemplate(templateData);
-      await template.save();
-      console.log(`✅ Created template: ${templateData.name} (${templateData.code})`);
-    }
 
     console.log('🎉 Email template seeding completed!');
     console.log(`📊 Created ${predefinedTemplates.length} predefined templates`);
