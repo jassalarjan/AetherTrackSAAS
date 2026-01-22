@@ -128,22 +128,18 @@ const sendWithBrevoAPI = async (to, subject, htmlContent, from = null) => {
   }
 };
 
+import brevoService from '../services/brevoEmailService.js';
+
 // Send email using Brevo API only
 export const sendEmail = async (to, subject, htmlContent, from = null) => {
-  console.log('📧 Sending email via Brevo API to:', to);
-
-  if (process.env.BREVO_API_KEY) {
-    console.log('🔑 API key detected, using API method...');
-    return await sendWithBrevoAPI(to, subject, htmlContent, from);
-  }
-
-  console.error('❌ No Brevo credentials configured');
-  return {
-    success: false,
-    status: 'failed',
-    error: 'No Brevo credentials configured. Set BREVO_API_KEY in your .env file',
-    provider: 'none'
-  };
+  console.log('📧 Sending email via Brevo Service to:', to);
+  return await brevoService.send({
+    to,
+    subject,
+    htmlContent,
+    from,
+    useLayout: true // Service will automatically skip wrapping if content is already a full document
+  });
 };
 
 // HTML Email Template for New User Credentials
