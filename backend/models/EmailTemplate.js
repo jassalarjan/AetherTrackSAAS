@@ -39,11 +39,19 @@ const emailTemplateSchema = new mongoose.Schema({
     type: Boolean,
     default: true
   },
-  isPredefined: {
-    type: Boolean,
-    default: false
-  }
-}, {
+    isPredefined: {
+      type: Boolean,
+      default: false
+    },
+    senderName: {
+      type: String,
+      trim: true
+    },
+    senderEmail: {
+      type: String,
+      trim: true
+    }
+  }, {
   timestamps: true
 });
 
