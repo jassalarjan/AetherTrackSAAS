@@ -252,10 +252,10 @@ router.post('/send', authenticate, checkRole(['admin', 'hr']), async (req, res) 
       htmlContent: htmlContent,
       params: variables,
       from: template ? {
-        name: template.senderName || process.env.BREVO_SENDER_NAME || 'TaskFlow',
-        email: template.senderEmail || process.env.BREVO_SENDER_EMAIL || 'updates.codecatalyst@gmail.com'
+        name: template.senderName || process.env.EMAIL_FROM_NAME || 'TaskFlow',
+        email: template.senderEmail || process.env.EMAIL_FROM || 'updates.codecatalyst@gmail.com'
       } : null,
-      useLayout: true // Always use layout for professional look
+      useLayout: true // Use layout to ensure proper HTML structure and CSS styling
     });
 
     if (result.success) {
@@ -486,7 +486,7 @@ router.post('/bulk-send', authenticate, checkRole(['admin', 'hr']), async (req, 
             name: template.senderName || process.env.EMAIL_FROM_NAME || 'TaskFlow',
             email: template.senderEmail || process.env.EMAIL_FROM || 'updates.codecatalyst@gmail.com'
           },
-          useLayout: true
+          useLayout: true // Use layout to ensure proper HTML structure and CSS styling
         });
 
         if (result.success) {

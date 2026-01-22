@@ -62,7 +62,7 @@ class BrevoEmailService {
 
     // Check if content is already a full HTML document
     if (content.includes('<html') || content.includes('<body')) {
-      return content;
+      return this.interpolateVariables(content, params);
     }
 
     // Default params for layout
