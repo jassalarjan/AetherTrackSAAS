@@ -12,12 +12,12 @@ import {
   X, Eye, Code, Layout, ChevronRight, ChevronLeft,
   Calendar, Clock, MessageSquare, Bell, UserMinus,
   Settings as SettingsIcon, ExternalLink, Briefcase,
-  AlertCircle, Edit3
+  AlertCircle, Edit3, Sparkles, RefreshCw
 } from 'lucide-react';
 
 /**
  * Email Center - Professional HR Email Management Interface
- * Handles recipient definition, intent selection, variable resolution, and email dispatch
+ * Enhanced with Smart Variable Mapping to eliminate redundant data entry.
  */
 export default function EmailCenter() {
   const navigate = useNavigate();
@@ -81,7 +81,7 @@ export default function EmailCenter() {
 
   const fetchUsers = async () => {
     try {
-      const response = await api.get('/users');
+      const response = await api.get('/hr/email-templates/users');
       setUsers(response.data.users || []);
     } catch (error) {
       console.error('Error fetching users:', error);
@@ -97,6 +97,37 @@ export default function EmailCenter() {
     }
   };
 
+  /**
+   * Smart Variable Mapper - Automatically maps recipient data to template variables
+   * to eliminate redundant data entry.
+   */
+  const getAutoVariables = (recipient, template) => {
+    if (!template || !template.variables) return {};
+
+    const autoVars = {};
+    const commonMappings = {
+      fullName: recipient.name,
+      name: recipient.name,
+      candidateName: recipient.name,
+      email: recipient.email,
+      recipientEmail: recipient.email,
+      department: recipient.department || '',
+      role: recipient.role || '',
+      jobTitle: recipient.role || '',
+      currentDate: new Date().toLocaleDateString(),
+      workspaceName: currentWorkspace?.name || 'TaskFlow',
+      appUrl: window.location.origin
+    };
+
+    template.variables.forEach(v => {
+      if (commonMappings[v.name]) {
+        autoVars[v.name] = commonMappings[v.name];
+      }
+    });
+
+    return autoVars;
+  };
+
   const handleTemplateSelect = (template) => {
     setSelectedTemplate(template);
     
@@ -109,7 +140,7 @@ export default function EmailCenter() {
     
     setCampaignStep(2);
 
-    // Auto-populate system variables
+    // Auto-populate system variables for global defaults
     const systemVariables = {};
     if (template.variables) {
       template.variables.forEach(variable => {
@@ -129,6 +160,15 @@ export default function EmailCenter() {
       });
     }
 
+    // Refresh existing recipients for the new template
+    setEmailRecipients(prev => prev.map(r => ({
+      ...r,
+      variables: {
+        ...r.variables,
+        ...getAutoVariables(r, template)
+      }
+    })));
+
     setEmailData({
       subject: template.subject,
       htmlContent: template.htmlContent,
@@ -142,28 +182,39 @@ export default function EmailCenter() {
       if (exists) {
         return prev.filter(r => r.id !== userId);
       } else {
-        const user = users.find(u => u._id === userId);
-        return [...prev, {
+        const user = users.find(u => u.id === userId);
+        const baseRecipient = {
           id: userId,
-          name: user.full_name,
+          name: user.name,
           email: user.email,
+          department: user.department,
+          role: user.role,
           source: 'INTERNAL',
           variables: {}
-        }];
+        };
+
+        // Smart Mapping: Auto-fill variables based on current template
+        baseRecipient.variables = getAutoVariables(baseRecipient, selectedTemplate);
+
+        return [...prev, baseRecipient];
       }
     });
   };
 
   const addExternalRecipient = () => {
     if (manualRecipient.name && manualRecipient.email) {
-      const newRecipient = {
+      const baseRecipient = {
         id: `ext-${Date.now()}`,
         name: manualRecipient.name,
         email: manualRecipient.email,
         source: 'EXTERNAL',
         variables: {}
       };
-      setEmailRecipients(prev => [...prev, newRecipient]);
+
+      // Smart Mapping: Auto-fill variables based on current template
+      baseRecipient.variables = getAutoVariables(baseRecipient, selectedTemplate);
+
+      setEmailRecipients(prev => [...prev, baseRecipient]);
       setManualRecipient({ name: '', email: '' });
     }
   };
@@ -176,6 +227,14 @@ export default function EmailCenter() {
     setEmailRecipients(prev => prev.map(r => 
       r.id === recipientId 
         ? { ...r, variables: { ...r.variables, [varName]: value } }
+        : r
+    ));
+  };
+
+  const resetToAutoMapping = (recipientId) => {
+    setEmailRecipients(prev => prev.map(r => 
+      r.id === recipientId 
+        ? { ...r, variables: getAutoVariables(r, selectedTemplate) }
         : r
     ));
   };
@@ -411,7 +470,10 @@ export default function EmailCenter() {
             {recipientMode === 'EXTERNAL' ? (
               <div className="space-y-8">
                 <div className={`p-8 rounded-3xl border-2 border-dashed ${currentTheme.border} ${currentTheme.surfaceSecondary}`}>
-                  <h3 className={`text-sm font-black ${currentTheme.text} mb-6 uppercase tracking-widest`}>Add New Candidate</h3>
+                  <h3 className={`text-sm font-black ${currentTheme.text} mb-6 uppercase tracking-widest flex items-center gap-2`}>
+                    <Sparkles className="w-4 h-4 text-blue-500" />
+                    Smart Candidate Entry
+                  </h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div>
                       <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Full Name</label>
@@ -443,6 +505,10 @@ export default function EmailCenter() {
                       </button>
                     </div>
                   </div>
+                  <p className="mt-4 text-[9px] font-bold text-blue-500/60 uppercase tracking-widest flex items-center gap-1.5 ml-1">
+                    <Sparkles className="w-3 h-3" />
+                    Variables like Name and Email will be automatically mapped to the template.
+                  </p>
                 </div>
 
                 {emailRecipients.length > 0 && (
@@ -469,10 +535,10 @@ export default function EmailCenter() {
             ) : (
               <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-4 rounded-3xl bg-gray-50/50 dark:bg-gray-900/30 border ${currentTheme.border}`}>
                 {users.map((u) => {
-                  const isSelected = emailRecipients.some(r => r.id === u._id);
+                  const isSelected = emailRecipients.some(r => r.id === u.id);
                   return (
                     <label 
-                      key={u._id}
+                      key={u.id}
                       className={`flex items-center p-4 rounded-2xl cursor-pointer border-2 transition-all ${
                         isSelected
                           ? 'border-blue-500 bg-white dark:bg-gray-800 shadow-xl'
@@ -482,7 +548,7 @@ export default function EmailCenter() {
                       <div className="flex items-center gap-3 flex-1 min-w-0">
                         <div className="relative">
                           <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-gray-500 font-black text-xs">
-                            {u.full_name?.charAt(0)}
+                            {u.name?.charAt(0)}
                           </div>
                           {isSelected && (
                             <div className="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 rounded-full border-2 border-white dark:border-gray-800 flex items-center justify-center">
@@ -491,14 +557,14 @@ export default function EmailCenter() {
                           )}
                         </div>
                         <div className="truncate">
-                          <p className={`text-xs font-black ${currentTheme.text} truncate`}>{u.full_name}</p>
+                          <p className={`text-xs font-black ${currentTheme.text} truncate`}>{u.name}</p>
                           <p className={`text-[10px] font-bold text-gray-400 truncate`}>{u.email}</p>
                         </div>
                       </div>
                       <input
                         type="checkbox"
                         checked={isSelected}
-                        onChange={() => handleUserToggle(u._id)}
+                        onChange={() => handleUserToggle(u.id)}
                         className="hidden"
                       />
                     </label>
@@ -663,52 +729,71 @@ export default function EmailCenter() {
             {/* Right Sidebar: Recipient Overrides */}
             <div className="lg:col-span-1 space-y-6">
               <div className={`${currentTheme.surface} p-6 rounded-3xl border ${currentTheme.border} shadow-sm border-l-4 border-l-blue-500`}>
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center font-black text-xs">
-                    {emailRecipients[activeRecipientIndex]?.name?.charAt(0) || '?'}
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center font-black text-xs">
+                      {emailRecipients[activeRecipientIndex]?.name?.charAt(0) || '?'}
+                    </div>
+                    <div>
+                      <h4 className={`text-xs font-black ${currentTheme.text} truncate max-w-[120px]`}>
+                        {emailRecipients[activeRecipientIndex]?.name || 'Select Recipient'}
+                      </h4>
+                      <p className="text-[9px] text-gray-400 font-bold uppercase">INDIVIDUAL DATA</p>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className={`text-xs font-black ${currentTheme.text} truncate max-w-[150px]`}>
-                      {emailRecipients[activeRecipientIndex]?.name || 'Select Recipient'}
-                    </h4>
-                    <p className="text-[9px] text-gray-400 font-bold uppercase">INDIVIDUAL OVERRIDES</p>
-                  </div>
+                  <button 
+                    onClick={() => resetToAutoMapping(emailRecipients[activeRecipientIndex]?.id)}
+                    title="Reset to Smart Mapping"
+                    className="p-2 hover:bg-blue-50 text-blue-500 rounded-xl transition-colors"
+                  >
+                    <RefreshCw className="w-4 h-4" />
+                  </button>
                 </div>
 
                 <div className="space-y-4">
-                  {selectedTemplate?.variables?.filter(v => !['fullName', 'email', 'workspaceName', 'appUrl', 'currentDate'].includes(v.name)).map((v) => (
-                    <div key={v.name}>
-                      <label className="block text-[10px] font-black text-blue-500 uppercase tracking-widest mb-1.5 ml-1">
-                        {v.name}
-                      </label>
-                      <div className="relative">
-                        <input
-                          type="text"
-                          placeholder={emailData.variables[v.name] || v.example}
-                          value={emailRecipients[activeRecipientIndex]?.variables[v.name] || ''}
-                          onChange={(e) => updateRecipientVariable(emailRecipients[activeRecipientIndex]?.id, v.name, e.target.value)}
-                          className={`w-full px-4 py-3 ${currentTheme.surfaceSecondary} rounded-xl border-2 ${
-                            emailRecipients[activeRecipientIndex]?.variables[v.name] ? 'border-blue-500' : currentTheme.border
-                          } ${currentTheme.text} text-xs font-bold transition-all`}
-                        />
-                        {!emailRecipients[activeRecipientIndex]?.variables[v.name] && (
-                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[8px] font-black text-gray-300 uppercase">Default</span>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+                  {selectedTemplate?.variables?.filter(v => !['workspaceName', 'appUrl', 'currentDate'].includes(v.name)).map((v) => {
+                    const isSystemVar = ['fullName', 'email', 'candidateName', 'recipientEmail'].includes(v.name);
+                    const isOverridden = emailRecipients[activeRecipientIndex]?.variables[v.name] && 
+                                       emailRecipients[activeRecipientIndex]?.variables[v.name] !== getAutoVariables(emailRecipients[activeRecipientIndex], selectedTemplate)[v.name];
 
-                  {selectedTemplate?.variables?.filter(v => !['fullName', 'email', 'workspaceName', 'appUrl', 'currentDate'].includes(v.name)).length === 0 && (
+                    return (
+                      <div key={v.name}>
+                        <label className="flex items-center justify-between mb-1.5 ml-1">
+                          <span className="text-[10px] font-black text-blue-500 uppercase tracking-widest">{v.name}</span>
+                          {!isOverridden && (
+                            <span className="flex items-center gap-1 text-[8px] font-black text-green-500 uppercase">
+                              <Sparkles className="w-2 h-2" />
+                              Auto
+                            </span>
+                          )}
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="text"
+                            placeholder={emailData.variables[v.name] || v.example}
+                            value={emailRecipients[activeRecipientIndex]?.variables[v.name] || ''}
+                            onChange={(e) => updateRecipientVariable(emailRecipients[activeRecipientIndex]?.id, v.name, e.target.value)}
+                            className={`w-full px-4 py-3 ${currentTheme.surfaceSecondary} rounded-xl border-2 ${
+                              isOverridden ? 'border-orange-500' : 'border-transparent'
+                            } ${currentTheme.text} text-xs font-bold transition-all bg-gray-50/50 dark:bg-gray-900/50 focus:border-blue-500`}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+
+                  {selectedTemplate?.variables?.filter(v => !['workspaceName', 'appUrl', 'currentDate'].includes(v.name)).length === 0 && (
                     <div className="py-10 text-center">
                       <AlertCircle className="w-8 h-8 text-gray-300 mx-auto mb-3" />
-                      <p className="text-[10px] text-gray-400 font-bold uppercase px-4">No custom variables available for this template</p>
+                      <p className="text-[10px] text-gray-400 font-bold uppercase px-4">No variables to map for this template</p>
                     </div>
                   )}
                 </div>
 
-                <div className="mt-8 p-4 rounded-2xl bg-gray-50 dark:bg-gray-900 border border-dashed border-gray-200 dark:border-gray-800">
-                  <p className="text-[9px] font-bold text-gray-400 uppercase leading-relaxed">
-                    Personalized data here will override the global default values ONLY for this specific recipient.
+                <div className="mt-8 p-4 rounded-2xl bg-blue-50/50 dark:bg-blue-950/10 border border-dashed border-blue-200 dark:border-blue-900">
+                  <p className="text-[9px] font-bold text-blue-600/60 dark:text-blue-400/60 uppercase leading-relaxed flex items-start gap-2">
+                    <Sparkles className="w-3 h-3 mt-0.5" />
+                    <span>The system is automatically pulling name and email from your input. Manually edit only if needed.</span>
                   </p>
                 </div>
               </div>
@@ -754,7 +839,7 @@ export default function EmailCenter() {
 
             <div className={`px-10 py-8 border-t ${currentTheme.border} flex justify-end gap-4 bg-gray-50/50 dark:bg-gray-900/50`}>
               <div className="flex-1 flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
-                {emailRecipients.slice(0, 5).map((r, idx) => (
+                {emailRecipients.map((r, idx) => (
                   <button
                     key={r.id}
                     onClick={() => setActiveRecipientIndex(idx)}
@@ -767,7 +852,6 @@ export default function EmailCenter() {
                     {r.name}
                   </button>
                 ))}
-                {emailRecipients.length > 5 && <span className="text-[9px] text-gray-400 font-bold">+{emailRecipients.length - 5} MORE</span>}
               </div>
               <button onClick={() => setShowPreview(false)} className={`px-8 py-4 ${currentTheme.surfaceSecondary} ${currentTheme.text} rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-gray-200 dark:hover:bg-gray-800 transition-all`}>
                 Close
