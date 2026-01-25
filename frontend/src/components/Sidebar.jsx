@@ -143,9 +143,9 @@ const Sidebar = () => {
         {isMobile && isMobileOpen && (
           <button
             onClick={closeMobileSidebar}
-            className={`absolute top-4 right-4 z-10 ${
-              isDark ? 'text-[#9da8b9] hover:text-white' : 'text-gray-600 hover:text-gray-900'
-            } lg:hidden`}
+            className={`absolute top-4 right-4 z-10 p-2 rounded-md ${
+              isDark ? 'text-[#9da8b9] hover:text-white hover:bg-[#1c2027]' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+            } lg:hidden transition-colors`}
           >
             <X size={24} />
           </button>
@@ -248,7 +248,7 @@ const Sidebar = () => {
 
             {/* HR Menu Items */}
             <div className={`transition-all duration-200 ${
-              isCollapsed || openDropdowns.hr ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0 overflow-hidden'
+              isCollapsed || openDropdowns.hr || isMobile ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0 overflow-hidden'
             }`}>
               {hrMenuItems.filter(canAccess).map((item) => {
                 const Icon = item.icon;
@@ -298,7 +298,7 @@ const Sidebar = () => {
 
             {/* Management Menu Items */}
             <div className={`transition-all duration-200 ${
-              isCollapsed || openDropdowns.management ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0 overflow-hidden'
+              isCollapsed || openDropdowns.management || isMobile ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0 overflow-hidden'
             }`}>
               {adminMenuItems.filter(canAccess).map((item) => {
                 const Icon = item.icon;

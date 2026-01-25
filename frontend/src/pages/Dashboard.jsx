@@ -525,7 +525,7 @@ const Dashboard = () => {
             {/* Mobile Menu Button */}
             <button
               onClick={toggleMobileSidebar}
-              className={`lg:hidden ${theme === 'dark' ? 'text-[#9da8b9] hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}
+              className={`lg:hidden p-2 rounded-md ${theme === 'dark' ? 'text-[#9da8b9] hover:text-white hover:bg-[#1c2027]' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'} transition-colors`}
               aria-label="Toggle menu"
             >
               <Menu size={24} />

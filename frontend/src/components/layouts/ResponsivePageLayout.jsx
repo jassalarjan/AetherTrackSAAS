@@ -58,7 +58,7 @@ const ResponsivePageLayout = ({
                         ? 'hover:bg-[#282f39] text-[#9da8b9] hover:text-white'
                         : 'hover:bg-gray-100 text-gray-600 hover:text-gray-900'
                       }
-                      transition-colors md:hidden
+                      transition-colors
                     `}
                     aria-label="Toggle menu"
                   >
