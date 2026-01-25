@@ -245,17 +245,21 @@ router.post('/send', authenticate, checkRole(['admin', 'hr']), async (req, res) 
       template = await EmailTemplate.findById(templateId);
     }
 
-    // Use brevoService for layout and sender name support
+    // Interpolate variables in content and subject
+    const interpolatedSubject = brevoService.interpolateVariables(subject, variables);
+    const interpolatedHtml = brevoService.interpolateVariables(htmlContent, variables);
+
+    // Use brevoService for sending
     const result = await brevoService.send({
       to: recipientEmails.map(r => r.email),
-      subject: subject,
-      htmlContent: htmlContent,
-      params: variables,
+      subject: interpolatedSubject,
+      htmlContent: interpolatedHtml,
+      params: {}, // No additional params needed since we already interpolated
       from: template ? {
         name: template.senderName || process.env.EMAIL_FROM_NAME || 'TaskFlow',
         email: template.senderEmail || process.env.EMAIL_FROM || 'updates.codecatalyst@gmail.com'
       } : null,
-      useLayout: true // Use layout to ensure proper HTML structure and CSS styling
+      useLayout: false // Predefined templates already have complete HTML structure
     });
 
     if (result.success) {
