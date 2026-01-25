@@ -259,10 +259,6 @@ export default function EmailCenter() {
           // Update individual recipient status to sending
           setEmailRecipients(prev => prev.map((r, idx) => idx === i ? { ...r, status: 'sending' } : r));
 
-          // Variable interpolation
-          let content = emailData.htmlContent;
-          let subject = emailData.subject;
-
           // MERGE VARIABLES: Global Defaults < Recipient Specific Overrides
           const mergedVariables = {
             ...emailData.variables,
@@ -271,20 +267,13 @@ export default function EmailCenter() {
             email: recipientObj.email
           };
 
-          // Custom variables interpolation
-          Object.entries(mergedVariables).forEach(([key, value]) => {
-            const regex = new RegExp(`{{${key}}}`, 'g');
-            content = content.replace(regex, value);
-            subject = subject.replace(regex, value);
-          });
-
           try {
             await api.post('/hr/email-templates/send', {
               recipients: [recipientObj],
-              subject,
-              htmlContent: content,
+              subject: emailData.subject, // Send raw template subject
+              htmlContent: emailData.htmlContent, // Send raw template HTML
               templateId: selectedTemplate._id,
-              variables: mergedVariables
+              variables: mergedVariables // Send all variables for backend interpolation
             });
             
             successCount++;
@@ -330,7 +319,7 @@ export default function EmailCenter() {
 
     // Get current preview recipient
     const recipient = emailRecipients[activeRecipientIndex] || emailRecipients[0];
-    
+
     // Merge variables for preview
     const mergedVariables = {
       ...emailData.variables,
@@ -339,13 +328,60 @@ export default function EmailCenter() {
       email: recipient?.email || '[Email]'
     };
 
+    // Simple client-side preview interpolation
     Object.entries(mergedVariables).forEach(([key, value]) => {
       const regex = new RegExp(`{{${key}}}`, 'g');
       html = html.replace(regex, value || `[${key}]`);
       subject = subject.replace(regex, value || `[${key}]`);
     });
 
-    return { html, subject };
+    // Wrap in proper HTML document for preview
+    const fullHtml = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Preview</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #1a1a1a;
+            background: #ffffff;
+            margin: 0;
+            padding: 20px;
+        }
+        .email-content {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #ffffff;
+            padding: 20px;
+        }
+        h1, h2, h3 {
+            color: #1f2937;
+            margin-top: 24px;
+            margin-bottom: 16px;
+        }
+        p {
+            margin-bottom: 16px;
+        }
+        .highlight {
+            background: rgba(102, 126, 234, 0.1);
+            border-left: 4px solid #667eea;
+            padding: 16px 20px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-content">
+        ${html}
+    </div>
+</body>
+</html>`;
+
+    return { html: fullHtml, subject };
   };
 
   if (loading) {
