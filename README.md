@@ -1,4 +1,4 @@
-# TaskFlow - Enterprise Task Management System
+# AetherFlow - Enterprise Task Management System
 
 A **modern**, **comprehensive**, and **role-based** task management system built with **Node.js**, **Express**, **MongoDB**, **React**, and **Socket.IO**. Featuring real-time collaboration, advanced analytics, PWA capabilities, and intelligent automation.
 
@@ -31,7 +31,7 @@ A **modern**, **comprehensive**, and **role-based** task management system built
 - Scroll-based reveals with staggered animations
 - Community vs CORE pricing comparison
 - 6 capability trust cards
-- Philosophy section explaining "why TaskFlow"
+- Philosophy section explaining "why AetherFlow"
 
 ---
 
@@ -403,7 +403,7 @@ A **modern**, **comprehensive**, and **role-based** task management system built
 ## 📁 Project Architecture
 
 ```
-TaskFlow/
+AetherFlow/
 ├── backend/                    # Node.js + Express API
 │   ├── config/
 │   │   └── db.js              # MongoDB connection configuration
@@ -542,7 +542,7 @@ EMAIL_PASSWORD=your-app-specific-password
 # EMAIL_PASSWORD=your-email-password
 
 # Application Settings
-APP_NAME=TaskFlow
+APP_NAME=AetherFlow
 COMPANY_NAME=Your Company
 ```
 
@@ -579,7 +579,7 @@ npm run seed:admin
 ```
 
 This creates a default **system administrator** account:
-- **Email**: `admin@taskflow.com`
+- **Email**: `admin@AetherFlow.com`
 - **Password**: `Admin@123`
 - **Type**: System Admin (no workspace required)
 - **Access**: Full system-wide access to all workspaces
@@ -650,7 +650,7 @@ This creates an optimized production build in the `dist/` directory.
 **For System Administrators:**
 1. Open your browser to `http://localhost:3000`
 2. Login with default system admin credentials:
-   - **Email**: `admin@taskflow.com`
+   - **Email**: `admin@AetherFlow.com`
    - **Password**: `Admin@123`
 3. **Immediately change the password** in Settings
 4. As a system admin, you can:

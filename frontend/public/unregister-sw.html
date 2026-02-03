@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Unregister Service Worker</title>
+</head>
+<body>
+    <h1>Unregistering Service Worker...</h1>
+    <div id="status">Working...</div>
+    
+    <script>
+        async function unregisterServiceWorkers() {
+            const statusDiv = document.getElementById('status');
+            
+            if ('serviceWorker' in navigator) {
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                
+                if (registrations.length === 0) {
+                    statusDiv.innerHTML = '<p>No service workers found.</p>';
+                    return;
+                }
+                
+                statusDiv.innerHTML = `<p>Found ${registrations.length} service worker(s). Unregistering...</p>`;
+                
+                for (const registration of registrations) {
+                    await registration.unregister();
+                    statusDiv.innerHTML += `<p>✓ Unregistered: ${registration.scope}</p>`;
+                }
+                
+                // Clear all caches
+                const cacheNames = await caches.keys();
+                for (const cacheName of cacheNames) {
+                    await caches.delete(cacheName);
+                    statusDiv.innerHTML += `<p>✓ Deleted cache: ${cacheName}</p>`;
+                }
+                
+                statusDiv.innerHTML += '<p style="color: green; font-weight: bold;">✓ All service workers and caches cleared!</p>';
+                statusDiv.innerHTML += '<p>Please close this tab and refresh your app.</p>';
+            } else {
+                statusDiv.innerHTML = '<p>Service Workers not supported in this browser.</p>';
+            }
+        }
+        
+        unregisterServiceWorkers();
+    </script>
+</body>
+</html>

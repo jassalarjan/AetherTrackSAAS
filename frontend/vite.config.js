@@ -14,8 +14,8 @@ export default defineConfig(({ mode }) => {
         injectRegister: 'auto',
         strategies: 'generateSW',
         manifest: {
-          name: 'TaskFlow - Task Management System',
-          short_name: 'TaskFlow',
+          name: 'AetherFlow - Task Management System',
+          short_name: 'AetherFlow',
           description: 'A comprehensive, role-based task management system for teams',
           theme_color: '#667eea',
           background_color: '#ffffff',

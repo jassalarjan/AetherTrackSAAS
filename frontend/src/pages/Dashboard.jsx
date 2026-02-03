@@ -139,7 +139,7 @@ const Dashboard = () => {
 
   const handleInstallClick = async () => {
     if (isInstalled || localStorage.getItem('pwa-installed') === 'true') {
-      alert('✅ TaskFlow is Already Installed!');
+      alert('✅ AetherFlow is Already Installed!');
       return;
     }
     
@@ -156,7 +156,7 @@ const Dashboard = () => {
         setIsInstalled(true);
         localStorage.setItem('pwa-installed', 'true');
         setTimeout(() => {
-          alert('🎉 TaskFlow has been installed!');
+          alert('🎉 AetherFlow has been installed!');
         }, 1000);
       }
 
@@ -409,7 +409,7 @@ const Dashboard = () => {
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `taskflow-report-${new Date().toISOString().split('T')[0]}.xlsx`;
+        link.download = `AetherFlow-report-${new Date().toISOString().split('T')[0]}.xlsx`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -487,10 +487,10 @@ const Dashboard = () => {
             </div>
             <div className="flex-1">
               <h3 className={`text-sm font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-1`}>
-                Install TaskFlow App
+                Install AetherFlow App
               </h3>
               <p className={`text-xs ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} mb-3`}>
-                Get quick access and work offline by installing TaskFlow on your device
+                Get quick access and work offline by installing AetherFlow on your device
               </p>
               <div className="flex gap-2">
                 <button

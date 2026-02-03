@@ -435,7 +435,7 @@ router.post('/resend-verification', [
       user.email, 
       verificationCode, 
       tempPassword, 
-      user.workspaceId?.name || 'TaskFlow'
+      user.workspaceId?.name || 'AetherFlow'
     );
 
     res.status(200).json({

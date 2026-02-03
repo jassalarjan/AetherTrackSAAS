@@ -26,7 +26,7 @@
 2. Sign in or create a free account
 3. Navigate to: **Settings → API Keys** (https://app.brevo.com/settings/keys/api)
 4. Click **"Generate a new API key"**
-5. Give it a name (e.g., "TaskFlow Production")
+5. Give it a name (e.g., "AetherFlow Production")
 6. Copy the generated API key
 
 ### 2. Update Your .env File
@@ -35,7 +35,7 @@ Open your `.env` file and replace `your_brevo_api_key_here` with your actual API
 ```env
 BREVO_API_KEY=xkeysib-xxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 EMAIL_FROM=updates.codecatalyst@gmail.com
-EMAIL_FROM_NAME=TaskFlow
+EMAIL_FROM_NAME=AetherFlow
 ```
 
 ### 3. Verify Sender Email in Brevo

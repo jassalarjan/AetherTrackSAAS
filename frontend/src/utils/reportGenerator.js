@@ -160,7 +160,7 @@ export const generateExcelReport = (tasks, analyticsData, filters) => {
 
   // Generate filename with timestamp
   const timestamp = new Date().toISOString().slice(0, 10);
-  const filename = `TaskFlow_Report_${timestamp}.xlsx`;
+  const filename = `AetherFlow_Report_${timestamp}.xlsx`;
 
   // Write file
   XLSX.writeFile(workbook, filename);
@@ -178,7 +178,7 @@ export const generatePDFReport = (tasks, analyticsData, filters, user) => {
     // Header
     doc.setFontSize(22);
     doc.setFont(undefined, 'bold');
-    doc.text('TaskFlow Analytics Report', pageWidth / 2, yPosition, { align: 'center' });
+    doc.text('AetherFlow Analytics Report', pageWidth / 2, yPosition, { align: 'center' });
     
     yPosition += 10;
     doc.setFontSize(10);
@@ -459,7 +459,7 @@ export const generatePDFReport = (tasks, analyticsData, filters, user) => {
     doc.setFontSize(8);
     doc.setTextColor(128, 128, 128);
     doc.text(
-      `Page ${i} of ${pageCount} | TaskFlow Report | ${new Date().toLocaleDateString()}`,
+      `Page ${i} of ${pageCount} | AetherFlow Report | ${new Date().toLocaleDateString()}`,
       pageWidth / 2,
       doc.internal.pageSize.getHeight() - 10,
       { align: 'center' }
@@ -468,7 +468,7 @@ export const generatePDFReport = (tasks, analyticsData, filters, user) => {
 
   // Save PDF
   const timestamp = new Date().toISOString().slice(0, 10);
-  doc.save(`TaskFlow_Report_${timestamp}.pdf`);
+  doc.save(`AetherFlow_Report_${timestamp}.pdf`);
   } catch (error) {
     console.error('Error in generatePDFReport:', error);
     throw error;

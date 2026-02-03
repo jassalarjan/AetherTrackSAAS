@@ -47,7 +47,7 @@ const io = new Server(httpServer, {
     origin: [
       'http://localhost:3000',
       'http://localhost:5173',
-      'https://taskflow-nine-phi.vercel.app'
+      'https://AetherFlow-nine-phi.vercel.app'
     ],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
     credentials: true,
@@ -72,7 +72,7 @@ app.use(cors({
     const allowedOrigins = [
       'http://localhost:3000',
       'http://localhost:5173',
-      'https://taskflow-nine-phi.vercel.app'
+      'https://AetherFlow-nine-phi.vercel.app'
     ];
     
     // Allow requests with no origin (like mobile apps or curl requests)

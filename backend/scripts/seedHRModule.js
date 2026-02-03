@@ -174,7 +174,7 @@ const seedHRData = async () => {
           <p><strong>Number of Days:</strong> {{days}}</p>
           <p><strong>Reason:</strong> {{reason}}</p>
           <hr>
-          <p>Please log in to TaskFlow to approve or reject this request.</p>
+          <p>Please log in to AetherFlow to approve or reject this request.</p>
         `,
         variables: [
           { name: 'employeeName', description: 'Name of employee', example: 'John Doe' },

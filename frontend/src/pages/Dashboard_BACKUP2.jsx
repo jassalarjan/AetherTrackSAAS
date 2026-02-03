@@ -134,7 +134,7 @@ const Dashboard = () => {
 
   const handleInstallClick = async () => {
     if (isInstalled || localStorage.getItem('pwa-installed') === 'true') {
-      alert('✅ TaskFlow is Already Installed!');
+      alert('✅ AetherFlow is Already Installed!');
       return;
     }
     
@@ -151,7 +151,7 @@ const Dashboard = () => {
         setIsInstalled(true);
         localStorage.setItem('pwa-installed', 'true');
         setTimeout(() => {
-          alert('🎉 TaskFlow has been installed!');
+          alert('🎉 AetherFlow has been installed!');
         }, 1000);
       }
 
@@ -335,7 +335,7 @@ const Dashboard = () => {
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `taskflow-report-${new Date().toISOString().split('T')[0]}.xlsx`;
+        link.download = `AetherFlow-report-${new Date().toISOString().split('T')[0]}.xlsx`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);

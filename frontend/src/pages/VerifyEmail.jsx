@@ -230,7 +230,7 @@ const VerifyEmail = () => {
             <div className="bg-gray-50 px-8 py-4 text-center border-t border-gray-200">
               <p className="text-sm text-gray-600">
                 Need help?{' '}
-                <a href="mailto:support@taskflow.com" className="text-purple-600 hover:text-purple-700 font-semibold">
+                <a href="mailto:support@AetherFlow.com" className="text-purple-600 hover:text-purple-700 font-semibold">
                   Contact Support
                 </a>
               </p>

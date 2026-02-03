@@ -69,7 +69,7 @@ const Login = () => {
           <div className="px-8 pt-10 pb-6 flex flex-col gap-3">
             <div className="flex flex-col gap-1">
               <h1 className={`text-3xl font-bold tracking-tight ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                TaskFlow
+                AetherFlow
               </h1>
               <p className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} text-sm font-normal`}>
                 Welcome back. Please enter your details.
@@ -232,7 +232,7 @@ const Login = () => {
         {/* Page Footer */}
         <div className="mt-8 flex flex-col items-center gap-4">
           <p className={`text-xs ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} font-normal`}>
-            © 2025 TaskFlow. Enterprise Edition.
+            © 2025 AetherFlow. Enterprise Edition.
           </p>
         </div>
       </div>

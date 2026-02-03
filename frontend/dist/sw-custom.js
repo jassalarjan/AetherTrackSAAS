@@ -1,4 +1,4 @@
-// Custom Service Worker for TaskFlow PWA
+// Custom Service Worker for AetherFlow PWA
 // This extends the Workbox service worker with notification handling
 
 // Import Workbox libraries
@@ -106,11 +106,11 @@ self.addEventListener('push', (event) => {
         { action: 'close', title: 'Close' },
       ],
       requireInteraction: data.requireInteraction || false,
-      tag: data.tag || 'taskflow-notification',
+      tag: data.tag || 'AetherFlow-notification',
     };
 
     event.waitUntil(
-      self.registration.showNotification(data.title || 'TaskFlow', options)
+      self.registration.showNotification(data.title || 'AetherFlow', options)
     );
   } catch (error) {
     console.error('Error handling push notification:', error);
@@ -142,4 +142,4 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(clients.claim());
 });
 
-console.log('TaskFlow Service Worker loaded');
+console.log('AetherFlow Service Worker loaded');

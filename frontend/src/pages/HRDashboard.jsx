@@ -378,8 +378,8 @@ export default function HRDashboard() {
     try {
       const response = await api.post('/hr/email-templates/test', {
         to: testEmailRecipient,
-        subject: 'Test Email from TaskFlow',
-        htmlContent: '<h1>Test Email</h1><p>This is a test email sent from TaskFlow HR Dashboard.</p>'
+        subject: 'Test Email from AetherFlow',
+        htmlContent: '<h1>Test Email</h1><p>This is a test email sent from AetherFlow HR Dashboard.</p>'
       });
 
       await confirmModal.show({
@@ -449,7 +449,7 @@ export default function HRDashboard() {
       template.variables.forEach(variable => {
         switch (variable.name) {
           case 'workspaceName':
-            systemVariables[variable.name] = 'TaskFlow'; // You can get this from context
+            systemVariables[variable.name] = 'AetherFlow'; // You can get this from context
             break;
           case 'appUrl':
             systemVariables[variable.name] = window.location.origin;
