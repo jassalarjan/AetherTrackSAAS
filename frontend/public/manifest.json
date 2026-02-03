@@ -1,8 +1,8 @@
 {
-  "name": "TaskFlow - Task Management System",
-  "short_name": "TaskFlow",
-  "description": "A comprehensive, role-based task management system for teams",
-  "theme_color": "#667eea",
+  "name": "AetherTrack - Next-Gen Project Management",
+  "short_name": "AetherTrack",
+  "description": "Elevate your project management with cutting-edge task tracking, team collaboration, and workflow automation",
+  "theme_color": "#a855f7",
   "background_color": "#ffffff",
   "display": "standalone",
   "orientation": "portrait-primary",

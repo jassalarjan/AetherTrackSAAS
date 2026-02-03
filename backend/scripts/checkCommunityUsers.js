@@ -7,7 +7,7 @@ dotenv.config();
 
 async function checkCommunityUsers() {
   try {
-    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/taskflow');
+    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/AetherFlow');
     console.log('Connected to MongoDB\n');
 
     // Get all community admins

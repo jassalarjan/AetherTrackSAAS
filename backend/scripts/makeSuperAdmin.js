@@ -1,35 +1,72 @@
 import mongoose from 'mongoose';
 import User from '../models/User.js';
+import bcrypt from 'bcryptjs';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
 const email = process.argv[2] || 'jassalarjansingh@gmail.com';
+const password = process.argv[3] || 'waheguru';
 
 async function makeSuperAdmin() {
   try {
-    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/taskflow');
+    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/AetherFlow');
     console.log('Connected to MongoDB');
 
-    const user = await User.findOne({ email });
+    let user = await User.findOne({ email });
 
     if (!user) {
-      console.log(`❌ User not found: ${email}`);
-      process.exit(1);
+      console.log(`User not found. Creating new super admin user...`);
+      
+      // Hash the password
+      const password_hash = await bcrypt.hash(password, 10);
+      
+      // Create new super admin user
+      user = new User({
+        full_name: 'Super Admin',
+        email: email,
+        password_hash: password_hash,
+        role: 'admin',
+        workspaceId: null,  // System admins have no workspace
+        team_id: null,      // System admins are not in teams
+        isEmailVerified: true,
+        employmentStatus: 'ACTIVE'
+      });
+      
+      await user.save();
+      
+      console.log('\n✅ New Super Admin user created:');
+      console.log({
+        email: user.email,
+        name: user.full_name,
+        role: user.role,
+        workspaceId: user.workspaceId,
+        team_id: user.team_id,
+        isSystemAdmin: true
+      });
+    } else {
+      console.log('Found user:', { 
+        email: user.email, 
+        name: user.full_name, 
+        currentRole: user.role,
+        currentWorkspaceId: user.workspaceId 
+      });
+
+      // Update to system admin
+      user.role = 'admin';
+      user.workspaceId = null;  // System admins have no workspace
+      user.team_id = null;      // System admins are not in teams
+      await user.save();
+
+      console.log('\n✅ User updated to System Admin (Super Admin):');
+      console.log({
+        email: user.email,
+        role: user.role,
+        workspaceId: user.workspaceId,
+        team_id: user.team_id,
+        isSystemAdmin: true
+      });
     }
-
-    console.log('Found user:', { 
-      email: user.email, 
-      name: user.full_name, 
-      currentRole: user.role,
-      currentWorkspaceId: user.workspaceId 
-    });
-
-    // Update to system admin
-    user.role = 'admin';
-    user.workspaceId = null;  // System admins have no workspace
-    user.team_id = null;      // System admins are not in teams
-    await user.save();
 
     console.log('\n✅ User updated to System Admin (Super Admin):');
     console.log({

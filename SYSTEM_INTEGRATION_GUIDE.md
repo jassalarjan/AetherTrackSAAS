@@ -1,8 +1,8 @@
-# System Integration Guide: Brevo + TaskFlow HR Email Automation
+# System Integration Guide: Brevo + AetherFlow HR Email Automation
 
 ## 🚀 Drop-In Ready Backend Integration Prompt
 
-This guide provides complete instructions for integrating the unified HTML email template with your TaskFlow HR system using the Brevo transactional email API.
+This guide provides complete instructions for integrating the unified HTML email template with your AetherFlow HR system using the Brevo transactional email API.
 
 ---
 
@@ -25,7 +25,7 @@ This guide provides complete instructions for integrating the unified HTML email
 - **Template Engine**: Handlebars-compatible HTML template (`template.html`)
 - **Email Provider**: Brevo (formerly Sendinblue) Transactional Email API
 - **Backend**: Node.js / Express.js
-- **Database**: MongoDB (TaskFlow existing setup)
+- **Database**: MongoDB (AetherFlow existing setup)
 - **Email Service**: `brevoEmailService.js` and `hrActionService.js`
 
 ### Email Types Supported
@@ -246,7 +246,7 @@ class BrevoEmailService {
       // Optional: Add tags for tracking
       sendSmtpEmail.tags = [
         templateData.email_type || 'hr-notification',
-        'taskflow-hr'
+        'AetherFlow-hr'
       ];
 
       // Send email
@@ -1141,12 +1141,12 @@ LOG_LEVEL=debug
 - [Brevo API Documentation](https://developers.brevo.com/)
 - [Handlebars Template Docs](https://handlebarsjs.com/)
 - [Email Variables Reference](./EMAIL_VARIABLES_REFERENCE.md)
-- [TaskFlow HR Module Docs](./HR_MODULE_IMPLEMENTATION.md)
+- [AetherFlow HR Module Docs](./HR_MODULE_IMPLEMENTATION.md)
 
 ---
 
 **Version:** 1.0  
 **Last Updated:** January 2025  
-**Author:** TaskFlow Development Team  
+**Author:** AetherFlow Development Team  
 **Contact:** codecatalystjb@gmail.com
 

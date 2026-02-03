@@ -1,8 +1,8 @@
-# 🎯 TaskFlow - Complete Implementation Documentation
+# 🎯 AetherFlow - Complete Implementation Documentation
 
 ## 📋 Overview
 
-TaskFlow is a comprehensive enterprise task management system with an integrated HR module, built with modern web technologies. This document provides complete implementation details for all features currently implemented in the repository.
+AetherFlow is a comprehensive enterprise task management system with an integrated HR module, built with modern web technologies. This document provides complete implementation details for all features currently implemented in the repository.
 
 ---
 
@@ -424,7 +424,7 @@ TaskFlow is a comprehensive enterprise task management system with an integrated
 1. **Clone Repository**
    ```bash
    git clone <repository-url>
-   cd TaskFlow
+   cd AetherFlow
    ```
 
 2. **Backend Setup**
@@ -451,7 +451,7 @@ TaskFlow is a comprehensive enterprise task management system with an integrated
 
 ### **Environment Configuration**
 ```env
-MONGODB_URI=mongodb://localhost:27017/taskflow
+MONGODB_URI=mongodb://localhost:27017/AetherFlow
 JWT_SECRET=your-secret-key
 EMAIL_HOST=smtp.gmail.com
 EMAIL_PORT=587

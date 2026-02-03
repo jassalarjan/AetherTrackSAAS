@@ -40,7 +40,7 @@ const NavigationBar = () => {
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
             whileHover={{ scale: 1.05 }}
           >
-            <span className="text-2xl font-bold text-blue-600">TaskFlow</span>
+            <span className="text-2xl font-bold text-blue-600">AetherFlow</span>
           </motion.div>
 
           {/* Desktop Menu */}
@@ -494,7 +494,7 @@ const GravityHero = () => {
             animate={{ opacity: 1 }}
             transition={{ duration: 1, delay: 0.8 }}
           >
-            TaskFlow brings order to chaos. Every project. Every team. In perfect sync.
+            AetherFlow brings order to chaos. Every project. Every team. In perfect sync.
           </motion.p>
 
           <motion.div
@@ -623,7 +623,7 @@ const ComparisonSection = () => {
           viewport={{ once: true }}
           transition={{ delay: 0.2 }}
         >
-          See the difference TaskFlow makes
+          See the difference AetherFlow makes
         </motion.p>
 
         <div className="grid md:grid-cols-2 gap-8">
@@ -708,7 +708,7 @@ const testimonials = [
     name: "Sarah Chen",
     role: "Product Manager",
     company: "TechCorp",
-    content: "TaskFlow transformed how our team collaborates. We've cut meeting time by 60% and increased productivity dramatically.",
+    content: "AetherFlow transformed how our team collaborates. We've cut meeting time by 60% and increased productivity dramatically.",
     rating: 5,
   },
   {
@@ -816,7 +816,7 @@ const InteractiveDemoSection = () => {
           viewport={{ once: true }}
           transition={{ delay: 0.2 }}
         >
-          Experience the power of TaskFlow
+          Experience the power of AetherFlow
         </motion.p>
 
         <div className="flex justify-center gap-4 mb-8">
@@ -1855,10 +1855,10 @@ const Footer = () => {
             className="text-2xl font-bold text-blue-600 mb-4 md:mb-0"
             whileHover={{ scale: 1.05 }}
           >
-            TaskFlow
+            AetherFlow
           </motion.div>
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            © 2025 TaskFlow. All rights reserved.
+            © 2025 AetherFlow. All rights reserved.
           </p>
         </div>
       </div>

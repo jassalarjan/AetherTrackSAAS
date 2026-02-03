@@ -136,7 +136,7 @@ const Dashboard = () => {
   const handleInstallClick = async () => {
     // Check if already installed
     if (isInstalled || localStorage.getItem('pwa-installed') === 'true') {
-      alert('✅ TaskFlow is Already Installed!\n\nThe app has been installed on your device.\n\nYou can:\n• Find it on your home screen/desktop\n• Launch it like a native app\n• Access it offline\n\n🎉 You\'re all set!');
+      alert('✅ AetherFlow is Already Installed!\n\nThe app has been installed on your device.\n\nYou can:\n• Find it on your home screen/desktop\n• Launch it like a native app\n• Access it offline\n\n🎉 You\'re all set!');
       return;
     }
     
@@ -150,19 +150,19 @@ const Dashboard = () => {
       let instructions = '';
       
       if (isIOS || isSafari) {
-        instructions = `📱 Install TaskFlow on iOS/Safari:\n\n` +
+        instructions = `📱 Install AetherFlow on iOS/Safari:\n\n` +
           `1. Tap the Share button (□↑) at the bottom of Safari\n` +
           `2. Scroll down and tap "Add to Home Screen"\n` +
           `3. Tap "Add" in the top right to confirm\n\n` +
-          `The TaskFlow icon will appear on your home screen!`;
+          `The AetherFlow icon will appear on your home screen!`;
       } else if (isChrome || isEdge) {
-        instructions = `💻 Install TaskFlow on Chrome/Edge:\n\n` +
+        instructions = `💻 Install AetherFlow on Chrome/Edge:\n\n` +
           `Option 1:\n` +
           `• Look for the install icon (⊕) in the address bar\n` +
-          `• Click it to install TaskFlow\n\n` +
+          `• Click it to install AetherFlow\n\n` +
           `Option 2:\n` +
           `• Open browser Menu (⋮)\n` +
-          `• Click "Install TaskFlow" or "Install app"\n\n` +
+          `• Click "Install AetherFlow" or "Install app"\n\n` +
           `Note: If you don't see these options, the PWA might not be fully ready yet.`;
       } else {
         instructions = `⚠️ Browser Not Supported\n\n` +
@@ -192,7 +192,7 @@ const Dashboard = () => {
         localStorage.setItem('pwa-installed', 'true');
         // Show success message
         setTimeout(() => {
-          alert('🎉 TaskFlow has been installed!\n\nYou can now access it from your home screen or desktop.\n\nLook for the TaskFlow icon on your device.');
+          alert('🎉 AetherFlow has been installed!\n\nYou can now access it from your home screen or desktop.\n\nLook for the AetherFlow icon on your device.');
         }, 1000);
       }
 
@@ -638,10 +638,10 @@ const Dashboard = () => {
                 
                 <div className="flex-1">
                   <h3 className={`text-xl font-bold ${currentTheme.text} mb-2`}>
-                    Install TaskFlow App
+                    Install AetherFlow App
                   </h3>
                   <p className={`${currentTheme.textSecondary} mb-4`}>
-                    Get the full app experience! Install TaskFlow on your device for:
+                    Get the full app experience! Install AetherFlow on your device for:
                   </p>
                   
                   <ul className={`${currentTheme.textSecondary} space-y-2 mb-4 ml-4`}>
@@ -690,7 +690,7 @@ const Dashboard = () => {
               <CheckSquare className="w-6 h-6 text-green-500" />
               <div>
                 <p className={`font-semibold ${currentTheme.text}`}>
-                  TaskFlow App Installed!
+                  AetherFlow App Installed!
                 </p>
                 <p className={`text-sm ${currentTheme.textSecondary}`}>
                   You're using the installed version. Enjoy the full app experience!
@@ -788,7 +788,7 @@ const Dashboard = () => {
                   onClick={handleInstallClick}
                   className={`btn ${deferredPrompt ? currentColorScheme.primary : 'bg-gray-400'} text-white hover:opacity-90 flex items-center space-x-2`}
                   data-testid="install-app-button"
-                  title={deferredPrompt ? 'Install TaskFlow as an app' : 'Click for installation instructions'}
+                  title={deferredPrompt ? 'Install AetherFlow as an app' : 'Click for installation instructions'}
                 >
                   <Download className="w-5 h-5" />
                   <span>{deferredPrompt ? 'Install App' : 'Install Instructions'}</span>

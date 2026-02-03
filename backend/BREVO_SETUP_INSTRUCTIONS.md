@@ -10,7 +10,7 @@
 1. Go to [Brevo Dashboard](https://app.brevo.com/settings/keys/api)
 2. Sign in to your Brevo account (or create a free account)
 3. Click **"Generate a new API key"**
-4. Give it a name like "TaskFlow Production"
+4. Give it a name like "AetherFlow Production"
 5. **Copy the generated key** (it starts with `xkeysib-`)
 
 ### 2. Update Your .env File

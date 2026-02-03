@@ -1,4 +1,4 @@
-// Custom Service Worker for TaskFlow PWA
+// Custom Service Worker for AetherTrack PWA
 // This extends the Workbox service worker with notification handling
 
 // Import Workbox libraries
@@ -45,6 +45,22 @@ workbox.routing.registerRoute(
       }),
     ],
   })
+);
+
+// Navigation route - handle SPA routing
+workbox.routing.registerNavigationRoute(
+  workbox.precaching.getCacheKeyForURL('/index.html'),
+  {
+    allowlist: [
+      // Allow all routes except API and socket.io
+      /^(?!\/(api|socket\.io)).*/,
+    ],
+    denylist: [
+      // Explicitly deny API and socket.io routes
+      /^\/api/,
+      /^\/socket\.io/,
+    ],
+  }
 );
 
 // Notification click handler
@@ -106,11 +122,11 @@ self.addEventListener('push', (event) => {
         { action: 'close', title: 'Close' },
       ],
       requireInteraction: data.requireInteraction || false,
-      tag: data.tag || 'taskflow-notification',
+      tag: data.tag || 'AetherTrack-notification',
     };
 
     event.waitUntil(
-      self.registration.showNotification(data.title || 'TaskFlow', options)
+      self.registration.showNotification(data.title || 'AetherTrack', options)
     );
   } catch (error) {
     console.error('Error handling push notification:', error);
@@ -142,4 +158,4 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(clients.claim());
 });
 
-console.log('TaskFlow Service Worker loaded');
+console.log('AetherTrack Service Worker loaded');

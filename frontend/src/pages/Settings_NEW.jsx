@@ -64,7 +64,7 @@ const Settings = () => {
           <div className="flex items-center justify-between px-6 py-4">
             <div>
               <h2 className="text-white text-xl font-bold leading-tight">Settings</h2>
-              <p className="text-[#9da8b9] text-xs mt-1">Customize your TaskFlow experience</p>
+              <p className="text-[#9da8b9] text-xs mt-1">Customize your AetherFlow experience</p>
             </div>
           </div>
         </header>
@@ -223,7 +223,7 @@ const Settings = () => {
                 <div>
                   <h4 className="text-sm font-semibold text-white mb-4">Theme & Color Scheme</h4>
                   <p className="text-sm text-[#9da8b9] mb-4">
-                    Customize how TaskFlow looks and feels. Changes are saved automatically.
+                    Customize how AetherFlow looks and feels. Changes are saved automatically.
                   </p>
                   <ThemeToggle />
                 </div>

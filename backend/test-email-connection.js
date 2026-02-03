@@ -120,17 +120,17 @@ async function testSendEmail(configObj, testEmail) {
 
   const mailOptions = {
     from: {
-      name: 'TaskFlow Test',
+      name: 'AetherFlow Test',
       address: process.env.EMAIL_USER
     },
     to: testEmail,
-    subject: '✅ TaskFlow Email Test - SUCCESS',
-    text: 'This is a test email from TaskFlow. If you received this, the email service is working correctly!',
+    subject: '✅ AetherFlow Email Test - SUCCESS',
+    text: 'This is a test email from AetherFlow. If you received this, the email service is working correctly!',
     html: `
       <div style="font-family: Arial, sans-serif; padding: 20px; background: #f4f4f4;">
         <div style="background: white; padding: 30px; border-radius: 10px; max-width: 500px; margin: 0 auto;">
-          <h2 style="color: #667eea;">✅ TaskFlow Email Test</h2>
-          <p>This is a test email from TaskFlow.</p>
+          <h2 style="color: #667eea;">✅ AetherFlow Email Test</h2>
+          <p>This is a test email from AetherFlow.</p>
           <p><strong>If you received this, the email service is working correctly!</strong></p>
           <p style="color: #666; font-size: 12px; margin-top: 30px;">
             Sent at: ${new Date().toLocaleString()}

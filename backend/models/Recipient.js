@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 /**
  * Recipient Model
  * Lightweight abstraction for email recipients
- * Supports both TaskFlow users and external contacts
+ * Supports both AetherFlow users and external contacts
  */
 const recipientSchema = new mongoose.Schema({
   email: {

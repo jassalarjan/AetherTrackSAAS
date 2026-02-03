@@ -240,7 +240,7 @@ const Settings = () => {
               </button>
               <div>
                 <h2 className={`${theme === 'dark' ? 'text-white' : 'text-gray-900'} text-xl font-bold leading-tight`}>Settings</h2>
-                <p className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} text-xs mt-1`}>Customize your TaskFlow experience</p>
+                <p className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} text-xs mt-1`}>Customize your AetherFlow experience</p>
               </div>
             </div>
           </div>
@@ -475,7 +475,7 @@ const Settings = () => {
                 <div>
                   <h4 className={`text-sm font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-4`}>Theme & Color Scheme</h4>
                   <p className={`text-sm ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} mb-4`}>
-                    Customize how TaskFlow looks and feels. Changes are saved automatically.
+                    Customize how AetherFlow looks and feels. Changes are saved automatically.
                   </p>
                   <ThemeToggle />
                 </div>

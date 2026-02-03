@@ -165,11 +165,11 @@ async function sendTestEmail() {
   
   const mailOptions = {
     from: {
-      name: 'TaskFlow Test',
+      name: 'AetherFlow Test',
       address: process.env.EMAIL_USER
     },
     to: testEmail,
-    subject: '🧪 TaskFlow Email Test - ' + new Date().toLocaleString(),
+    subject: '🧪 AetherFlow Email Test - ' + new Date().toLocaleString(),
     html: `
       <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #667eea;">✅ Email Configuration Test Successful!</h2>
@@ -183,7 +183,7 @@ async function sendTestEmail() {
         </div>
         <p>Test Time: ${new Date().toLocaleString()}</p>
         <p style="color: #666; font-size: 14px; margin-top: 30px;">
-          This is an automated test email from TaskFlow.
+          This is an automated test email from AetherFlow.
         </p>
       </div>
     `,

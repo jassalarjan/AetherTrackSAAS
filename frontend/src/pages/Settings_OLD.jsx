@@ -66,7 +66,7 @@ const Settings = () => {
               <SettingsIcon className="w-8 h-8 text-blue-600" />
               <h1 className="text-3xl font-bold text-gray-900 dark:text-white transition-colors">Settings</h1>
             </div>
-            <p className="text-gray-600 dark:text-gray-300 mt-2 transition-colors">Customize your TaskFlow experience</p>
+            <p className="text-gray-600 dark:text-gray-300 mt-2 transition-colors">Customize your AetherFlow experience</p>
           </div>
 
           {/* Settings Content */}
@@ -222,7 +222,7 @@ const Settings = () => {
                 <div>
                   <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Theme & Color Scheme</h3>
                   <p className="text-gray-600 dark:text-gray-300 mb-4">
-                    Customize how TaskFlow looks and feels. Changes are saved automatically.
+                    Customize how AetherFlow looks and feels. Changes are saved automatically.
                   </p>
                   <ThemeToggle />
                 </div>

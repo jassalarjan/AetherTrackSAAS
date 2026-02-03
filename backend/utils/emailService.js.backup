@@ -14,7 +14,7 @@ const getBrevoClient = () => {
 };
 
 // Send email using Brevo API (preferred method)
-const sendWithBrevoAPI = async (to, subject, htmlContent, from = { email: 'updates.codecatalyst@gmail.com', name: 'TaskFlow' }) => {
+const sendWithBrevoAPI = async (to, subject, htmlContent, from = { email: 'updates.codecatalyst@gmail.com', name: 'AetherFlow' }) => {
   try {
     console.log('🔍 Checking Brevo API configuration...');
     console.log('   API Key present:', !!process.env.BREVO_API_KEY);
@@ -181,7 +181,7 @@ const getCredentialEmailTemplate = (fullName, email, password, appUrl) => {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Welcome to TaskFlow</title>
+  <title>Welcome to AetherFlow</title>
   <style>
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
@@ -460,9 +460,9 @@ const getCredentialEmailTemplate = (fullName, email, password, appUrl) => {
     <div class="container">
       <div class="header">
         <div class="logo-container">
-          <img src="https://taskflow-nine-phi.vercel.app/logo.png" alt="TaskFlow Logo" />
+          <img src="https://AetherFlow-nine-phi.vercel.app/logo.png" alt="AetherFlow Logo" />
         </div>
-        <h1>Welcome to TaskFlow! 🚀</h1>
+        <h1>Welcome to AetherFlow! 🚀</h1>
         <p>Your account is ready to go</p>
       </div>
       
@@ -472,8 +472,8 @@ const getCredentialEmailTemplate = (fullName, email, password, appUrl) => {
         </div>
         
         <div class="message">
-          <p>We're excited to have you on board! Your TaskFlow account has been created and you're all set to start managing tasks like a pro.</p>
-          <p>TaskFlow is your all-in-one collaborative workspace where teams come together to get things done efficiently.</p>
+          <p>We're excited to have you on board! Your AetherFlow account has been created and you're all set to start managing tasks like a pro.</p>
+          <p>AetherFlow is your all-in-one collaborative workspace where teams come together to get things done efficiently.</p>
         </div>
 
         <div class="credentials-box">
@@ -497,7 +497,7 @@ const getCredentialEmailTemplate = (fullName, email, password, appUrl) => {
         </div>
 
         <div class="button-container">
-          <a href="${appUrl}" class="btn">🚀 Launch TaskFlow</a>
+          <a href="${appUrl}" class="btn">🚀 Launch AetherFlow</a>
         </div>
 
         <div class="divider"></div>
@@ -541,12 +541,12 @@ const getCredentialEmailTemplate = (fullName, email, password, appUrl) => {
       </div>
 
       <div class="footer">
-        <img src="https://taskflow-nine-phi.vercel.app/logo.png" alt="TaskFlow" class="footer-logo" />
-        <p><strong>TaskFlow</strong></p>
+        <img src="https://AetherFlow-nine-phi.vercel.app/logo.png" alt="AetherFlow" class="footer-logo" />
+        <p><strong>AetherFlow</strong></p>
         <p>Collaborative Task Management System</p>
         <p style="margin-top: 20px; font-size: 12px; opacity: 0.8;">This is an automated message. Please do not reply.</p>
         <p style="margin-top: 15px;">
-          <a href="${appUrl}">🌐 Visit TaskFlow</a>
+          <a href="${appUrl}">🌐 Visit AetherFlow</a>
         </p>
       </div>
     </div>
@@ -560,11 +560,11 @@ const getCredentialEmailTemplate = (fullName, email, password, appUrl) => {
 export const sendCredentialEmail = async (fullName, email, password) => {
   try {
     const appUrl = process.env.NODE_ENV === 'production' 
-      ? 'https://taskflow-nine-phi.vercel.app'
-      : (process.env.CLIENT_URL || 'https://taskflow-nine-phi.vercel.app');
+      ? 'https://AetherFlow-nine-phi.vercel.app'
+      : (process.env.CLIENT_URL || 'https://AetherFlow-nine-phi.vercel.app');
 
     const htmlContent = getCredentialEmailTemplate(fullName, email, password, appUrl);
-    const subject = '🎉 Welcome to TaskFlow - Your Account is Ready!';
+    const subject = '🎉 Welcome to AetherFlow - Your Account is Ready!';
 
     // Try Brevo API first (preferred)
     if (process.env.BREVO_API_KEY) {
@@ -580,7 +580,7 @@ export const sendCredentialEmail = async (fullName, email, password) => {
     const transporter = createTransporter();
     const mailOptions = {
       from: {
-        name: 'TaskFlow Team',
+        name: 'AetherFlow Team',
         address: process.env.EMAIL_USER || 'updates.codecatalyst@gmail.com'
       },
       to: email,
@@ -588,11 +588,11 @@ export const sendCredentialEmail = async (fullName, email, password) => {
       html: htmlContent,
       // Plain text fallback
       text: `
-Welcome to TaskFlow!
+Welcome to AetherFlow!
 
 Hi ${fullName},
 
-Your TaskFlow account has been successfully created! 🎉
+Your AetherFlow account has been successfully created! 🎉
 
 LOGIN CREDENTIALS:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -613,10 +613,10 @@ WHAT YOU CAN DO:
 Need help? Contact your administrator!
 
 Best regards,
-The TaskFlow Team
+The AetherFlow Team
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-TaskFlow - Collaborative Task Management
+AetherFlow - Collaborative Task Management
 ${appUrl}
       `.trim()
     };
@@ -644,11 +644,11 @@ ${appUrl}
 export const sendVerificationEmail = async (fullName, email, verificationCode, password, workspaceName) => {
   try {
     const appUrl = process.env.NODE_ENV === 'production' 
-      ? 'https://taskflow-nine-phi.vercel.app'
+      ? 'https://AetherFlow-nine-phi.vercel.app'
       : (process.env.CLIENT_URL || 'http://localhost:3000');
     
     const verificationLink = `${appUrl}/verify-email?code=${verificationCode}`;
-    const subject = '✉️ Verify Your TaskFlow Account - Action Required';
+    const subject = '✉️ Verify Your AetherFlow Account - Action Required';
 
     const htmlContent = `
 <!DOCTYPE html>
@@ -823,7 +823,7 @@ export const sendVerificationEmail = async (fullName, email, verificationCode, p
         </div>
         
         <div class="message">
-          <p>Welcome to <strong>TaskFlow</strong>! 🎉</p>
+          <p>Welcome to <strong>AetherFlow</strong>! 🎉</p>
           <p>Your workspace "<strong>${workspaceName}</strong>" has been created successfully. To activate your account and start managing tasks, please verify your email address.</p>
         </div>
 
@@ -865,14 +865,14 @@ export const sendVerificationEmail = async (fullName, email, verificationCode, p
         </div>
 
         <div style="margin-top: 40px; padding: 25px; background: #f8fafc; border-radius: 12px; text-align: center;">
-          <p style="color: #64748b; margin: 0; font-size: 14px;">Didn't create a TaskFlow account? Please ignore this email or contact support if you have concerns.</p>
+          <p style="color: #64748b; margin: 0; font-size: 14px;">Didn't create a AetherFlow account? Please ignore this email or contact support if you have concerns.</p>
         </div>
       </div>
 
       <div class="footer">
-        <p><strong>TaskFlow</strong> - Collaborative Task Management</p>
+        <p><strong>AetherFlow</strong> - Collaborative Task Management</p>
         <p style="font-size: 12px; opacity: 0.8; margin-top: 15px;">This is an automated message. Please do not reply.</p>
-        <p style="margin-top: 15px;"><a href="${appUrl}" style="color: #90cdf4; text-decoration: none;">Visit TaskFlow</a></p>
+        <p style="margin-top: 15px;"><a href="${appUrl}" style="color: #90cdf4; text-decoration: none;">Visit AetherFlow</a></p>
       </div>
     </div>
   </div>
@@ -893,7 +893,7 @@ export const sendVerificationEmail = async (fullName, email, verificationCode, p
     // Fallback to SMTP
     const transporter = createTransporter();
     const textContent = `
-Welcome to TaskFlow!
+Welcome to AetherFlow!
 
 Hi ${fullName},
 
@@ -918,16 +918,16 @@ YOUR LOGIN CREDENTIALS (After Verification):
 Didn't create an account? Please ignore this email.
 
 Best regards,
-The TaskFlow Team
+The AetherFlow Team
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-TaskFlow - Collaborative Task Management
+AetherFlow - Collaborative Task Management
 ${appUrl}
     `;
 
     const mailOptions = {
       from: {
-        name: 'TaskFlow Team',
+        name: 'AetherFlow Team',
         address: process.env.EMAIL_USER
       },
       to: email,
@@ -958,10 +958,10 @@ ${appUrl}
 export const sendPasswordResetEmail = async (fullName, email, newPassword) => {
   try {
     const appUrl = process.env.NODE_ENV === 'production' 
-      ? 'https://taskflow-nine-phi.vercel.app'
+      ? 'https://AetherFlow-nine-phi.vercel.app'
       : (process.env.CLIENT_URL || 'http://localhost:3000');
 
-    const subject = '🔑 TaskFlow - Password Reset';
+    const subject = '🔑 AetherFlow - Password Reset';
     const htmlContent = `
 <!DOCTYPE html>
 <html lang="en">
@@ -1086,12 +1086,12 @@ export const sendPasswordResetEmail = async (fullName, email, newPassword) => {
       </div>
 
       <div class="button-container">
-        <a href="${appUrl}" class="btn">Login to TaskFlow</a>
+        <a href="${appUrl}" class="btn">Login to AetherFlow</a>
       </div>
     </div>
 
     <div class="footer">
-      <p><strong>TaskFlow</strong> - Collaborative Task Management System</p>
+      <p><strong>AetherFlow</strong> - Collaborative Task Management System</p>
       <p>This is an automated email. Please do not reply to this message.</p>
     </div>
   </div>
@@ -1126,12 +1126,12 @@ Please login at: ${appUrl}
 Important: Please change this password immediately after logging in.
 
 Best regards,
-TaskFlow Team
+AetherFlow Team
     `;
 
     const mailOptions = {
       from: {
-        name: 'TaskFlow Team',
+        name: 'AetherFlow Team',
         address: process.env.EMAIL_USER
       },
       to: email,
@@ -1262,7 +1262,7 @@ const getOverdueTaskEmailTemplate = (fullName, tasks, appUrl) => {
     <div class="container">
       <div class="header">
         <div class="logo-circle">
-          <img src="https://taskflow-nine-phi.vercel.app/logo.png" alt="TaskFlow Logo" />
+          <img src="https://AetherFlow-nine-phi.vercel.app/logo.png" alt="AetherFlow Logo" />
         </div>
         <h1 style="margin: 0; font-size: 28px;">⚠️ Overdue Tasks Alert</h1>
         <p style="margin: 10px 0 0 0; opacity: 0.9;">You have ${tasks.length} overdue task${tasks.length > 1 ? 's' : ''} requiring immediate attention</p>
@@ -1301,8 +1301,8 @@ const getOverdueTaskEmailTemplate = (fullName, tasks, appUrl) => {
       </div>
 
       <div class="footer">
-        <img src="https://taskflow-nine-phi.vercel.app/logo.png" alt="TaskFlow" style="width: 30px; height: 30px; margin-bottom: 10px;" />
-        <p><strong>TaskFlow</strong></p>
+        <img src="https://AetherFlow-nine-phi.vercel.app/logo.png" alt="AetherFlow" style="width: 30px; height: 30px; margin-bottom: 10px;" />
+        <p><strong>AetherFlow</strong></p>
         <p>Collaborative Task Management System</p>
         <p style="margin-top: 20px; font-size: 12px; opacity: 0.8;">This is an automated reminder. Please do not reply.</p>
       </div>
@@ -1329,12 +1329,12 @@ export const sendOverdueTaskReminder = async (fullName, email, tasks) => {
   try {
     const transporter = createTransporter();
     const appUrl = process.env.NODE_ENV === 'production' 
-      ? 'https://taskflow-nine-phi.vercel.app'
+      ? 'https://AetherFlow-nine-phi.vercel.app'
       : (process.env.CLIENT_URL || 'http://localhost:3000');
 
     const mailOptions = {
       from: {
-        name: 'TaskFlow Reminders',
+        name: 'AetherFlow Reminders',
         address: process.env.EMAIL_USER
       },
       to: email,
@@ -1353,10 +1353,10 @@ ${tasks.map((task, i) => `${i + 1}. ${task.title}
    Due Date: ${new Date(task.due_date).toLocaleDateString()}
 `).join('\n')}
 
-Please login to TaskFlow to review and update these tasks: ${appUrl}/tasks
+Please login to AetherFlow to review and update these tasks: ${appUrl}/tasks
 
 Best regards,
-TaskFlow Team
+AetherFlow Team
       `.trim()
     };
 
@@ -1377,7 +1377,7 @@ const getWeeklyReportEmailTemplate = (adminName, reportData, appUrl) => {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Weekly TaskFlow Report</title>
+  <title>Weekly AetherFlow Report</title>
   <style>
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
@@ -1482,7 +1482,7 @@ const getWeeklyReportEmailTemplate = (adminName, reportData, appUrl) => {
     <div class="container">
       <div class="header">
         <div class="logo-circle">
-          <img src="https://taskflow-nine-phi.vercel.app/logo.png" alt="TaskFlow Logo" />
+          <img src="https://AetherFlow-nine-phi.vercel.app/logo.png" alt="AetherFlow Logo" />
         </div>
         <h1 style="margin: 0; font-size: 28px;">📊 Weekly Report</h1>
         <p style="margin: 10px 0 0 0; opacity: 0.9;">${reportData.weekRange}</p>
@@ -1491,7 +1491,7 @@ const getWeeklyReportEmailTemplate = (adminName, reportData, appUrl) => {
       <div class="content">
         <p style="font-size: 16px; color: #2d3748;">Hi <strong>${adminName}</strong>,</p>
         
-        <p style="font-size: 16px; color: #4a5568;">Here's your weekly TaskFlow summary:</p>
+        <p style="font-size: 16px; color: #4a5568;">Here's your weekly AetherFlow summary:</p>
 
         <div class="stat-grid">
           <div class="stat-card">
@@ -1531,8 +1531,8 @@ const getWeeklyReportEmailTemplate = (adminName, reportData, appUrl) => {
       </div>
 
       <div class="footer">
-        <img src="https://taskflow-nine-phi.vercel.app/logo.png" alt="TaskFlow" style="width: 30px; height: 30px; margin-bottom: 10px;" />
-        <p><strong>TaskFlow</strong></p>
+        <img src="https://AetherFlow-nine-phi.vercel.app/logo.png" alt="AetherFlow" style="width: 30px; height: 30px; margin-bottom: 10px;" />
+        <p><strong>AetherFlow</strong></p>
         <p>Collaborative Task Management System</p>
         <p style="margin-top: 20px; font-size: 12px; opacity: 0.8;">This is an automated report. Please do not reply.</p>
       </div>
@@ -1548,24 +1548,24 @@ export const sendWeeklyReport = async (adminName, email, reportData, attachments
   try {
     const transporter = createTransporter();
     const appUrl = process.env.NODE_ENV === 'production' 
-      ? 'https://taskflow-nine-phi.vercel.app'
+      ? 'https://AetherFlow-nine-phi.vercel.app'
       : (process.env.CLIENT_URL || 'http://localhost:3000');
 
     const mailOptions = {
       from: {
-        name: 'TaskFlow Reports',
+        name: 'AetherFlow Reports',
         address: process.env.EMAIL_USER
       },
       to: email,
-      subject: `📊 Weekly TaskFlow Report - ${reportData.weekRange}`,
+      subject: `📊 Weekly AetherFlow Report - ${reportData.weekRange}`,
       html: getWeeklyReportEmailTemplate(adminName, reportData, appUrl),
       text: `
-Weekly TaskFlow Report
+Weekly AetherFlow Report
 ${reportData.weekRange}
 
 Hi ${adminName},
 
-Here's your weekly TaskFlow summary:
+Here's your weekly AetherFlow summary:
 
 STATISTICS:
 • Total Tasks: ${reportData.totalTasks}
@@ -1581,7 +1581,7 @@ Detailed reports (Excel & PDF) are attached to this email.
 View full analytics: ${appUrl}/analytics
 
 Best regards,
-TaskFlow Team
+AetherFlow Team
       `.trim(),
       attachments: attachments
     };
@@ -1653,7 +1653,7 @@ export default {
 };
 
 // Generic email sending function
-export const sendEmail = async (to, subject, htmlContent, from = { email: 'updates.codecatalyst@gmail.com', name: 'TaskFlow' }) => {
+export const sendEmail = async (to, subject, htmlContent, from = { email: 'updates.codecatalyst@gmail.com', name: 'AetherFlow' }) => {
   try {
     // Try Brevo API first (preferred)
     if (process.env.BREVO_API_KEY) {
@@ -1709,7 +1709,7 @@ export const sendPasswordResetLink = async (full_name, email, resetToken) => {
           </div>
           <div class="content">
             <p>Hello ${full_name},</p>
-            <p>We received a request to reset your password for your TaskFlow account. Use the code below to reset your password:</p>
+            <p>We received a request to reset your password for your AetherFlow account. Use the code below to reset your password:</p>
             <div class="token-box">
               <p style="margin: 0; color: #666; font-size: 14px; margin-bottom: 10px;">Your Reset Code</p>
               <div class="token">${resetToken}</div>
@@ -1724,7 +1724,7 @@ export const sendPasswordResetLink = async (full_name, email, resetToken) => {
               </ul>
             </div>
             <p>If you're having trouble, contact your administrator for assistance.</p>
-            <p>Best regards,<br>TaskFlow Team</p>
+            <p>Best regards,<br>AetherFlow Team</p>
           </div>
           <div class="footer">
             <p>This is an automated email. Please do not reply.</p>
@@ -1736,7 +1736,7 @@ export const sendPasswordResetLink = async (full_name, email, resetToken) => {
 
     // Try Brevo API first (preferred for production)
     if (process.env.BREVO_API_KEY) {
-      const result = await sendWithBrevoAPI(email, 'Reset Your Password - TaskFlow', htmlContent);
+      const result = await sendWithBrevoAPI(email, 'Reset Your Password - AetherFlow', htmlContent);
       if (result.success) {
         console.log(`✅ Password reset email sent successfully to ${email} via Brevo API`);
         return result;
@@ -1747,9 +1747,9 @@ export const sendPasswordResetLink = async (full_name, email, resetToken) => {
     // Fallback to SMTP
     const transporter = createTransporter();
     const mailOptions = {
-      from: `"TaskFlow" <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`,
+      from: `"AetherFlow" <${process.env.EMAIL_FROM || process.env.EMAIL_USER}>`,
       to: email,
-      subject: 'Reset Your Password - TaskFlow',
+      subject: 'Reset Your Password - AetherFlow',
       html: htmlContent
     };
 
