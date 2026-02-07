@@ -55,6 +55,11 @@ const leaveRequestSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  hrNotes: {
+    type: String,
+    default: '',
+    trim: true
+  },
   attachments: [{
     type: String
   }]

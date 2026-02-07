@@ -15,15 +15,16 @@ import HrEventService from '../services/hrEventService.js';
 const router = express.Router();
 
 // Get all leave requests (filtered by status/user)
-router.get('/', authenticate, requireCoreWorkspace, async (req, res) => {
+router.get('/', authenticate, async (req, res) => {
   try {
     const { status, userId } = req.query;
     const workspaceId = req.context?.workspaceId || req.user.workspaceId;
 
     const query = { workspaceId };
 
-    // Members see only their own requests
-    if (req.user.role === 'member') {
+    // Members and team_leads see only their own requests
+    // HR and Admin see all requests
+    if (!['admin', 'hr'].includes(req.user.role)) {
       query.userId = req.user._id;
     } else if (userId) {
       query.userId = userId;
@@ -48,7 +49,7 @@ router.get('/', authenticate, requireCoreWorkspace, async (req, res) => {
 });
 
 // Create leave request
-router.post('/', authenticate, requireCoreWorkspace, async (req, res) => {
+router.post('/', authenticate, async (req, res) => {
   try {
     const { leaveTypeId, startDate, endDate, reason, days } = req.body;
     const workspaceId = req.context?.workspaceId || req.user.workspaceId;
@@ -120,9 +121,9 @@ router.post('/', authenticate, requireCoreWorkspace, async (req, res) => {
 });
 
 // Approve/Reject leave request (HR Action-Driven)
-router.patch('/:id/status', authenticate, checkRole(['admin', 'hr']), requireCoreWorkspace, async (req, res) => {
+router.patch('/:id/status', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
   try {
-    const { status, rejectionReason } = req.body;
+    const { status, rejectionReason, hrNotes } = req.body;
     const workspaceId = req.context?.workspaceId || req.user.workspaceId;
     const ipAddress = getClientIP(req);
 
@@ -134,11 +135,21 @@ router.patch('/:id/status', authenticate, checkRole(['admin', 'hr']), requireCor
     let actionResult;
     if (status === 'approved') {
       actionResult = await HrActionService.approveLeave(req.user, req.params.id, workspaceId, ipAddress);
+      
+      // Update hrNotes if provided
+      if (hrNotes !== undefined) {
+        await LeaveRequest.findByIdAndUpdate(req.params.id, { hrNotes });
+      }
     } else {
       if (!rejectionReason || rejectionReason.trim() === '') {
         return res.status(400).json({ message: 'Rejection reason is required' });
       }
       actionResult = await HrActionService.rejectLeave(req.user, req.params.id, rejectionReason, workspaceId, ipAddress);
+      
+      // Update hrNotes if provided
+      if (hrNotes !== undefined) {
+        await LeaveRequest.findByIdAndUpdate(req.params.id, { hrNotes });
+      }
     }
 
     // Handle HR event for email dispatch
@@ -158,14 +169,18 @@ router.patch('/:id/status', authenticate, checkRole(['admin', 'hr']), requireCor
 });
 
 // Get leave balance for a user
-router.get('/balance/:userId?', authenticate, requireCoreWorkspace, async (req, res) => {
+router.get('/balance/:userId?', authenticate, async (req, res) => {
   try {
     const targetUserId = req.params.userId || req.user._id;
     const workspaceId = req.context?.workspaceId || req.user.workspaceId;
 
-    // Members can only view their own balance
-    if (req.user.role === 'member' && targetUserId !== req.user._id.toString()) {
-      return res.status(403).json({ message: 'Unauthorized' });
+    // Members and team_leads can only view their own balance
+    // HR and Admin can view anyone's balance
+    if (!['admin', 'hr'].includes(req.user.role)) {
+      // Convert both to strings for comparison
+      if (targetUserId.toString() !== req.user._id.toString()) {
+        return res.status(403).json({ message: 'Unauthorized' });
+      }
     }
 
     const currentYear = new Date().getFullYear();
@@ -184,7 +199,7 @@ router.get('/balance/:userId?', authenticate, requireCoreWorkspace, async (req, 
 });
 
 // Get all leave balances (for HR/Admin)
-router.get('/balances', authenticate, checkRole(['admin', 'hr']), requireCoreWorkspace, async (req, res) => {
+router.get('/balances', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
   try {
     const workspaceId = req.context?.workspaceId || req.user.workspaceId;
     const currentYear = new Date().getFullYear();
@@ -201,6 +216,46 @@ router.get('/balances', authenticate, checkRole(['admin', 'hr']), requireCoreWor
   } catch (error) {
     console.error('Get all leave balances error:', error);
     res.status(500).json({ message: 'Failed to fetch leave balances' });
+  }
+});
+
+// Update HR notes for a leave request (Admin/HR only)
+router.patch('/:id/notes', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
+  try {
+    const { hrNotes } = req.body;
+    const workspaceId = req.context?.workspaceId || req.user.workspaceId;
+
+    const leaveRequest = await LeaveRequest.findOne({
+      _id: req.params.id,
+      workspaceId
+    });
+
+    if (!leaveRequest) {
+      return res.status(404).json({ message: 'Leave request not found' });
+    }
+
+    leaveRequest.hrNotes = hrNotes || '';
+    await leaveRequest.save();
+
+    await logChange({
+      userId: req.user._id,
+      workspaceId,
+      action: 'update',
+      entity: 'leave_request',
+      entityId: leaveRequest._id,
+      details: { action: 'updated_notes' },
+      ipAddress: getClientIP(req)
+    });
+
+    const updatedLeave = await LeaveRequest.findById(req.params.id)
+      .populate('userId', 'full_name email profile_picture')
+      .populate('leaveTypeId', 'name code color')
+      .populate('approvedBy', 'full_name email');
+
+    res.json({ success: true, leaveRequest: updatedLeave });
+  } catch (error) {
+    console.error('Update leave notes error:', error);
+    res.status(500).json({ message: 'Failed to update leave notes' });
   }
 });
 
