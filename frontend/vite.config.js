@@ -124,7 +124,7 @@ export default defineConfig(({ mode }) => {
       } : false,
       proxy: isDevelopment ? {
         '/api': {
-          target: process.env.VITE_API_URL || 'http://localhost:5000',
+          target: process.env.VITE_API_URL || 'http://localhost:5000' || 'https://aethertracksaas.onrender.com',
           changeOrigin: true,
           secure: false,
         }
