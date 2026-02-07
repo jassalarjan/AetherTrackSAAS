@@ -11,7 +11,7 @@ import getClientIP from '../utils/getClientIP.js';
 const router = express.Router();
 
 // Get all leave types
-router.get('/', authenticate, requireCoreWorkspace, async (req, res) => {
+router.get('/', authenticate, async (req, res) => {
   try {
     const workspaceId = req.context?.workspaceId || req.user.workspaceId;
 
