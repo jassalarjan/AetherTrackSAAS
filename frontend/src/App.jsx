@@ -37,7 +37,7 @@ function AppContent() {
 
   return (
     <Routes>
-      <Route path="/" element={<Landing />} />
+      <Route path="/" element={<Login />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<CommunityRegister />} />
       <Route path="/register-community" element={<CommunityRegister />} />
