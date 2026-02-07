@@ -14,10 +14,18 @@ export default function LeavesPage() {
   const [leaveBalances, setLeaveBalances] = useState([]);
   const [leaveTypes, setLeaveTypes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [showRejectModal, setShowRejectModal] = useState(false);
+  const [showNotesModal, setShowNotesModal] = useState(false);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [showLeaveTypeModal, setShowLeaveTypeModal] = useState(false);
+  const [editingLeaveType, setEditingLeaveType] = useState(null);
+  const [selectedRequest, setSelectedRequest] = useState(null);
   const [rejectingRequestId, setRejectingRequestId] = useState(null);
   const [rejectionReason, setRejectionReason] = useState('');
+  const [hrNotes, setHrNotes] = useState('');
   const [formData, setFormData] = useState({
     leaveTypeId: '',
     startDate: '',
@@ -25,23 +33,72 @@ export default function LeavesPage() {
     days: 1,
     reason: ''
   });
+  const [leaveTypeForm, setLeaveTypeForm] = useState({
+    name: '',
+    code: '',
+    annualQuota: 10,
+    carryForward: false,
+    maxCarryForward: 0,
+    color: '#3b82f6',
+    description: ''
+  });
 
   const isAdmin = user && (user.role === 'admin' || user.role === 'hr');
 
-  const handleApproveReject = async (id, status, reason = '') => {
+  const handleApproveReject = async (id, status, reason = '', notes = '') => {
+    setError('');
+    setSuccess('');
     try {
       const response = await api.patch(`/hr/leaves/${id}/status`, {
         status,
-        rejectionReason: reason
+        rejectionReason: reason,
+        hrNotes: notes
       });
 
       if (response.data.success) {
-        fetchData(); // Refresh the list
+        setSuccess(`Leave request ${status} successfully!`);
+        fetchData();
+        setTimeout(() => setSuccess(''), 5000);
       }
     } catch (error) {
       console.error('Error updating leave status:', error);
-      alert('Failed to update leave status');
+      setError('Failed to update leave status');
     }
+  };
+
+  const handleUpdateNotes = async () => {
+    if (!selectedRequest) return;
+    
+    setError('');
+    setSuccess('');
+    try {
+      const response = await api.patch(`/hr/leaves/${selectedRequest._id}/notes`, {
+        hrNotes
+      });
+
+      if (response.data.success) {
+        fetchData();
+        setShowNotesModal(false);
+        setSelectedRequest(null);
+        setHrNotes('');
+        setSuccess('Notes updated successfully!');
+        setTimeout(() => setSuccess(''), 5000);
+      }
+    } catch (error) {
+      console.error('Error updating notes:', error);
+      setError('Failed to update notes');
+    }
+  };
+
+  const openNotesModal = (request) => {
+    setSelectedRequest(request);
+    setHrNotes(request.hrNotes || '');
+    setShowNotesModal(true);
+  };
+
+  const openDetailsModal = (request) => {
+    setSelectedRequest(request);
+    setShowDetailsModal(true);
   };
 
   const handleRejectSubmit = () => {
@@ -60,18 +117,20 @@ export default function LeavesPage() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const balanceEndpoint = isAdmin ? '/hr/leaves/balances' : '/hr/leaves/balance';
+      setError('');
+      // Always fetch personal balance for the current user
       const [requestsRes, balancesRes, typesRes] = await Promise.all([
         api.get('/hr/leaves'),
-        api.get(balanceEndpoint),
+        api.get('/hr/leaves/balance'), // Get only current user's balances
         api.get('/hr/leave-types')
       ]);
 
-      setLeaveRequests(requestsRes.data.requests);
-      setLeaveBalances(balancesRes.data.balances);
-      setLeaveTypes(typesRes.data.leaveTypes);
+      setLeaveRequests(requestsRes.data.requests || []);
+      setLeaveBalances(balancesRes.data.balances || []);
+      setLeaveTypes(typesRes.data.leaveTypes || []);
     } catch (error) {
       console.error('Error fetching data:', error);
+      setError(error.response?.data?.message || 'Failed to load leave data. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -87,16 +146,82 @@ export default function LeavesPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
+    setSuccess('');
     try {
       const days = calculateDays(formData.startDate, formData.endDate);
       await api.post('/hr/leaves', { ...formData, days });
       setShowModal(false);
       setFormData({ leaveTypeId: '', startDate: '', endDate: '', days: 1, reason: '' });
+      setSuccess('Leave request submitted successfully!');
       fetchData();
-      alert('Leave request submitted successfully!');
+      // Auto-clear success message after 5 seconds
+      setTimeout(() => setSuccess(''), 5000);
     } catch (error) {
-      alert(error.response?.data?.message || 'Failed to submit leave request');
+      setError(error.response?.data?.message || 'Failed to submit leave request');
     }
+  };
+
+  const handleCreateLeaveType = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+    try {
+      if (editingLeaveType) {
+        // Update existing leave type
+        await api.put(`/hr/leave-types/${editingLeaveType._id}`, leaveTypeForm);
+        setSuccess('Leave type updated successfully!');
+      } else {
+        // Create new leave type
+        await api.post('/hr/leave-types', leaveTypeForm);
+        setSuccess('Leave type created successfully! All users have been assigned this leave balance.');
+      }
+      
+      setShowLeaveTypeModal(false);
+      setEditingLeaveType(null);
+      setLeaveTypeForm({
+        name: '',
+        code: '',
+        annualQuota: 10,
+        carryForward: false,
+        maxCarryForward: 0,
+        color: '#3b82f6',
+        description: ''
+      });
+      fetchData();
+      // Auto-clear success message after 5 seconds
+      setTimeout(() => setSuccess(''), 5000);
+    } catch (error) {
+      setError(error.response?.data?.message || `Failed to ${editingLeaveType ? 'update' : 'create'} leave type`);
+    }
+  };
+
+  const handleEditLeaveType = (leaveType) => {
+    setEditingLeaveType(leaveType);
+    setLeaveTypeForm({
+      name: leaveType.name,
+      code: leaveType.code,
+      annualQuota: leaveType.annualQuota,
+      carryForward: leaveType.carryForward || false,
+      maxCarryForward: leaveType.maxCarryForward || 0,
+      color: leaveType.color || '#3b82f6',
+      description: leaveType.description || ''
+    });
+    setShowLeaveTypeModal(true);
+  };
+
+  const handleCloseLeaveTypeModal = () => {
+    setShowLeaveTypeModal(false);
+    setEditingLeaveType(null);
+    setLeaveTypeForm({
+      name: '',
+      code: '',
+      annualQuota: 10,
+      carryForward: false,
+      maxCarryForward: 0,
+      color: '#3b82f6',
+      description: ''
+    });
   };
 
 
@@ -114,50 +239,109 @@ export default function LeavesPage() {
     <div>
       <ResponsivePageLayout
         title="Leave Management"
-        actions={!isAdmin ? (
-          <button
-            onClick={() => setShowModal(true)}
-            className={`px-4 py-2 ${currentTheme.primary} text-white ${currentTheme.primaryHover} flex items-center gap-2`}
-          >
-            <Plus className="w-5 h-5" />
-            Apply Leave
-          </button>
-        ) : null}
-      >
-          {/* Leave Balance Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            {leaveBalances.map((balance) => (
-              <div key={balance._id} className={`${currentTheme.surface} rounded-lg p-4 border ${currentTheme.border}`}>
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className={`text-sm font-semibold ${currentTheme.text}`}>
-                    {balance.leaveTypeId?.name}
-                  </h3>
-                  <div
-                    className="w-3 h-3 rounded-full"
-                    style={{ backgroundColor: balance.leaveTypeId?.color }}
-                  ></div>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className={`${currentTheme.textSecondary}`}>Total:</span>
-                    <span className={`font-semibold ${currentTheme.text}`}>{balance.totalQuota}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className={`${currentTheme.textSecondary}`}>Used:</span>
-                    <span className="font-semibold text-red-600 dark:text-red-400">{balance.used}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className={`${currentTheme.textSecondary}`}>Pending:</span>
-                    <span className="font-semibold text-yellow-600 dark:text-yellow-400">{balance.pending}</span>
-                  </div>
-                  <div className={`flex justify-between text-sm pt-2 border-t ${currentTheme.border}`}>
-                    <span className={`${currentTheme.textSecondary}`}>Available:</span>
-                    <span className="font-bold text-green-600 dark:text-green-400">{balance.available}</span>
-                  </div>
-                </div>
-              </div>
-            ))}
+        subtitle={`${leaveRequests.length} request${leaveRequests.length !== 1 ? 's' : ''} • ${leaveTypes.length} leave type${leaveTypes.length !== 1 ? 's' : ''}`}
+        actions={
+          <div className="flex gap-2">
+            {isAdmin && (
+              <button
+                onClick={() => setShowLeaveTypeModal(true)}
+                className="px-3 sm:px-4 py-2 bg-purple-600 text-white hover:bg-purple-700 flex items-center gap-2 rounded-lg transition-colors text-sm sm:text-base font-medium whitespace-nowrap"
+              >
+                <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+                <span className="hidden sm:inline">Manage Leave Types</span>
+                <span className="sm:hidden">Types</span>
+              </button>
+            )}
+            <button
+              onClick={() => setShowModal(true)}
+              className="px-3 sm:px-4 py-2 bg-[#136dec] text-white hover:bg-blue-600 flex items-center gap-2 rounded-lg transition-colors text-sm sm:text-base font-medium whitespace-nowrap"
+            >
+              <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span>Apply Leave</span>
+            </button>
           </div>
+        }
+      >
+          {/* Error Message */}
+          {error && (
+            <div className="mb-6 bg-red-500/10 border border-red-500/30 rounded-lg p-4">
+              <p className="text-sm text-red-400">{error}</p>
+              <button
+                onClick={fetchData}
+                className="mt-2 text-xs text-red-300 underline hover:text-red-200"
+              >
+                Try Again
+              </button>
+            </div>
+          )}
+
+          {/* Success Message */}
+          {success && (
+            <div className="mb-6 bg-green-500/10 border border-green-500/30 rounded-lg p-4">
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-green-400">{success}</p>
+                <button
+                  onClick={() => setSuccess('')}
+                  className="text-green-300 hover:text-green-200"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Loading State */}
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className={`text-center ${currentTheme.textSecondary}`}>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+                <p>Loading leave data...</p>
+              </div>
+            </div>
+          ) : (
+            <>
+              {/* Leave Balance Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                {leaveBalances.length === 0 ? (
+                  <div className={`col-span-full ${currentTheme.surface} rounded-lg p-6 border ${currentTheme.border} text-center`}>
+                    <p className={`${currentTheme.textSecondary} text-sm`}>
+                      No leave balances found. Contact HR to set up your leave entitlements.
+                    </p>
+                  </div>
+                ) : (
+                  leaveBalances.map((balance) => (
+                    <div key={balance._id} className={`${currentTheme.surface} rounded-lg p-4 border ${currentTheme.border}`}>
+                      <div className="flex items-center justify-between mb-3">
+                        <h3 className={`text-sm font-semibold ${currentTheme.text}`}>
+                          {balance.leaveTypeId?.name}
+                        </h3>
+                        <div
+                          className="w-3 h-3 rounded-full"
+                          style={{ backgroundColor: balance.leaveTypeId?.color }}
+                        ></div>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span className={`${currentTheme.textSecondary}`}>Total:</span>
+                          <span className={`font-semibold ${currentTheme.text}`}>{balance.totalQuota}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className={`${currentTheme.textSecondary}`}>Used:</span>
+                          <span className="font-semibold text-red-600 dark:text-red-400">{balance.used}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className={`${currentTheme.textSecondary}`}>Pending:</span>
+                          <span className="font-semibold text-yellow-600 dark:text-yellow-400">{balance.pending}</span>
+                        </div>
+                        <div className={`flex justify-between text-sm pt-2 border-t ${currentTheme.border}`}>
+                          <span className={`${currentTheme.textSecondary}`}>Available:</span>
+                          <span className="font-bold text-green-600 dark:text-green-400">{balance.available}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
 
           {/* Leave Requests Table */}
           <div className={`${currentTheme.surface} rounded-lg border ${currentTheme.border} overflow-hidden`}>
@@ -181,16 +365,13 @@ export default function LeavesPage() {
                   </tr>
                 </thead>
                 <tbody className={`divide-y ${currentTheme.border}`}>
-                  {loading ? (
+                  {leaveRequests.length === 0 ? (
                     <tr>
-                      <td colSpan={isAdmin ? 7 : 6} className={`px-6 py-4 text-center ${currentTheme.textSecondary}`}>
-                        Loading...
-                      </td>
-                    </tr>
-                  ) : leaveRequests.length === 0 ? (
-                    <tr>
-                      <td colSpan={isAdmin ? 7 : 6} className={`px-6 py-4 text-center ${currentTheme.textSecondary}`}>
-                        No leave requests found
+                      <td colSpan={isAdmin ? 7 : 6} className={`px-6 py-8 text-center`}>
+                        <div className={`${currentTheme.textSecondary}`}>
+                          <p className="text-sm mb-2">No leave requests found</p>
+                          <p className="text-xs">Click "Apply Leave" to create your first leave request</p>
+                        </div>
                       </td>
                     </tr>
                   ) : (
@@ -227,28 +408,42 @@ export default function LeavesPage() {
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          {isAdmin && request.status === 'pending' ? (
-                            <div className="flex gap-2">
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => openDetailsModal(request)}
+                              className="px-3 py-1 bg-blue-600 dark:bg-blue-500 text-white text-xs rounded hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors"
+                            >
+                              View Details
+                            </button>
+                            {isAdmin && request.status === 'pending' && (
+                              <>
+                                <button
+                                  onClick={() => handleApproveReject(request._id, 'approved')}
+                                  className="px-3 py-1 bg-green-600 dark:bg-green-500 text-white text-xs rounded hover:bg-green-700 dark:hover:bg-green-600 transition-colors"
+                                >
+                                  Approve
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    setRejectingRequestId(request._id);
+                                    setRejectionReason('');
+                                    setShowRejectModal(true);
+                                  }}
+                                  className="px-3 py-1 bg-red-600 dark:bg-red-500 text-white text-xs rounded hover:bg-red-700 dark:hover:bg-red-600 transition-colors"
+                                >
+                                  Reject
+                                </button>
+                              </>
+                            )}
+                            {isAdmin && (
                               <button
-                                onClick={() => handleApproveReject(request._id, 'approved')}
-                                className="px-3 py-1 bg-green-600 dark:bg-green-500 text-white text-xs rounded hover:bg-green-700 dark:hover:bg-green-600 transition-colors"
+                                onClick={() => openNotesModal(request)}
+                                className="px-3 py-1 bg-purple-600 dark:bg-purple-500 text-white text-xs rounded hover:bg-purple-700 dark:hover:bg-purple-600 transition-colors"
                               >
-                                Approve
+                                {request.hrNotes ? 'Edit Notes' : 'Add Notes'}
                               </button>
-                              <button
-                                onClick={() => {
-                                  setRejectingRequestId(request._id);
-                                  setRejectionReason('');
-                                  setShowRejectModal(true);
-                                }}
-                                className="px-3 py-1 bg-red-600 dark:bg-red-500 text-white text-xs rounded hover:bg-red-700 dark:hover:bg-red-600 transition-colors"
-                              >
-                                Reject
-                              </button>
-                            </div>
-                          ) : (
-                            <span className="text-gray-400">-</span>
-                          )}
+                            )}
+                          </div>
                         </td>
                       </tr>
                     ))
@@ -257,6 +452,8 @@ export default function LeavesPage() {
               </table>
             </div>
           </div>
+            </>
+          )}
       </ResponsivePageLayout>
 
       {/* Apply Leave Modal */}
@@ -277,22 +474,35 @@ export default function LeavesPage() {
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label className={`block text-sm font-medium ${currentTheme.text} mb-1`}>
-                    Leave Type
-                  </label>
-                  <select
-                    value={formData.leaveTypeId}
-                    onChange={(e) => setFormData({ ...formData, leaveTypeId: e.target.value })}
-                    className={`w-full px-3 py-2 border ${currentTheme.border} rounded-lg ${currentTheme.surface} ${currentTheme.text}`}
-                    required
-                  >
-                    <option value="">Select leave type</option>
-                    {leaveTypes.map(type => (
-                      <option key={type._id} value={type._id}>{type.name}</option>
-                    ))}
-                  </select>
-                </div>
+                {leaveTypes.length === 0 ? (
+                  <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
+                    <p className="text-sm text-yellow-400 mb-2">No leave types available</p>
+                    <p className="text-xs text-yellow-300">
+                      {isAdmin 
+                        ? 'Please create leave types first by clicking "Manage Leave Types" button.'
+                        : 'Please contact your HR or Admin to set up leave types.'}
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    <div>
+                      <label className={`block text-sm font-medium ${currentTheme.text} mb-1`}>
+                        Leave Type *
+                      </label>
+                      <select
+                        value={formData.leaveTypeId}
+                        onChange={(e) => setFormData({ ...formData, leaveTypeId: e.target.value })}
+                        className={`w-full px-3 py-2 border ${currentTheme.border} rounded-lg ${currentTheme.surface} ${currentTheme.text}`}
+                        required
+                      >
+                        <option value="">Select leave type</option>
+                        {leaveTypes.map(type => (
+                          <option key={type._id} value={type._id}>
+                            {type.name} ({type.code}) - {type.annualQuota} days/year
+                          </option>
+                        ))}
+                      </select>
+                    </div>
 
                 <div>
                   <label className={`block text-sm font-medium ${currentTheme.text} mb-1`}>
@@ -332,23 +542,402 @@ export default function LeavesPage() {
                     required
                   />
                 </div>
+                  </>
+                )}
+
+                <div className="flex gap-3 justify-end pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowModal(false)}
+                    className={`px-4 py-2 border ${currentTheme.border} rounded-lg ${currentTheme.textSecondary} hover:${currentTheme.text} transition-colors`}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={leaveTypes.length === 0}
+                    className="px-4 py-2 bg-[#136dec] text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                  >
+                    Submit Request
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Leave Type Management Modal */}
+      {showLeaveTypeModal && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen px-4">
+            <div className="fixed inset-0 bg-black opacity-50" onClick={() => setShowLeaveTypeModal(false)}></div>
+
+            <div className={`relative ${currentTheme.surface} rounded-lg max-w-4xl w-full p-6 max-h-[90vh] overflow-y-auto`}>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className={`text-lg font-semibold ${currentTheme.text}`}>
+                  {editingLeaveType ? 'Edit Leave Type' : 'Manage Leave Types'}
+                </h3>
+                <button
+                  onClick={handleCloseLeaveTypeModal}
+                  className={`${currentTheme.textSecondary} hover:${currentTheme.text}`}
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Existing Leave Types List */}
+              {!editingLeaveType && leaveTypes.length > 0 && (
+                <div className="mb-6">
+                  <h4 className={`text-sm font-semibold ${currentTheme.text} mb-3`}>Existing Leave Types</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {leaveTypes.map((type) => (
+                      <div
+                        key={type._id}
+                        className={`${currentTheme.surfaceSecondary} border ${currentTheme.border} rounded-lg p-3 flex items-center justify-between hover:border-blue-500/50 transition-colors`}
+                      >
+                        <div className="flex items-center gap-3 flex-1">
+                          <div
+                            className="w-4 h-4 rounded-full flex-shrink-0"
+                            style={{ backgroundColor: type.color }}
+                          ></div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <h5 className={`text-sm font-semibold ${currentTheme.text} truncate`}>
+                                {type.name}
+                              </h5>
+                              <span className={`text-xs px-2 py-0.5 rounded ${currentTheme.surfaceSecondary} ${currentTheme.textSecondary} border ${currentTheme.border}`}>
+                                {type.code}
+                              </span>
+                            </div>
+                            <p className={`text-xs ${currentTheme.textSecondary} mt-0.5`}>
+                              {type.annualQuota} days/year
+                              {type.carryForward && ` • Carry forward: ${type.maxCarryForward} days`}
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleEditLeaveType(type)}
+                          className="ml-2 px-3 py-1.5 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors flex-shrink-0"
+                        >
+                          Edit
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  <div className={`mt-4 pt-4 border-t ${currentTheme.border}`}>
+                    <p className={`text-sm font-semibold ${currentTheme.text} mb-2`}>Create New Leave Type</p>
+                  </div>
+                </div>
+              )}
+
+              <form onSubmit={handleCreateLeaveType} className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className={`block text-sm font-medium ${currentTheme.text} mb-1`}>
+                      Leave Type Name *
+                    </label>
+                    <input
+                      type="text"
+                      value={leaveTypeForm.name}
+                      onChange={(e) => setLeaveTypeForm({ ...leaveTypeForm, name: e.target.value })}
+                      className={`w-full px-3 py-2 border ${currentTheme.border} rounded-lg ${currentTheme.surface} ${currentTheme.text}`}
+                      placeholder="e.g., Annual Leave"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className={`block text-sm font-medium ${currentTheme.text} mb-1`}>
+                      Code (2-4 chars) *
+                    </label>
+                    <input
+                      type="text"
+                      value={leaveTypeForm.code}
+                      onChange={(e) => setLeaveTypeForm({ ...leaveTypeForm, code: e.target.value.toUpperCase() })}
+                      className={`w-full px-3 py-2 border ${currentTheme.border} rounded-lg ${currentTheme.surface} ${currentTheme.text} ${editingLeaveType ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      placeholder="e.g., AL"
+                      maxLength={4}
+                      readOnly={editingLeaveType}
+                      required
+                    />
+                    {editingLeaveType && (
+                      <p className="text-xs text-yellow-500 mt-1">Code cannot be changed after creation</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className={`block text-sm font-medium ${currentTheme.text} mb-1`}>
+                      Annual Quota (days) *
+                    </label>
+                    <input
+                      type="number"
+                      value={leaveTypeForm.annualQuota}
+                      onChange={(e) => setLeaveTypeForm({ ...leaveTypeForm, annualQuota: parseInt(e.target.value) })}
+                      className={`w-full px-3 py-2 border ${currentTheme.border} rounded-lg ${currentTheme.surface} ${currentTheme.text}`}
+                      min="1"
+                      max="365"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className={`block text-sm font-medium ${currentTheme.text} mb-1`}>
+                      Color
+                    </label>
+                    <input
+                      type="color"
+                      value={leaveTypeForm.color}
+                      onChange={(e) => setLeaveTypeForm({ ...leaveTypeForm, color: e.target.value })}
+                      className={`w-full h-10 px-3 py-1 border ${currentTheme.border} rounded-lg ${currentTheme.surface}`}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="carryForward"
+                    checked={leaveTypeForm.carryForward}
+                    onChange={(e) => setLeaveTypeForm({ ...leaveTypeForm, carryForward: e.target.checked })}
+                    className="rounded border-gray-500 text-[#136dec] focus:ring-[#136dec]"
+                  />
+                  <label htmlFor="carryForward" className={`text-sm ${currentTheme.text}`}>
+                    Allow carry forward to next year
+                  </label>
+                </div>
+
+                {leaveTypeForm.carryForward && (
+                  <div>
+                    <label className={`block text-sm font-medium ${currentTheme.text} mb-1`}>
+                      Max Carry Forward (days)
+                    </label>
+                    <input
+                      type="number"
+                      value={leaveTypeForm.maxCarryForward}
+                      onChange={(e) => setLeaveTypeForm({ ...leaveTypeForm, maxCarryForward: parseInt(e.target.value) })}
+                      className={`w-full px-3 py-2 border ${currentTheme.border} rounded-lg ${currentTheme.surface} ${currentTheme.text}`}
+                      min="0"
+                      max={leaveTypeForm.annualQuota}
+                    />
+                  </div>
+                )}
+
+                <div>
+                  <label className={`block text-sm font-medium ${currentTheme.text} mb-1`}>
+                    Description
+                  </label>
+                  <textarea
+                    value={leaveTypeForm.description}
+                    onChange={(e) => setLeaveTypeForm({ ...leaveTypeForm, description: e.target.value })}
+                    className={`w-full px-3 py-2 border ${currentTheme.border} rounded-lg ${currentTheme.surface} ${currentTheme.text}`}
+                    rows="3"
+                    placeholder="Brief description of this leave type..."
+                  />
+                </div>
+
+                {!editingLeaveType && (
+                  <div className={`bg-blue-500/10 border border-blue-500/30 rounded-lg p-3`}>
+                    <p className="text-xs text-blue-400">
+                      <strong>Note:</strong> This will create leave balances for all existing users in the workspace with the specified annual quota.
+                    </p>
+                  </div>
+                )}
+
+                {editingLeaveType && (
+                  <div className={`bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3`}>
+                    <p className="text-xs text-yellow-400">
+                      <strong>Warning:</strong> Changing the annual quota will not automatically update existing user balances. Only new users will get the updated quota.
+                    </p>
+                  </div>
+                )}
 
                 <div className="flex gap-3 justify-end">
                   <button
                     type="button"
-                    onClick={() => setShowModal(false)}
+                    onClick={handleCloseLeaveTypeModal}
                     className={`px-4 py-2 border ${currentTheme.border} rounded-lg ${currentTheme.textSecondary} ${currentTheme.hover}`}
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className={`px-4 py-2 ${currentTheme.primary} text-white ${currentTheme.primaryHover} rounded-lg`}
+                    className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
                   >
-                    Submit Request
+                    {editingLeaveType ? 'Update Leave Type' : 'Create Leave Type'}
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Leave Details Modal */}
+      {showDetailsModal && selectedRequest && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen px-4">
+            <div className="fixed inset-0 bg-black opacity-50" onClick={() => setShowDetailsModal(false)}></div>
+
+            <div className={`relative ${currentTheme.surface} rounded-lg max-w-2xl w-full p-6`}>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className={`text-lg font-semibold ${currentTheme.text}`}>Leave Request Details</h3>
+                <button
+                  onClick={() => setShowDetailsModal(false)}
+                  className={`${currentTheme.textSecondary} hover:${currentTheme.text}`}
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                {/* Employee Info */}
+                {isAdmin && (
+                  <div className={`p-4 rounded-lg ${currentTheme.surfaceSecondary} border ${currentTheme.border}`}>
+                    <h4 className={`text-sm font-bold ${currentTheme.text} mb-2`}>Employee</h4>
+                    <p className={`text-sm ${currentTheme.text}`}>{selectedRequest.userId?.full_name}</p>
+                    <p className={`text-xs ${currentTheme.textSecondary}`}>{selectedRequest.userId?.email}</p>
+                  </div>
+                )}
+
+                {/* Leave Type */}
+                <div className={`p-4 rounded-lg ${currentTheme.surfaceSecondary} border ${currentTheme.border}`}>
+                  <h4 className={`text-sm font-bold ${currentTheme.text} mb-2`}>Leave Type</h4>
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="w-4 h-4 rounded-full"
+                      style={{ backgroundColor: selectedRequest.leaveTypeId?.color }}
+                    ></div>
+                    <span className={`text-sm ${currentTheme.text}`}>{selectedRequest.leaveTypeId?.name}</span>
+                  </div>
+                </div>
+
+                {/* Dates */}
+                <div className={`p-4 rounded-lg ${currentTheme.surfaceSecondary} border ${currentTheme.border}`}>
+                  <h4 className={`text-sm font-bold ${currentTheme.text} mb-2`}>Duration</h4>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <p className={`text-xs ${currentTheme.textSecondary} mb-1`}>Start Date</p>
+                      <p className={`text-sm ${currentTheme.text}`}>{new Date(selectedRequest.startDate).toLocaleDateString()}</p>
+                    </div>
+                    <div>
+                      <p className={`text-xs ${currentTheme.textSecondary} mb-1`}>End Date</p>
+                      <p className={`text-sm ${currentTheme.text}`}>{new Date(selectedRequest.endDate).toLocaleDateString()}</p>
+                    </div>
+                    <div>
+                      <p className={`text-xs ${currentTheme.textSecondary} mb-1`}>Total Days</p>
+                      <p className={`text-sm font-bold ${currentTheme.text}`}>{selectedRequest.days}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Reason */}
+                <div className={`p-4 rounded-lg ${currentTheme.surfaceSecondary} border ${currentTheme.border}`}>
+                  <h4 className={`text-sm font-bold ${currentTheme.text} mb-2`}>Reason</h4>
+                  <p className={`text-sm ${currentTheme.text} whitespace-pre-wrap`}>{selectedRequest.reason}</p>
+                </div>
+
+                {/* Status */}
+                <div className={`p-4 rounded-lg ${currentTheme.surfaceSecondary} border ${currentTheme.border}`}>
+                  <h4 className={`text-sm font-bold ${currentTheme.text} mb-2`}>Status</h4>
+                  <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(selectedRequest.status)}`}>
+                    {selectedRequest.status.toUpperCase()}
+                  </span>
+                  {selectedRequest.approvedBy && (
+                    <p className={`text-xs ${currentTheme.textSecondary} mt-2`}>
+                      {selectedRequest.status === 'approved' ? 'Approved' : 'Processed'} by {selectedRequest.approvedBy.full_name}
+                    </p>
+                  )}
+                  {selectedRequest.approvedAt && (
+                    <p className={`text-xs ${currentTheme.textSecondary}`}>
+                      on {new Date(selectedRequest.approvedAt).toLocaleDateString()}
+                    </p>
+                  )}
+                </div>
+
+                {/* Rejection Reason */}
+                {selectedRequest.rejectionReason && (
+                  <div className={`p-4 rounded-lg bg-red-500/10 border border-red-500/30`}>
+                    <h4 className="text-sm font-bold text-red-400 mb-2">Rejection Reason</h4>
+                    <p className="text-sm text-red-300 whitespace-pre-wrap">{selectedRequest.rejectionReason}</p>
+                  </div>
+                )}
+
+                {/* HR Notes */}
+                {selectedRequest.hrNotes && (
+                  <div className={`p-4 rounded-lg bg-purple-500/10 border border-purple-500/30`}>
+                    <h4 className="text-sm font-bold text-purple-400 mb-2">HR Notes</h4>
+                    <p className="text-sm text-purple-300 whitespace-pre-wrap">{selectedRequest.hrNotes}</p>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex justify-end gap-3 mt-6">
+                <button
+                  onClick={() => setShowDetailsModal(false)}
+                  className={`px-4 py-2 border ${currentTheme.border} rounded-lg ${currentTheme.textSecondary} ${currentTheme.hover}`}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* HR Notes Modal */}
+      {showNotesModal && selectedRequest && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen px-4">
+            <div className="fixed inset-0 bg-black opacity-50" onClick={() => setShowNotesModal(false)}></div>
+
+            <div className={`relative ${currentTheme.surface} rounded-lg max-w-md w-full p-6`}>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className={`text-lg font-semibold ${currentTheme.text}`}>HR Notes</h3>
+                <button
+                  onClick={() => setShowNotesModal(false)}
+                  className={`${currentTheme.textSecondary} hover:${currentTheme.text}`}
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className={`block text-sm font-medium ${currentTheme.text} mb-1`}>
+                    Notes (Visible to Employee)
+                  </label>
+                  <textarea
+                    value={hrNotes}
+                    onChange={(e) => setHrNotes(e.target.value)}
+                    className={`w-full px-3 py-2 border ${currentTheme.border} rounded-lg ${currentTheme.surface} ${currentTheme.text}`}
+                    rows="5"
+                    placeholder="Add notes or comments for the employee..."
+                  />
+                  <p className={`text-xs ${currentTheme.textSecondary} mt-1`}>
+                    These notes will be visible to the employee and can be used to provide additional context or instructions.
+                  </p>
+                </div>
+
+                <div className="flex gap-3 justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setShowNotesModal(false)}
+                    className={`px-4 py-2 border ${currentTheme.border} rounded-lg ${currentTheme.textSecondary} ${currentTheme.hover}`}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleUpdateNotes}
+                    className={`px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700`}
+                  >
+                    Save Notes
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
