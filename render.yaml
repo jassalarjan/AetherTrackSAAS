@@ -1,7 +1,7 @@
 services:
   # Backend Service
   - type: web
-    name: AetherFlow-backend
+    name: AetherTrack-backend
     env: node
     region: oregon
     plan: free

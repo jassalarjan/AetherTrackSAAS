@@ -2,7 +2,7 @@
 
 ## Overview
 
-The HR Email System provides automated email notifications for HR-related events in the AetherFlow application. It integrates with Brevo (formerly Sendinblue) for reliable email delivery and uses predefined HTML templates for consistent branding and professional appearance.
+The HR Email System provides automated email notifications for HR-related events in the AetherTrack application. It integrates with Brevo (formerly Sendinblue) for reliable email delivery and uses predefined HTML templates for consistent branding and professional appearance.
 
 ## Architecture
 
@@ -55,7 +55,7 @@ Templates support dynamic content through variable interpolation:
 ```javascript
 // Example variables for LEAVE_APPROVED template
 {
-  workspaceName: 'AetherFlow',
+  workspaceName: 'AetherTrack',
   fullName: 'John Doe',
   leaveType: 'Annual Leave',
   startDate: '2024-01-15',
@@ -63,8 +63,8 @@ Templates support dynamic content through variable interpolation:
   days: '5',
   approvedBy: 'Jane Smith',
   remainingDays: '15',
-  loginUrl: 'https://app.AetherFlow.com/login',
-  supportEmail: 'support@AetherFlow.com'
+  loginUrl: 'https://app.AetherTrack.com/login',
+  supportEmail: 'support@AetherTrack.com'
 }
 ```
 
@@ -102,7 +102,7 @@ BREVO_LOGIN_EMAIL=your_brevo_account_email
 
 # Email Settings
 EMAIL_FROM=updates@codecatalyst.com
-EMAIL_FROM_NAME=AetherFlow
+EMAIL_FROM_NAME=AetherTrack
 ```
 
 ### Template Management

@@ -202,7 +202,7 @@ const NotificationSettings = () => {
           📱 Mobile Device Tips
         </p>
         <ul className={`list-disc list-inside text-xs sm:text-sm ${currentTheme.textSecondary} space-y-1`}>
-          <li><strong>iOS:</strong> Add AetherFlow to Home Screen for notifications to work</li>
+          <li><strong>iOS:</strong> Add AetherTrack to Home Screen for notifications to work</li>
           <li><strong>Android:</strong> Ensure notifications are allowed in browser settings</li>
           <li><strong>All devices:</strong> Check that Do Not Disturb mode is off</li>
           <li><strong>HTTPS required:</strong> Notifications only work on secure connections</li>

@@ -256,7 +256,7 @@ router.post('/send', authenticate, checkRole(['admin', 'hr']), async (req, res) 
       htmlContent: interpolatedHtml,
       params: {}, // No additional params needed since we already interpolated
       from: template ? {
-        name: template.senderName || process.env.EMAIL_FROM_NAME || 'AetherFlow',
+        name: template.senderName || process.env.EMAIL_FROM_NAME || 'AetherTrack',
         email: template.senderEmail || process.env.EMAIL_FROM || 'updates.codecatalyst@gmail.com'
       } : null,
       useLayout: false // Predefined templates already have complete HTML structure
@@ -378,7 +378,7 @@ router.get('/config', authenticate, checkRole(['admin', 'hr']), async (req, res)
     const config = {
       brevoConfigured: !!process.env.BREVO_API_KEY,
       senderEmail: process.env.BREVO_SENDER_EMAIL || 'updates.codecatalyst@gmail.com',
-      senderName: process.env.BREVO_SENDER_NAME || 'AetherFlow'
+      senderName: process.env.BREVO_SENDER_NAME || 'AetherTrack'
     };
 
     res.json({ success: true, config });
@@ -419,7 +419,7 @@ router.post('/test-send', authenticate, checkRole(['admin', 'hr']), async (req, 
       htmlContent: template.htmlContent,
       params: variables,
       from: {
-        name: template.senderName || process.env.EMAIL_FROM_NAME || 'AetherFlow',
+        name: template.senderName || process.env.EMAIL_FROM_NAME || 'AetherTrack',
         email: template.senderEmail || process.env.EMAIL_FROM || 'updates.codecatalyst@gmail.com'
       },
       useLayout: true
@@ -487,7 +487,7 @@ router.post('/bulk-send', authenticate, checkRole(['admin', 'hr']), async (req, 
           htmlContent: template.htmlContent,
           params: variables,
           from: {
-            name: template.senderName || process.env.EMAIL_FROM_NAME || 'AetherFlow',
+            name: template.senderName || process.env.EMAIL_FROM_NAME || 'AetherTrack',
             email: template.senderEmail || process.env.EMAIL_FROM || 'updates.codecatalyst@gmail.com'
           },
           useLayout: true // Use layout to ensure proper HTML structure and CSS styling

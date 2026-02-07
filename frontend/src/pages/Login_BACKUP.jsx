@@ -43,7 +43,7 @@ const Login = () => {
           <div className="px-8 pt-10 pb-6 flex flex-col gap-3">
             <div className="flex flex-col gap-1">
               <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
-                AetherFlow
+                AetherTrack
               </h1>
               <p className="text-gray-500 dark:text-[#9da8b9] text-sm font-normal">
                 Welcome back. Please enter your details.
@@ -158,7 +158,7 @@ const Login = () => {
         {/* Page Footer */}
         <div className="mt-8 flex flex-col items-center gap-4">
           <p className="text-xs text-gray-400 dark:text-gray-600 font-normal">
-            © 2025 AetherFlow. Enterprise Edition.
+            © 2025 AetherTrack. Enterprise Edition.
           </p>
         </div>
       </div>

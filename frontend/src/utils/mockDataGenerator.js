@@ -5,14 +5,14 @@
 
 // User profiles with diverse names and roles
 export const mockUsers = [
-  { _id: '1', full_name: 'Sarah Chen', email: 'sarah.chen@AetherFlow.io', role: 'admin', avatar: '👩‍💼' },
-  { _id: '2', full_name: 'Marcus Johnson', email: 'marcus.j@AetherFlow.io', role: 'hr', avatar: '👨‍💻' },
-  { _id: '3', full_name: 'Emma Rodriguez', email: 'emma.r@AetherFlow.io', role: 'team_lead', avatar: '👩‍🎨' },
-  { _id: '4', full_name: 'James Kim', email: 'james.kim@AetherFlow.io', role: 'member', avatar: '👨‍🔬' },
-  { _id: '5', full_name: 'Olivia Patel', email: 'olivia.p@AetherFlow.io', role: 'member', avatar: '👩‍🚀' },
-  { _id: '6', full_name: 'David Martinez', email: 'david.m@AetherFlow.io', role: 'team_lead', avatar: '👨‍🎓' },
-  { _id: '7', full_name: 'Sophia Anderson', email: 'sophia.a@AetherFlow.io', role: 'member', avatar: '👩‍🔧' },
-  { _id: '8', full_name: 'Michael Brown', email: 'michael.b@AetherFlow.io', role: 'member', avatar: '👨‍🎤' },
+  { _id: '1', full_name: 'Sarah Chen', email: 'sarah.chen@AetherTrack.io', role: 'admin', avatar: '👩‍💼' },
+  { _id: '2', full_name: 'Marcus Johnson', email: 'marcus.j@AetherTrack.io', role: 'hr', avatar: '👨‍💻' },
+  { _id: '3', full_name: 'Emma Rodriguez', email: 'emma.r@AetherTrack.io', role: 'team_lead', avatar: '👩‍🎨' },
+  { _id: '4', full_name: 'James Kim', email: 'james.kim@AetherTrack.io', role: 'member', avatar: '👨‍🔬' },
+  { _id: '5', full_name: 'Olivia Patel', email: 'olivia.p@AetherTrack.io', role: 'member', avatar: '👩‍🚀' },
+  { _id: '6', full_name: 'David Martinez', email: 'david.m@AetherTrack.io', role: 'team_lead', avatar: '👨‍🎓' },
+  { _id: '7', full_name: 'Sophia Anderson', email: 'sophia.a@AetherTrack.io', role: 'member', avatar: '👩‍🔧' },
+  { _id: '8', full_name: 'Michael Brown', email: 'michael.b@AetherTrack.io', role: 'member', avatar: '👨‍🎤' },
 ];
 
 // Teams with realistic names

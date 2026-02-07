@@ -1,4 +1,4 @@
-// Custom Service Worker for AetherFlow PWA
+// Custom Service Worker for AetherTrack PWA
 // This extends the Workbox service worker with notification handling
 
 // Import Workbox libraries
@@ -106,11 +106,11 @@ self.addEventListener('push', (event) => {
         { action: 'close', title: 'Close' },
       ],
       requireInteraction: data.requireInteraction || false,
-      tag: data.tag || 'AetherFlow-notification',
+      tag: data.tag || 'AetherTrack-notification',
     };
 
     event.waitUntil(
-      self.registration.showNotification(data.title || 'AetherFlow', options)
+      self.registration.showNotification(data.title || 'AetherTrack', options)
     );
   } catch (error) {
     console.error('Error handling push notification:', error);
@@ -142,4 +142,4 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(clients.claim());
 });
 
-console.log('AetherFlow Service Worker loaded');
+console.log('AetherTrack Service Worker loaded');

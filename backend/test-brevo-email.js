@@ -40,7 +40,7 @@ if (!process.env.BREVO_LOGIN_EMAIL) {
 
 // Test email details
 const testEmail = process.env.EMAIL_FROM; // Send to yourself
-const testSubject = 'AetherFlow Email Test';
+const testSubject = 'AetherTrack Email Test';
 const testHtmlContent = `
 <!DOCTYPE html>
 <html>
@@ -49,7 +49,7 @@ const testHtmlContent = `
   <title>Email Test</title>
 </head>
 <body style="font-family: Arial, sans-serif; padding: 20px;">
-  <h2>✅ AetherFlow Email Test</h2>
+  <h2>✅ AetherTrack Email Test</h2>
   <p>This is a test email to verify your Brevo email configuration is working correctly.</p>
   <p><strong>Timestamp:</strong> ${new Date().toISOString()}</p>
   <p><strong>Environment:</strong> ${process.env.NODE_ENV || 'development'}</p>

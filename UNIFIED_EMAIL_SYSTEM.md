@@ -403,7 +403,7 @@ node backend/scripts/seedEmailTemplates.js
 
 For questions or issues:
 - **Technical Lead:** Jassa
-- **Project:** AetherFlow HR Module
+- **Project:** AetherTrack HR Module
 - **Documentation:** This file + API_REFERENCE_HR_MODULE.md
 
 ---

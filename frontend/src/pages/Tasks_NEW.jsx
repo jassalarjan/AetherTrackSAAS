@@ -434,7 +434,7 @@ const Tasks = () => {
             <div className="size-8 rounded bg-[#136dec] flex items-center justify-center">
               <CheckSquare className="text-white" size={20} />
             </div>
-            <h2 className="text-white text-lg font-bold leading-tight tracking-tight">AetherFlow</h2>
+            <h2 className="text-white text-lg font-bold leading-tight tracking-tight">AetherTrack</h2>
           </div>
           <label className="hidden md:flex flex-col min-w-[320px] h-9">
             <div className="flex w-full flex-1 items-stretch rounded bg-[#1c2027] border border-[#282f39] group focus-within:border-[#136dec] transition-colors">

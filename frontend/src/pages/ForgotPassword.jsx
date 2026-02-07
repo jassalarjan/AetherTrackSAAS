@@ -94,9 +94,9 @@ const ForgotPassword = () => {
         {/* Logo */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-3 mb-4">
-            <img src="/logo.png" alt="AetherFlow" className="w-12 h-12" />
+            <img src="/logo.png" alt="AetherTrack" className="w-12 h-12" />
             <h1 className={`text-3xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-              AetherFlow
+              AetherTrack
             </h1>
           </div>
         </div>
@@ -297,7 +297,7 @@ const ForgotPassword = () => {
         {/* Footer */}
         <div className="text-center mt-6">
           <p className={`text-xs ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`}>
-            © 2026 AetherFlow. All rights reserved.
+            © 2026 AetherTrack. All rights reserved.
           </p>
         </div>
       </div>

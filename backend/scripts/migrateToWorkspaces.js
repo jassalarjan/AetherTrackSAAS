@@ -30,7 +30,7 @@ import Notification from '../models/Notification.js';
 import ChangeLog from '../models/ChangeLog.js';
 import Workspace from '../models/Workspace.js';
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/AetherFlow';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/AetherTrack';
 
 async function migrateToWorkspaces() {
   try {
@@ -63,7 +63,7 @@ async function migrateToWorkspaces() {
 
       // Create CORE workspace
       coreWorkspace = new Workspace({
-        name: process.env.COMPANY_NAME || 'AetherFlow Enterprise',
+        name: process.env.COMPANY_NAME || 'AetherTrack Enterprise',
         type: 'CORE',
         owner: adminUser._id,
         isActive: true,
@@ -199,7 +199,7 @@ async function migrateToWorkspaces() {
     console.log(`   Audit Logs: ${totalChangeLogs}`);
     console.log();
     console.log('🎉 All existing data has been migrated to the CORE workspace.');
-    console.log('   Your AetherFlow instance is now multi-workspace enabled!');
+    console.log('   Your AetherTrack instance is now multi-workspace enabled!');
     console.log();
 
   } catch (error) {
@@ -215,7 +215,7 @@ async function migrateToWorkspaces() {
 
 // Run migration
 console.log('═══════════════════════════════════════════');
-console.log('  AetherFlow Workspace Migration Script     ');
+console.log('  AetherTrack Workspace Migration Script     ');
 console.log('═══════════════════════════════════════════\n');
 
 migrateToWorkspaces();

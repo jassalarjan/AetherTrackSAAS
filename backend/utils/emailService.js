@@ -32,7 +32,7 @@ const getSmtpTransporter = () => {
 // Get default sender info from environment
 const getDefaultSender = () => ({
   email: process.env.EMAIL_FROM || 'updates.codecatalyst@gmail.com',
-  name: process.env.EMAIL_FROM_NAME || 'AetherFlow'
+  name: process.env.EMAIL_FROM_NAME || 'AetherTrack'
 });
 
 // Send email using Brevo SMTP
@@ -150,7 +150,7 @@ const getCredentialEmailTemplate = (fullName, email, password, appUrl) => {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Welcome to AetherFlow</title>
+  <title>Welcome to AetherTrack</title>
   <style>
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
@@ -384,9 +384,9 @@ const getCredentialEmailTemplate = (fullName, email, password, appUrl) => {
     <div class="container">
       <div class="header">
         <div class="logo-container">
-          <img src="https://AetherFlow-nine-phi.vercel.app/logo.png" alt="AetherFlow Logo" />
+          <img src="https://AetherTrack-nine-phi.vercel.app/logo.png" alt="AetherTrack Logo" />
         </div>
-        <h1>Welcome to AetherFlow! 🚀</h1>
+        <h1>Welcome to AetherTrack! 🚀</h1>
         <p>Your account is ready to go</p>
       </div>
       
@@ -396,8 +396,8 @@ const getCredentialEmailTemplate = (fullName, email, password, appUrl) => {
         </div>
         
         <div class="message">
-          <p>We're excited to have you on board! Your AetherFlow account has been created and you're all set to start managing tasks like a pro.</p>
-          <p>AetherFlow is your all-in-one collaborative workspace where teams come together to get things done efficiently.</p>
+          <p>We're excited to have you on board! Your AetherTrack account has been created and you're all set to start managing tasks like a pro.</p>
+          <p>AetherTrack is your all-in-one collaborative workspace where teams come together to get things done efficiently.</p>
         </div>
 
         <div class="credentials-box">
@@ -421,7 +421,7 @@ const getCredentialEmailTemplate = (fullName, email, password, appUrl) => {
         </div>
 
         <div class="button-container">
-          <a href="${appUrl}" class="btn">🚀 Launch AetherFlow</a>
+          <a href="${appUrl}" class="btn">🚀 Launch AetherTrack</a>
         </div>
 
         <div class="divider"></div>
@@ -465,11 +465,11 @@ const getCredentialEmailTemplate = (fullName, email, password, appUrl) => {
       </div>
 
       <div class="footer">
-        <p><strong>AetherFlow</strong></p>
+        <p><strong>AetherTrack</strong></p>
         <p>Collaborative Task Management System</p>
         <p style="margin-top: 20px; font-size: 12px; opacity: 0.8;">This is an automated message. Please do not reply.</p>
         <p style="margin-top: 15px;">
-          <a href="${appUrl}" style="color: #90cdf4; text-decoration: none;">🌐 Visit AetherFlow</a>
+          <a href="${appUrl}" style="color: #90cdf4; text-decoration: none;">🌐 Visit AetherTrack</a>
         </p>
       </div>
     </div>
@@ -483,8 +483,8 @@ const getCredentialEmailTemplate = (fullName, email, password, appUrl) => {
 export const sendVerificationEmail = async (fullName, email, verificationCode, password, workspaceName) => {
   try {
     const appUrl = process.env.NODE_ENV === 'production'
-      ? 'https://AetherFlow-nine-phi.vercel.app'
-      : (process.env.CLIENT_URL || 'https://AetherFlow-nine-phi.vercel.app');
+      ? 'https://AetherTrack-nine-phi.vercel.app'
+      : (process.env.CLIENT_URL || 'https://AetherTrack-nine-phi.vercel.app');
 
     const htmlContent = `
 <!DOCTYPE html>
@@ -539,7 +539,7 @@ export const sendVerificationEmail = async (fullName, email, verificationCode, p
       <a href="${appUrl}/verify-email" class="btn">Verify Email Address</a>
 
       <p style="margin-top: 30px;">If you have any questions, please contact your administrator.</p>
-      <p>Best regards,<br>AetherFlow Team</p>
+      <p>Best regards,<br>AetherTrack Team</p>
     </div>
     <div class="footer">
       <p>This is an automated email. Please do not reply.</p>
@@ -570,11 +570,11 @@ export const sendVerificationEmail = async (fullName, email, verificationCode, p
 export const sendCredentialEmail = async (fullName, email, password) => {
   try {
     const appUrl = process.env.NODE_ENV === 'production' 
-      ? 'https://AetherFlow-nine-phi.vercel.app'
-      : (process.env.CLIENT_URL || 'https://AetherFlow-nine-phi.vercel.app');
+      ? 'https://AetherTrack-nine-phi.vercel.app'
+      : (process.env.CLIENT_URL || 'https://AetherTrack-nine-phi.vercel.app');
 
     const htmlContent = getCredentialEmailTemplate(fullName, email, password, appUrl);
-    const subject = '🎉 Welcome to AetherFlow - Your Account is Ready!';
+    const subject = '🎉 Welcome to AetherTrack - Your Account is Ready!';
 
     const result = await sendEmail(email, subject, htmlContent);
     
@@ -632,7 +632,7 @@ const getTaskAssignmentTemplate = (userName, taskTitle, taskDescription, priorit
       <p>Click the button below to view task details and get started:</p>
       <a href="${appUrl}" class="btn">View Task</a>
       <p style="margin-top: 30px;">If you have any questions, please contact your team lead.</p>
-      <p>Best regards,<br>AetherFlow Team</p>
+      <p>Best regards,<br>AetherTrack Team</p>
     </div>
     <div class="footer">
       <p>This is an automated email. Please do not reply.</p>
@@ -647,8 +647,8 @@ const getTaskAssignmentTemplate = (userName, taskTitle, taskDescription, priorit
 export const sendTaskAssignmentEmail = async (userName, userEmail, taskTitle, taskDescription, priority, dueDate) => {
   try {
     const appUrl = process.env.NODE_ENV === 'production' 
-      ? 'https://AetherFlow-nine-phi.vercel.app'
-      : (process.env.CLIENT_URL || 'https://AetherFlow-nine-phi.vercel.app');
+      ? 'https://AetherTrack-nine-phi.vercel.app'
+      : (process.env.CLIENT_URL || 'https://AetherTrack-nine-phi.vercel.app');
 
     const htmlContent = getTaskAssignmentTemplate(userName, taskTitle, taskDescription, priority, dueDate, appUrl);
     const subject = `📋 New Task Assigned: ${taskTitle}`;
@@ -708,7 +708,7 @@ const getTaskStatusTemplate = (userName, taskTitle, oldStatus, newStatus, update
       </div>
       <p>Click below to view the task:</p>
       <a href="${appUrl}" class="btn">View Task</a>
-      <p style="margin-top: 30px;">Best regards,<br>AetherFlow Team</p>
+      <p style="margin-top: 30px;">Best regards,<br>AetherTrack Team</p>
     </div>
     <div class="footer">
       <p>This is an automated email. Please do not reply.</p>
@@ -723,8 +723,8 @@ const getTaskStatusTemplate = (userName, taskTitle, oldStatus, newStatus, update
 export const sendTaskStatusEmail = async (userName, userEmail, taskTitle, oldStatus, newStatus, updatedBy) => {
   try {
     const appUrl = process.env.NODE_ENV === 'production' 
-      ? 'https://AetherFlow-nine-phi.vercel.app'
-      : (process.env.CLIENT_URL || 'https://AetherFlow-nine-phi.vercel.app');
+      ? 'https://AetherTrack-nine-phi.vercel.app'
+      : (process.env.CLIENT_URL || 'https://AetherTrack-nine-phi.vercel.app');
 
     const htmlContent = getTaskStatusTemplate(userName, taskTitle, oldStatus, newStatus, updatedBy, appUrl);
     const subject = `🔄 Task Status Updated: ${taskTitle}`;
@@ -781,7 +781,7 @@ const getDueDateReminderTemplate = (userName, taskTitle, taskDescription, dueDat
       </div>
       <p>Please make sure to complete this task on time. Click below to view details:</p>
       <a href="${appUrl}" class="btn">View Task</a>
-      <p style="margin-top: 30px;">Best regards,<br>AetherFlow Team</p>
+      <p style="margin-top: 30px;">Best regards,<br>AetherTrack Team</p>
     </div>
     <div class="footer">
       <p>This is an automated email. Please do not reply.</p>
@@ -796,8 +796,8 @@ const getDueDateReminderTemplate = (userName, taskTitle, taskDescription, dueDat
 export const sendDueDateReminder = async (userName, userEmail, taskTitle, taskDescription, dueDate) => {
   try {
     const appUrl = process.env.NODE_ENV === 'production' 
-      ? 'https://AetherFlow-nine-phi.vercel.app'
-      : (process.env.CLIENT_URL || 'https://AetherFlow-nine-phi.vercel.app');
+      ? 'https://AetherTrack-nine-phi.vercel.app'
+      : (process.env.CLIENT_URL || 'https://AetherTrack-nine-phi.vercel.app');
 
     const htmlContent = getDueDateReminderTemplate(userName, taskTitle, taskDescription, dueDate, appUrl);
     const subject = `⏰ Reminder: ${taskTitle} - Due Soon`;
@@ -842,7 +842,7 @@ const getPasswordResetTemplate = (fullName, resetToken) => {
     </div>
     <div class="content">
       <p>Hello ${fullName},</p>
-      <p>We received a request to reset your password for your AetherFlow account. Use the code below to reset your password:</p>
+      <p>We received a request to reset your password for your AetherTrack account. Use the code below to reset your password:</p>
       <div class="token-box">
         <p style="margin: 0; color: #666; font-size: 14px; margin-bottom: 10px;">Your Reset Code</p>
         <div class="token">${resetToken}</div>
@@ -857,7 +857,7 @@ const getPasswordResetTemplate = (fullName, resetToken) => {
         </ul>
       </div>
       <p>If you're having trouble, contact your administrator for assistance.</p>
-      <p>Best regards,<br>AetherFlow Team</p>
+      <p>Best regards,<br>AetherTrack Team</p>
     </div>
     <div class="footer">
       <p>This is an automated email. Please do not reply.</p>
@@ -872,8 +872,8 @@ const getPasswordResetTemplate = (fullName, resetToken) => {
 export const sendPasswordResetEmail = async (fullName, email, newPassword) => {
   try {
     const appUrl = process.env.NODE_ENV === 'production'
-      ? 'https://AetherFlow-nine-phi.vercel.app'
-      : (process.env.CLIENT_URL || 'https://AetherFlow-nine-phi.vercel.app');
+      ? 'https://AetherTrack-nine-phi.vercel.app'
+      : (process.env.CLIENT_URL || 'https://AetherTrack-nine-phi.vercel.app');
 
     const htmlContent = `
 <!DOCTYPE html>
@@ -918,10 +918,10 @@ export const sendPasswordResetEmail = async (fullName, email, newPassword) => {
       </div>
 
       <p>Click the button below to log in with your new password:</p>
-      <a href="${appUrl}" class="btn">Login to AetherFlow</a>
+      <a href="${appUrl}" class="btn">Login to AetherTrack</a>
 
       <p style="margin-top: 30px;">If you didn't request this password reset, please contact your administrator immediately.</p>
-      <p>Best regards,<br>AetherFlow Team</p>
+      <p>Best regards,<br>AetherTrack Team</p>
     </div>
     <div class="footer">
       <p>This is an automated email. Please do not reply.</p>
@@ -931,7 +931,7 @@ export const sendPasswordResetEmail = async (fullName, email, newPassword) => {
 </html>
     `;
 
-    const subject = 'Password Reset Successful - AetherFlow';
+    const subject = 'Password Reset Successful - AetherTrack';
 
     console.log('📧 Sending password reset confirmation email via Brevo API to:', email);
     const result = await sendEmail(email, subject, htmlContent);
@@ -953,7 +953,7 @@ export const sendPasswordResetEmail = async (fullName, email, newPassword) => {
 export const sendPasswordResetLink = async (full_name, email, resetToken) => {
   try {
     const htmlContent = getPasswordResetTemplate(full_name, resetToken);
-    const subject = 'Reset Your Password - AetherFlow';
+    const subject = 'Reset Your Password - AetherTrack';
 
     console.log('📧 Sending password reset email via Brevo API to:', email);
     const result = await sendEmail(email, subject, htmlContent);
@@ -1002,7 +1002,7 @@ const getCommentNotificationTemplate = (userName, commenterName, taskTitle, comm
       </div>
       <p>Click below to view the full conversation:</p>
       <a href="${appUrl}" class="btn">View Task</a>
-      <p style="margin-top: 30px;">Best regards,<br>AetherFlow Team</p>
+      <p style="margin-top: 30px;">Best regards,<br>AetherTrack Team</p>
     </div>
     <div class="footer">
       <p>This is an automated email. Please do not reply.</p>
@@ -1017,8 +1017,8 @@ const getCommentNotificationTemplate = (userName, commenterName, taskTitle, comm
 export const sendCommentNotification = async (userName, userEmail, commenterName, taskTitle, commentText) => {
   try {
     const appUrl = process.env.NODE_ENV === 'production' 
-      ? 'https://AetherFlow-nine-phi.vercel.app'
-      : (process.env.CLIENT_URL || 'https://AetherFlow-nine-phi.vercel.app');
+      ? 'https://AetherTrack-nine-phi.vercel.app'
+      : (process.env.CLIENT_URL || 'https://AetherTrack-nine-phi.vercel.app');
 
     const htmlContent = getCommentNotificationTemplate(userName, commenterName, taskTitle, commentText, appUrl);
     const subject = `💬 New Comment: ${taskTitle}`;
@@ -1053,8 +1053,8 @@ export const renderTemplate = (template, variables) => {
 export const sendOverdueTaskReminder = async (userName, userEmail, taskTitle, daysOverdue) => {
   try {
     const appUrl = process.env.NODE_ENV === 'production' 
-      ? 'https://AetherFlow-nine-phi.vercel.app'
-      : (process.env.CLIENT_URL || 'https://AetherFlow-nine-phi.vercel.app');
+      ? 'https://AetherTrack-nine-phi.vercel.app'
+      : (process.env.CLIENT_URL || 'https://AetherTrack-nine-phi.vercel.app');
 
     const htmlContent = `
 <!DOCTYPE html>
@@ -1085,7 +1085,7 @@ export const sendOverdueTaskReminder = async (userName, userEmail, taskTitle, da
       </div>
       <p>Please complete this task as soon as possible:</p>
       <a href="${appUrl}" class="btn">View Task</a>
-      <p style="margin-top: 30px;">Best regards,<br>AetherFlow Team</p>
+      <p style="margin-top: 30px;">Best regards,<br>AetherTrack Team</p>
     </div>
     <div class="footer">
       <p>This is an automated email. Please do not reply.</p>
@@ -1117,8 +1117,8 @@ export const sendOverdueTaskReminder = async (userName, userEmail, taskTitle, da
 export const sendWeeklyReport = async (userName, userEmail, reportData) => {
   try {
     const appUrl = process.env.NODE_ENV === 'production' 
-      ? 'https://AetherFlow-nine-phi.vercel.app'
-      : (process.env.CLIENT_URL || 'https://AetherFlow-nine-phi.vercel.app');
+      ? 'https://AetherTrack-nine-phi.vercel.app'
+      : (process.env.CLIENT_URL || 'https://AetherTrack-nine-phi.vercel.app');
 
     const htmlContent = `
 <!DOCTYPE html>
@@ -1165,7 +1165,7 @@ export const sendWeeklyReport = async (userName, userEmail, reportData) => {
       </div>
       <p>Keep up the great work! Click below to see your full dashboard:</p>
       <a href="${appUrl}" class="btn">View Dashboard</a>
-      <p style="margin-top: 30px;">Best regards,<br>AetherFlow Team</p>
+      <p style="margin-top: 30px;">Best regards,<br>AetherTrack Team</p>
     </div>
     <div class="footer">
       <p>This is an automated email. Please do not reply.</p>
@@ -1175,7 +1175,7 @@ export const sendWeeklyReport = async (userName, userEmail, reportData) => {
 </html>
     `;
 
-    const subject = '📊 Your Weekly AetherFlow Report';
+    const subject = '📊 Your Weekly AetherTrack Report';
 
     console.log('📧 Sending weekly report via Brevo API to:', userEmail);
     const result = await sendEmail(userEmail, subject, htmlContent);

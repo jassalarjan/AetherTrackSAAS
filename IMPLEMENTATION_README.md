@@ -1,8 +1,8 @@
-# 🎯 AetherFlow - Complete Implementation Documentation
+# 🎯 AetherTrack - Complete Implementation Documentation
 
 ## 📋 Overview
 
-AetherFlow is a comprehensive enterprise task management system with an integrated HR module, built with modern web technologies. This document provides complete implementation details for all features currently implemented in the repository.
+AetherTrack is a comprehensive enterprise task management system with an integrated HR module, built with modern web technologies. This document provides complete implementation details for all features currently implemented in the repository.
 
 ---
 
@@ -424,7 +424,7 @@ AetherFlow is a comprehensive enterprise task management system with an integrat
 1. **Clone Repository**
    ```bash
    git clone <repository-url>
-   cd AetherFlow
+   cd AetherTrack
    ```
 
 2. **Backend Setup**
@@ -451,7 +451,7 @@ AetherFlow is a comprehensive enterprise task management system with an integrat
 
 ### **Environment Configuration**
 ```env
-MONGODB_URI=mongodb://localhost:27017/AetherFlow
+MONGODB_URI=mongodb://localhost:27017/AetherTrack
 JWT_SECRET=your-secret-key
 EMAIL_HOST=smtp.gmail.com
 EMAIL_PORT=587

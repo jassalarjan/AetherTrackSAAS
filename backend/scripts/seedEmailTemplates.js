@@ -17,13 +17,13 @@ const predefinedTemplates = [
     category: 'system',
     isPredefined: true,
     variables: [
-      { name: 'workspaceName', description: 'Name of the workspace', example: 'AetherFlow' },
+      { name: 'workspaceName', description: 'Name of the workspace', example: 'AetherTrack' },
       { name: 'fullName', description: 'User\'s full name', example: 'John Doe' },
       { name: 'email', description: 'User\'s email address', example: 'john@example.com' },
       { name: 'password', description: 'Temporary password', example: 'TempPass123' },
-      { name: 'loginUrl', description: 'Login page URL', example: 'https://app.AetherFlow.com/login' },
-      { name: 'supportEmail', description: 'Support email address', example: 'support@AetherFlow.com' },
-      { name: 'companyName', description: 'Company name', example: 'AetherFlow Inc.' }
+      { name: 'loginUrl', description: 'Login page URL', example: 'https://app.AetherTrack.com/login' },
+      { name: 'supportEmail', description: 'Support email address', example: 'support@AetherTrack.com' },
+      { name: 'companyName', description: 'Company name', example: 'AetherTrack Inc.' }
     ],
     htmlContent: `
 <!DOCTYPE html>
@@ -317,7 +317,7 @@ const predefinedTemplates = [
     <div class="container">
       <div class="header">
         <div class="logo-container">
-          <img src="https://AetherFlow-nine-phi.vercel.app/logo.png" alt="{{workspaceName}} Logo" />
+          <img src="https://AetherTrack-nine-phi.vercel.app/logo.png" alt="{{workspaceName}} Logo" />
         </div>
         <h1>🎉 Welcome to {{workspaceName}}!</h1>
         <p>Your account is ready to go</p>
@@ -427,7 +427,7 @@ const predefinedTemplates = [
     category: 'leave',
     isPredefined: true,
     variables: [
-      { name: 'workspaceName', description: 'Name of the workspace', example: 'AetherFlow' },
+      { name: 'workspaceName', description: 'Name of the workspace', example: 'AetherTrack' },
       { name: 'fullName', description: 'Employee\'s full name', example: 'John Doe' },
       { name: 'leaveType', description: 'Type of leave', example: 'Annual Leave' },
       { name: 'startDate', description: 'Leave start date', example: '2024-01-15' },
@@ -435,8 +435,8 @@ const predefinedTemplates = [
       { name: 'days', description: 'Number of leave days', example: '5' },
       { name: 'approvedBy', description: 'Name of approver', example: 'Jane Smith' },
       { name: 'remainingDays', description: 'Remaining leave days', example: '15' },
-      { name: 'loginUrl', description: 'Login page URL', example: 'https://app.AetherFlow.com/login' },
-      { name: 'supportEmail', description: 'Support email address', example: 'support@AetherFlow.com' }
+      { name: 'loginUrl', description: 'Login page URL', example: 'https://app.AetherTrack.com/login' },
+      { name: 'supportEmail', description: 'Support email address', example: 'support@AetherTrack.com' }
     ],
     htmlContent: `
 <!DOCTYPE html>
@@ -737,7 +737,7 @@ const predefinedTemplates = [
     <div class="container">
       <div class="header">
         <div class="logo-container">
-          <img src="https://AetherFlow-nine-phi.vercel.app/logo.png" alt="{{workspaceName}} Logo" />
+          <img src="https://AetherTrack-nine-phi.vercel.app/logo.png" alt="{{workspaceName}} Logo" />
         </div>
         <h1>✅ Leave Request Approved</h1>
         <p>Your time off has been confirmed</p>
@@ -840,7 +840,7 @@ const predefinedTemplates = [
     category: 'leave',
     isPredefined: true,
     variables: [
-      { name: 'workspaceName', description: 'Name of the workspace', example: 'AetherFlow' },
+      { name: 'workspaceName', description: 'Name of the workspace', example: 'AetherTrack' },
       { name: 'fullName', description: 'Employee\'s full name', example: 'John Doe' },
       { name: 'leaveType', description: 'Type of leave', example: 'Annual Leave' },
       { name: 'startDate', description: 'Leave start date', example: '2024-01-15' },
@@ -899,7 +899,7 @@ const predefinedTemplates = [
     category: 'attendance',
     isPredefined: true,
     variables: [
-      { name: 'workspaceName', description: 'Name of the workspace', example: 'AetherFlow' },
+      { name: 'workspaceName', description: 'Name of the workspace', example: 'AetherTrack' },
       { name: 'fullName', description: 'Employee\'s full name', example: 'John Doe' },
       { name: 'date', description: 'Date of attendance', example: '2024-01-15' }
     ],
@@ -992,7 +992,7 @@ const predefinedTemplates = [
       <p>Click the button below to view task details and get started:</p>
       <a href="#" class="btn">View Task</a>
       <p style="margin-top: 30px;">If you have any questions, please contact your team lead.</p>
-      <p>Best regards,<br>AetherFlow Team</p>
+      <p>Best regards,<br>AetherTrack Team</p>
     </div>
     <div class="footer">
       <p>This is an automated email. Please do not reply.</p>
@@ -1037,7 +1037,7 @@ const predefinedTemplates = [
           {{content}}
         </div>
       </div>
-      <p>Best regards,<br>AetherFlow Team</p>
+      <p>Best regards,<br>AetherTrack Team</p>
     </div>
     <div class="footer">
       <p>This is an automated email. Please do not reply.</p>
@@ -1937,7 +1937,7 @@ const predefinedTemplates = [
 async function seedEmailTemplates() {
   try {
     // Connect to MongoDB
-    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/AetherFlow');
+    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/AetherTrack');
     console.log('✅ Connected to MongoDB');
 
     console.log('🌱 Seeding predefined email templates...');

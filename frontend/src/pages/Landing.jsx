@@ -25,9 +25,9 @@ const Landing = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-2">
-              <img src="/logo.png" alt="AetherFlow" className="w-8 h-8" />
+              <img src="/logo.png" alt="AetherTrack" className="w-8 h-8" />
               <span className="text-xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-                AetherFlow
+                AetherTrack
               </span>
             </div>
             <div className="flex items-center space-x-4">
@@ -232,7 +232,7 @@ const Landing = () => {
                 Ready to Join?
               </h2>
               <p className="text-xl text-slate-400 mb-8">
-                Request access to AetherFlow for your organization
+                Request access to AetherTrack for your organization
               </p>
               <button
                 onClick={() => navigate('/register')}
@@ -254,11 +254,11 @@ const Landing = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row items-center justify-between">
             <div className="flex items-center space-x-2 mb-4 md:mb-0">
-              <img src="/logo.png" alt="AetherFlow" className="w-8 h-8" />
-              <span className="text-xl font-bold">AetherFlow</span>
+              <img src="/logo.png" alt="AetherTrack" className="w-8 h-8" />
+              <span className="text-xl font-bold">AetherTrack</span>
             </div>
             <div className="text-slate-400 text-sm">
-              © 2025 AetherFlow. All rights reserved.
+              © 2025 AetherTrack. All rights reserved.
             </div>
           </div>
         </div>
