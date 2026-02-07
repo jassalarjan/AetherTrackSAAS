@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
  * Philosophy Section
  * 
  * Strategy: Human, grounded, confident
- * No CTA. Just clarity about why AetherFlow exists.
+ * No CTA. Just clarity about why AetherTrack exists.
  * This builds trust through calm honesty.
  * 
  * Visual: Minimal. Words matter here.
@@ -46,7 +46,7 @@ const Philosophy = () => {
           {/* Title */}
           <div className="text-center">
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-3 sm:mb-4">
-              Why AetherFlow Exists
+              Why AetherTrack Exists
             </h2>
             <div className="w-12 sm:w-16 h-1 bg-gradient-to-r from-blue-500 to-cyan-500 mx-auto rounded-full" />
           </div>
@@ -63,7 +63,7 @@ const Philosophy = () => {
             </p>
 
             <p className="text-slate-400">
-              AetherFlow was built to survive complexity. Multi-workspace isolation. 
+              AetherTrack was built to survive complexity. Multi-workspace isolation. 
               Role hierarchies that map to real organizations. Audit trails that mean something. 
               Real-time sync that doesn't break under load.
             </p>

@@ -175,4 +175,4 @@ For detailed information, see:
 
 **Updated:** January 22, 2026  
 **Developer:** GitHub Copilot  
-**Project:** AetherFlow HR Email System
+**Project:** AetherTrack HR Email System

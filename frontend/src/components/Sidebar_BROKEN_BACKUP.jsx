@@ -73,13 +73,13 @@ const Sidebar = () => {
           <div className="flex items-center gap-3 w-full px-2">
             <img 
               src="/logo.png" 
-              alt="AetherFlow Logo" 
+              alt="AetherTrack Logo" 
               className="w-8 h-8 object-contain"
             />
             <span className={`text-xl font-bold ${
               theme === 'dark' ? 'text-white' : 'text-gray-900'
             }`}>
-              AetherFlow
+              AetherTrack
             </span>theme === 'dark'
                     ? 'bg-[#136dec]/10 text-[#136dec]'
                     : 'bg-blue-50 text-blue-600'
@@ -91,7 +91,7 @@ const Sidebar = () => {
             >
               <Icon size={20} className={`${active ? 'fill-current' : theme === 'dark' ? 'group-hover:text-[#136dec]' : 'group-hover:text-blue-600
             className="w-8 h-8 object-contain"
-            title="AetherFlow"
+            title="AetherTrack"
           />
         )}
       </div>

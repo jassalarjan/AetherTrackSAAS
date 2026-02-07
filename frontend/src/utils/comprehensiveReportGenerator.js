@@ -400,7 +400,7 @@ export const generateComprehensivePDFReport = (tasks, analyticsData, filters, us
     // ========== SAVE PDF ==========
     const timestamp = new Date().toISOString().slice(0, 10);
     const reportTypeLabel = reportType === 'all' ? 'Full' : reportType.charAt(0).toUpperCase() + reportType.slice(1);
-    doc.save(`AetherFlow_${reportTypeLabel}_Report_${timestamp}.pdf`);
+    doc.save(`AetherTrack_${reportTypeLabel}_Report_${timestamp}.pdf`);
     
   } catch (error) {
     console.error('Error in generateComprehensivePDFReport:', error);
@@ -426,7 +426,7 @@ function addCoverPage(doc, reportType, user, taskCount) {
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(32);
   doc.setFont(undefined, 'bold');
-  doc.text('AetherFlow', pageWidth / 2, 60, { align: 'center' });
+  doc.text('AetherTrack', pageWidth / 2, 60, { align: 'center' });
   
   doc.setFontSize(24);
   doc.text('Analytics Report', pageWidth / 2, 75, { align: 'center' });
@@ -772,7 +772,7 @@ function addFootersToAllPages(doc, reportType) {
     // Footer text
     const reportLabel = reportType === 'all' ? 'Full' : reportType.charAt(0).toUpperCase() + reportType.slice(1);
     doc.text(
-      `AetherFlow ${reportLabel} Report | Page ${i} of ${pageCount} | ${new Date().toLocaleDateString()}`,
+      `AetherTrack ${reportLabel} Report | Page ${i} of ${pageCount} | ${new Date().toLocaleDateString()}`,
       pageWidth / 2,
       pageHeight - 10,
       { align: 'center' }

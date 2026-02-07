@@ -2,7 +2,7 @@
 
 ## Complete Variable Specification for HR Email System
 
-This document provides a comprehensive mapping of ALL variables supported by the unified HTML email template for the AetherFlow HR Module. The template is designed to handle all HR communication scenarios without requiring manual editing.
+This document provides a comprehensive mapping of ALL variables supported by the unified HTML email template for the AetherTrack HR Module. The template is designed to handle all HR communication scenarios without requiring manual editing.
 
 ---
 
@@ -554,4 +554,4 @@ For questions or issues with variable mapping:
 
 **Last Updated:** January 2025  
 **Template Version:** 2.0  
-**Compatible With:** Brevo Transactional Email API, AetherFlow HR Module
+**Compatible With:** Brevo Transactional Email API, AetherTrack HR Module

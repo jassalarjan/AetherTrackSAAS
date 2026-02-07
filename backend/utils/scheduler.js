@@ -273,12 +273,12 @@ const sendWeeklyReports = async () => {
     const timestamp = now.toISOString().slice(0, 10);
     const attachments = [
       {
-        filename: `AetherFlow_Report_${timestamp}.xlsx`,
+        filename: `AetherTrack_Report_${timestamp}.xlsx`,
         content: Buffer.from(excelBuffer),
         contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
       },
       {
-        filename: `AetherFlow_Report_${timestamp}.pdf`,
+        filename: `AetherTrack_Report_${timestamp}.pdf`,
         content: Buffer.from(pdfBuffer),
         contentType: 'application/pdf'
       }

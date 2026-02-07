@@ -160,21 +160,21 @@ const Sidebar = () => {
           <div className="flex items-center gap-3 w-full px-2">
             <img 
               src="/logo.png" 
-              alt="AetherFlow Logo" 
+              alt="AetherTrack Logo" 
               className="w-8 h-8 object-contain"
             />
             <span className={`text-xl font-bold ${
               isDark ? 'text-white' : 'text-gray-900'
             }`}>
-              AetherFlow
+              AetherTrack
             </span>
           </div>
         ) : (
           <img 
             src="/logo.png" 
-            alt="AetherFlow Logo" 
+            alt="AetherTrack Logo" 
             className="w-8 h-8 object-contain"
-            title="AetherFlow"
+            title="AetherTrack"
           />
         )}
       </div>

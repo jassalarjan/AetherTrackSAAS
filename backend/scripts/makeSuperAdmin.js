@@ -10,7 +10,7 @@ const password = process.argv[3] || 'waheguru';
 
 async function makeSuperAdmin() {
   try {
-    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/AetherFlow');
+    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/AetherTrack');
     console.log('Connected to MongoDB');
 
     let user = await User.findOne({ email });

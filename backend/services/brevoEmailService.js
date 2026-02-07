@@ -68,16 +68,16 @@ class BrevoEmailService {
     // Default params for layout
     const layoutParams = {
       email_subject: subject,
-      logo_url: params.logo_url || 'https://AetherFlow-nine-phi.vercel.app/logo.png',
+      logo_url: params.logo_url || 'https://AetherTrack-nine-phi.vercel.app/logo.png',
       header_title: params.header_title || 'Notification',
       recipient_name: params.fullName || params.candidateName || params.name || 'User',
       intro_message: content, // The content itself becomes the intro or body
-      website_url: params.websiteUrl || 'https://AetherFlow-nine-phi.vercel.app',
+      website_url: params.websiteUrl || 'https://AetherTrack-nine-phi.vercel.app',
       discord_url: params.discordUrl || 'https://discord.gg/CfwBfFhDZf',
       linkedin_url: params.linkedinUrl || 'https://www.linkedin.com/company/code-catalyst-s/',
       instagram_url: params.instagramUrl || 'https://www.instagram.com/codecatalyst_jb/',
       current_year: new Date().getFullYear(),
-      sender_name: params.senderName || process.env.EMAIL_FROM_NAME || 'AetherFlow',
+      sender_name: params.senderName || process.env.EMAIL_FROM_NAME || 'AetherTrack',
       sender_designation: params.senderDesignation || 'Team',
       ...params
     };
@@ -110,7 +110,7 @@ class BrevoEmailService {
     if (!from) {
       from = {
         email: process.env.EMAIL_FROM || 'updates.codecatalyst@gmail.com',
-        name: process.env.EMAIL_FROM_NAME || 'AetherFlow'
+        name: process.env.EMAIL_FROM_NAME || 'AetherTrack'
       };
     }
     try {

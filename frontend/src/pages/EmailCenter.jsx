@@ -115,7 +115,7 @@ export default function EmailCenter() {
       role: recipient.role || '',
       jobTitle: recipient.role || '',
       currentDate: new Date().toLocaleDateString(),
-      workspaceName: currentWorkspace?.name || 'AetherFlow',
+      workspaceName: currentWorkspace?.name || 'AetherTrack',
       appUrl: window.location.origin
     };
 
@@ -146,7 +146,7 @@ export default function EmailCenter() {
       template.variables.forEach(variable => {
         switch (variable.name) {
           case 'workspaceName':
-            systemVariables[variable.name] = currentWorkspace?.name || 'AetherFlow';
+            systemVariables[variable.name] = currentWorkspace?.name || 'AetherTrack';
             break;
           case 'appUrl':
             systemVariables[variable.name] = window.location.origin;

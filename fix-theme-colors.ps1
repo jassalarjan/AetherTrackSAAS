@@ -1,9 +1,9 @@
 $files = @(
-    "c:\Users\jassa_u9qxsxc\Documents\01_Projects\AetherFlow\frontend\src\pages\Calendar.jsx",
-    "c:\Users\jassa_u9qxsxc\Documents\01_Projects\AetherFlow\frontend\src\pages\Analytics.jsx",
-    "c:\Users\jassa_u9qxsxc\Documents\01_Projects\AetherFlow\frontend\src\pages\UserManagement.jsx",
-    "c:\Users\jassa_u9qxsxc\Documents\01_Projects\AetherFlow\frontend\src\pages\Teams.jsx",
-    "c:\Users\jassa_u9qxsxc\Documents\01_Projects\AetherFlow\frontend\src\pages\ChangeLog.jsx"
+    "c:\Users\jassa_u9qxsxc\Documents\01_Projects\AetherTrack\frontend\src\pages\Calendar.jsx",
+    "c:\Users\jassa_u9qxsxc\Documents\01_Projects\AetherTrack\frontend\src\pages\Analytics.jsx",
+    "c:\Users\jassa_u9qxsxc\Documents\01_Projects\AetherTrack\frontend\src\pages\UserManagement.jsx",
+    "c:\Users\jassa_u9qxsxc\Documents\01_Projects\AetherTrack\frontend\src\pages\Teams.jsx",
+    "c:\Users\jassa_u9qxsxc\Documents\01_Projects\AetherTrack\frontend\src\pages\ChangeLog.jsx"
 )
 
 foreach ($file in $files) {

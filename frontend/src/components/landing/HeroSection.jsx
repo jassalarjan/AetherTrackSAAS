@@ -5,7 +5,7 @@ import { ArrowRight, Sparkles, Zap, Shield, Workflow } from 'lucide-react';
 /**
  * Hero Section - The First 5 Seconds
  * 
- * Goal: Establish AetherFlow as a serious platform in one glance
+ * Goal: Establish AetherTrack as a serious platform in one glance
  * Strategy: Cinematic depth + confident messaging + clear escape routes
  * 
  * Motion: Staggered fade-in, subtle floating elements
@@ -78,12 +78,12 @@ const HeroSection = () => {
             <div className="flex justify-center lg:justify-start items-center space-x-4 animate-fade-in">
               <img 
                 src="/logo.png" 
-                alt="AetherFlow Logo" 
+                alt="AetherTrack Logo" 
                 className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl shadow-2xl shadow-blue-500/30 ring-2 ring-white/10"
               />
               <div className="text-left">
                 <h2 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-                  AetherFlow
+                  AetherTrack
                 </h2>
                 <p className="text-xs sm:text-sm text-slate-400 font-medium">Enterprise Task Management</p>
               </div>
@@ -237,7 +237,7 @@ const ScreenshotShowcase = () => {
           <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
           <img 
             src="/UI/main_dashboard/screen.png" 
-            alt="AetherFlow Dashboard"
+            alt="AetherTrack Dashboard"
             className="w-full h-full object-cover object-top"
             loading="lazy"
           />

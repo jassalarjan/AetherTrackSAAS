@@ -134,7 +134,7 @@ const Dashboard = () => {
 
   const handleInstallClick = async () => {
     if (isInstalled || localStorage.getItem('pwa-installed') === 'true') {
-      alert('✅ AetherFlow is Already Installed!');
+      alert('✅ AetherTrack is Already Installed!');
       return;
     }
     
@@ -151,7 +151,7 @@ const Dashboard = () => {
         setIsInstalled(true);
         localStorage.setItem('pwa-installed', 'true');
         setTimeout(() => {
-          alert('🎉 AetherFlow has been installed!');
+          alert('🎉 AetherTrack has been installed!');
         }, 1000);
       }
 
@@ -335,7 +335,7 @@ const Dashboard = () => {
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `AetherFlow-report-${new Date().toISOString().split('T')[0]}.xlsx`;
+        link.download = `AetherTrack-report-${new Date().toISOString().split('T')[0]}.xlsx`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);

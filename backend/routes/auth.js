@@ -437,7 +437,7 @@ router.post('/resend-verification', [
       user.email, 
       verificationCode, 
       tempPassword, 
-      user.workspaceId?.name || 'AetherFlow'
+      user.workspaceId?.name || 'AetherTrack'
     );
 
     res.status(200).json({

@@ -7,7 +7,7 @@ import fs from 'fs';
 // Generate Excel Report
 export const generateExcelReport = async (tasks, analytics) => {
   const workbook = new ExcelJS.Workbook();
-  workbook.creator = 'AetherFlow System';
+  workbook.creator = 'AetherTrack System';
   workbook.created = new Date();
 
   // Sheet 1: Summary
@@ -141,7 +141,7 @@ export const generatePDFReport = (tasks, analytics) => {
   // Title
   doc.setFontSize(20);
   doc.setFont(undefined, 'bold');
-  doc.text('AetherFlow Weekly Report', pageWidth / 2, yPosition, { align: 'center' });
+  doc.text('AetherTrack Weekly Report', pageWidth / 2, yPosition, { align: 'center' });
   
   yPosition += 10;
   doc.setFontSize(12);
@@ -265,7 +265,7 @@ export const generatePDFReport = (tasks, analytics) => {
     doc.setFontSize(8);
     doc.setTextColor(128);
     doc.text(
-      `Page ${i} of ${pageCount} | AetherFlow Report | ${new Date().toLocaleDateString()}`,
+      `Page ${i} of ${pageCount} | AetherTrack Report | ${new Date().toLocaleDateString()}`,
       pageWidth / 2,
       doc.internal.pageSize.getHeight() - 10,
       { align: 'center' }
