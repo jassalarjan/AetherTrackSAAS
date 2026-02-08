@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Project Detail Page - ProManager Enterprise</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#135bec",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#101622",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .timeline-line { height: 2px; background: #e5e7eb; position: absolute; top: 50%; left: 0; right: 0; z-index: 1; }
+        .timeline-progress { height: 2px; background: #135bec; position: absolute; top: 50%; left: 0; width: 45%; z-index: 2; }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-[#0d121b] dark:text-gray-100 min-h-screen">
+<div class="flex h-screen overflow-hidden">
+<!-- Sidebar Navigation -->
+<aside class="w-64 border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-background-dark flex flex-col hidden lg:flex">
+<div class="p-6 flex items-center gap-3">
+<div class="bg-primary p-1.5 rounded-lg text-white">
+<span class="material-symbols-outlined block">rocket_launch</span>
+</div>
+<h1 class="font-bold text-lg tracking-tight">ProManager</h1>
+</div>
+<nav class="flex-1 px-4 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">dashboard</span>
+<span class="text-sm font-medium">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-primary/10 text-primary transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">folder_open</span>
+<span class="text-sm font-semibold">Projects</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">group</span>
+<span class="text-sm font-medium">Teams</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">analytics</span>
+<span class="text-sm font-medium">Reports</span>
+</a>
+</nav>
+<div class="p-4 border-t border-gray-100 dark:border-gray-800">
+<div class="flex items-center gap-3 px-3 py-2">
+<div class="size-8 rounded-full bg-gray-200" data-alt="User profile avatar circle" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCTR8GtqdARYO9m3jn9kbibyFazTXPWtXYReqdcPmSYSmGDGHXmsHwDQXGFN236-cakONVoF8fFYp6ojPW6LShCsZsD6sTODktml4kQBXyCQGKHp502ilVWQFRIIIINxbeFl_p4V74iTc_oju_af4g21fELJdwEgiBUXJ_8BFkZD7213u5G5oVRaFOhPEIz9a_ufQddO_8VWaO23MQXsRD6h6bF-GVStQzcH7tXMwJHbmfdwbBXUijRhtyQVyRGpPC1VUouRbFMKU9U')"></div>
+<div class="flex-1 min-w-0">
+<p class="text-xs font-semibold truncate">Alex Rivera</p>
+<p class="text-[10px] text-gray-400 truncate">Project Lead</p>
+</div>
+<span class="material-symbols-outlined text-gray-400 text-[18px]">settings</span>
+</div>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 flex flex-col overflow-y-auto">
+<!-- Top Navigation Bar -->
+<header class="h-16 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-background-dark flex items-center justify-between px-8 sticky top-0 z-30">
+<div class="flex items-center gap-4 text-sm text-gray-500">
+<a class="hover:text-primary transition-colors" href="#">Projects</a>
+<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+<span class="text-[#0d121b] dark:text-white font-medium">Cloud Infrastructure Migration</span>
+</div>
+<div class="flex items-center gap-3">
+<div class="relative hidden md:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-[20px]">search</span>
+<input class="bg-gray-100 dark:bg-gray-800 border-none rounded-lg pl-10 pr-4 py-2 text-sm focus:ring-2 focus:ring-primary w-64" placeholder="Search tasks..." type="text"/>
+</div>
+<button class="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg">
+<span class="material-symbols-outlined text-[24px]">notifications</span>
+</button>
+<button class="bg-primary text-white text-sm font-semibold px-4 py-2 rounded-lg flex items-center gap-2 shadow-sm shadow-primary/20">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                        New Task
+                    </button>
+</div>
+</header>
+<!-- Project Content -->
+<div class="flex-1 p-8 space-y-8 max-w-7xl mx-auto w-full">
+<!-- Page Title & Quick Actions -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+<div>
+<div class="flex items-center gap-3 mb-1">
+<h2 class="text-3xl font-black tracking-tight text-[#0d121b] dark:text-white leading-none">Cloud Infrastructure Migration</h2>
+<span class="material-symbols-outlined text-gray-400 cursor-pointer hover:text-primary transition-colors text-[20px]">edit</span>
+</div>
+<p class="text-gray-500 font-medium">Phase 2: Data lake modernization &amp; security hardening</p>
+</div>
+<div class="flex items-center gap-2">
+<button class="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 text-sm font-medium transition-colors">
+<span class="material-symbols-outlined text-[18px]">share</span>
+                            Share
+                        </button>
+<button class="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 text-sm font-medium transition-colors">
+<span class="material-symbols-outlined text-[18px]">download</span>
+                            Export
+                        </button>
+</div>
+</div>
+<!-- Meta Row (Status, Priority, Deadline) -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+<div class="bg-white dark:bg-gray-900 p-4 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm flex flex-col gap-1 cursor-pointer hover:border-primary/40 transition-colors">
+<span class="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Current Status</span>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="size-2.5 rounded-full bg-blue-500"></span>
+<span class="text-sm font-bold text-blue-600 dark:text-blue-400">In Progress</span>
+</div>
+<span class="material-symbols-outlined text-gray-300 text-[18px]">expand_more</span>
+</div>
+</div>
+<div class="bg-white dark:bg-gray-900 p-4 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm flex flex-col gap-1 cursor-pointer hover:border-primary/40 transition-colors">
+<span class="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Priority</span>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="size-2.5 rounded-full bg-red-500"></span>
+<span class="text-sm font-bold text-red-600 dark:text-red-400">High Impact</span>
+</div>
+<span class="material-symbols-outlined text-gray-300 text-[18px]">expand_more</span>
+</div>
+</div>
+<div class="bg-white dark:bg-gray-900 p-4 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm flex flex-col gap-1 cursor-pointer hover:border-primary/40 transition-colors">
+<span class="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Project Deadline</span>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-gray-400 text-[18px]">calendar_today</span>
+<span class="text-sm font-bold">Dec 14, 2024</span>
+</div>
+<span class="material-symbols-outlined text-gray-300 text-[18px]">expand_more</span>
+</div>
+</div>
+<div class="bg-white dark:bg-gray-900 p-4 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm flex flex-col gap-1">
+<span class="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Completion</span>
+<div class="flex items-center gap-3">
+<div class="flex-1 bg-gray-100 dark:bg-gray-800 h-1.5 rounded-full overflow-hidden">
+<div class="bg-primary h-full w-[45%]"></div>
+</div>
+<span class="text-sm font-bold">45%</span>
+</div>
+</div>
+</div>
+<!-- Tabbed Navigation Content -->
+<div class="space-y-6">
+<!-- Tabs -->
+<div class="border-b border-gray-200 dark:border-gray-800 flex items-center gap-8 px-2 overflow-x-auto no-scrollbar">
+<button class="py-4 border-b-2 border-primary text-primary text-sm font-bold flex items-center gap-2 whitespace-nowrap">
+<span class="material-symbols-outlined text-[20px]">info</span>
+                            Overview
+                        </button>
+<button class="py-4 border-b-2 border-transparent text-gray-500 hover:text-[#0d121b] dark:hover:text-white text-sm font-medium flex items-center gap-2 whitespace-nowrap">
+<span class="material-symbols-outlined text-[20px]">checklist</span>
+                            Tasks
+                            <span class="bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded text-[10px] font-bold">24</span>
+</button>
+<button class="py-4 border-b-2 border-transparent text-gray-500 hover:text-[#0d121b] dark:hover:text-white text-sm font-medium flex items-center gap-2 whitespace-nowrap">
+<span class="material-symbols-outlined text-[20px]">view_timeline</span>
+                            Timeline
+                        </button>
+<button class="py-4 border-b-2 border-transparent text-gray-500 hover:text-[#0d121b] dark:hover:text-white text-sm font-medium flex items-center gap-2 whitespace-nowrap">
+<span class="material-symbols-outlined text-[20px]">group</span>
+                            Team
+                        </button>
+<button class="py-4 border-b-2 border-transparent text-gray-500 hover:text-[#0d121b] dark:hover:text-white text-sm font-medium flex items-center gap-2 whitespace-nowrap">
+<span class="material-symbols-outlined text-[20px]">description</span>
+                            Documents
+                        </button>
+<button class="py-4 border-b-2 border-transparent text-gray-500 hover:text-[#0d121b] dark:hover:text-white text-sm font-medium flex items-center gap-2 whitespace-nowrap">
+<span class="material-symbols-outlined text-[20px]">history</span>
+                            Activity
+                        </button>
+</div>
+<!-- Tab Content (Overview) -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+<div class="lg:col-span-2 space-y-8">
+<!-- Milestone Path -->
+<section class="bg-white dark:bg-gray-900 p-6 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm">
+<div class="flex items-center justify-between mb-8">
+<h3 class="font-bold text-lg">Upcoming Milestones</h3>
+<a class="text-primary text-xs font-bold hover:underline" href="#">View Roadmap</a>
+</div>
+<div class="relative px-4 pb-4 overflow-x-auto no-scrollbar">
+<div class="flex items-center justify-between min-w-[600px] relative py-10">
+<!-- Connection Lines -->
+<div class="timeline-line"></div>
+<div class="timeline-progress"></div>
+<!-- Milestone Nodes -->
+<div class="relative z-10 flex flex-col items-center gap-3 w-32">
+<div class="size-10 rounded-full bg-primary text-white flex items-center justify-center ring-4 ring-white dark:ring-gray-900">
+<span class="material-symbols-outlined text-[20px]">check</span>
+</div>
+<div class="text-center">
+<p class="text-[11px] font-bold text-primary uppercase tracking-tighter">Done</p>
+<p class="text-xs font-bold">Architecture</p>
+</div>
+</div>
+<div class="relative z-10 flex flex-col items-center gap-3 w-32">
+<div class="size-10 rounded-full bg-primary text-white flex items-center justify-center ring-4 ring-white dark:ring-gray-900">
+<span class="material-symbols-outlined text-[20px]">sync</span>
+</div>
+<div class="text-center">
+<p class="text-[11px] font-bold text-primary uppercase tracking-tighter">Current</p>
+<p class="text-xs font-bold">Cloud VPC Setup</p>
+</div>
+</div>
+<div class="relative z-10 flex flex-col items-center gap-3 w-32 opacity-50">
+<div class="size-10 rounded-full bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-700 flex items-center justify-center ring-4 ring-white dark:ring-gray-900">
+<span class="material-symbols-outlined text-[20px] text-gray-400">database</span>
+</div>
+<div class="text-center">
+<p class="text-[11px] font-bold text-gray-400 uppercase tracking-tighter">Next</p>
+<p class="text-xs font-bold">Data Migration</p>
+</div>
+</div>
+<div class="relative z-10 flex flex-col items-center gap-3 w-32 opacity-50">
+<div class="size-10 rounded-full bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-700 flex items-center justify-center ring-4 ring-white dark:ring-gray-900">
+<span class="material-symbols-outlined text-[20px] text-gray-400">lock</span>
+</div>
+<div class="text-center">
+<p class="text-[11px] font-bold text-gray-400 uppercase tracking-tighter">Q4 2024</p>
+<p class="text-xs font-bold">Sec-Ops Audit</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Project Context -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<section class="bg-white dark:bg-gray-900 p-6 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm">
+<h3 class="font-bold text-sm mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]">description</span>
+                                        Project Goals
+                                    </h3>
+<ul class="space-y-3">
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-green-500 text-[18px] mt-0.5">check_circle</span>
+<span class="text-sm text-gray-600 dark:text-gray-400">Zero-downtime cutover from legacy VPC</span>
+</li>
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-green-500 text-[18px] mt-0.5">check_circle</span>
+<span class="text-sm text-gray-600 dark:text-gray-400">Implement Terraform-based infra-as-code</span>
+</li>
+<li class="flex items-start gap-3 text-gray-400">
+<span class="material-symbols-outlined text-[18px] mt-0.5">radio_button_unchecked</span>
+<span class="text-sm">Cost reduction by 25% through spot instances</span>
+</li>
+</ul>
+</section>
+<section class="bg-white dark:bg-gray-900 p-6 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm">
+<h3 class="font-bold text-sm mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]">payments</span>
+                                        Budget Utilization
+                                    </h3>
+<div class="space-y-4">
+<div class="flex justify-between items-end">
+<p class="text-2xl font-black">$45,200 <span class="text-xs font-normal text-gray-400">/ $120k</span></p>
+<span class="text-xs font-bold text-green-500">+12% vs last month</span>
+</div>
+<div class="h-2 w-full bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+<div class="bg-green-500 h-full w-[38%]"></div>
+</div>
+<p class="text-xs text-gray-500 leading-relaxed">Infrastructure costs are currently under budget due to optimized instance scheduling.</p>
+</div>
+</section>
+</div>
+</div>
+<!-- Sidebar Info -->
+<div class="space-y-6">
+<!-- Team Section -->
+<section class="bg-white dark:bg-gray-900 p-6 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm">
+<div class="flex items-center justify-between mb-4">
+<h3 class="font-bold text-sm">Project Team</h3>
+<span class="material-symbols-outlined text-gray-400 cursor-pointer text-[18px]">add</span>
+</div>
+<div class="space-y-4">
+<div class="flex items-center gap-3">
+<div class="size-8 rounded-full bg-blue-100 flex items-center justify-center text-xs font-bold text-blue-600 border border-blue-200">AR</div>
+<div class="flex-1">
+<p class="text-sm font-semibold">Alex Rivera</p>
+<p class="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Project Lead</p>
+</div>
+<span class="material-symbols-outlined text-primary text-[16px]">chat_bubble</span>
+</div>
+<div class="flex items-center gap-3">
+<div class="size-8 rounded-full bg-purple-100 flex items-center justify-center text-xs font-bold text-purple-600 border border-purple-200">SK</div>
+<div class="flex-1">
+<p class="text-sm font-semibold">Sarah Kim</p>
+<p class="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Cloud Architect</p>
+</div>
+<span class="material-symbols-outlined text-primary text-[16px]">chat_bubble</span>
+</div>
+<div class="flex items-center gap-3">
+<div class="size-8 rounded-full bg-amber-100 flex items-center justify-center text-xs font-bold text-amber-600 border border-amber-200">JT</div>
+<div class="flex-1">
+<p class="text-sm font-semibold">Jordan Taylor</p>
+<p class="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Security Engineer</p>
+</div>
+<span class="material-symbols-outlined text-primary text-[16px]">chat_bubble</span>
+</div>
+</div>
+<button class="w-full mt-6 py-2 border border-dashed border-gray-300 dark:border-gray-700 rounded-lg text-xs font-bold text-gray-500 hover:border-primary hover:text-primary transition-all">
+                                    Manage Permissions
+                                </button>
+</section>
+<!-- Recent Activity Feed -->
+<section class="bg-white dark:bg-gray-900 p-6 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm">
+<h3 class="font-bold text-sm mb-4">Latest Activity</h3>
+<div class="space-y-6 relative before:content-[''] before:absolute before:left-[11px] before:top-2 before:bottom-2 before:w-[2px] before:bg-gray-100 dark:before:bg-gray-800">
+<div class="relative flex gap-4 pl-1">
+<div class="size-[22px] rounded-full bg-blue-500 border-4 border-white dark:border-gray-900 z-10"></div>
+<div class="flex-1">
+<p class="text-xs text-[#0d121b] dark:text-gray-300 leading-snug">
+<span class="font-bold">Sarah Kim</span> completed task <span class="text-primary font-medium hover:underline cursor-pointer">VPC Configuration</span>
+</p>
+<span class="text-[10px] text-gray-400">2 hours ago</span>
+</div>
+</div>
+<div class="relative flex gap-4 pl-1">
+<div class="size-[22px] rounded-full bg-gray-300 border-4 border-white dark:border-gray-900 z-10"></div>
+<div class="flex-1">
+<p class="text-xs text-[#0d121b] dark:text-gray-300 leading-snug">
+<span class="font-bold">System</span> auto-archived old security logs
+                                            </p>
+<span class="text-[10px] text-gray-400">Yesterday, 4:12 PM</span>
+</div>
+</div>
+<div class="relative flex gap-4 pl-1">
+<div class="size-[22px] rounded-full bg-amber-500 border-4 border-white dark:border-gray-900 z-10"></div>
+<div class="flex-1">
+<p class="text-xs text-[#0d121b] dark:text-gray-300 leading-snug">
+<span class="font-bold">Jordan Taylor</span> uploaded <span class="text-primary font-medium hover:underline cursor-pointer">Security_Manifest.pdf</span>
+</p>
+<span class="text-[10px] text-gray-400">Nov 12, 11:30 AM</span>
+</div>
+</div>
+</div>
+</section>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

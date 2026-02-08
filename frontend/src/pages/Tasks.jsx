@@ -32,6 +32,7 @@ const Tasks = () => {
     status: '',
     priority: '',
     showMyTasksOnly: false,
+    project: '',
     team: '',
     assigned_to: '',
     dueDateFrom: '',
@@ -44,14 +45,17 @@ const Tasks = () => {
     priority: 'medium',
     status: 'todo',
     due_date: '',
+    project_id: '',
     team_id: '',
     assigned_to: [],
   });
   const [users, setUsers] = useState([]);
   const [teams, setTeams] = useState([]);
+  const [projects, setProjects] = useState([]);
 
   useEffect(() => {
     fetchTasks();
+    fetchProjects();
     if (['admin', 'hr', 'team_lead'].includes(user?.role)) {
       fetchUsers();
       fetchTeams();
@@ -94,6 +98,9 @@ const Tasks = () => {
 
   const applyFilters = useCallback(() => {
     let filtered = [...tasks];
+    if (filters.project) {
+      filtered = filtered.filter((t) => t.project_id && (t.project_id._id === filters.project || t.project_id === filters.project));
+    }
     if (filters.status) {
       filtered = filtered.filter((t) => t.status === filters.status);
     }
@@ -169,6 +176,15 @@ const Tasks = () => {
     }
   };
 
+  const fetchProjects = async () => {
+    try {
+      const data = await projectsApi.getAll();
+      setProjects(data.projects || []);
+    } catch (error) {
+      console.error('Error fetching projects:', error);
+    }
+  };
+
   const handleCreateTask = async (e) => {
     e.preventDefault();
     try {
@@ -180,6 +196,7 @@ const Tasks = () => {
         priority: 'medium',
         status: 'todo',
         due_date: '',
+        project_id: '',
         team_id: '',
         assigned_to: [],
       });
@@ -501,6 +518,25 @@ const Tasks = () => {
               <option value="urgent">Urgent</option>
             </select>
 
+            {projects.length > 0 && (
+              <select
+                value={filters.project}
+                onChange={(e) => setFilters({ ...filters, project: e.target.value })}
+                className={`px-3 py-1.5 ${
+                  filters.project 
+                    ? 'bg-purple-500/10 border-purple-500/50 text-purple-400 font-medium' 
+                    : theme === 'dark' 
+                      ? 'bg-[#1c2027] border-[#282f39] text-white' 
+                      : 'bg-white border-gray-300 text-gray-900'
+                } border rounded-lg text-sm focus:ring-2 focus:ring-[#136dec] focus:border-transparent transition-all`}
+              >
+                <option value="">All Projects</option>
+                {projects.map((project) => (
+                  <option key={project._id} value={project._id}>{project.name}</option>
+                ))}
+              </select>
+            )}
+
             {['admin', 'hr', 'team_lead'].includes(user?.role) && teams.length > 0 && (
               <select
                 value={filters.team}
@@ -514,9 +550,9 @@ const Tasks = () => {
               </select>
             )}
 
-            {(filters.status || filters.priority || filters.team || filters.assigned_to) && (
+            {(filters.status || filters.priority || filters.project || filters.team || filters.assigned_to) && (
               <button
-                onClick={() => setFilters({ ...filters, status: '', priority: '', team: '', assigned_to: '' })}
+                onClick={() => setFilters({ ...filters, status: '', priority: '', project: '', team: '', assigned_to: '' })}
                 className={`px-3 py-1.5 text-sm ${theme === 'dark' ? 'text-[#9da8b9] hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}
               >
                 Clear Filters
@@ -727,6 +763,22 @@ const Tasks = () => {
                   </select>
                 </div>
 
+                {projects.length > 0 && (
+                  <div>
+                    <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2`}>Project</label>
+                    <select
+                      value={filters.project}
+                      onChange={(e) => setFilters({ ...filters, project: e.target.value })}
+                      className={`w-full px-3 py-2 ${theme === 'dark' ? 'bg-[#111418] border-[#282f39] text-white' : 'bg-gray-50 border-gray-300 text-gray-900'} border rounded-lg focus:ring-2 focus:ring-[#136dec] focus:border-transparent`}
+                    >
+                      <option value="">All Projects</option>
+                      {projects.map((project) => (
+                        <option key={project._id} value={project._id}>{project.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
                 {['admin', 'hr', 'team_lead'].includes(user?.role) && teams.length > 0 && (
                   <div>
                     <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2`}>Team</label>
@@ -783,7 +835,7 @@ const Tasks = () => {
               <div className={`p-4 border-t ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} space-y-2`}>
                 <button
                   onClick={() => {
-                    setFilters({ ...filters, status: '', priority: '', team: '', assigned_to: '', dueDateFrom: '', dueDateTo: '' });
+                    setFilters({ ...filters, status: '', priority: '', project: '', team: '', assigned_to: '', dueDateFrom: '', dueDateTo: '' });
                     setShowFilterDrawer(false);
                   }}
                   className={`w-full px-4 py-2 ${theme === 'dark' ? 'bg-[#282f39] text-white hover:bg-[#3a4454]' : 'bg-gray-200 text-gray-900 hover:bg-gray-300'} rounded transition-colors`}
@@ -861,6 +913,21 @@ const Tasks = () => {
                 <option value="done">Done</option>
               </select>
             </div>
+          </div>
+
+          <div>
+            <label className={`block text-xs sm:text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-1.5 sm:mb-2`}>Project *</label>
+            <select
+              value={formData.project_id}
+              onChange={(e) => setFormData({ ...formData, project_id: e.target.value })}
+              className={`w-full px-3 sm:px-4 py-2.5 sm:py-2 ${theme === 'dark' ? 'bg-[#111418] border-[#282f39] text-white' : 'bg-white border-gray-300 text-gray-900'} border rounded-lg text-sm focus:ring-2 focus:ring-[#136dec] focus:border-transparent transition-all`}
+              required
+            >
+              <option value="">Select a project</option>
+              {projects.map((project) => (
+                <option key={project._id} value={project._id}>{project.name}</option>
+              ))}
+            </select>
           </div>
 
           <div>
@@ -1034,6 +1101,23 @@ const Tasks = () => {
                   <option value="archived" className={theme === 'dark' ? 'bg-[#111418] text-white' : 'bg-white text-gray-900'}>Archived</option>
                 </select>
               </div>
+            </div>
+
+            <div>
+              <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2`}>Project *</label>
+              <select
+                value={editingTask.project_id?._id || editingTask.project_id || ''}
+                onChange={(e) => setEditingTask({ ...editingTask, project_id: e.target.value })}
+                className={`w-full px-4 py-2 ${theme === 'dark' ? 'bg-[#111418] border-[#282f39] text-white' : 'bg-white border-gray-300 text-gray-900'} border rounded focus:ring-2 focus:ring-[#136dec] focus:border-transparent`}
+                required
+              >
+                <option value="">Select a project</option>
+                {projects.map((project) => (
+                  <option key={project._id} value={project._id} className={theme === 'dark' ? 'bg-[#111418] text-white' : 'bg-white text-gray-900'}>
+                    {project.name}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div>

@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Sprint &amp; Milestone Management</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#135bec",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#101622",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .chart-container {
+            background: linear-gradient(180deg, rgba(19, 91, 236, 0.05) 0%, rgba(19, 91, 236, 0) 100%);
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen">
+<div class="flex h-screen flex-col overflow-hidden">
+<!-- Top Navigation -->
+<header class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-8 py-3 shrink-0">
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-3">
+<div class="bg-primary rounded-lg p-1.5 flex items-center justify-center text-white">
+<span class="material-symbols-outlined text-xl">rocket_launch</span>
+</div>
+<h2 class="text-xl font-bold tracking-tight">ProManager</h2>
+</div>
+<nav class="hidden md:flex items-center gap-6">
+<a class="text-sm font-medium text-slate-500 hover:text-primary transition-colors" href="#">Projects</a>
+<a class="text-sm font-semibold text-primary" href="#">Sprints</a>
+<a class="text-sm font-medium text-slate-500 hover:text-primary transition-colors" href="#">Team</a>
+<a class="text-sm font-medium text-slate-500 hover:text-primary transition-colors" href="#">Reports</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative hidden lg:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">search</span>
+<input class="bg-slate-100 dark:bg-slate-800 border-none rounded-lg pl-10 pr-4 py-1.5 text-sm focus:ring-2 focus:ring-primary w-64 transition-all" placeholder="Search tasks..." type="text"/>
+</div>
+<button class="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<div class="h-8 w-8 rounded-full bg-slate-200 overflow-hidden border border-slate-200 dark:border-slate-700" data-alt="User profile avatar">
+<img alt="User" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBPmA1M67HgsVd6LZxAIegduaUsLQx2HZCzN3SmL03qTbS5hAlQQaOcqSEZ6W4wqFBXQupHdY2hPwXB3FxewQGNtACy6dr2mYhCbPWf10NMYhHkLdIwlavZ67OZZ2QrpTH2jJcKsBm8awM-drlJ2ZK3c-BL77XenOex2o8yfu5PvhQQ25SY-z0jBWY48MCKcIDq0xDzYXQr2OtoPQ9POFGeMqzafYXg6Ih0GhsP5_ET2eFqvxfnby89lclGLoZSNVyndHlwUGlESYPQ"/>
+</div>
+</div>
+</header>
+<!-- Secondary Navigation / Breadcrumbs -->
+<div class="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-8 py-3 flex items-center justify-between shrink-0">
+<div class="flex items-center gap-2 text-sm">
+<a class="text-slate-500 hover:text-primary" href="#">Project Alpha</a>
+<span class="material-symbols-outlined text-xs text-slate-400">chevron_right</span>
+<span class="font-medium text-slate-900 dark:text-slate-100">Sprint 12 (Current)</span>
+<span class="ml-2 px-2 py-0.5 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 text-[10px] font-bold rounded-full uppercase tracking-wider">Active</span>
+</div>
+<div class="flex gap-3">
+<button class="px-4 py-1.5 text-sm font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+                    Sprint Settings
+                </button>
+<button class="px-4 py-1.5 text-sm font-semibold bg-primary text-white rounded-lg hover:bg-blue-700 shadow-sm shadow-primary/20 transition-colors">
+                    Complete Sprint
+                </button>
+</div>
+</div>
+<!-- Main Content Area -->
+<main class="flex-1 flex overflow-hidden">
+<!-- Left Pane: Backlog/Tasks -->
+<section class="flex-1 overflow-y-auto p-6 border-r border-slate-200 dark:border-slate-800">
+<div class="max-w-4xl mx-auto">
+<div class="flex items-end justify-between mb-6">
+<div>
+<h1 class="text-3xl font-black tracking-tight mb-1">Q4 Engineering Sprint 2</h1>
+<p class="text-slate-500 text-sm">Oct 15 - Oct 29 • 42 Story Points • 14 Tasks</p>
+</div>
+<button class="flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary text-sm font-bold rounded-lg hover:bg-primary/20 transition-colors">
+<span class="material-symbols-outlined text-lg">add</span>
+                            Add Item
+                        </button>
+</div>
+<!-- Filters -->
+<div class="flex gap-3 mb-6 overflow-x-auto pb-2">
+<button class="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-medium">
+                            Status: All <span class="material-symbols-outlined text-sm">expand_more</span>
+</button>
+<button class="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-medium">
+                            Priority: High <span class="material-symbols-outlined text-sm">expand_more</span>
+</button>
+<button class="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-medium">
+                            Assignee: Me <span class="material-symbols-outlined text-sm">expand_more</span>
+</button>
+</div>
+<!-- Task Table -->
+<div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm">
+<table class="w-full text-left text-sm">
+<thead class="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
+<tr>
+<th class="px-6 py-4 font-semibold text-slate-600 dark:text-slate-400">Task Title</th>
+<th class="px-4 py-4 font-semibold text-slate-600 dark:text-slate-400">Assignee</th>
+<th class="px-4 py-4 font-semibold text-slate-600 dark:text-slate-400 text-center">Story Points</th>
+<th class="px-4 py-4 font-semibold text-slate-600 dark:text-slate-400">Priority</th>
+<th class="px-6 py-4 font-semibold text-slate-600 dark:text-slate-400 text-right">Status</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-200 dark:divide-slate-800">
+<!-- Task Row 1 -->
+<tr class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors group">
+<td class="px-6 py-4">
+<div class="flex flex-col">
+<span class="text-xs text-slate-400 font-medium mb-1 tracking-wider uppercase">PRO-121</span>
+<span class="font-semibold text-slate-900 dark:text-slate-100 group-hover:text-primary">Migrate legacy auth to OAuth 2.0</span>
+</div>
+</td>
+<td class="px-4 py-4">
+<div class="h-8 w-8 rounded-full bg-blue-100 border border-white dark:border-slate-800 overflow-hidden" data-alt="Developer profile avatar">
+<img alt="Avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAO1Z-zxRQQtxMZI1_o6n1eJvJOIc_HZWBrkm-1B94pZ4q07oSWcE7o27HnGcth-7BHOWCpm8ajHzpbRW4PoPGz80GwnwCqsfPxDQbmq5dzhxnInLaMfjru-OmA73oiGw-jiDl66Q8cXVXiZ4nQih8BzERXQyq9ZERuYvJyH7yDpRK_uR374xATQOW-jzq3D0Ic3WC777_SpUsOOhyr2_XiQD3QqPAOIHyvwD9F05xJ14gZtlTizZew6kulQKqnAz6EDgwzyBR1ptMM"/>
+</div>
+</td>
+<td class="px-4 py-4 text-center font-mono font-medium">8</td>
+<td class="px-4 py-4">
+<span class="flex items-center gap-1.5 text-red-600 dark:text-red-400 font-semibold">
+<span class="material-symbols-outlined text-base">keyboard_double_arrow_up</span>
+                                            High
+                                        </span>
+</td>
+<td class="px-6 py-4 text-right">
+<span class="inline-block px-3 py-1 bg-primary/10 text-primary text-xs font-bold rounded-lg border border-primary/20">In Progress</span>
+</td>
+</tr>
+<!-- Task Row 2 -->
+<tr class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors group">
+<td class="px-6 py-4">
+<div class="flex flex-col">
+<span class="text-xs text-slate-400 font-medium mb-1 tracking-wider uppercase">PRO-122</span>
+<span class="font-semibold text-slate-900 dark:text-slate-100 group-hover:text-primary">API Documentation &amp; Swagger UI</span>
+</div>
+</td>
+<td class="px-4 py-4">
+<div class="h-8 w-8 rounded-full bg-purple-100 border border-white dark:border-slate-800 overflow-hidden" data-alt="Technical writer avatar">
+<img alt="Avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDJyQvqSyzI7NxwUV_Z7zdAx-kLEqB236i3vZQMFx1XUUI3GpH3NPMS4ejAuqQCalvS-2i_ogNTSdPARbfup2uECx5H7qtaz223Ayd0VlcmTQMwxpvbAZmmzCLg_GiRrUDnkKis3e4vlNDbkEXzt8EoSJDCCXbEA1SN70hCLr5hIZCUSjoXpoS_-Xo9ekJp5gQEYVODOOjBkxfVCLph7IniLNC7fnxn_5Yqw0MS37HZnAOpY1zHJHi_ZoshIPBiIM6gE5ehg6k_0Sbc"/>
+</div>
+</td>
+<td class="px-4 py-4 text-center font-mono font-medium">3</td>
+<td class="px-4 py-4">
+<span class="flex items-center gap-1.5 text-amber-600 dark:text-amber-400 font-semibold">
+<span class="material-symbols-outlined text-base">keyboard_arrow_up</span>
+                                            Medium
+                                        </span>
+</td>
+<td class="px-6 py-4 text-right">
+<span class="inline-block px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-500 text-xs font-bold rounded-lg">To Do</span>
+</td>
+</tr>
+<!-- Task Row 3 -->
+<tr class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors group">
+<td class="px-6 py-4">
+<div class="flex flex-col">
+<span class="text-xs text-slate-400 font-medium mb-1 tracking-wider uppercase">PRO-123</span>
+<span class="font-semibold text-slate-900 dark:text-slate-100 group-hover:text-primary">Fix critical security vulnerability</span>
+</div>
+</td>
+<td class="px-4 py-4">
+<div class="h-8 w-8 rounded-full bg-green-100 border border-white dark:border-slate-800 overflow-hidden" data-alt="Security engineer avatar">
+<img alt="Avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuATr8iAQGVor9aLZTa-UpZASVpUTpYWdAX14UOIV0sSFxbR35oXu9KvGHLCJ00YCfP-FKw1VLamF79RFqd_GeKPdMjsTklLaLCQQD60JEQu6zfXoNjG5lGi3-N07cBETJG_R_7AA3MgGpjpuDCdM0oAZSI4pKxrHW5PvCUM1qh9Ghlq9lMdFE4_ltoI0WjhjJ12jMWfBt_n35gY8EXgrMU4Mu5NrBUU6TUfSHk7K3Scrw-FQUWrf2AhgfmgJh-vTerKLIr9K5K4cXvt"/>
+</div>
+</td>
+<td class="px-4 py-4 text-center font-mono font-medium">5</td>
+<td class="px-4 py-4">
+<span class="flex items-center gap-1.5 text-red-600 dark:text-red-400 font-semibold">
+<span class="material-symbols-outlined text-base">keyboard_double_arrow_up</span>
+                                            High
+                                        </span>
+</td>
+<td class="px-6 py-4 text-right">
+<span class="inline-block px-3 py-1 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 text-xs font-bold rounded-lg border border-green-200 dark:border-green-800">Done</span>
+</td>
+</tr>
+<!-- Task Row 4 -->
+<tr class="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors group">
+<td class="px-6 py-4">
+<div class="flex flex-col">
+<span class="text-xs text-slate-400 font-medium mb-1 tracking-wider uppercase">PRO-124</span>
+<span class="font-semibold text-slate-900 dark:text-slate-100 group-hover:text-primary">Database Schema Update v2.4</span>
+</div>
+</td>
+<td class="px-4 py-4">
+<div class="h-8 w-8 rounded-full bg-slate-100 border border-white dark:border-slate-800 overflow-hidden" data-alt="Database administrator avatar">
+<img alt="Avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCsDgC_--P64QNXwg5WlYs8U-rhSYpY-JoidEJHq70uqg8yEeRSX67qRSW2tQ9r-xH2_d_Ae9Z-_-FFUYRZMm_gkjbW2rumlwRCwToVqUz6pE3g2y_AG6GwnZiM_sMPAX3DpMnW0O0aZoHmhstbWiDtUmHuhgDnxzrzjiGEe-xd52OXQ0f-DITmVP6mYjL7UBTQWg1X8MTNTM33dRIfgwd9F5Tf05-6DfCEHH_4CN5FNReWTFbtSFeME8WNy7BUw6Nsbff0qzIEXtBH"/>
+</div>
+</td>
+<td class="px-4 py-4 text-center font-mono font-medium">5</td>
+<td class="px-4 py-4">
+<span class="flex items-center gap-1.5 text-slate-500 font-semibold">
+<span class="material-symbols-outlined text-base">remove</span>
+                                            Low
+                                        </span>
+</td>
+<td class="px-6 py-4 text-right">
+<span class="inline-block px-3 py-1 bg-primary/10 text-primary text-xs font-bold rounded-lg border border-primary/20">In Progress</span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+<!-- Right Pane: Analytics & Info -->
+<aside class="w-[420px] overflow-y-auto p-6 bg-slate-50 dark:bg-slate-950 flex flex-col gap-6">
+<!-- Burndown Chart -->
+<div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm">
+<div class="flex items-center justify-between mb-6">
+<h3 class="font-bold text-slate-800 dark:text-slate-200">Burndown Chart</h3>
+<span class="material-symbols-outlined text-slate-400 cursor-help">info</span>
+</div>
+<div class="h-40 w-full chart-container rounded-lg flex items-end justify-between px-2 pb-2 relative">
+<!-- Burndown Visualization Placeholder -->
+<div class="absolute inset-0 p-4 opacity-10 flex items-center justify-center">
+<span class="material-symbols-outlined text-6xl">show_chart</span>
+</div>
+<svg class="w-full h-full" preserveaspectratio="none" viewbox="0 0 200 100">
+<!-- Ideal line -->
+<line stroke="#94a3b8" stroke-dasharray="4" stroke-width="1" x1="0" x2="200" y1="10" y2="90"></line>
+<!-- Actual line -->
+<path d="M 0 10 L 25 15 L 50 12 L 75 35 L 100 30 L 125 45 L 150 50" fill="none" stroke="#135bec" stroke-width="2"></path>
+</svg>
+</div>
+<div class="flex justify-between mt-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">
+<span>Day 1</span>
+<span>Day 7</span>
+<span>Day 14</span>
+</div>
+</div>
+<!-- Velocity Graph -->
+<div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm">
+<div class="flex items-center justify-between mb-6">
+<h3 class="font-bold text-slate-800 dark:text-slate-200">Velocity Graph</h3>
+<div class="flex gap-1">
+<div class="w-2.5 h-2.5 rounded-full bg-primary/30"></div>
+<div class="w-2.5 h-2.5 rounded-full bg-primary"></div>
+</div>
+</div>
+<div class="flex items-end justify-between h-32 px-4">
+<!-- Bar chart simulation -->
+<div class="flex flex-col items-center gap-2">
+<div class="w-8 bg-slate-200 dark:bg-slate-800 rounded-t-lg h-[60%]"></div>
+<span class="text-[10px] text-slate-400 font-bold">S9</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<div class="w-8 bg-slate-200 dark:bg-slate-800 rounded-t-lg h-[75%]"></div>
+<span class="text-[10px] text-slate-400 font-bold">S10</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<div class="w-8 bg-slate-200 dark:bg-slate-800 rounded-t-lg h-[85%]"></div>
+<span class="text-[10px] text-slate-400 font-bold">S11</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<div class="w-8 bg-primary rounded-t-lg h-[40%] relative">
+<div class="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] font-bold text-primary">42</div>
+</div>
+<span class="text-[10px] text-primary font-bold">S12</span>
+</div>
+</div>
+</div>
+<!-- Sprint Goals -->
+<div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm">
+<h3 class="font-bold text-slate-800 dark:text-slate-200 mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-lg">flag</span>
+                        Sprint Goals
+                    </h3>
+<p class="text-sm text-slate-600 dark:text-slate-400 leading-relaxed italic border-l-2 border-primary/30 pl-4">
+                        "Successfully migrate the legacy authentication system to OAuth 2.0 while ensuring zero downtime for current enterprise users."
+                    </p>
+</div>
+<!-- Key Deliverables -->
+<div class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5 shadow-sm">
+<h3 class="font-bold text-slate-800 dark:text-slate-200 mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-lg">verified</span>
+                        Key Deliverables
+                    </h3>
+<ul class="space-y-3">
+<li class="flex items-center gap-3 group cursor-pointer">
+<div class="w-5 h-5 rounded border border-slate-300 dark:border-slate-700 flex items-center justify-center bg-green-500 border-green-500">
+<span class="material-symbols-outlined text-sm text-white font-bold">check</span>
+</div>
+<span class="text-sm text-slate-500 line-through">Security Audit Phase 1</span>
+</li>
+<li class="flex items-center gap-3 group cursor-pointer">
+<div class="w-5 h-5 rounded border border-primary flex items-center justify-center">
+<div class="w-2 h-2 bg-primary rounded-sm opacity-0 group-hover:opacity-100 transition-opacity"></div>
+</div>
+<span class="text-sm text-slate-700 dark:text-slate-300">API Documentation Live</span>
+</li>
+<li class="flex items-center gap-3 group cursor-pointer">
+<div class="w-5 h-5 rounded border border-slate-300 dark:border-slate-700 flex items-center justify-center">
+<div class="w-2 h-2 bg-primary rounded-sm opacity-0 group-hover:opacity-100 transition-opacity"></div>
+</div>
+<span class="text-sm text-slate-700 dark:text-slate-300">UAT Sign-off by Client</span>
+</li>
+<li class="flex items-center gap-3 group cursor-pointer">
+<div class="w-5 h-5 rounded border border-slate-300 dark:border-slate-700 flex items-center justify-center">
+<div class="w-2 h-2 bg-primary rounded-sm opacity-0 group-hover:opacity-100 transition-opacity"></div>
+</div>
+<span class="text-sm text-slate-700 dark:text-slate-300">Deploy to Staging</span>
+</li>
+</ul>
+</div>
+</aside>
+</main>
+<!-- Footer / Status Bar -->
+<footer class="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-6 py-2 flex items-center justify-between text-[11px] font-medium text-slate-500 shrink-0">
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 bg-green-500 rounded-full"></span>
+                    Systems Operational
+                </div>
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-xs">sync</span>
+                    Last updated: 2 mins ago
+                </div>
+</div>
+<div class="flex items-center gap-4">
+<span>API Version: v2.4.12-stable</span>
+<span class="text-primary hover:underline cursor-pointer">Developer Docs</span>
+</div>
+</footer>
+</div>
+</body></html>

@@ -17,6 +17,7 @@ import commentRoutes from './routes/comments.js';
 import notificationRoutes from './routes/notifications.js';
 import changelogRoutes from './routes/changelog.js';
 import workspaceRoutes from './routes/workspaces.js';
+import projectRoutes from './routes/projects.js';
 // HR Module routes
 import attendanceRoutes from './routes/attendance.js';
 import leavesRoutes from './routes/leaves.js';
@@ -122,6 +123,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', authenticate, workspaceContext, userRoutes);
 app.use('/api/teams', authenticate, workspaceContext, teamRoutes);
 app.use('/api/tasks', authenticate, workspaceContext, taskRoutes);
+app.use('/api/projects', authenticate, workspaceContext, projectRoutes);
 app.use('/api/comments', authenticate, workspaceContext, commentRoutes);
 app.use('/api/notifications', authenticate, workspaceContext, notificationRoutes);
 app.use('/api/changelog', authenticate, workspaceContext, changelogRoutes);

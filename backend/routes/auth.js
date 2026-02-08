@@ -597,4 +597,45 @@ router.post('/reset-password', [
   }
 });
 
+// Verify token and get current user
+router.get('/verify', authenticate, async (req, res) => {
+  try {
+    // User is already authenticated via middleware
+    // Fetch fresh user data from database
+    const user = await User.findById(req.user.id)
+      .select('-password_hash')
+      .populate('team_id', 'name lead_id members')
+      .populate('workspaceId', 'name type');
+
+    if (!user) {
+      return res.status(401).json({ message: 'User not found' });
+    }
+
+    // Check if user is deactivated
+    if (user.deactivatedAt) {
+      return res.status(403).json({ 
+        message: 'Your account has been deactivated. Please contact your administrator.',
+        accountDeactivated: true 
+      });
+    }
+
+    // Return user data
+    res.json({ 
+      user: {
+        id: user._id,
+        full_name: user.full_name,
+        email: user.email,
+        role: user.role,
+        team_id: user.team_id,
+        workspace: user.workspaceId,
+        isEmailVerified: user.isEmailVerified,
+        profile_picture: user.profile_picture,
+      }
+    });
+  } catch (error) {
+    console.error('Verify token error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 export default router;

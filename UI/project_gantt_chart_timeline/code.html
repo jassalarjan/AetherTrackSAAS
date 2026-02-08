@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Project Gantt Chart Timeline - ProManager Enterprise</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#135bec",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#101622",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+<style>
+        .gantt-grid-line {
+            background-image: linear-gradient(to right, #e5e7eb 1px, transparent 1px);
+            background-size: 40px 100%;
+        }
+        .dark .gantt-grid-line {
+            background-image: linear-gradient(to right, #1f2937 1px, transparent 1px);
+        }
+        .dependency-line {
+            stroke: #94a3b8;
+            stroke-width: 1.5;
+            fill: none;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 antialiased overflow-hidden">
+<div class="flex flex-col h-screen">
+<!-- Top Navigation Bar -->
+<header class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-6 py-3 shrink-0">
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-2 text-primary">
+<span class="material-symbols-outlined text-3xl font-bold">account_tree</span>
+<h2 class="text-slate-900 dark:text-white text-lg font-bold leading-tight tracking-tight">ProManager</h2>
+</div>
+<nav class="flex items-center gap-6">
+<a class="text-slate-500 dark:text-slate-400 text-sm font-medium hover:text-primary transition-colors" href="#">Dashboard</a>
+<a class="text-slate-500 dark:text-slate-400 text-sm font-medium hover:text-primary transition-colors" href="#">Projects</a>
+<a class="text-primary text-sm font-semibold border-b-2 border-primary pb-1" href="#">Timeline</a>
+<a class="text-slate-500 dark:text-slate-400 text-sm font-medium hover:text-primary transition-colors" href="#">Team</a>
+<a class="text-slate-500 dark:text-slate-400 text-sm font-medium hover:text-primary transition-colors" href="#">Reports</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xl">search</span>
+<input class="bg-slate-100 dark:bg-slate-800 border-none rounded-lg pl-10 pr-4 py-2 text-sm w-64 focus:ring-2 focus:ring-primary" placeholder="Search tasks..." type="text"/>
+</div>
+<button class="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<div class="h-8 w-8 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center overflow-hidden">
+<img alt="User" data-alt="User profile avatar circle" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDC2KzghTvoE9s2qaAwjw3FZfOnpimdjTZxl2mROJGtlaMCYjAO6H_g3mENWYfQE8RzB3o_U9JjiocH2wIImSYGMyFTlgiOEi2Jx7pylqsvEEqTSyZ1oBmrONgrpOn57ia5v6J-xrkhDIdZfehzyj6vTzU7r2NuhayY7IUGAcXvpeSZ791hdkV9F6IIOsjcGiPTBu-bPtzEGP-WNmygDfD6HFT9chhz5YJuXviA0hjw46iP5i3U0sMOdgQw594y4tpnstL1PdtS35Fd"/>
+</div>
+</div>
+</header>
+<!-- Project Header & Controls -->
+<div class="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-6 py-4 shrink-0">
+<div class="flex items-center justify-between mb-4">
+<div>
+<nav class="flex items-center gap-2 text-xs text-slate-400 mb-1">
+<a href="#">Projects</a>
+<span class="material-symbols-outlined text-sm">chevron_right</span>
+<span class="text-slate-600 dark:text-slate-300">Infrastructure Overhaul 2024</span>
+</nav>
+<h1 class="text-2xl font-bold text-slate-900 dark:text-white">Infrastructure Overhaul 2024</h1>
+</div>
+<div class="flex items-center gap-2">
+<button class="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-lg text-sm font-semibold shadow-sm hover:bg-blue-700 transition-all">
+<span class="material-symbols-outlined text-lg">add</span>
+                    New Task
+                </button>
+<button class="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-slate-200 dark:hover:bg-slate-700 transition-all">
+<span class="material-symbols-outlined text-lg">ios_share</span>
+                    Export
+                </button>
+</div>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
+<button class="px-3 py-1.5 text-xs font-medium rounded-md text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">Day</button>
+<button class="px-3 py-1.5 text-xs font-semibold rounded-md bg-white dark:bg-slate-700 text-primary shadow-sm">Week</button>
+<button class="px-3 py-1.5 text-xs font-medium rounded-md text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">Month</button>
+<button class="px-3 py-1.5 text-xs font-medium rounded-md text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">Quarter</button>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-2 border-r border-slate-200 dark:border-slate-700 pr-4">
+<button class="flex items-center gap-1.5 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary">
+<span class="material-symbols-outlined text-lg">today</span>
+                        Today
+                    </button>
+</div>
+<div class="flex items-center gap-3">
+<label class="flex items-center gap-2 cursor-pointer">
+<input checked="" class="w-4 h-4 text-primary rounded border-slate-300 focus:ring-primary" type="checkbox"/>
+<span class="text-sm font-medium text-slate-600 dark:text-slate-400">Milestones</span>
+</label>
+<label class="flex items-center gap-2 cursor-pointer">
+<input checked="" class="w-4 h-4 text-red-500 rounded border-slate-300 focus:ring-red-500" type="checkbox"/>
+<span class="text-sm font-medium text-slate-600 dark:text-slate-400">Critical Path</span>
+</label>
+</div>
+</div>
+</div>
+</div>
+<!-- Main Gantt Content Area -->
+<div class="flex-1 flex overflow-hidden">
+<!-- Task List (Left Side) -->
+<div class="w-[420px] shrink-0 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col">
+<div class="flex border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
+<div class="w-48 px-4 py-2 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Task Name</div>
+<div class="w-24 px-4 py-2 text-[11px] font-bold text-slate-500 uppercase tracking-wider border-l border-slate-200 dark:border-slate-700">Duration</div>
+<div class="flex-1 px-4 py-2 text-[11px] font-bold text-slate-500 uppercase tracking-wider border-l border-slate-200 dark:border-slate-700">Assignee</div>
+</div>
+<div class="flex-1 overflow-y-auto overflow-x-hidden">
+<!-- Row 1 (Parent) -->
+<div class="flex items-center border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors h-10 group">
+<div class="w-48 px-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-slate-400 text-sm cursor-pointer">keyboard_arrow_down</span>
+<span class="text-sm font-semibold truncate">Phase 1: Planning</span>
+</div>
+<div class="w-24 px-4 text-sm text-slate-500 border-l border-slate-100 dark:border-slate-800">12 days</div>
+<div class="flex-1 px-4 flex -space-x-2 border-l border-slate-100 dark:border-slate-800">
+<div class="h-6 w-6 rounded-full border-2 border-white dark:border-slate-900 bg-primary/20"><img class="rounded-full" data-alt="Small team member avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDp2tdgKp8AP9lrwAaN6ILIYz2dwIlAe44vfbYWE3gn-966JQeryHPP3Ys9lN-g9ny2C34dLTEY99ThpHKBLSSE-AHGHumZTZOgbZYbzUtrDhrGzfR2AE3T7xpDT13_sKmxMTFVBCIi0OJ4SPS6WbEJUNK7q5XBWKsMGA_0e3CrNRcFQhRhWTYkTCtbxigKTaEKwg0b-kjcoKxFmhGRHXRc8wyRltyVQUum7dlZ5SZTU2Ia6vO0xzOtJ7E6HqNoGxdqaR8VNOusnzKX"/></div>
+<div class="h-6 w-6 rounded-full border-2 border-white dark:border-slate-900 bg-primary/20"><img class="rounded-full" data-alt="Small team member avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCN-_vpIv_KV0k6ZLv5XGQvy8nahOCtyINdQBTlTIFMHgxNdYyBZ_3IYsXKJ_hN0gAkG_ot4YeBqoPzNZTKQ6poIqQtRrTUSQAIPucba9M4QEUz3KzAZFEvUq9i7LBXuzg6JcQrgeuu5A2eIQRtqK0_VsR8q63LvI1I-Fb_PZugRlc7RA8vExfBVjtR_DORlYp0tyGHoT2mEdxgVSwLwn3wIzcKfowyH7IwQNdrLj51ebkF6Idjo5r1lLRQSMf0YfOMBGrQMoTGbYLT"/></div>
+</div>
+</div>
+<!-- Row 2 (Child) -->
+<div class="flex items-center border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors h-10 group">
+<div class="w-48 pl-10 pr-4 flex items-center gap-2">
+<span class="text-sm text-slate-600 dark:text-slate-300 truncate">Requirements Analysis</span>
+</div>
+<div class="w-24 px-4 text-sm text-slate-500 border-l border-slate-100 dark:border-slate-800">5 days</div>
+<div class="flex-1 px-4 border-l border-slate-100 dark:border-slate-800">
+<div class="h-6 w-6 rounded-full border-2 border-white dark:border-slate-900 bg-primary/20"><img class="rounded-full" data-alt="Small team member avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBge9sXoYnZrEslinvWNg6ASHZ4AZ1wGelP7Eya6iPEiaQXRcrcfIIsNTVJE9yW1oDFUBrFFLJ31koCarkMQtXb3-Z5-TTFOpCRW9-dW0ba5Kmx6pDNgy1Y7ZNftR0RWcya9ULMusc2eIwNjykJidCR4kK5TfPAPuBlqzBewKcIpDnMOG4OCrU2o73gGTIAvJr7KEoN3rpi8seaJ-5aBspGcBhvfLzZjVD4tM6mRfuEHQGHglJVBj_LFTUFTO8yIQR49x9Stav_XBFV"/></div>
+</div>
+</div>
+<!-- Row 3 (Child) -->
+<div class="flex items-center border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors h-10 group">
+<div class="w-48 pl-10 pr-4 flex items-center gap-2">
+<span class="text-sm text-slate-600 dark:text-slate-300 truncate">Stakeholder Review</span>
+</div>
+<div class="w-24 px-4 text-sm text-slate-500 border-l border-slate-100 dark:border-slate-800">3 days</div>
+<div class="flex-1 px-4 border-l border-slate-100 dark:border-slate-800">
+<div class="h-6 w-6 rounded-full border-2 border-white dark:border-slate-900 bg-primary/20"><img class="rounded-full" data-alt="Small team member avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAHiPImCb2ywNwPtTCIhqZ24qZa0_-A37mHfu9LLwR5KuGVgpad4RLJpKew9l4x6PxgabguEVbahFlMVjDUrPnzEy1EUAms6W9Zm6CKVT7i3Xw5XlOTLMx16GFSaERHMIxn_ClIaRWZrq2aEi7n9dmLf-qeBGB0MDfVoGR_Auyep5MeX3MMklhzcyw1rw_V8CXgxhEPXmO39sZLSqWwPGNpnEb5CRnPJDMtd7EYDS_FrwMg4qWUVpREb8a_Tad9ZQkhGIZibrnBr0m7"/></div>
+</div>
+</div>
+<!-- Row 4 (Parent) -->
+<div class="flex items-center border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors h-10 group bg-slate-50/30 dark:bg-slate-800/20">
+<div class="w-48 px-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-slate-400 text-sm cursor-pointer">keyboard_arrow_right</span>
+<span class="text-sm font-semibold truncate">Phase 2: Execution</span>
+</div>
+<div class="w-24 px-4 text-sm text-slate-500 border-l border-slate-100 dark:border-slate-800">45 days</div>
+<div class="flex-1 px-4 flex -space-x-2 border-l border-slate-100 dark:border-slate-800">
+<div class="h-6 w-6 rounded-full border-2 border-white dark:border-slate-900 bg-primary/20"><img class="rounded-full" data-alt="Small team member avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAEl2oi7qE4EDj11L8OnSKtJQIFUOlWO7riec1BMLM3upb-KiyasAtqamjHKFEGP4hoQJHGj7MEIS5SAEKdqgoDPpfdE05Nz4RDnZ3xA06THGlZt9Rc3WOIj9y6Fi0qQ-yPZfHKX1K3i4WzEOthfZzztmO9PYXosPodLiwlgxkl3RyaUWtITJP6lBBs0wKImxUYAf1QUGH18ebyIJwPZvaNjsNI7ncunJejuT3FdwaXHHDJD_shzq3-zzW-cw8RlO06t-oq4jqz8oQA"/></div>
+<div class="h-6 w-6 rounded-full border-2 border-white dark:border-slate-900 bg-primary/20"><img class="rounded-full" data-alt="Small team member avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBn4rwgFJtjgGYkWTiBH-X8tEEdMUN6EbtExc6Alj9r2tC_lKL5FvomITbJGoEbDAm2JXN4uJGxtgKyJQ7U7Ax1r00Gr-TmF3VqKaJPiE2FvMjLlQhqOWcWEfOm8j8LSLTXxWOm9joyjkAx8d4eoX9CaYLDJB6ib5FEbk0yPEe2BzoqMeUrD7j3JsITEsi_xT5iLreRo3XyrFPL-F5sDgiY5DKd50N_l0-URyDcXOnPDV3jMiCccwKRUuuekTg119HQXk0EWc3-8OAg"/></div>
+<div class="h-6 w-6 rounded-full border-2 border-white dark:border-slate-900 bg-primary/20"><img class="rounded-full" data-alt="Small team member avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAtvKlxyU-rZEXr9MtfMAsui7g4Ba7L1O6t_HVytTIiJm1T9J6y9bDVkEKhR-48-dsNtSbEI5w3uqrlAt6Sg0IhwZ8AatOMQrWK8KNbTgyNktshfEJLhDDW60YWKAI2f_OX5wUEa3NLs3l1POUimLIBx7yW6pSyrEjcigJIaNrmfC8M0e-hchCgX4oNbxe9ZPpGk6FWgafNbP1o5ZIzaD5xDoGEDoIxbq5d73zidpGHoVWL3swniapwxD2dDTjVKASWZSe-EYPKYkt4"/></div>
+</div>
+</div>
+<!-- Row 5 (Child - Critical) -->
+<div class="flex items-center border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors h-10 group">
+<div class="w-48 pl-10 pr-4 flex items-center gap-2">
+<span class="text-sm text-slate-600 dark:text-slate-300 truncate">Database Migration</span>
+</div>
+<div class="w-24 px-4 text-sm text-slate-500 border-l border-slate-100 dark:border-slate-800 font-medium text-red-500">14 days</div>
+<div class="flex-1 px-4 border-l border-slate-100 dark:border-slate-800">
+<div class="h-6 w-6 rounded-full border-2 border-white dark:border-slate-900 bg-primary/20"><img class="rounded-full" data-alt="Small team member avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAh7FHVuYEF08cZzugGW-CEjz8ku9NwxhtDBDHwmiBbfEIA1xmRZD8hdJKkXa6wvwS9MfqouWo_7waZ41fy56t9QRH2z1wAz04Q7qJw3xZzunIIGbnsvXd1j9cGAR47ZlWT7JiWBfBA6cPMoezJ628wcbP8AnCnOG9csxZBgGK_ZepOqMi9A6y_XGXspmMpSMTmbIkK2pCZpgbnqQBwCqXWfzJ5k4amIfY89VXC_EcUC4L3sxpyN1J6B42l-w0hiQu2e_NmTAItItb_"/></div>
+</div>
+</div>
+<!-- Row 6 (Child) -->
+<div class="flex items-center border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors h-10 group">
+<div class="w-48 pl-10 pr-4 flex items-center gap-2">
+<span class="text-sm text-slate-600 dark:text-slate-300 truncate">Security Patching</span>
+</div>
+<div class="w-24 px-4 text-sm text-slate-500 border-l border-slate-100 dark:border-slate-800">7 days</div>
+<div class="flex-1 px-4 border-l border-slate-100 dark:border-slate-800">
+<div class="h-6 w-6 rounded-full border-2 border-white dark:border-slate-900 bg-primary/20"><img class="rounded-full" data-alt="Small team member avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCTZ3dMtAV6KfLtCNKIKvLqhmYm4-Sm5BhJrmQjUbf5whHLDne7bZlULU7t9Lykle2H0oNB3C3hBIos2i0kUhEqpjnZL7ZOQc0EsGm4z61rkX_NLR5iyNszYVuyNJTQvH-Rdy8AQk1kPV3vJ0MdQpaRKwpCO_RuVe4azbq155l5gOFwhGj6jToT6vmNlfaiBzd4kqlVfEnAYMjP-1G5OZGe0bSrZkqNXZj3ZYcux-MT-wefwlUClvvZBhx0-FaM8XjT3eFO4VcGywdC"/></div>
+</div>
+</div>
+<!-- Fill Rows -->
+<div class="flex-1 bg-slate-50/30 dark:bg-slate-800/10"></div>
+</div>
+</div>
+<!-- Timeline Grid (Right Side) -->
+<div class="flex-1 overflow-x-auto overflow-y-hidden relative bg-white dark:bg-slate-900">
+<!-- Timeline Header -->
+<div class="sticky top-0 z-20">
+<div class="flex border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 h-8">
+<div class="w-[280px] shrink-0 border-r border-slate-200 dark:border-slate-800 px-4 flex items-center text-xs font-bold text-slate-500">MAY 2024</div>
+<div class="w-[280px] shrink-0 border-r border-slate-200 dark:border-slate-800 px-4 flex items-center text-xs font-bold text-slate-500">JUNE 2024</div>
+<div class="w-[280px] shrink-0 border-r border-slate-200 dark:border-slate-800 px-4 flex items-center text-xs font-bold text-slate-500">JULY 2024</div>
+<div class="w-[280px] shrink-0 border-r border-slate-200 dark:border-slate-800 px-4 flex items-center text-xs font-bold text-slate-500">AUGUST 2024</div>
+</div>
+<div class="flex border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 h-8">
+<!-- Day labels simplified for visualization -->
+<div class="flex divide-x divide-slate-100 dark:divide-slate-800">
+<template id="day-labels">
+<div class="w-10 h-8 flex items-center justify-center text-[10px] text-slate-400 font-medium">1</div>
+<div class="w-10 h-8 flex items-center justify-center text-[10px] text-slate-400 font-medium">8</div>
+<div class="w-10 h-8 flex items-center justify-center text-[10px] text-slate-400 font-medium">15</div>
+<div class="w-10 h-8 flex items-center justify-center text-[10px] text-slate-400 font-medium">22</div>
+</template>
+<div class="flex w-[280px] justify-around items-center text-[10px] text-slate-400 font-medium px-2"><span>1</span><span>8</span><span>15</span><span>22</span><span>29</span></div>
+<div class="flex w-[280px] justify-around items-center text-[10px] text-slate-400 font-medium px-2"><span>5</span><span>12</span><span>19</span><span>26</span></div>
+<div class="flex w-[280px] justify-around items-center text-[10px] text-slate-400 font-medium px-2"><span>3</span><span>10</span><span>17</span><span>24</span><span>31</span></div>
+<div class="flex w-[280px] justify-around items-center text-[10px] text-slate-400 font-medium px-2"><span>7</span><span>14</span><span>21</span><span>28</span></div>
+</div>
+</div>
+</div>
+<!-- Grid & Bars -->
+<div class="relative h-full gantt-grid-line">
+<!-- Current Time Indicator -->
+<div class="absolute left-[340px] top-0 bottom-0 w-px bg-primary z-10">
+<div class="absolute -top-1 -left-1.5 w-3 h-3 bg-primary rounded-full ring-4 ring-primary/20"></div>
+</div>
+<!-- Dependency Lines (SVG Overlay) -->
+<svg class="absolute inset-0 pointer-events-none z-0" height="1000" width="2000">
+<path class="dependency-line" d="M180,50 L200,50 L200,70 L215,70" marker-end="url(#arrowhead)"></path>
+<path class="dependency-line" d="M340,70 L360,70 L360,90 L375,90" marker-end="url(#arrowhead)"></path>
+<path class="dependency-line" d="M540,170 L560,170 L560,190 L575,190" marker-end="url(#arrowhead-red)" stroke="#ef4444"></path>
+<defs>
+<marker id="arrowhead" markerheight="7" markerwidth="10" orient="auto" refx="0" refy="3.5">
+<polygon fill="#94a3b8" points="0 0, 10 3.5, 0 7"></polygon>
+</marker>
+<marker id="arrowhead-red" markerheight="7" markerwidth="10" orient="auto" refx="0" refy="3.5">
+<polygon fill="#ef4444" points="0 0, 10 3.5, 0 7"></polygon>
+</marker>
+</defs>
+</svg>
+<!-- Row Containers with Task Bars -->
+<div class="flex flex-col">
+<!-- Row 1: Parent Bar -->
+<div class="h-10 border-b border-slate-100 dark:border-slate-800 flex items-center relative">
+<div class="absolute left-20 w-[420px] h-6 bg-slate-400/20 dark:bg-slate-500/20 rounded-sm">
+<div class="absolute left-0 top-0 bottom-0 w-full h-1 bg-slate-600 dark:bg-slate-400 rounded-t-sm"></div>
+<div class="absolute left-0 bottom-0 border-l-8 border-b-8 border-transparent border-l-slate-600"></div>
+<div class="absolute right-0 bottom-0 border-r-8 border-b-8 border-transparent border-r-slate-600"></div>
+</div>
+</div>
+<!-- Row 2: Child Bar (Completed) -->
+<div class="h-10 border-b border-slate-100 dark:border-slate-800 flex items-center relative">
+<div class="absolute left-20 w-[120px] h-6 bg-green-500 rounded-md shadow-sm flex items-center px-2">
+<span class="text-[10px] text-white font-bold uppercase tracking-tighter">100%</span>
+</div>
+</div>
+<!-- Row 3: Child Bar (In Progress) -->
+<div class="h-10 border-b border-slate-100 dark:border-slate-800 flex items-center relative">
+<div class="absolute left-[220px] w-[80px] h-6 bg-primary rounded-md shadow-sm flex items-center overflow-hidden">
+<div class="h-full w-[60%] bg-white/20"></div>
+<div class="absolute inset-0 flex items-center px-2">
+<span class="text-[10px] text-white font-bold uppercase tracking-tighter">60%</span>
+</div>
+</div>
+</div>
+<!-- Row 4: Parent Bar -->
+<div class="h-10 border-b border-slate-100 dark:border-slate-800 flex items-center relative bg-slate-50/30 dark:bg-slate-800/20">
+<div class="absolute left-[380px] w-[650px] h-6 bg-slate-400/20 dark:bg-slate-500/20 rounded-sm">
+<div class="absolute left-0 top-0 bottom-0 w-full h-1 bg-slate-600 dark:bg-slate-400 rounded-t-sm"></div>
+</div>
+</div>
+<!-- Row 5: Child Bar (Critical Path) -->
+<div class="h-10 border-b border-slate-100 dark:border-slate-800 flex items-center relative">
+<div class="absolute left-[380px] w-[220px] h-6 bg-red-500 rounded-md shadow-sm border-2 border-red-700 flex items-center px-2">
+<span class="text-[10px] text-white font-bold uppercase tracking-tighter">Critical</span>
+</div>
+<!-- Milestone Marker -->
+<div class="absolute left-[595px] flex flex-col items-center">
+<div class="w-4 h-4 bg-amber-500 rotate-45 border-2 border-white dark:border-slate-900 shadow-sm z-20"></div>
+<span class="text-[9px] font-bold text-amber-600 mt-1">UAT Start</span>
+</div>
+</div>
+<!-- Row 6: Child Bar (Planned) -->
+<div class="h-10 border-b border-slate-100 dark:border-slate-800 flex items-center relative">
+<div class="absolute left-[610px] w-[140px] h-6 bg-primary/40 dark:bg-primary/20 rounded-md border border-primary/50 flex items-center px-2">
+<span class="text-[10px] text-primary dark:text-blue-300 font-bold uppercase tracking-tighter">Planned</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer Stats -->
+<footer class="h-10 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between px-6 shrink-0">
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2">
+<div class="w-3 h-3 rounded-full bg-green-500"></div>
+<span class="text-xs text-slate-500 font-medium">Completed: 12</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-3 h-3 rounded-full bg-primary"></div>
+<span class="text-xs text-slate-500 font-medium">In Progress: 8</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-3 h-3 rounded-full bg-red-500"></div>
+<span class="text-xs text-slate-500 font-medium">Critical: 3</span>
+</div>
+</div>
+<div class="text-xs text-slate-400 italic">
+            Last synced: 2 minutes ago
+        </div>
+</footer>
+</div>
+</body></html>
