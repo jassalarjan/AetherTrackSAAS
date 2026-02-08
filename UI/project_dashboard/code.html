@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Project Dashboard | Acme Corp</title>
+<!-- Tailwind CSS with Plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Google Fonts: Inter -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              colors: {
+                "primary": "#135bec",
+                "background-light": "#f6f6f8",
+                "background-dark": "#101622",
+              },
+              fontFamily: {
+                "display": ["Inter", "sans-serif"]
+              },
+              borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+            },
+          },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-[#0d121b] dark:text-gray-100 font-display">
+<div class="flex h-screen overflow-hidden">
+<!-- SideNavBar -->
+<aside class="w-64 flex-shrink-0 bg-white dark:bg-[#1a2234] border-r border-gray-200 dark:border-gray-800 flex flex-col justify-between p-4">
+<div class="flex flex-col gap-8">
+<!-- Branding -->
+<div class="flex items-center gap-3 px-2">
+<div class="bg-primary rounded-lg size-10 flex items-center justify-center text-white">
+<span class="material-symbols-outlined">rocket_launch</span>
+</div>
+<div class="flex flex-col">
+<h1 class="text-[#0d121b] dark:text-white text-base font-bold leading-none">Acme Corp</h1>
+<p class="text-[#4c669a] dark:text-gray-400 text-xs font-medium uppercase tracking-wider mt-1">Enterprise PMO</p>
+</div>
+</div>
+<!-- Navigation Links -->
+<nav class="flex flex-col gap-1">
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-primary/10 text-primary font-semibold transition-colors" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="text-sm">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" href="#">
+<span class="material-symbols-outlined">assignment</span>
+<span class="text-sm font-medium">Tasks</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="text-sm font-medium">HR &amp; Resource</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="text-sm font-medium">Reports</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-sm font-medium">Settings</span>
+</a>
+</nav>
+</div>
+<!-- Sidebar Bottom -->
+<div class="flex flex-col gap-4">
+<div class="bg-background-light dark:bg-gray-800/50 p-4 rounded-xl border border-gray-100 dark:border-gray-700">
+<p class="text-xs text-gray-500 dark:text-gray-400 font-medium">Monthly Usage</p>
+<div class="w-full bg-gray-200 dark:bg-gray-700 h-1.5 rounded-full mt-2">
+<div class="bg-primary h-1.5 rounded-full" style="width: 75%"></div>
+</div>
+<p class="text-[10px] text-gray-400 mt-2 uppercase font-bold tracking-tighter">750 / 1000 Tasks</p>
+</div>
+<button class="w-full bg-primary text-white py-2.5 rounded-lg font-bold text-sm flex items-center justify-center gap-2 hover:bg-blue-700 transition-all">
+<span class="material-symbols-outlined text-sm">add</span>
+<span>New Project</span>
+</button>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 flex flex-col overflow-hidden">
+<!-- Header -->
+<header class="h-16 flex items-center justify-between px-8 bg-white dark:bg-[#1a2234] border-b border-gray-200 dark:border-gray-800 z-10">
+<div class="flex items-center flex-1 max-w-xl">
+<div class="relative w-full group">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary transition-colors">search</span>
+<input class="w-full bg-gray-100 dark:bg-gray-800/50 border-none rounded-lg pl-10 pr-4 py-2 text-sm focus:ring-2 focus:ring-primary focus:bg-white dark:focus:bg-gray-800 transition-all" placeholder="Search projects, tasks, or team members..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2 right-2.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-[#1a2234]"></span>
+</button>
+<div class="h-8 w-[1px] bg-gray-200 dark:bg-gray-700 mx-2"></div>
+<div class="flex items-center gap-3 cursor-pointer group">
+<div class="flex flex-col text-right hidden sm:flex">
+<span class="text-sm font-bold leading-none dark:text-white">Alex Morgan</span>
+<span class="text-xs text-gray-400 font-medium">Principal PM</span>
+</div>
+<div class="size-10 rounded-full bg-primary/20 border-2 border-primary/10 flex items-center justify-center overflow-hidden">
+<img alt="User Profile" class="w-full h-full object-cover" data-alt="Professional headshot of a business manager" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBJT6d-IoMzvcZ3GvVmFQuNPTGkO6E2qTXFeZkyyunhhRtajCNHbwXzcVKjq3LHrHTxgpwh06H6m9uITe7-MBhdOYGAnOxnXNU5U1MtWJj2ZPeOnjH-twWqu1HPQ9FpBF8Z-k1pq34JGoxCUdFe31AQueaB5KG5wFyKvPa05wnu-MrydS0Ci8Rq6Eai8FpTCyTaoqOawftoRRg4rDz0KP66pfhw8ak95rQ3Qqpn9qY8gspp8zO96Oh6dQvDmppv6fWE5u3vrCONbbK5"/>
+</div>
+</div>
+</div>
+</header>
+<!-- Dashboard Body -->
+<div class="flex-1 overflow-y-auto p-8 space-y-8 scroll-smooth">
+<!-- Welcome Header -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+<div>
+<h2 class="text-3xl font-black tracking-tight text-[#0d121b] dark:text-white">Project Dashboard</h2>
+<p class="text-[#4c669a] dark:text-gray-400 mt-1">Real-time overview of enterprise initiatives and resource velocity.</p>
+</div>
+<div class="flex gap-3">
+<button class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all shadow-sm">
+<span class="material-symbols-outlined text-[20px]">tune</span>
+<span>Filters</span>
+</button>
+<button class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all shadow-sm">
+<span class="material-symbols-outlined text-[20px]">ios_share</span>
+<span>Export</span>
+</button>
+</div>
+</div>
+<!-- Stats Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+<div class="bg-white dark:bg-[#1a2234] p-6 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm flex items-center gap-4">
+<div class="size-12 bg-blue-50 dark:bg-blue-900/20 rounded-xl flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">folder_open</span>
+</div>
+<div>
+<p class="text-xs font-bold text-gray-400 uppercase tracking-widest">Total Projects</p>
+<p class="text-2xl font-black text-[#0d121b] dark:text-white">24</p>
+</div>
+<span class="ml-auto text-[10px] font-bold px-2 py-1 bg-green-100 text-green-700 rounded-full">+12%</span>
+</div>
+<div class="bg-white dark:bg-[#1a2234] p-6 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm flex items-center gap-4">
+<div class="size-12 bg-orange-50 dark:bg-orange-900/20 rounded-xl flex items-center justify-center text-orange-600">
+<span class="material-symbols-outlined">payments</span>
+</div>
+<div>
+<p class="text-xs font-bold text-gray-400 uppercase tracking-widest">Active Budget</p>
+<p class="text-2xl font-black text-[#0d121b] dark:text-white">$1.2M</p>
+</div>
+<span class="ml-auto text-[10px] font-bold px-2 py-1 bg-red-100 text-red-700 rounded-full">-4%</span>
+</div>
+<div class="bg-white dark:bg-[#1a2234] p-6 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm flex items-center gap-4">
+<div class="size-12 bg-purple-50 dark:bg-purple-900/20 rounded-xl flex items-center justify-center text-purple-600">
+<span class="material-symbols-outlined">groups</span>
+</div>
+<div>
+<p class="text-xs font-bold text-gray-400 uppercase tracking-widest">Team Capacity</p>
+<p class="text-2xl font-black text-[#0d121b] dark:text-white">88%</p>
+</div>
+<span class="ml-auto text-[10px] font-bold px-2 py-1 bg-green-100 text-green-700 rounded-full">Optimal</span>
+</div>
+<div class="bg-white dark:bg-[#1a2234] p-6 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm flex items-center gap-4">
+<div class="size-12 bg-red-50 dark:bg-red-900/20 rounded-xl flex items-center justify-center text-red-600">
+<span class="material-symbols-outlined">warning</span>
+</div>
+<div>
+<p class="text-xs font-bold text-gray-400 uppercase tracking-widest">Critical Risks</p>
+<p class="text-2xl font-black text-[#0d121b] dark:text-white">03</p>
+</div>
+<span class="ml-auto text-[10px] font-bold px-2 py-1 bg-red-100 text-red-700 rounded-full">Urgent</span>
+</div>
+</div>
+<!-- Dashboard Main Content Grid -->
+<div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
+<!-- Project Status Grid (Span 2) -->
+<div class="xl:col-span-2 space-y-6">
+<div class="flex items-center justify-between">
+<h3 class="text-xl font-bold dark:text-white">Active Projects</h3>
+<a class="text-sm font-bold text-primary hover:underline" href="#">View All</a>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<!-- Project Card 1 -->
+<div class="bg-white dark:bg-[#1a2234] rounded-xl border-l-4 border-primary p-6 shadow-sm hover:shadow-md transition-shadow group">
+<div class="flex justify-between items-start mb-4">
+<span class="bg-blue-100 text-primary dark:bg-primary/20 text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded">Active</span>
+<button class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+<span class="material-symbols-outlined text-[20px]">more_horiz</span>
+</button>
+</div>
+<h4 class="text-lg font-bold mb-1 dark:text-white group-hover:text-primary transition-colors">Migration to Cloud v2.0</h4>
+<p class="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 mb-6 leading-relaxed">Infrastructure modernization focusing on multi-region AWS availability and serverless optimization.</p>
+<div class="space-y-3">
+<div class="flex justify-between text-xs font-bold">
+<span class="text-gray-400 uppercase tracking-tighter">Progress</span>
+<span class="text-primary">75%</span>
+</div>
+<div class="w-full bg-gray-100 dark:bg-gray-800 h-2 rounded-full overflow-hidden">
+<div class="bg-primary h-full rounded-full" style="width: 75%"></div>
+</div>
+<div class="flex justify-between items-center pt-2">
+<div class="flex -space-x-2">
+<img alt="Member 1" class="size-7 rounded-full border-2 border-white dark:border-[#1a2234]" data-alt="Team member headshot" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDL9x2K4UJP_epYlm-j8rY5RNiCu10P6sZSrpPgr6Fey4edxfmQAy5zC_lJsrUGuas_bjZNbPIZILvkZflG6fzUoeA8PymV6NnpASDou6mWDcSa-cfFWZBDjgJNRSOrAj-2qg4PIyd8XdJZq3WWVMIPdnDNh4y7Hf7ZiqXY04Bg-JnNq3yljMqrjH2iFykaiNbtxMUaHATuq9CJqr37mvZCVoh34fo5EekJqPji3vSrSCj6gyQlxw5EBn0HTV1Qrszky-dEttwY2PXD"/>
+<img alt="Member 2" class="size-7 rounded-full border-2 border-white dark:border-[#1a2234]" data-alt="Team member headshot" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD0hvVSuos8aC4rm6eOHWiEef5r2ncM7v7XvAipC7CAh16_JndkxLQDZFUgAieEuIqgmZ882i6dZgVtF_98DHuQ1ppf69VPVJ-fSwQ1Zfz0LdLEGRnopvu4qPCcntXMht2lkT0Os1eUBlkoa0Wfj9Tu0eDehZlgO_1Z2FToOaBKBf8m-e3hQeD6dEv_LVYD4d_k9WTQEJOdn7cqyzbHsowycZtAz6ZtnNYYfh00ROut840S44ijeXQmhs5_VJOlPtDDsgc_aM2847v7"/>
+<img alt="Member 3" class="size-7 rounded-full border-2 border-white dark:border-[#1a2234]" data-alt="Team member headshot" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD1pAJiurnNp6qUq9bkT_Iwf8UIqUcer1xII8n45uwnEQes8kqAU6w6fOs6olBURu063bwnkGIGQEXl2ed-2quQzb9Apq9L649Yz4-U6bt2jeuBI_gv_KMHdQLv70lsrCL9JbIGDTYqu_tX0VQA2A_YComj5m2pCa0L5tvIT8Ri-MAv_9fZS0xDx4TfyGsOQg-W_q7xC7W0MRdWenKOCVf5rrIR4QnCoDIC_wo0JSk4qh9hkiB-wWBV-7lX8mPH-hp9cb8bpvIVACyC"/>
+<div class="size-7 rounded-full bg-gray-100 dark:bg-gray-700 border-2 border-white dark:border-[#1a2234] flex items-center justify-center text-[10px] font-bold text-gray-500">+4</div>
+</div>
+<span class="text-xs text-gray-400 font-medium">Due: Oct 24</span>
+</div>
+</div>
+</div>
+<!-- Project Card 2 -->
+<div class="bg-white dark:bg-[#1a2234] rounded-xl border-l-4 border-amber-400 p-6 shadow-sm hover:shadow-md transition-shadow group">
+<div class="flex justify-between items-start mb-4">
+<span class="bg-amber-100 text-amber-700 dark:bg-amber-400/20 dark:text-amber-400 text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded">On Hold</span>
+<button class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+<span class="material-symbols-outlined text-[20px]">more_horiz</span>
+</button>
+</div>
+<h4 class="text-lg font-bold mb-1 dark:text-white group-hover:text-primary transition-colors">Global CRM Integration</h4>
+<p class="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 mb-6 leading-relaxed">Unified CRM rollout across EMEA and APAC regions including localized sales pipelines.</p>
+<div class="space-y-3">
+<div class="flex justify-between text-xs font-bold">
+<span class="text-gray-400 uppercase tracking-tighter">Progress</span>
+<span class="text-amber-600">32%</span>
+</div>
+<div class="w-full bg-gray-100 dark:bg-gray-800 h-2 rounded-full overflow-hidden">
+<div class="bg-amber-400 h-full rounded-full" style="width: 32%"></div>
+</div>
+<div class="flex justify-between items-center pt-2">
+<div class="flex -space-x-2">
+<img alt="Member 4" class="size-7 rounded-full border-2 border-white dark:border-[#1a2234]" data-alt="Team member headshot" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA2Tmf8bZgEGKLfdKz5iJd9bc_rXWPgJpKIuQK3OM_6XMz5l566DN8vDDOB1ZkjT6kBpaYgZDgzUeKGueHeQjgsKLM0SLvzypEhz1wVPfusNdGzghyasrpyY-1HHkYJVQ_q8Q8UE9enx-3lRNa7x2dVfLkvYuugxFX-1ZruJqBp3FIacZm6YBHiQVAAV15vUPL778kC-865NMqLOvd6BgCG5g7ZzCSMtF2FeasM58maskLZXUEf-PJghmn7wXvScCCFdqoQCekiE6uo"/>
+<img alt="Member 5" class="size-7 rounded-full border-2 border-white dark:border-[#1a2234]" data-alt="Team member headshot" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAWijOaw1oOG4pfUIYUKqIqbJ6PAlwbRmwihkjpqF0zN32TcEwmIsmwbwhfPnKdSxxmg__q3z808iqYkpW0C2B-EJ7YFpuOg-WjcjPEvQbt7hqjJX3x6TVNsvvJWzR7HythIAtyRWrg1aq4nlkfdUn5VS1wpMTvzaDGIB0ECWPb0jV4MgCmzVXbgIaih2fC_r8QXTlsLfuNRTDwGIg_nl_0eBi4H3aomyyxUOweljLpLfrXvTL4kooae6xjkfGiXcM30mnsAZdPNfFn"/>
+</div>
+<span class="text-xs text-gray-400 font-medium">Due: Dec 12</span>
+</div>
+</div>
+</div>
+<!-- Project Card 3 -->
+<div class="bg-white dark:bg-[#1a2234] rounded-xl border-l-4 border-emerald-500 p-6 shadow-sm hover:shadow-md transition-shadow group">
+<div class="flex justify-between items-start mb-4">
+<span class="bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-500 text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded">Completed</span>
+<button class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+<span class="material-symbols-outlined text-[20px]">more_horiz</span>
+</button>
+</div>
+<h4 class="text-lg font-bold mb-1 dark:text-white group-hover:text-primary transition-colors">Q3 Security Audit</h4>
+<p class="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 mb-6 leading-relaxed">Annual compliance and vulnerability assessment for core financial services applications.</p>
+<div class="space-y-3">
+<div class="flex justify-between text-xs font-bold">
+<span class="text-gray-400 uppercase tracking-tighter">Progress</span>
+<span class="text-emerald-600">100%</span>
+</div>
+<div class="w-full bg-gray-100 dark:bg-gray-800 h-2 rounded-full overflow-hidden">
+<div class="bg-emerald-500 h-full rounded-full" style="width: 100%"></div>
+</div>
+<div class="flex justify-between items-center pt-2">
+<div class="flex -space-x-2">
+<img alt="Member 6" class="size-7 rounded-full border-2 border-white dark:border-[#1a2234]" data-alt="Team member headshot" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDXBXUUI09IbkcrImvgsQtJOEzTRvRdW_ycMhpoweHeiEakUzDXPdwtFowURJob7tR7B8nMzATcdu-fV06_u915QPeBL6WsY1z_wiepG2TWIUWHvb-PBOVdgDaEIeGKmPs2X5zUYDM9LUEWo_M5TJJTFeHqwTBNZzVzC4exCQak9_AAS2W58VmBjuLqjGJZJJ0Dk4Ed9R3f-e8BLUNtAOP_YlW9L83i1UYtVDDpGUn2obRvXMEHw8Qv86hF_U_PPFbvGTlonTMbUrte"/>
+</div>
+<span class="text-xs text-emerald-600 font-bold">Finalized</span>
+</div>
+</div>
+</div>
+<!-- Project Card 4 -->
+<div class="bg-white dark:bg-[#1a2234] rounded-xl border-l-4 border-primary p-6 shadow-sm hover:shadow-md transition-shadow group">
+<div class="flex justify-between items-start mb-4">
+<span class="bg-blue-100 text-primary dark:bg-primary/20 text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded">Active</span>
+<button class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+<span class="material-symbols-outlined text-[20px]">more_horiz</span>
+</button>
+</div>
+<h4 class="text-lg font-bold mb-1 dark:text-white group-hover:text-primary transition-colors">Customer Portal Redesign</h4>
+<p class="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 mb-6 leading-relaxed">Mobile-first overhaul of the primary B2B client interface focusing on self-service tools.</p>
+<div class="space-y-3">
+<div class="flex justify-between text-xs font-bold">
+<span class="text-gray-400 uppercase tracking-tighter">Progress</span>
+<span class="text-primary">58%</span>
+</div>
+<div class="w-full bg-gray-100 dark:bg-gray-800 h-2 rounded-full overflow-hidden">
+<div class="bg-primary h-full rounded-full" style="width: 58%"></div>
+</div>
+<div class="flex justify-between items-center pt-2">
+<div class="flex -space-x-2">
+<img alt="Member 7" class="size-7 rounded-full border-2 border-white dark:border-[#1a2234]" data-alt="Team member headshot" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC_GY6MtVRuCog_Wp8tvLIHMMCctZdYPEf3MNPV-QEHB4QgaKHbclVIYVAbCgb-wRk3INgaaHj8-nFMv3PRXO6aVPF6vSUBsYfJpYqk7LFU0X-IgM-eU3IMvrKxuRwyB7ywfYLvtyrFMq0llPQErWFO8y0Nnb-0nbgD8xkgVE4HTHNDtZbrU0s79cyJPOPRVOyRCFpy-EFDyzEbij9LJiR9K0-rPau_SCdNiZxRUO8aPpu7k7apUuXcFG_ftPDa0Cck3oPGgipZNv5w"/>
+<img alt="Member 8" class="size-7 rounded-full border-2 border-white dark:border-[#1a2234]" data-alt="Team member headshot" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCDajo1zdSlpUGv8Fqb5WjF2qFTPrD6SQp0NsLEDvqRH_xHnF0Pi8kLG4YN8v7j-EhipCswT8I2kxvw0kEhPlx091y6pWRKlwgExt-wCnpxplJJeEQOv4_7GCpI_DK7Z4jpMHcJvYLEUXT3Olkyw8Qe8pqMRpf9CUJUYgfeGzs-qfxrj3UbCwfB1VucqUhCPP6ZKrltJ_2jwMlj2bjIUtOkdY0HwuvytuhlTkFQW9IHqSHAYHWq5eOIzOlBB7_II3y33Ow9yin5E0W6"/>
+</div>
+<span class="text-xs text-gray-400 font-medium">Due: Nov 30</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Sidebar: Widgets -->
+<div class="space-y-8">
+<!-- Budget & Resource Summary -->
+<div class="bg-white dark:bg-[#1a2234] rounded-xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm">
+<h3 class="font-bold mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">pie_chart</span>
+                            Budget &amp; Resources
+                        </h3>
+<!-- Visual Donut Chart Representation -->
+<div class="flex items-center justify-center py-4">
+<div class="relative size-32 rounded-full border-[10px] border-primary flex items-center justify-center border-t-gray-100 dark:border-t-gray-700 -rotate-45">
+<div class="rotate-45 text-center">
+<p class="text-xl font-black text-[#0d121b] dark:text-white">$785k</p>
+<p class="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">Spent</p>
+</div>
+</div>
+</div>
+<div class="mt-6 space-y-4">
+<div>
+<div class="flex justify-between text-xs font-bold mb-1.5">
+<span class="text-gray-500">Utilization Rate</span>
+<span class="text-[#0d121b] dark:text-gray-200">84%</span>
+</div>
+<div class="w-full bg-gray-100 dark:bg-gray-800 h-1.5 rounded-full overflow-hidden">
+<div class="bg-primary h-full rounded-full" style="width: 84%"></div>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-4 pt-2">
+<div class="p-3 bg-background-light dark:bg-gray-800/50 rounded-lg">
+<p class="text-[10px] text-gray-400 font-bold uppercase mb-1">Total Allocated</p>
+<p class="text-sm font-black dark:text-white">$1,250,000</p>
+</div>
+<div class="p-3 bg-background-light dark:bg-gray-800/50 rounded-lg">
+<p class="text-[10px] text-gray-400 font-bold uppercase mb-1">Burn Rate/Mo</p>
+<p class="text-sm font-black dark:text-white">$142,000</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Risk & Blockers Panel -->
+<div class="bg-white dark:bg-[#1a2234] rounded-xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm overflow-hidden">
+<div class="flex justify-between items-center mb-6">
+<h3 class="font-bold flex items-center gap-2">
+<span class="material-symbols-outlined text-red-500">priority_high</span>
+                                Risk &amp; Blockers
+                            </h3>
+<span class="bg-red-50 text-red-600 dark:bg-red-900/20 text-[10px] font-bold px-2 py-0.5 rounded">3 Priority</span>
+</div>
+<div class="space-y-4">
+<div class="flex gap-4 p-3 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-lg transition-colors cursor-pointer group">
+<div class="size-8 shrink-0 bg-red-100 dark:bg-red-900/30 text-red-600 rounded flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]">emergency</span>
+</div>
+<div>
+<p class="text-sm font-bold leading-tight group-hover:text-red-700 transition-colors dark:text-gray-200">API Documentation Delay</p>
+<p class="text-xs text-gray-500 mt-1">Pending approval from Third-party provider.</p>
+</div>
+</div>
+<div class="flex gap-4 p-3 hover:bg-amber-50 dark:hover:bg-amber-900/10 rounded-lg transition-colors cursor-pointer group border-t border-gray-100 dark:border-gray-800">
+<div class="size-8 shrink-0 bg-amber-100 dark:bg-amber-900/30 text-amber-600 rounded flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]">warning</span>
+</div>
+<div>
+<p class="text-sm font-bold leading-tight dark:text-gray-200">Resource Shortage</p>
+<p class="text-xs text-gray-500 mt-1">Dev Lead out for 2 weeks (Family Leave).</p>
+</div>
+</div>
+<div class="flex gap-4 p-3 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-lg transition-colors cursor-pointer group border-t border-gray-100 dark:border-gray-800">
+<div class="size-8 shrink-0 bg-red-100 dark:bg-red-900/30 text-red-600 rounded flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]">money_off</span>
+</div>
+<div>
+<p class="text-sm font-bold leading-tight dark:text-gray-200">Budget Cap Reached</p>
+<p class="text-xs text-gray-500 mt-1">Integration testing exceeded q3 buffer.</p>
+</div>
+</div>
+</div>
+<button class="w-full mt-6 py-2 text-xs font-bold text-gray-400 hover:text-primary transition-colors border-t border-gray-100 dark:border-gray-800 pt-4 flex items-center justify-center gap-2">
+                            View All Issues
+                            <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Team & HR Section Snippet -->
+<div class="bg-white dark:bg-[#1a2234] rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden shadow-sm">
+<div class="px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center">
+<h3 class="font-bold dark:text-white">Active Resources</h3>
+<button class="text-primary text-xs font-bold hover:underline">Manage Team</button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead>
+<tr class="bg-background-light dark:bg-gray-800/30 text-[10px] font-bold uppercase text-gray-400 tracking-wider">
+<th class="px-6 py-3">Team Member</th>
+<th class="px-6 py-3">Primary Role</th>
+<th class="px-6 py-3">Current Project</th>
+<th class="px-6 py-3">Workload Status</th>
+<th class="px-6 py-3 text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+<tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="size-8 rounded-full bg-blue-100 flex items-center justify-center font-bold text-xs text-primary">SC</div>
+<span class="text-sm font-semibold dark:text-gray-200">Sarah Connor</span>
+</div>
+</td>
+<td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">Lead Frontend Eng</td>
+<td class="px-6 py-4 text-sm font-medium dark:text-gray-300">Cloud Migration</td>
+<td class="px-6 py-4">
+<span class="px-2 py-1 bg-green-100 text-green-700 text-[10px] font-bold rounded-lg uppercase">Balanced</span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-gray-400 hover:text-primary"><span class="material-symbols-outlined text-[18px]">mail</span></button>
+</td>
+</tr>
+<tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="size-8 rounded-full bg-purple-100 flex items-center justify-center font-bold text-xs text-purple-700">MR</div>
+<span class="text-sm font-semibold dark:text-gray-200">Marcus Reed</span>
+</div>
+</td>
+<td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">Security Analyst</td>
+<td class="px-6 py-4 text-sm font-medium dark:text-gray-300">Q3 Security Audit</td>
+<td class="px-6 py-4">
+<span class="px-2 py-1 bg-red-100 text-red-700 text-[10px] font-bold rounded-lg uppercase">Overloaded</span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-gray-400 hover:text-primary"><span class="material-symbols-outlined text-[18px]">mail</span></button>
+</td>
+</tr>
+<tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="size-8 rounded-full bg-amber-100 flex items-center justify-center font-bold text-xs text-amber-700">JL</div>
+<span class="text-sm font-semibold dark:text-gray-200">Jenny Lane</span>
+</div>
+</td>
+<td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">UI Designer</td>
+<td class="px-6 py-4 text-sm font-medium dark:text-gray-300">Portal Redesign</td>
+<td class="px-6 py-4">
+<span class="px-2 py-1 bg-green-100 text-green-700 text-[10px] font-bold rounded-lg uppercase">Available</span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="text-gray-400 hover:text-primary"><span class="material-symbols-outlined text-[18px]">mail</span></button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

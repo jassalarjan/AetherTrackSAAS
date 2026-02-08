@@ -15,6 +15,8 @@ api.interceptors.request.use(
     const token = localStorage.getItem('accessToken');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+      // Update last activity time on each request
+      localStorage.setItem('lastActivityTime', Date.now().toString());
     }
     return config;
   },

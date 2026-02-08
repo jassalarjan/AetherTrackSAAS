@@ -30,6 +30,11 @@ import HRCalendar from './pages/HRCalendar';
 import LeavesPage from './pages/LeavesPage';
 import HRDashboard from './pages/HRDashboard';
 import EmailCenter from './pages/EmailCenter';
+import ProjectDashboard from './pages/ProjectDashboard';
+import ProjectDetail from './pages/ProjectDetail';
+import ProjectGantt from './pages/ProjectGantt';
+import SprintManagement from './pages/SprintManagement';
+import ResourceWorkload from './pages/ResourceWorkload';
 
 function AppContent() {
   // Initialize notifications
@@ -68,6 +73,51 @@ function AppContent() {
         element={
           <ProtectedRoute>
             <Kanban />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/projects"
+        element={
+          <ProtectedRoute>
+            <ProjectDashboard />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/projects/:id"
+        element={
+          <ProtectedRoute>
+            <ProjectDetail />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/projects/gantt"
+        element={
+          <ProtectedRoute>
+            <ProjectGantt />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/sprints"
+        element={
+          <ProtectedRoute>
+            <SprintManagement />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/resources"
+        element={
+          <ProtectedRoute>
+            <ResourceWorkload />
           </ProtectedRoute>
         }
       />

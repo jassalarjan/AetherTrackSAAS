@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Resource &amp; Workload View - ProManage Enterprise</title>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#135bec",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#101622",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #334155;
+        }
+        .sticky-col {
+            position: sticky;
+            left: 0;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 antialiased">
+<div class="flex h-screen overflow-hidden">
+<!-- Sidebar Navigation -->
+<aside class="w-64 flex-shrink-0 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hidden lg:flex flex-col">
+<div class="p-6 flex flex-col gap-8 h-full">
+<div class="flex items-center gap-3">
+<div class="size-10 bg-primary rounded-xl flex items-center justify-center text-white">
+<span class="material-symbols-outlined">account_tree</span>
+</div>
+<div class="flex flex-col">
+<h1 class="text-slate-900 dark:text-white text-sm font-bold leading-tight">ProManage</h1>
+<p class="text-slate-500 text-xs font-medium uppercase tracking-wider">Enterprise Plan</p>
+</div>
+</div>
+<nav class="flex flex-col gap-1 flex-1">
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined text-xl">dashboard</span>
+<span class="text-sm font-medium">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined text-xl">work</span>
+<span class="text-sm font-medium">Projects</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 bg-primary/10 text-primary rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined text-xl">group</span>
+<span class="text-sm font-semibold">Resources</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined text-xl">schedule</span>
+<span class="text-sm font-medium">Time Tracking</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined text-xl">analytics</span>
+<span class="text-sm font-medium">Reports</span>
+</a>
+</nav>
+<div class="pt-6 border-t border-slate-100 dark:border-slate-800">
+<div class="flex items-center gap-3 px-3 py-2">
+<div class="size-8 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="User profile avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD3SO1y0AwyL-BiII2axVM4M1H9JV0GakYqiH0_dJmZKA5rqIsqXgc_qgBlgFscaEN6eNbJNCG9QwEvys2Dx90qx0lC_cFAgUQQS3B2_RxouIPv3mnXBEDh4xjb57eQ8CETXYpNQBxM6ChF6DKSrQmZu6o06srLEAkD4Kgpr2gWcKgmMKhKdD7oXvhqWdDtOKN8zjnjQD-1pJKFDAOYoXE-GmsAZLL8MjTB99Yk-sDVCYKX8rbfiFD1dwr_RRpUKzqt-J07DR9XXF63"/>
+</div>
+<div class="flex flex-col">
+<span class="text-xs font-bold text-slate-900 dark:text-white">Alex Rivera</span>
+<span class="text-[10px] text-slate-500 uppercase">Admin</span>
+</div>
+<span class="material-symbols-outlined ml-auto text-slate-400 text-lg">settings</span>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="flex-1 flex flex-col min-w-0 overflow-hidden">
+<!-- Header -->
+<header class="h-16 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between px-6 z-20">
+<div class="flex items-center gap-6">
+<h2 class="text-lg font-bold text-slate-900 dark:text-white">Resource &amp; Workload</h2>
+<div class="flex items-center bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
+<button class="px-3 py-1.5 text-xs font-semibold rounded-md transition-all bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm">Team View</button>
+<button class="px-3 py-1.5 text-xs font-medium text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-all">Project View</button>
+<button class="px-3 py-1.5 text-xs font-medium text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-all">Capacity Map</button>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative w-64">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xl">search</span>
+<input class="w-full bg-slate-100 dark:bg-slate-800 border-none rounded-lg py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-primary/20 placeholder:text-slate-500" placeholder="Search resources..." type="text"/>
+</div>
+<div class="flex items-center gap-2">
+<button class="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="bg-primary text-white text-sm font-bold px-4 py-2 rounded-lg flex items-center gap-2">
+<span class="material-symbols-outlined text-lg">add</span>
+                        Add Resource
+                    </button>
+</div>
+</div>
+</header>
+<!-- Subheader Controls -->
+<div class="flex flex-wrap items-center justify-between gap-4 px-6 py-4 bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800">
+<div class="flex items-center gap-3">
+<div class="flex items-center gap-1">
+<button class="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md text-slate-500">
+<span class="material-symbols-outlined">chevron_left</span>
+</button>
+<button class="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md text-slate-500">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+<h3 class="text-sm font-bold text-slate-900 dark:text-white">Jan 12 – Jan 18, 2024</h3>
+<button class="ml-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-3 py-1 rounded-md text-xs font-semibold">Today</button>
+</div>
+<div class="flex items-center gap-3">
+<div class="flex items-center bg-slate-100 dark:bg-slate-800 rounded-lg p-1 h-9">
+<button class="px-3 h-full text-xs font-medium text-slate-500">Day</button>
+<button class="px-4 h-full text-xs font-bold bg-white dark:bg-slate-700 rounded-md shadow-sm">Week</button>
+<button class="px-3 h-full text-xs font-medium text-slate-500">Month</button>
+</div>
+<button class="flex items-center gap-2 px-3 py-1.5 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800">
+<span class="material-symbols-outlined text-lg">filter_list</span>
+                    Filters
+                </button>
+<button class="flex items-center gap-2 px-3 py-1.5 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800">
+<span class="material-symbols-outlined text-lg">ios_share</span>
+                    Export
+                </button>
+</div>
+</div>
+<!-- Allocation Table/Grid Container -->
+<div class="flex-1 overflow-auto custom-scrollbar bg-slate-50 dark:bg-slate-950">
+<table class="w-full border-separate border-spacing-0 table-fixed min-w-[1200px]">
+<thead>
+<tr class="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
+<th class="sticky-col top-0 bg-white dark:bg-slate-900 w-72 px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-slate-500 border-b border-slate-200 dark:border-slate-800 border-r border-slate-100 dark:border-slate-800">
+                            Team Member
+                        </th>
+<!-- Timeline Headers -->
+<th class="px-4 py-4 text-center border-b border-slate-200 dark:border-slate-800 border-r border-slate-100 dark:border-slate-800">
+<div class="text-xs font-bold text-slate-900 dark:text-white">Mon</div>
+<div class="text-[10px] text-slate-400">Jan 12</div>
+</th>
+<th class="px-4 py-4 text-center border-b border-slate-200 dark:border-slate-800 border-r border-slate-100 dark:border-slate-800 bg-primary/5">
+<div class="text-xs font-black text-primary">Tue</div>
+<div class="text-[10px] text-primary/70">Jan 13</div>
+</th>
+<th class="px-4 py-4 text-center border-b border-slate-200 dark:border-slate-800 border-r border-slate-100 dark:border-slate-800">
+<div class="text-xs font-bold text-slate-900 dark:text-white">Wed</div>
+<div class="text-[10px] text-slate-400">Jan 14</div>
+</th>
+<th class="px-4 py-4 text-center border-b border-slate-200 dark:border-slate-800 border-r border-slate-100 dark:border-slate-800">
+<div class="text-xs font-bold text-slate-900 dark:text-white">Thu</div>
+<div class="text-[10px] text-slate-400">Jan 15</div>
+</th>
+<th class="px-4 py-4 text-center border-b border-slate-200 dark:border-slate-800 border-r border-slate-100 dark:border-slate-800">
+<div class="text-xs font-bold text-slate-900 dark:text-white">Fri</div>
+<div class="text-[10px] text-slate-400">Jan 16</div>
+</th>
+<th class="px-4 py-4 text-center border-b border-slate-200 dark:border-slate-800 border-r border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20">
+<div class="text-xs font-bold text-slate-400 dark:text-slate-600">Sat</div>
+<div class="text-[10px] text-slate-400">Jan 17</div>
+</th>
+<th class="px-4 py-4 text-center border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20">
+<div class="text-xs font-bold text-slate-400 dark:text-slate-600">Sun</div>
+<div class="text-[10px] text-slate-400">Jan 18</div>
+</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+<!-- Row 1: Over-allocated -->
+<tr class="group hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors">
+<td class="sticky-col bg-white dark:bg-slate-900 group-hover:bg-slate-50 dark:group-hover:bg-slate-900/50 border-r border-slate-100 dark:border-slate-800 px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="size-9 rounded-full bg-blue-100 flex-shrink-0">
+<img class="w-full h-full rounded-full object-cover" data-alt="Team member profile picture" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBQEQG773CB0JLE95QrJM1p3i4rjrwOrf2NYaK7GL27mwH4v5FJ1TuNuYfgTfdu3GNgduilDm0J-XKXC_L5nODx6ezBNFWIUGcBIYbqt5IQtj6WRqHnyZklUpEgdTOBHHkxbqFggFpW4LVnYipmMHN-ZaCnRjr4n6yy0bIR6p1rI54yvoPA9z9P7AHmiGCw7N6ZWbNpP9VY5Wq3Q3CHxQJQYvchlPpog8WKc2RmDc-bpru6NNIa2Pax3-R827AFOO4punTAlG0KzEdm"/>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="text-sm font-bold text-slate-900 dark:text-white truncate">Marcus Thorne</span>
+<span class="text-xs text-slate-500">Senior UI Designer</span>
+</div>
+<div class="ml-auto flex items-center gap-1 text-red-500 font-bold text-xs bg-red-50 dark:bg-red-500/10 px-1.5 py-0.5 rounded">
+                                    115%
+                                </div>
+</div>
+</td>
+<!-- Day Columns -->
+<td class="p-2 border-r border-slate-100 dark:border-slate-800">
+<div class="h-14 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 flex flex-col justify-center px-3 relative">
+<div class="text-[10px] font-bold text-slate-900 dark:text-white mb-1">8h / 8h</div>
+<div class="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full" style="width: 100%"></div>
+</div>
+</div>
+</td>
+<td class="p-2 border-r border-slate-100 dark:border-slate-800 bg-primary/5">
+<div class="h-14 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-900/40 flex flex-col justify-center px-3 relative overflow-hidden">
+<div class="flex items-center justify-between mb-1">
+<div class="text-[10px] font-black text-red-600 dark:text-red-400">12h / 8h</div>
+<span class="material-symbols-outlined text-red-500 text-sm">warning</span>
+</div>
+<div class="w-full h-2 bg-red-100 dark:bg-red-900/40 rounded-full overflow-hidden">
+<div class="h-full bg-red-500 rounded-full" style="width: 100%"></div>
+</div>
+</div>
+</td>
+<td class="p-2 border-r border-slate-100 dark:border-slate-800">
+<div class="h-14 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 flex flex-col justify-center px-3">
+<div class="text-[10px] font-bold text-slate-900 dark:text-white mb-1">10h / 8h</div>
+<div class="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-red-400 rounded-full" style="width: 100%"></div>
+</div>
+</div>
+</td>
+<td class="p-2 border-r border-slate-100 dark:border-slate-800">
+<div class="h-14 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 flex flex-col justify-center px-3">
+<div class="text-[10px] font-bold text-slate-900 dark:text-white mb-1">8h / 8h</div>
+<div class="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full" style="width: 100%"></div>
+</div>
+</div>
+</td>
+<td class="p-2 border-r border-slate-100 dark:border-slate-800">
+<div class="h-14 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 flex flex-col justify-center px-3">
+<div class="text-[10px] font-bold text-slate-900 dark:text-white mb-1">8h / 8h</div>
+<div class="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full" style="width: 100%"></div>
+</div>
+</div>
+</td>
+<td class="p-2 border-r border-slate-100 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-800/10"></td>
+<td class="p-2 bg-slate-50/30 dark:bg-slate-800/10"></td>
+</tr>
+<!-- Row 2: Optimal -->
+<tr class="group hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors">
+<td class="sticky-col bg-white dark:bg-slate-900 group-hover:bg-slate-50 dark:group-hover:bg-slate-900/50 border-r border-slate-100 dark:border-slate-800 px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="size-9 rounded-full bg-indigo-100 flex-shrink-0">
+<img class="w-full h-full rounded-full object-cover" data-alt="Team member profile picture" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCB3L_wy9mPyvV-8rf3M8xqewXpKm4OONeF8LPnl9HmySIKbsCslu-UQtgcz6KmbHZvPB5c-NIQBt7mIEI9k6rY3WKCYv2GXtckqmBqfqpCUlhJV2Bxoj_1JEB7dOBxbHsx7kr_rUUSYeIW8fhtja_elM694ILxo3mpRYsbdroz1RkLKKKjpe9JlQegJFJg6Q-SmKRnlt_LAfcvr5Ki0k9AaEpg0866yW2XN8vjaEdM1QMNkCa_l-HbK4bKP77EGbyKihZ6u966sxV_"/>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="text-sm font-bold text-slate-900 dark:text-white truncate">Sarah Chen</span>
+<span class="text-xs text-slate-500">Project Manager</span>
+</div>
+<div class="ml-auto flex items-center gap-1 text-emerald-500 font-bold text-xs bg-emerald-50 dark:bg-emerald-500/10 px-1.5 py-0.5 rounded">
+                                    92%
+                                </div>
+</div>
+</td>
+<td class="p-2 border-r border-slate-100 dark:border-slate-800">
+<div class="h-14 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 flex flex-col justify-center px-3">
+<div class="text-[10px] font-bold text-slate-900 dark:text-white mb-1">7h / 8h</div>
+<div class="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-emerald-500 rounded-full" style="width: 87.5%"></div>
+</div>
+</div>
+</td>
+<td class="p-2 border-r border-slate-100 dark:border-slate-800 bg-primary/5">
+<div class="h-14 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 flex flex-col justify-center px-3">
+<div class="text-[10px] font-bold text-slate-900 dark:text-white mb-1">8h / 8h</div>
+<div class="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full" style="width: 100%"></div>
+</div>
+</div>
+</td>
+<td class="p-2 border-r border-slate-100 dark:border-slate-800">
+<div class="h-14 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 flex flex-col justify-center px-3">
+<div class="text-[10px] font-bold text-slate-900 dark:text-white mb-1">8h / 8h</div>
+<div class="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full" style="width: 100%"></div>
+</div>
+</div>
+</td>
+<td class="p-2 border-r border-slate-100 dark:border-slate-800">
+<div class="h-14 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 flex flex-col justify-center px-3">
+<div class="text-[10px] font-bold text-slate-900 dark:text-white mb-1">8h / 8h</div>
+<div class="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full" style="width: 100%"></div>
+</div>
+</div>
+</td>
+<td class="p-2 border-r border-slate-100 dark:border-slate-800">
+<div class="h-14 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 flex flex-col justify-center px-3">
+<div class="text-[10px] font-bold text-slate-900 dark:text-white mb-1">6h / 8h</div>
+<div class="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-emerald-400 rounded-full" style="width: 75%"></div>
+</div>
+</div>
+</td>
+<td class="p-2 border-r border-slate-100 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-800/10"></td>
+<td class="p-2 bg-slate-50/30 dark:bg-slate-800/10"></td>
+</tr>
+<!-- Row 3: Under-utilized -->
+<tr class="group hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors">
+<td class="sticky-col bg-white dark:bg-slate-900 group-hover:bg-slate-50 dark:group-hover:bg-slate-900/50 border-r border-slate-100 dark:border-slate-800 px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="size-9 rounded-full bg-amber-100 flex-shrink-0">
+<img class="w-full h-full rounded-full object-cover" data-alt="Team member profile picture" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDAZxD-bSl6Fom9GAu19SrzGOvHHqa3v-paDSJN3U2Pk0svRpcC8xnx0QR_LUyAWvjv7EjTdMklEMQuMT06FpT6o2ZFp1ONARNSf7e8diaGbJfDnoxZrNXerUnu37obWGil4ui3BhYr1G6aD5agsO0fcb0cb8fYAP3hLArmvZ1854rtTxvrlbaNR0wSk-oU1m8tzaFWDspXJ3PXBlpj3WdV3_x_wiXh_0l7l2UP2YpV2tTEaGkJAx6IA_Shj00uttoUnR5BXS7TTUQ7"/>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="text-sm font-bold text-slate-900 dark:text-white truncate">David Park</span>
+<span class="text-xs text-slate-500">Backend Architect</span>
+</div>
+<div class="ml-auto flex items-center gap-1 text-slate-400 font-bold text-xs bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">
+                                    45%
+                                </div>
+</div>
+</td>
+<td class="p-2 border-r border-slate-100 dark:border-slate-800">
+<div class="h-14 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 flex flex-col justify-center px-3">
+<div class="text-[10px] font-bold text-slate-900 dark:text-white mb-1">4h / 8h</div>
+<div class="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-slate-400 rounded-full" style="width: 50%"></div>
+</div>
+</div>
+</td>
+<td class="p-2 border-r border-slate-100 dark:border-slate-800 bg-primary/5">
+<div class="h-14 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 flex flex-col justify-center px-3">
+<div class="text-[10px] font-bold text-slate-900 dark:text-white mb-1">3h / 8h</div>
+<div class="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-slate-400 rounded-full" style="width: 37%"></div>
+</div>
+</div>
+</td>
+<td class="p-2 border-r border-slate-100 dark:border-slate-800">
+<div class="h-14 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 flex flex-col justify-center px-3">
+<div class="text-[10px] font-bold text-slate-900 dark:text-white mb-1">5h / 8h</div>
+<div class="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-slate-400 rounded-full" style="width: 62%"></div>
+</div>
+</div>
+</td>
+<td class="p-2 border-r border-slate-100 dark:border-slate-800">
+<div class="h-14 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 flex flex-col justify-center px-3">
+<div class="text-[10px] font-bold text-slate-900 dark:text-white mb-1">4h / 8h</div>
+<div class="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-slate-400 rounded-full" style="width: 50%"></div>
+</div>
+</div>
+</td>
+<td class="p-2 border-r border-slate-100 dark:border-slate-800">
+<div class="h-14 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 flex flex-col justify-center px-3">
+<div class="text-[10px] font-bold text-slate-900 dark:text-white mb-1">2h / 8h</div>
+<div class="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-slate-400 rounded-full" style="width: 25%"></div>
+</div>
+</div>
+</td>
+<td class="p-2 border-r border-slate-100 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-800/10"></td>
+<td class="p-2 bg-slate-50/30 dark:bg-slate-800/10"></td>
+</tr>
+<!-- Row 4: Mixed -->
+<tr class="group hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors">
+<td class="sticky-col bg-white dark:bg-slate-900 group-hover:bg-slate-50 dark:group-hover:bg-slate-900/50 border-r border-slate-100 dark:border-slate-800 px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="size-9 rounded-full bg-pink-100 flex-shrink-0">
+<img class="w-full h-full rounded-full object-cover" data-alt="Team member profile picture" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAzea-AWvmzE3IM9lCGW1W3un1eNFDsPP_-YanPBsZPdubPKxpS8vCAF9tWl325EuSVo5hN8o6ndgPGohOT80ls0Na0g7Mc3u2tphbPxRUzGjZpE6C5IlLVSMMxJ_pEmaK-cvYXTQqYrq9jhRJIpyb_-xNEwXn-ltaJSuPNCQ3XKCYAaMVxcdB57LGo0hdN4c9SUrTFIHAzBoEjv1L2shfAopdg0fovA4SRSxL6ff9NY8Z_k7MixC5OoR6VyYxyASlA4oxRYvY8C2md"/>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="text-sm font-bold text-slate-900 dark:text-white truncate">Elena Gilbert</span>
+<span class="text-xs text-slate-500">Marketing Lead</span>
+</div>
+<div class="ml-auto flex items-center gap-1 text-primary font-bold text-xs bg-primary/10 px-1.5 py-0.5 rounded">
+                                    80%
+                                </div>
+</div>
+</td>
+<td class="p-2 border-r border-slate-100 dark:border-slate-800">
+<div class="h-14 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 flex flex-col justify-center px-3">
+<div class="text-[10px] font-bold text-slate-900 dark:text-white mb-1">8h / 8h</div>
+<div class="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full" style="width: 100%"></div>
+</div>
+</div>
+</td>
+<td class="p-2 border-r border-slate-100 dark:border-slate-800 bg-primary/5">
+<div class="h-14 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 flex flex-col justify-center px-3">
+<div class="text-[10px] font-bold text-slate-900 dark:text-white mb-1">8h / 8h</div>
+<div class="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full" style="width: 100%"></div>
+</div>
+</div>
+</td>
+<td class="p-2 border-r border-slate-100 dark:border-slate-800">
+<div class="h-14 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 flex flex-col justify-center px-3">
+<div class="text-[10px] font-bold text-slate-900 dark:text-white mb-1">8h / 8h</div>
+<div class="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full" style="width: 100%"></div>
+</div>
+</div>
+</td>
+<td class="p-2 border-r border-slate-100 dark:border-slate-800">
+<div class="h-14 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 flex flex-col justify-center px-3">
+<div class="text-[10px] font-bold text-slate-900 dark:text-white mb-1">4h / 8h</div>
+<div class="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-slate-400 rounded-full" style="width: 50%"></div>
+</div>
+</div>
+</td>
+<td class="p-2 border-r border-slate-100 dark:border-slate-800">
+<div class="h-14 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 flex flex-col justify-center px-3">
+<div class="text-[10px] font-bold text-slate-900 dark:text-white mb-1">4h / 8h</div>
+<div class="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+<div class="h-full bg-slate-400 rounded-full" style="width: 50%"></div>
+</div>
+</div>
+</td>
+<td class="p-2 border-r border-slate-100 dark:border-slate-800 bg-slate-50/30 dark:bg-slate-800/10"></td>
+<td class="p-2 bg-slate-50/30 dark:bg-slate-800/10"></td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Legend Footer -->
+<footer class="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-6 py-3 flex items-center justify-between">
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2">
+<div class="size-3 rounded bg-red-500"></div>
+<span class="text-xs text-slate-500 font-medium">Overloaded (&gt;100%)</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="size-3 rounded bg-primary"></div>
+<span class="text-xs text-slate-500 font-medium">Optimal (80-100%)</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="size-3 rounded bg-emerald-400"></div>
+<span class="text-xs text-slate-500 font-medium">Available (60-80%)</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="size-3 rounded bg-slate-300 dark:bg-slate-700"></div>
+<span class="text-xs text-slate-500 font-medium">Low Utilization (&lt;60%)</span>
+</div>
+</div>
+<div class="text-[10px] text-slate-400 font-medium uppercase tracking-widest">
+                Showing 12 of 48 Resources
+            </div>
+</footer>
+</main>
+<!-- Side Task Panel (Hidden by default or peek-in) -->
+<aside class="w-80 border-l border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex-shrink-0 hidden xl:flex flex-col">
+<div class="p-6 border-b border-slate-100 dark:border-slate-800">
+<h4 class="text-sm font-bold text-slate-900 dark:text-white">Daily Details</h4>
+<p class="text-xs text-slate-500">Tue, Jan 13 — Marcus Thorne</p>
+</div>
+<div class="p-6 flex flex-col gap-4">
+<div class="bg-red-50 dark:bg-red-900/20 p-4 rounded-xl border border-red-100 dark:border-red-900/40">
+<div class="flex items-center justify-between mb-2">
+<span class="text-[10px] font-bold text-red-600 dark:text-red-400 uppercase tracking-wide">Over-allocated</span>
+<span class="text-xs font-bold text-red-700 dark:text-red-300">12h Total</span>
+</div>
+<div class="text-xs text-red-600/80 dark:text-red-400/80 leading-relaxed">
+                    Marcus has 3 overlapping critical tasks today. Consider reassigning 4 hours.
+                </div>
+</div>
+<div class="flex flex-col gap-3">
+<div class="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-100 dark:border-slate-800">
+<div class="flex justify-between items-start mb-1">
+<h5 class="text-xs font-bold text-slate-900 dark:text-white">Design System Audit</h5>
+<span class="text-[10px] font-bold text-slate-400">5h</span>
+</div>
+<p class="text-[10px] text-slate-500 truncate">Project: Phoenix Web App</p>
+</div>
+<div class="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-100 dark:border-slate-800">
+<div class="flex justify-between items-start mb-1">
+<h5 class="text-xs font-bold text-slate-900 dark:text-white">Mobile Onboarding Flow</h5>
+<span class="text-[10px] font-bold text-slate-400">4h</span>
+</div>
+<p class="text-[10px] text-slate-500 truncate">Project: Global Expansion</p>
+</div>
+<div class="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-100 dark:border-slate-800">
+<div class="flex justify-between items-start mb-1">
+<h5 class="text-xs font-bold text-slate-900 dark:text-white">Client Feedback Review</h5>
+<span class="text-[10px] font-bold text-slate-400">3h</span>
+</div>
+<p class="text-[10px] text-slate-500 truncate">Project: Phoenix Web App</p>
+</div>
+</div>
+<button class="mt-4 w-full py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                View Allocation History
+            </button>
+</div>
+</aside>
+</div>
+</body></html>

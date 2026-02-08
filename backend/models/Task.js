@@ -34,6 +34,12 @@ const taskSchema = new mongoose.Schema({
     ref: 'Team',
     default: null
   },
+  project_id: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Project',
+    default: null,
+    index: true
+  },
   // WORKSPACE SUPPORT: All tasks belong to a workspace (null for system admins)
   workspaceId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -67,6 +73,8 @@ taskSchema.index({ workspaceId: 1, status: 1 });
 taskSchema.index({ workspaceId: 1, assigned_to: 1 });
 taskSchema.index({ workspaceId: 1, team_id: 1 });
 taskSchema.index({ workspaceId: 1, due_date: 1 });
+taskSchema.index({ workspaceId: 1, project_id: 1 });
+taskSchema.index({ project_id: 1, status: 1 });
 
 taskSchema.pre('save', function(next) {
   this.updated_at = Date.now();

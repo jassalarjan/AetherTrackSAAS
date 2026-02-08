@@ -11,16 +11,96 @@ export const AuthProvider = ({ children }) => {
   const [socket, setSocket] = useState(null);
 
   useEffect(() => {
-    // Check if user is logged in
-    const storedUser = localStorage.getItem('user');
-    const token = localStorage.getItem('accessToken');
+    // Check if user is logged in and validate token
+    const initAuth = async () => {
+      const storedUser = localStorage.getItem('user');
+      const token = localStorage.getItem('accessToken');
 
-    if (storedUser && token) {
-      setUser(JSON.parse(storedUser));
-      initializeSocket(JSON.parse(storedUser).id);
-    }
-    setLoading(false);
+      if (storedUser && token) {
+        try {
+          // Validate token by making a request to verify user
+          const response = await api.get('/auth/verify');
+          const validatedUser = response.data.user;
+          
+          // Update stored user with latest data from server
+          const userWithWorkspace = {
+            ...validatedUser,
+            workspace: validatedUser.workspace
+          };
+          
+          localStorage.setItem('user', JSON.stringify(userWithWorkspace));
+          setUser(userWithWorkspace);
+          initializeSocket(validatedUser.id);
+        } catch (error) {
+          // Token is invalid or expired, clear everything
+          console.error('Token validation failed:', error);
+          localStorage.removeItem('user');
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('refreshToken');
+          localStorage.removeItem('lastActivityTime');
+          setUser(null);
+        }
+      }
+      setLoading(false);
+    };
+
+    initAuth();
+
+    // Listen for logout events from axios interceptor
+    const handleAuthLogout = () => {
+      setUser(null);
+      if (socket) {
+        socket.disconnect();
+        setSocket(null);
+      }
+    };
+
+    window.addEventListener('auth:logout', handleAuthLogout);
+    
+    return () => {
+      window.removeEventListener('auth:logout', handleAuthLogout);
+    };
   }, []);
+
+  // Activity tracking
+  useEffect(() => {
+    if (!user) return;
+
+    const ACTIVITY_TIMEOUT = 30 * 60 * 1000; // 30 minutes
+
+    const updateActivity = () => {
+      localStorage.setItem('lastActivityTime', Date.now().toString());
+    };
+
+    // Track user activity
+    const events = ['mousedown', 'keydown', 'scroll', 'touchstart', 'click'];
+    events.forEach(event => {
+      window.addEventListener(event, updateActivity, { passive: true });
+    });
+
+    // Check for inactivity periodically
+    const checkInactivity = setInterval(() => {
+      const lastActivity = localStorage.getItem('lastActivityTime');
+      const token = localStorage.getItem('accessToken');
+      
+      if (lastActivity && token) {
+        const timeSinceActivity = Date.now() - parseInt(lastActivity, 10);
+        
+        if (timeSinceActivity > ACTIVITY_TIMEOUT) {
+          console.log('Session expired due to inactivity');
+          logout();
+          window.location.href = '/login';
+        }
+      }
+    }, 60000); // Check every minute
+
+    return () => {
+      events.forEach(event => {
+        window.removeEventListener(event, updateActivity);
+      });
+      clearInterval(checkInactivity);
+    };
+  }, [user]);
 
   const initializeSocket = (userId) => {
     const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
@@ -54,6 +134,7 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('user', JSON.stringify(userWithWorkspace));
       localStorage.setItem('accessToken', accessToken);
       localStorage.setItem('refreshToken', refreshToken);
+      localStorage.setItem('lastActivityTime', Date.now().toString());
 
       setUser(userWithWorkspace);
       initializeSocket(user.id);
@@ -83,6 +164,7 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('user', JSON.stringify(user));
       localStorage.setItem('accessToken', accessToken);
       localStorage.setItem('refreshToken', refreshToken);
+      localStorage.setItem('lastActivityTime', Date.now().toString());
 
       setUser(user);
       initializeSocket(user.id);

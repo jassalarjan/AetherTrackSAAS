@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Reports &amp; Analytics Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#135bec",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#101622",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .filled-icon {
+            font-variation-settings: 'FILL' 1;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-[#0d121b] dark:text-gray-100 antialiased">
+<div class="flex h-screen overflow-hidden">
+<!-- Sidebar Navigation -->
+<aside class="w-64 border-r border-[#e7ebf3] dark:border-gray-800 bg-white dark:bg-[#1a2133] flex flex-col">
+<div class="p-6 flex flex-col gap-8">
+<div class="flex items-center gap-3">
+<div class="size-10 bg-primary rounded-lg flex items-center justify-center text-white">
+<span class="material-symbols-outlined text-2xl">leaderboard</span>
+</div>
+<div class="flex flex-col">
+<h1 class="text-[#0d121b] dark:text-white text-base font-bold leading-none">Project Manager</h1>
+<p class="text-[#4c669a] dark:text-gray-400 text-xs font-normal">Enterprise Edition</p>
+</div>
+</div>
+<nav class="flex flex-col gap-2">
+<a class="flex items-center gap-3 px-3 py-2 text-[#4c669a] hover:bg-background-light dark:hover:bg-gray-800 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined text-[24px]">folder</span>
+<span class="text-sm font-medium">Projects</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-[#4c669a] hover:bg-background-light dark:hover:bg-gray-800 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined text-[24px]">checklist</span>
+<span class="text-sm font-medium">Tasks</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 bg-primary/10 text-primary rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined text-[24px] filled-icon">bar_chart</span>
+<span class="text-sm font-semibold">Reports</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-[#4c669a] hover:bg-background-light dark:hover:bg-gray-800 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined text-[24px]">group</span>
+<span class="text-sm font-medium">Team</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-[#4c669a] hover:bg-background-light dark:hover:bg-gray-800 rounded-lg transition-colors" href="#">
+<span class="material-symbols-outlined text-[24px]">settings</span>
+<span class="text-sm font-medium">Settings</span>
+</a>
+</nav>
+</div>
+<div class="mt-auto p-6 border-t border-[#e7ebf3] dark:border-gray-800">
+<div class="flex items-center gap-3">
+<div class="size-8 rounded-full bg-gray-200" data-alt="User profile avatar placeholder">
+<img alt="Profile" class="rounded-full size-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCg6rgcld8H5M_3EfA6JEswRGBmm04BPirofoo9qp9A42oIEmTty5DIgVd7D7npGbMOMk8t3bQgTvr1z4YlrSNapiTldQhxeRjAwgcQ_FZ-Qk7T0rvi1lq84DcucEsQ0CqZqLrXD4VDwWSOUXGFUVz4EhbwiMmyovSoOvWDFH2DG3Ai5Hyhob2dQRcajbmOz9isYU4cwctWcjiP0YqRlGH37f1wfi1NLXUXtWyvjktSUK_JXuHfhAP4TLAjxld51XzgVZ6bZF1mqrkE"/>
+</div>
+<div class="flex flex-col">
+<p class="text-sm font-semibold dark:text-white">Alex Rivera</p>
+<p class="text-xs text-[#4c669a]">Project Director</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 overflow-y-auto">
+<!-- Header -->
+<header class="sticky top-0 z-10 flex items-center justify-between border-b border-[#e7ebf3] dark:border-gray-800 bg-white/80 dark:bg-[#1a2133]/80 backdrop-blur-md px-8 py-4">
+<div class="flex items-center gap-6">
+<h2 class="text-xl font-bold text-[#0d121b] dark:text-white tracking-tight">Reports &amp; Analytics</h2>
+<div class="relative group">
+<button class="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[#cfd7e7] dark:border-gray-700 bg-white dark:bg-gray-800 text-sm font-medium">
+<span>Q3 Product Growth</span>
+<span class="material-symbols-outlined text-sm">expand_more</span>
+</button>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<div class="relative">
+<span class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-gray-400 text-xl">search</span>
+<input class="pl-10 pr-4 py-2 bg-background-light dark:bg-gray-800 border-none rounded-lg text-sm w-64 focus:ring-2 focus:ring-primary/20" placeholder="Search analytics..." type="text"/>
+</div>
+<div class="flex items-center gap-1 border-l border-gray-200 dark:border-gray-700 ml-2 pl-3">
+<button class="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg text-sm font-bold transition-all shadow-sm">
+<span class="material-symbols-outlined text-[20px]">download</span>
+                        Export
+                        <span class="material-symbols-outlined text-[18px]">keyboard_arrow_down</span>
+</button>
+</div>
+</div>
+</header>
+<div class="p-8 max-w-7xl mx-auto space-y-8">
+<!-- Top Section: Health and KPIs -->
+<div class="grid grid-cols-12 gap-6">
+<!-- Project Health Card -->
+<div class="col-span-12 lg:col-span-5 bg-white dark:bg-[#1a2133] rounded-xl border border-[#e7ebf3] dark:border-gray-800 p-6 shadow-sm">
+<div class="flex justify-between items-start mb-6">
+<div>
+<h3 class="text-lg font-bold dark:text-white">Project Health</h3>
+<p class="text-sm text-[#4c669a]">Status across 12 key performance indicators</p>
+</div>
+<span class="bg-green-100 text-green-700 text-xs font-bold px-2 py-1 rounded">HEALTHY</span>
+</div>
+<div class="relative flex flex-col items-center justify-center pt-4">
+<div class="relative w-64 h-32 overflow-hidden">
+<div class="absolute inset-0 w-64 h-64 border-[16px] border-gray-100 dark:border-gray-800 rounded-full"></div>
+<div class="absolute inset-0 w-64 h-64 border-[16px] border-primary rounded-full" style="clip-path: polygon(0 0, 100% 0, 100% 50%, 0 50%); transform: rotate(45deg);"></div>
+<div class="absolute inset-0 flex items-end justify-center pb-2">
+<div class="text-center">
+<span class="text-4xl font-black text-[#0d121b] dark:text-white leading-none">82</span>
+<span class="text-lg font-bold text-[#4c669a]">/100</span>
+</div>
+</div>
+</div>
+<div class="flex w-full justify-between mt-6 px-4">
+<div class="text-center">
+<p class="text-xs text-[#4c669a] mb-1">Schedule</p>
+<p class="text-sm font-bold text-green-600">On Track</p>
+</div>
+<div class="text-center border-x border-gray-100 dark:border-gray-800 px-6">
+<p class="text-xs text-[#4c669a] mb-1">Budget</p>
+<p class="text-sm font-bold text-green-600">+12% Var</p>
+</div>
+<div class="text-center">
+<p class="text-xs text-[#4c669a] mb-1">Risk</p>
+<p class="text-sm font-bold text-amber-500">Low</p>
+</div>
+</div>
+</div>
+</div>
+<!-- KPI Cards -->
+<div class="col-span-12 lg:col-span-7 grid grid-cols-2 gap-6">
+<div class="bg-white dark:bg-[#1a2133] rounded-xl border border-[#e7ebf3] dark:border-gray-800 p-6 flex flex-col justify-between shadow-sm">
+<div class="flex justify-between items-start">
+<div class="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+<span class="material-symbols-outlined text-primary">payments</span>
+</div>
+<span class="text-green-600 text-sm font-bold flex items-center">
+<span class="material-symbols-outlined text-sm">trending_up</span> 12%
+                            </span>
+</div>
+<div class="mt-4">
+<p class="text-sm text-[#4c669a] font-medium">Total Budget Spent</p>
+<h4 class="text-2xl font-bold dark:text-white mt-1">$124,000</h4>
+</div>
+</div>
+<div class="bg-white dark:bg-[#1a2133] rounded-xl border border-[#e7ebf3] dark:border-gray-800 p-6 flex flex-col justify-between shadow-sm">
+<div class="flex justify-between items-start">
+<div class="p-2 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+<span class="material-symbols-outlined text-purple-600">bolt</span>
+</div>
+<span class="text-green-600 text-sm font-bold flex items-center">
+<span class="material-symbols-outlined text-sm">trending_up</span> 8%
+                            </span>
+</div>
+<div class="mt-4">
+<p class="text-sm text-[#4c669a] font-medium">Team Velocity</p>
+<h4 class="text-2xl font-bold dark:text-white mt-1">42 pts</h4>
+</div>
+</div>
+<div class="bg-white dark:bg-[#1a2133] rounded-xl border border-[#e7ebf3] dark:border-gray-800 p-6 flex flex-col justify-between shadow-sm">
+<div class="flex justify-between items-start">
+<div class="p-2 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
+<span class="material-symbols-outlined text-orange-600">task</span>
+</div>
+<span class="text-red-500 text-sm font-bold flex items-center">
+<span class="material-symbols-outlined text-sm">trending_down</span> 5%
+                            </span>
+</div>
+<div class="mt-4">
+<p class="text-sm text-[#4c669a] font-medium">Active Tasks</p>
+<h4 class="text-2xl font-bold dark:text-white mt-1">86</h4>
+</div>
+</div>
+<div class="bg-white dark:bg-[#1a2133] rounded-xl border border-[#e7ebf3] dark:border-gray-800 p-6 flex flex-col justify-between shadow-sm">
+<div class="flex justify-between items-start">
+<div class="p-2 bg-green-50 dark:bg-green-900/20 rounded-lg">
+<span class="material-symbols-outlined text-green-600">group_work</span>
+</div>
+<span class="text-blue-500 text-sm font-bold flex items-center">Stable</span>
+</div>
+<div class="mt-4">
+<p class="text-sm text-[#4c669a] font-medium">Resource Utilization</p>
+<h4 class="text-2xl font-bold dark:text-white mt-1">94%</h4>
+</div>
+</div>
+</div>
+</div>
+<!-- Middle Section: Velocity Chart -->
+<div class="bg-white dark:bg-[#1a2133] rounded-xl border border-[#e7ebf3] dark:border-gray-800 p-6 shadow-sm">
+<div class="flex items-center justify-between mb-8">
+<div>
+<h3 class="text-lg font-bold dark:text-white">Team Velocity Trends</h3>
+<p class="text-sm text-[#4c669a]">Historical view of story points completed per sprint</p>
+</div>
+<div class="flex gap-2">
+<button class="px-3 py-1 rounded bg-background-light dark:bg-gray-800 text-xs font-medium border border-gray-200 dark:border-gray-700">Daily</button>
+<button class="px-3 py-1 rounded bg-primary text-white text-xs font-bold">Weekly</button>
+<button class="px-3 py-1 rounded bg-background-light dark:bg-gray-800 text-xs font-medium border border-gray-200 dark:border-gray-700">Monthly</button>
+</div>
+</div>
+<div class="h-64 flex flex-col relative">
+<!-- Placeholder Chart Visualization -->
+<div class="flex-1 flex items-end justify-between gap-4 px-2">
+<div class="flex flex-col items-center gap-2 w-full group">
+<div class="w-full bg-primary/20 dark:bg-primary/10 rounded-t-lg h-[40%] group-hover:bg-primary/30 transition-all relative">
+<div class="absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">18 pts</div>
+</div>
+<span class="text-[10px] text-[#4c669a] font-bold">SP 01</span>
+</div>
+<div class="flex flex-col items-center gap-2 w-full group">
+<div class="w-full bg-primary/20 dark:bg-primary/10 rounded-t-lg h-[60%] group-hover:bg-primary/30 transition-all relative">
+<div class="absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">26 pts</div>
+</div>
+<span class="text-[10px] text-[#4c669a] font-bold">SP 02</span>
+</div>
+<div class="flex flex-col items-center gap-2 w-full group">
+<div class="w-full bg-primary rounded-t-lg h-[85%] relative">
+<div class="absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[10px] px-2 py-1 rounded">38 pts</div>
+</div>
+<span class="text-[10px] text-[#4c669a] font-bold">SP 03</span>
+</div>
+<div class="flex flex-col items-center gap-2 w-full group">
+<div class="w-full bg-primary/20 dark:bg-primary/10 rounded-t-lg h-[55%] group-hover:bg-primary/30 transition-all relative">
+<div class="absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">24 pts</div>
+</div>
+<span class="text-[10px] text-[#4c669a] font-bold">SP 04</span>
+</div>
+<div class="flex flex-col items-center gap-2 w-full group">
+<div class="w-full bg-primary/20 dark:bg-primary/10 rounded-t-lg h-[75%] group-hover:bg-primary/30 transition-all relative">
+<div class="absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">32 pts</div>
+</div>
+<span class="text-[10px] text-[#4c669a] font-bold">SP 05</span>
+</div>
+<div class="flex flex-col items-center gap-2 w-full group">
+<div class="w-full bg-primary/20 dark:bg-primary/10 rounded-t-lg h-[95%] group-hover:bg-primary/30 transition-all relative">
+<div class="absolute -top-10 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">42 pts</div>
+</div>
+<span class="text-[10px] text-[#4c669a] font-bold">Current</span>
+</div>
+<div class="flex flex-col items-center gap-2 w-full group opacity-50">
+<div class="w-full border-2 border-dashed border-primary/30 rounded-t-lg h-[80%]"></div>
+<span class="text-[10px] text-[#4c669a] font-bold">Forecast</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom Section: Metrics Table -->
+<div class="bg-white dark:bg-[#1a2133] rounded-xl border border-[#e7ebf3] dark:border-gray-800 shadow-sm overflow-hidden">
+<div class="p-6 border-b border-[#e7ebf3] dark:border-gray-800 flex justify-between items-center">
+<h3 class="text-lg font-bold dark:text-white">Performance Metrics</h3>
+<button class="text-primary text-sm font-semibold hover:underline flex items-center gap-1">
+                        View Detailed Log
+                        <span class="material-symbols-outlined text-sm">open_in_new</span>
+</button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead class="bg-background-light dark:bg-gray-800/50 text-[#4c669a] text-xs font-bold uppercase tracking-wider">
+<tr>
+<th class="px-6 py-4">Task Name</th>
+<th class="px-6 py-4">Assignee</th>
+<th class="px-6 py-4">Status</th>
+<th class="px-6 py-4">Efficiency</th>
+<th class="px-6 py-4 text-right">Variance</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-[#e7ebf3] dark:divide-gray-800">
+<tr class="hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors">
+<td class="px-6 py-4">
+<div class="flex flex-col">
+<span class="text-sm font-bold text-[#0d121b] dark:text-white">API Infrastructure Setup</span>
+<span class="text-xs text-[#4c669a]">Milestone 1 • Backend</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<div class="size-6 rounded-full bg-blue-100 flex items-center justify-center text-[10px] font-bold text-primary">JD</div>
+<span class="text-sm dark:text-gray-300">Jane Doe</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="px-2 py-1 rounded bg-green-100 text-green-700 text-[10px] font-bold">COMPLETED</span>
+</td>
+<td class="px-6 py-4">
+<div class="w-24 h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full" style="width: 98%;"></div>
+</div>
+</td>
+<td class="px-6 py-4 text-right">
+<span class="text-sm font-bold text-green-600">+2.5%</span>
+</td>
+</tr>
+<tr class="hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors">
+<td class="px-6 py-4">
+<div class="flex flex-col">
+<span class="text-sm font-bold text-[#0d121b] dark:text-white">UI Components Library</span>
+<span class="text-xs text-[#4c669a]">Sprint 03 • Frontend</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<div class="size-6 rounded-full bg-purple-100 flex items-center justify-center text-[10px] font-bold text-purple-600">MK</div>
+<span class="text-sm dark:text-gray-300">Mike Kim</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="px-2 py-1 rounded bg-blue-100 text-blue-700 text-[10px] font-bold">IN PROGRESS</span>
+</td>
+<td class="px-6 py-4">
+<div class="w-24 h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full" style="width: 72%;"></div>
+</div>
+</td>
+<td class="px-6 py-4 text-right">
+<span class="text-sm font-bold text-red-500">-1.2%</span>
+</td>
+</tr>
+<tr class="hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors">
+<td class="px-6 py-4">
+<div class="flex flex-col">
+<span class="text-sm font-bold text-[#0d121b] dark:text-white">Database Migration v2</span>
+<span class="text-xs text-[#4c669a]">Sprint 04 • Ops</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<div class="size-6 rounded-full bg-orange-100 flex items-center justify-center text-[10px] font-bold text-orange-600">SH</div>
+<span class="text-sm dark:text-gray-300">Sarah Hill</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="px-2 py-1 rounded bg-amber-100 text-amber-700 text-[10px] font-bold">AT RISK</span>
+</td>
+<td class="px-6 py-4">
+<div class="w-24 h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+<div class="h-full bg-amber-500 rounded-full" style="width: 45%;"></div>
+</div>
+</td>
+<td class="px-6 py-4 text-right">
+<span class="text-sm font-bold text-red-500">-8.4%</span>
+</td>
+</tr>
+<tr class="hover:bg-gray-50 dark:hover:bg-gray-800/30 transition-colors">
+<td class="px-6 py-4">
+<div class="flex flex-col">
+<span class="text-sm font-bold text-[#0d121b] dark:text-white">User Auth Flows</span>
+<span class="text-xs text-[#4c669a]">Sprint 02 • Security</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<div class="flex items-center gap-2">
+<div class="size-6 rounded-full bg-teal-100 flex items-center justify-center text-[10px] font-bold text-teal-600">RT</div>
+<span class="text-sm dark:text-gray-300">Ray Tan</span>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="px-2 py-1 rounded bg-green-100 text-green-700 text-[10px] font-bold">COMPLETED</span>
+</td>
+<td class="px-6 py-4">
+<div class="w-24 h-1.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full" style="width: 100%;"></div>
+</div>
+</td>
+<td class="px-6 py-4 text-right">
+<span class="text-sm font-bold text-green-600">+4.0%</span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</main>
+</div>
+<!-- Simple Dropdown Menu Mockup (Hidden by default, shown conceptually for UX) -->
+<div class="hidden absolute top-16 right-8 w-48 bg-white dark:bg-gray-800 border border-[#e7ebf3] dark:border-gray-700 rounded-lg shadow-xl py-2 z-50">
+<button class="w-full flex items-center gap-3 px-4 py-2 text-sm text-[#0d121b] dark:text-white hover:bg-background-light dark:hover:bg-gray-700">
+<span class="material-symbols-outlined text-red-500">picture_as_pdf</span>
+        Export as PDF
+    </button>
+<button class="w-full flex items-center gap-3 px-4 py-2 text-sm text-[#0d121b] dark:text-white hover:bg-background-light dark:hover:bg-gray-700">
+<span class="material-symbols-outlined text-green-600">csv</span>
+        Export as CSV
+    </button>
+<div class="border-t border-gray-100 dark:border-gray-700 my-1"></div>
+<button class="w-full flex items-center gap-3 px-4 py-2 text-sm text-[#0d121b] dark:text-white hover:bg-background-light dark:hover:bg-gray-700">
+<span class="material-symbols-outlined text-[#4c669a]">mail</span>
+        Email Report
+    </button>
+</div>
+</body></html>

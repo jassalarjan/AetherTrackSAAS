@@ -4,6 +4,7 @@ import { useTheme } from '../context/ThemeContext';
 import { useSidebar } from '../context/SidebarContext';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import api from '../api/axios';
+import { projectsApi } from '../api/projectsApi';
 import useRealtimeSync from '../hooks/useRealtimeSync';
 import { useConfirmModal } from '../hooks/useConfirmModal';
 import Sidebar from '../components/Sidebar';
@@ -26,6 +27,7 @@ const Kanban = () => {
   const [selectedTask, setSelectedTask] = useState(null);
   const [draggedTask, setDraggedTask] = useState(null);
   const [filters, setFilters] = useState({
+    project: '',
     team: '',
     assigned_to: '',
     showMyTasksOnly: false,
@@ -41,11 +43,13 @@ const Kanban = () => {
     priority: 'medium',
     status: 'todo',
     due_date: '',
+    project_id: '',
     team_id: '',
     assigned_to: [],
   });
   const [users, setUsers] = useState([]);
   const [teams, setTeams] = useState([]);
+  const [projects, setProjects] = useState([]);
   const [selectedTeamMembers, setSelectedTeamMembers] = useState([]);
   const [dragOverColumn, setDragOverColumn] = useState(null);
 
@@ -58,6 +62,7 @@ const Kanban = () => {
 
   useEffect(() => {
     fetchTasks();
+    fetchProjects();
     if (['admin', 'hr', 'team_lead', 'community_admin'].includes(user?.role)) {
       fetchUsers();
       fetchTeams();
@@ -127,6 +132,15 @@ const Kanban = () => {
     }
   };
 
+  const fetchProjects = async () => {
+    try {
+      const data = await projectsApi.getAll();
+      setProjects(data.projects || []);
+    } catch (error) {
+      console.error('Error fetching projects:', error);
+    }
+  };
+
   const handleCreateTask = async (e) => {
     e.preventDefault();
     try {
@@ -138,6 +152,7 @@ const Kanban = () => {
         priority: 'medium',
         status: 'todo',
         due_date: '',
+        project_id: '',
         team_id: '',
         assigned_to: [],
       });
@@ -277,6 +292,9 @@ const Kanban = () => {
 
   const getTasksByStatus = (status) => {
     let filtered = tasks.filter(task => task.status === status);
+    if (filters.project) {
+      filtered = filtered.filter((t) => t.project_id && (t.project_id._id === filters.project || t.project_id === filters.project));
+    }
     if (filters.team) {
       filtered = filtered.filter((t) => t.team_id && (t.team_id._id === filters.team || t.team_id === filters.team));
     }
@@ -414,6 +432,28 @@ const Kanban = () => {
 
           {/* Bottom Row: Filters */}
           <div className="flex items-center gap-2 sm:gap-4 px-3 sm:px-6 pb-3 sm:pb-4 overflow-x-auto scrollbar-thin">
+            {/* Project Selector */}
+            {projects.length > 0 && (
+              <select
+                value={filters.project}
+                onChange={(e) => setFilters({ ...filters, project: e.target.value })}
+                className={`h-9 px-3 rounded border text-sm font-medium flex-shrink-0 focus:ring-2 focus:ring-[#136dec] focus:border-transparent transition-all ${
+                  filters.project
+                    ? 'bg-purple-500/10 border-purple-500/50 text-purple-400'
+                    : theme === 'dark' 
+                      ? 'bg-[#282f39] border-[#3e454f] text-white' 
+                      : 'bg-white border-gray-200 text-gray-900'
+                }`}
+              >
+                <option value="">All Projects</option>
+                {projects.map((project) => (
+                  <option key={project._id} value={project._id}>
+                    {project.name}
+                  </option>
+                ))}
+              </select>
+            )}
+            
             <div className={`relative flex items-center h-9 w-full sm:w-64 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-white'} rounded border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} focus-within:border-[#136dec]/50 transition-colors flex-shrink-0`}>
               <Search className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} ml-3 flex-shrink-0`} size={18} />
               <input
@@ -426,6 +466,15 @@ const Kanban = () => {
             <div className="hidden sm:block w-px h-6 bg-[#3e454f] mx-2"></div>
 
             <div className="flex gap-2 flex-nowrap">
+              {filters.project && (
+                <button
+                  onClick={() => setFilters({ ...filters, project: '' })}
+                  className="flex h-7 items-center gap-1.5 sm:gap-2 rounded-full bg-purple-500/20 border border-purple-500/30 px-2.5 sm:px-3 text-purple-400 hover:bg-purple-500/30 transition-colors whitespace-nowrap flex-shrink-0"
+                >
+                  <span className="text-xs font-medium">{projects.find(p => p._id === filters.project)?.name || 'Project'}</span>
+                  <X size={14} />
+                </button>
+              )}
               {filters.showMyTasksOnly && (
                 <button
                   onClick={() => setFilters({ ...filters, showMyTasksOnly: false })}
@@ -635,6 +684,23 @@ const Kanban = () => {
                     <option value="done">Done</option>
                   </select>
                 </div>
+              </div>
+
+              <div>
+                <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2`}>Project *</label>
+                <select
+                  value={formData.project_id}
+                  onChange={(e) => setFormData({ ...formData, project_id: e.target.value })}
+                  className={`w-full px-4 py-2 ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'} border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} rounded ${theme === 'dark' ? 'text-white' : 'text-gray-900'} focus:ring-2 focus:ring-[#136dec] focus:border-transparent`}
+                  required
+                >
+                  <option value="">Select a project</option>
+                  {projects.map((project) => (
+                    <option key={project._id} value={project._id}>
+                      {project.name}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div>
