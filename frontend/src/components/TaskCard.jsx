@@ -1,6 +1,11 @@
 import { useTheme } from '../context/ThemeContext';
 import { Edit2, Trash2, Calendar, User, Clock, ChevronDown } from 'lucide-react';
 import { useState } from 'react';
+import ProjectLabel from './ProjectLabel';
+import TeamLabel from './TeamLabel';
+import SprintLabel from './SprintLabel';
+import ProgressBar from './ProgressBar';
+import LatestCommentPreview from './LatestCommentPreview';
 
 /**
  * TaskCard - Advanced mobile-first card view for tasks
@@ -122,6 +127,22 @@ const TaskCard = ({
           </div>
         </div>
 
+        {/* Project, Team, Sprint Labels */}
+        {(task.project_id || task.team_id || task.sprint_id) && (
+          <div className="flex flex-wrap gap-2 mb-4">
+            {task.project_id && <ProjectLabel project={task.project_id} size="sm" />}
+            {task.team_id && <TeamLabel team={task.team_id} size="sm" />}
+            {task.sprint_id && <SprintLabel sprint={task.sprint_id} size="sm" />}
+          </div>
+        )}
+
+        {/* Progress Bar */}
+        {task.progress > 0 && (
+          <div className="mb-4">
+            <ProgressBar progress={task.progress} size="md" showPercentage={true} animated={true} />
+          </div>
+        )}
+
         {/* Metadata Grid */}
         <div className="grid grid-cols-2 gap-3 mb-4">
           {/* Status Dropdown */}
@@ -192,6 +213,13 @@ const TaskCard = ({
                 )}
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Latest Comment */}
+        {task.latest_comment && (
+          <div className="mb-4">
+            <LatestCommentPreview comment={task.latest_comment} size="md" maxLength={80} />
           </div>
         )}
 

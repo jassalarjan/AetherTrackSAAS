@@ -4,6 +4,7 @@ import { checkRole } from '../middleware/roleCheck.js';
 import Task from '../models/Task.js';
 import Notification from '../models/Notification.js';
 import User from '../models/User.js';
+import Comment from '../models/Comment.js';
 import { logChange } from '../utils/changeLogService.js';
 import getClientIP from '../utils/getClientIP.js';
 
@@ -12,7 +13,7 @@ const router = express.Router();
 // Create task
 router.post('/', authenticate, async (req, res) => {
   try {
-    const { title, description, priority, assigned_to, team_id, due_date, project_id, status } = req.body;
+    const { title, description, priority, assigned_to, team_id, due_date, project_id, status, sprint_id, progress } = req.body;
 
     // Members can only create tasks for themselves
     // Admins, HR, and Team Leads can assign to anyone
@@ -36,7 +37,9 @@ router.post('/', authenticate, async (req, res) => {
       assigned_to: assigned_to && assigned_to.length > 0 ? assigned_to : [req.user._id],
       team_id: team_id || undefined,
       project_id: project_id || undefined,
-      due_date
+      sprint_id: sprint_id || undefined,
+      due_date,
+      progress: progress || 0
     });
 
     await task.save();
@@ -79,7 +82,9 @@ router.post('/', authenticate, async (req, res) => {
     const populatedTask = await Task.findById(task._id)
       .populate('created_by', 'full_name email')
       .populate('assigned_to', 'full_name email')
-      .populate('team_id', 'name');
+      .populate('team_id', 'name')
+      .populate('project_id', 'name status')
+      .populate('sprint_id', 'name start_date end_date');
 
     // Log task creation
     const user_ip = getClientIP(req);
@@ -172,9 +177,23 @@ router.get('/', authenticate, async (req, res) => {
       .populate('created_by', 'full_name email')
       .populate('assigned_to', 'full_name email')
       .populate('team_id', 'name')
+      .populate('project_id', 'name status')
+      .populate('sprint_id', 'name start_date end_date')
       .sort({ created_at: -1 });
 
-    res.json({ tasks, count: tasks.length });
+    // Fetch latest comment for each task
+    const tasksWithComments = await Promise.all(tasks.map(async (task) => {
+      const latestComment = await Comment.findOne({ task_id: task._id })
+        .sort({ created_at: -1 })
+        .limit(1)
+        .populate('author_id', 'full_name');
+      
+      const taskObj = task.toObject();
+      taskObj.latest_comment = latestComment;
+      return taskObj;
+    }));
+
+    res.json({ tasks: tasksWithComments, count: tasksWithComments.length });
   } catch (error) {
     console.error('Get tasks error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
@@ -187,7 +206,15 @@ router.get('/:id', authenticate, async (req, res) => {
     const task = await Task.findOne({ _id: req.params.id })
       .populate('created_by', 'full_name email')
       .populate('assigned_to', 'full_name email')
-      .populate('team_id', 'name');
+      .populate('team_id', 'name')
+      .populate('project_id', 'name status')
+      .populate('sprint_id', 'name start_date end_date');
+
+    // Fetch latest comment for this task
+    const latestComment = await Comment.findOne({ task_id: req.params.id })
+      .sort({ created_at: -1 })
+      .limit(1)
+      .populate('author_id', 'full_name');
 
     if (!task) {
       return res.status(404).json({ message: 'Task not found' });
@@ -224,7 +251,10 @@ router.get('/:id', authenticate, async (req, res) => {
       }
     }
 
-    res.json({ task });
+    const taskWithComment = task.toObject();
+    taskWithComment.latest_comment = latestComment;
+    
+    res.json({ task: taskWithComment });
   } catch (error) {
     console.error('Get task error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });

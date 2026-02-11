@@ -9,6 +9,11 @@ import useRealtimeSync from '../hooks/useRealtimeSync';
 import { useConfirmModal } from '../hooks/useConfirmModal';
 import Sidebar from '../components/Sidebar';
 import ConfirmModal from '../components/modals/ConfirmModal';
+import ProjectLabel from '../components/ProjectLabel';
+import TeamLabel from '../components/TeamLabel';
+import SprintLabel from '../components/SprintLabel';
+import ProgressBar from '../components/ProgressBar';
+import LatestCommentPreview from '../components/LatestCommentPreview';
 import {
   Plus, X, Search, Settings, UserPlus, Calendar as CalendarIcon,
   MoreHorizontal, MessageSquare, Menu
@@ -45,11 +50,14 @@ const Kanban = () => {
     due_date: '',
     project_id: '',
     team_id: '',
+    sprint_id: '',
+    progress: 0,
     assigned_to: [],
   });
   const [users, setUsers] = useState([]);
   const [teams, setTeams] = useState([]);
   const [projects, setProjects] = useState([]);
+  const [sprints, setSprints] = useState([]);
   const [selectedTeamMembers, setSelectedTeamMembers] = useState([]);
   const [dragOverColumn, setDragOverColumn] = useState(null);
 
@@ -63,6 +71,7 @@ const Kanban = () => {
   useEffect(() => {
     fetchTasks();
     fetchProjects();
+    fetchSprints();
     if (['admin', 'hr', 'team_lead', 'community_admin'].includes(user?.role)) {
       fetchUsers();
       fetchTeams();
@@ -135,9 +144,20 @@ const Kanban = () => {
   const fetchProjects = async () => {
     try {
       const data = await projectsApi.getAll();
-      setProjects(data.projects || []);
+      setProjects(Array.isArray(data) ? data : data.projects || []);
     } catch (error) {
       console.error('Error fetching projects:', error);
+      setProjects([]);
+    }
+  };
+
+  const fetchSprints = async () => {
+    try {
+      const response = await api.get('/sprints');
+      setSprints(response.data.sprints || []);
+    } catch (error) {
+      console.error('Error fetching sprints:', error);
+      setSprints([]);
     }
   };
 
@@ -154,6 +174,8 @@ const Kanban = () => {
         due_date: '',
         project_id: '',
         team_id: '',
+        sprint_id: '',
+        progress: 0,
         assigned_to: [],
       });
       setSelectedTeamMembers([]);
@@ -561,10 +583,33 @@ const Kanban = () => {
                               {priorityBadge.label}
                             </span>
                           </div>
+                          
+                          {/* Project, Team, Sprint Labels */}
+                          <div className="flex flex-wrap gap-1.5 mb-2">
+                            {task.project_id && <ProjectLabel project={task.project_id} size="sm" />}
+                            {task.team_id && <TeamLabel team={task.team_id} size="sm" />}
+                            {task.sprint_id && <SprintLabel sprint={task.sprint_id} size="sm" />}
+                          </div>
+
                           <p className={`text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-3 leading-snug group-hover:text-[#136dec] transition-colors ${isDone ? 'line-through decoration-slate-600' : ''
                             }`}>
                             {task.title}
                           </p>
+                          
+                          {/* Progress Indicator */}
+                          {task.progress > 0 && (
+                            <div className="mb-3">
+                              <ProgressBar progress={task.progress} size="sm" showPercentage={false} animated={false} />
+                            </div>
+                          )}
+
+                          {/* Latest Comment Preview */}
+                          {task.latest_comment && (
+                            <div className="mb-3">
+                              <LatestCommentPreview comment={task.latest_comment} size="sm" maxLength={40} />
+                            </div>
+                          )}
+
                           <div className={`flex items-center justify-between border-t ${theme === 'dark' ? 'border-[#3e454f]/50' : 'border-gray-200'} pt-2 mt-auto`}>
                             <div className="flex -space-x-2">
                               {task.assigned_to && task.assigned_to.length > 0 ? (
@@ -701,6 +746,35 @@ const Kanban = () => {
                     </option>
                   ))}
                 </select>
+              </div>
+
+              <div>
+                <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2`}>Sprint (Optional)</label>
+                <select
+                  value={formData.sprint_id}
+                  onChange={(e) => setFormData({ ...formData, sprint_id: e.target.value })}
+                  className={`w-full px-4 py-2 ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'} border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} rounded ${theme === 'dark' ? 'text-white' : 'text-gray-900'} focus:ring-2 focus:ring-[#136dec] focus:border-transparent`}
+                >
+                  <option value="">No Sprint</option>
+                  {sprints.map((sprint) => (
+                    <option key={sprint._id} value={sprint._id}>
+                      {sprint.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2`}>Progress: {formData.progress}%</label>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  step="5"
+                  value={formData.progress}
+                  onChange={(e) => setFormData({ ...formData, progress: parseInt(e.target.value) })}
+                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#136dec]"
+                />
               </div>
 
               <div>

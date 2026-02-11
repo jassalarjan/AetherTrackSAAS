@@ -7,6 +7,8 @@ import useRealtimeSync from '../hooks/useRealtimeSync';
 import api from '../api/axios';
 import Avatar from '../components/Avatar';
 import Sidebar from '../components/Sidebar';
+import ProjectLabel from '../components/ProjectLabel';
+import SprintLabel from '../components/SprintLabel';
 import { 
   Plus, Users, CheckSquare, TrendingUp, Clock, FileSpreadsheet, FileText, 
   AlertTriangle, Calendar, Filter, X, Download, Smartphone, Search,
@@ -918,9 +920,14 @@ const Dashboard = () => {
                             />
                           </td>
                           <td className="px-4 py-3">
-                            <div className="flex flex-col">
+                            <div className="flex flex-col gap-1">
+                              <div className="flex items-center gap-2">
+                                {task.project_id && <ProjectLabel project={task.project_id} size="sm" showIcon={false} />}
+                                {task.sprint_id && <SprintLabel sprint={task.sprint_id} size="sm" showIcon={false} />}
+                              </div>
                               <span className={`${theme === 'dark' ? 'text-white' : 'text-gray-900'} font-medium`}>{task.title}</span>
                               <span className={`text-xs ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`}>
+                                {task.progress > 0 && `${task.progress}% • `}
                                 Project: {task.team_id?.name || 'No Team'}
                               </span>
                             </div>
@@ -989,12 +996,19 @@ const Dashboard = () => {
                         onClick={() => navigate('/tasks')}
                       >
                         <div className="flex justify-between items-start mb-1">
-                          <p className={`text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'} font-medium line-clamp-1`}>{task.title}</p>
-                          <span className="text-xs text-red-400 font-mono whitespace-nowrap">
+                          <div className="flex flex-col gap-1 flex-1">
+                            <div className="flex items-center gap-1 flex-wrap">
+                              {task.project_id && <ProjectLabel project={task.project_id} size="sm" showIcon={false} />}
+                              {task.sprint_id && <SprintLabel sprint={task.sprint_id} size="sm" showIcon={false} />}
+                            </div>
+                            <p className={`text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'} font-medium line-clamp-1`}>{task.title}</p>
+                          </div>
+                          <span className="text-xs text-red-400 font-mono whitespace-nowrap ml-2">
                             {Math.abs(Math.ceil((new Date(task.due_date) - new Date()) / (1000 * 60 * 60 * 24)))}d ago
                           </span>
                         </div>
                         <p className={`text-xs ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} mb-2`}>
+                          {task.progress > 0 && `${task.progress}% • `}
                           {task.team_id?.name || 'No Team'} • {task.priority?.charAt(0).toUpperCase() + task.priority?.slice(1)}
                         </p>
                         {task.assigned_to && task.assigned_to.length > 0 && (

@@ -40,6 +40,12 @@ const taskSchema = new mongoose.Schema({
     default: null,
     index: true
   },
+  sprint_id: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Sprint',
+    default: null,
+    index: true
+  },
   due_date: {
     type: Date,
     required: [true, 'Due date is required']
@@ -66,6 +72,7 @@ taskSchema.index({ assigned_to: 1 });
 taskSchema.index({ team_id: 1 });
 taskSchema.index({ due_date: 1 });
 taskSchema.index({ project_id: 1, status: 1 });
+taskSchema.index({ sprint_id: 1, status: 1 });
 
 taskSchema.pre('save', function(next) {
   this.updated_at = Date.now();
