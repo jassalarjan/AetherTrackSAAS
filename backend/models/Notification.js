@@ -24,13 +24,6 @@ const notificationSchema = new mongoose.Schema({
     type: Object,
     default: {}
   },
-  // WORKSPACE SUPPORT: All notifications belong to a workspace
-  workspaceId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Workspace',
-    required: true,
-    index: true
-  },
   read_at: {
     type: Date,
     default: null
@@ -41,8 +34,8 @@ const notificationSchema = new mongoose.Schema({
   }
 });
 
-// WORKSPACE SUPPORT: Indexes for workspace-scoped queries
-notificationSchema.index({ workspaceId: 1, user_id: 1, read_at: 1 });
-notificationSchema.index({ workspaceId: 1, created_at: -1 });
+// Indexes for queries
+notificationSchema.index({ user_id: 1, read_at: 1 });
+notificationSchema.index({ created_at: -1 });
 
 export default mongoose.model('Notification', notificationSchema);

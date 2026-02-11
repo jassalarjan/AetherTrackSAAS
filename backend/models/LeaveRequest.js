@@ -7,12 +7,6 @@ const leaveRequestSchema = new mongoose.Schema({
     required: true,
     index: true
   },
-  workspaceId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Workspace',
-    required: true,
-    index: true
-  },
   leaveTypeId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'LeaveType',
@@ -68,7 +62,7 @@ const leaveRequestSchema = new mongoose.Schema({
 });
 
 // Indexes for efficient queries
-leaveRequestSchema.index({ workspaceId: 1, status: 1, startDate: -1 });
+leaveRequestSchema.index({ status: 1, startDate: -1 });
 
 const LeaveRequest = mongoose.model('LeaveRequest', leaveRequestSchema);
 

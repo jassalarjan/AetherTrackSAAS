@@ -3,7 +3,6 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useSidebar } from '../context/SidebarContext';
-import { useWorkspace } from '../context/WorkspaceContext';
 import { useConfirmModal } from '../hooks/useConfirmModal';
 import ConfirmModal from './modals/ConfirmModal';
 import {
@@ -42,7 +41,6 @@ const Sidebar = () => {
   const { user, logout } = useAuth();
   const { theme, currentTheme } = useTheme();
   const { isMobileOpen, isMobile, closeMobileSidebar, isCollapsed, toggleCollapse } = useSidebar();
-  const { workspace } = useWorkspace();
   const navigate = useNavigate();
   const location = useLocation();
   const confirmModal = useConfirmModal();
@@ -183,6 +181,7 @@ const Sidebar = () => {
   ];
 
   const projectMenuItems = [
+    { path: '/my-projects', icon: Briefcase, label: 'My Projects' },
     { path: '/projects', icon: FolderKanban, label: 'Dashboard' },
     { path: '/sprints', icon: Briefcase, label: 'Sprints' },
     { path: '/projects/gantt', icon: GitBranch, label: 'Gantt Chart' },
@@ -190,18 +189,17 @@ const Sidebar = () => {
   ];
 
   const hrMenuItems = [
-    { path: '/hr/dashboard', icon: LayoutDashboard, label: 'HR Dashboard', roles: ['admin', 'hr'], coreWorkspaceOnly: true },
-    { path: '/hr/attendance', icon: Clock, label: 'Attendance', roles: ['admin', 'hr'], coreWorkspaceOnly: true },
-    { path: '/hr/leaves', icon: CalendarDays, label: 'Leave Management', roles: ['admin', 'hr', 'member'], coreWorkspaceOnly: true },
-    { path: '/hr/calendar', icon: Calendar, label: 'HR Calendar', roles: ['admin', 'hr'], coreWorkspaceOnly: true },
-    { path: '/hr/email-center', icon: FileText, label: 'Email Center', roles: ['admin', 'hr'], coreWorkspaceOnly: true },
+    { path: '/hr/dashboard', icon: LayoutDashboard, label: 'HR Dashboard', roles: ['admin', 'hr'] },
+    { path: '/hr/attendance', icon: Clock, label: 'Attendance', roles: ['admin', 'hr'] },
+    { path: '/hr/leaves', icon: CalendarDays, label: 'Leave Management', roles: ['admin', 'hr', 'member'] },
+    { path: '/hr/calendar', icon: Calendar, label: 'HR Calendar', roles: ['admin', 'hr'] },
+    { path: '/hr/email-center', icon: FileText, label: 'Email Center', roles: ['admin', 'hr'] },
     { path: '/teams', icon: Users, label: 'Teams', roles: ['admin', 'hr', 'team_lead', 'community_admin'] },
     { path: '/users', icon: UserCog, label: 'User Management', roles: ['admin', 'hr', 'community_admin'] },
   ];
 
   const adminMenuItems = [
     { path: '/community-users', icon: UserCog, label: 'Community Users', roles: ['community_admin'] },
-    { path: '/workspaces', icon: Building2, label: 'Workspaces', roles: ['admin'] },
     { path: '/changelog', icon: FileText, label: 'Audit Logs', roles: ['admin'] },
   ];
 
@@ -211,19 +209,7 @@ const Sidebar = () => {
 
   const canAccess = (item) => {
     if (!item.roles) return true;
-    if (!item.roles.includes(user?.role)) return false;
-
-    // If systemAdminOnly, check if user is a system admin
-    if (item.systemAdminOnly) {
-      return user?.isSystemAdmin || (!user?.workspaceId && user?.role === 'admin');
-    }
-
-    // Check workspace type restrictions for HR features
-    if (item.coreWorkspaceOnly && workspace?.type !== 'CORE') {
-      return false;
-    }
-
-    return true;
+    return item.roles.includes(user?.role);
   };
 
   const isDark = theme === 'dark';
@@ -672,7 +658,7 @@ const Sidebar = () => {
         )}
       </div>
 
-      {/* Workspace Info */}
+      {/* Team/Role Info */}
       {!isCollapsed && (
         <div className={`p-2 border-t hidden lg:block ${
           isDark ? 'border-[#282f39]' : 'border-gray-200'
@@ -680,23 +666,8 @@ const Sidebar = () => {
           <div className="px-2 py-1.5">
             <p className={`text-xs font-bold uppercase tracking-wider mb-2 ${
               isDark ? 'text-[#9da8b9]' : 'text-gray-500'
-            }`}>Workspace</p>
-            {/* Show workspace info for community_admin */}
-            {user?.role === 'community_admin' && user?.workspace ? (
-              <div className={`flex items-center gap-2 text-sm font-medium ${
-                isDark ? 'text-white' : 'text-gray-900'
-              }`}>
-                <div className="size-6 rounded bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center text-[10px] text-white font-bold">
-                  {getUserInitials(user.workspace.name)}
-                </div>
-                <div className="flex-1">
-                  <span className="truncate block">{user.workspace.name}</span>
-                  <span className={`text-[10px] ${isDark ? 'text-[#9da8b9]' : 'text-gray-500'}`}>
-                    {user.workspace.type === 'COMMUNITY' ? 'Community' : 'Core'} Workspace
-                  </span>
-                </div>
-              </div>
-            ) : user?.team_id ? (
+            }`}>Team</p>
+            {user?.team_id ? (
               <div className={`flex items-center gap-2 text-sm font-medium ${
                 isDark ? 'text-white' : 'text-gray-900'
               }`}>
@@ -722,18 +693,6 @@ const Sidebar = () => {
                       >
                         Manage Teams →
                       </button>
-                    </div>
-                  </>
-                ) : user?.workspace ? (
-                  <>
-                    <div className="size-6 rounded bg-gradient-to-br from-teal-500 to-emerald-500 flex items-center justify-center text-[10px] text-white font-bold">
-                      {getUserInitials(user.workspace.name)}
-                    </div>
-                    <div className="flex-1">
-                      <span className={`truncate block text-xs font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>{user.workspace.name}</span>
-                      <span className={`text-[10px] ${isDark ? 'text-[#9da8b9]' : 'text-gray-500'}`}>
-                        {user.workspace.type === 'COMMUNITY' ? 'Community' : 'Core'} Workspace
-                      </span>
                     </div>
                   </>
                 ) : (

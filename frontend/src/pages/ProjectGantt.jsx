@@ -3,9 +3,10 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import { projectsApi } from '../api/projectsApi';
 import api from '../api/axios';
+import * as XLSX from 'xlsx';
 import {
   Plus, Share2, Calendar, ChevronRight, Check, Loader, Database,
-  Lock, MoreHorizontal, ChevronDown
+  Lock, MoreHorizontal, ChevronDown, Filter, Download, FileSpreadsheet, X
 } from 'lucide-react';
 
 const ProjectGantt = () => {
@@ -16,14 +17,63 @@ const ProjectGantt = () => {
   const [project, setProject] = useState(null);
   const [projects, setProjects] = useState([]);
   const [tasks, setTasks] = useState([]);
+  const [filteredTasks, setFilteredTasks] = useState([]);
   const [timeScale, setTimeScale] = useState('week'); // day, week, month, quarter
   const [showMilestones, setShowMilestones] = useState(true);
   const [showCriticalPath, setShowCriticalPath] = useState(true);
   const [loading, setLoading] = useState(true);
+  const [showFilters, setShowFilters] = useState(false);
+  const [showExportMenu, setShowExportMenu] = useState(false);
+  const [filters, setFilters] = useState({
+    status: '',
+    priority: '',
+    assignee: '',
+    search: ''
+  });
+  const [users, setUsers] = useState([]);
 
   useEffect(() => {
     fetchData();
+    fetchUsers();
   }, [projectId]);
+
+  useEffect(() => {
+    applyFilters();
+  }, [tasks, filters]);
+
+  const fetchUsers = async () => {
+    try {
+      const response = await api.get('/users');
+      setUsers(response.data.users || []);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    }
+  };
+
+  const applyFilters = () => {
+    let filtered = [...tasks];
+
+    if (filters.status) {
+      filtered = filtered.filter(t => t.status === filters.status);
+    }
+    if (filters.priority) {
+      filtered = filtered.filter(t => t.priority === filters.priority);
+    }
+    if (filters.assignee) {
+      filtered = filtered.filter(t => 
+        t.assigned_to && t.assigned_to.some(u => (u._id || u) === filters.assignee)
+      );
+    }
+    if (filters.search) {
+      const searchLower = filters.search.toLowerCase();
+      filtered = filtered.filter(t => 
+        t.title?.toLowerCase().includes(searchLower) ||
+        t.description?.toLowerCase().includes(searchLower)
+      );
+    }
+
+    setFilteredTasks(filtered);
+  };
 
   const fetchData = async () => {
     try {
@@ -33,13 +83,35 @@ const ProjectGantt = () => {
       setProjects(allProjectsResponse || []);
       
       if (projectId) {
+        // Fetch specific project with populated tasks
         const projectData = await projectsApi.getById(projectId);
         setProject(projectData);
-        setTasks(projectData.tasks || []);
+        
+        // Fetch tasks for this project with populated fields
+        const tasksResponse = await api.get(`/tasks?project=${projectId}`);
+        const projectTasks = tasksResponse.data.tasks || [];
+        
+        // Ensure tasks have proper project reference
+        const enrichedTasks = projectTasks.map(task => ({
+          ...task,
+          project_id: projectData
+        }));
+        
+        setTasks(enrichedTasks);
       } else {
-        // Fetch all tasks across projects
+        // Fetch all tasks across projects with populated project info
         const response = await api.get('/tasks');
-        setTasks(response.data.tasks || []);
+        const allTasks = response.data.tasks || [];
+        
+        // Sort tasks by start_date for better visualization
+        const sortedTasks = allTasks.sort((a, b) => {
+          if (!a.start_date && !b.start_date) return 0;
+          if (!a.start_date) return 1;
+          if (!b.start_date) return -1;
+          return new Date(a.start_date) - new Date(b.start_date);
+        });
+        
+        setTasks(sortedTasks);
       }
     } catch (error) {
       console.error('Error fetching gantt data:', error);
@@ -88,24 +160,256 @@ const ProjectGantt = () => {
     }
   };
 
+  // Calculate timeline range based on tasks
+  const getTimelineRange = () => {
+    if (filteredTasks.length === 0) {
+      const today = new Date();
+      const startDate = new Date(today);
+      startDate.setDate(1); // Start of current month
+      const endDate = new Date(today);
+      endDate.setMonth(endDate.getMonth() + 3);
+      return { startDate, endDate };
+    }
+
+    const dates = filteredTasks
+      .filter(t => t.start_date || t.due_date)
+      .flatMap(t => [t.start_date, t.due_date].filter(Boolean))
+      .map(d => new Date(d));
+
+    if (dates.length === 0) {
+      const today = new Date();
+      const startDate = new Date(today);
+      startDate.setDate(1);
+      const endDate = new Date(today);
+      endDate.setMonth(endDate.getMonth() + 3);
+      return { startDate, endDate };
+    }
+
+    const minDate = new Date(Math.min(...dates));
+    const maxDate = new Date(Math.max(...dates));
+
+    // Add padding
+    const startDate = new Date(minDate);
+    startDate.setDate(startDate.getDate() - 7);
+    const endDate = new Date(maxDate);
+    endDate.setDate(endDate.getDate() + 14);
+
+    return { startDate, endDate };
+  };
+
+  const timelineRange = getTimelineRange();
+
+  // Get day width based on time scale
+  const getDayWidth = () => {
+    switch (timeScale) {
+      case 'day': return 40;
+      case 'week': return 8;
+      case 'month': return 3;
+      case 'quarter': return 1;
+      default: return 8;
+    }
+  };
+
+  const dayWidth = getDayWidth();
+
+  // Debug: Log filtered tasks
+  console.log('Filtered tasks:', filteredTasks.length, filteredTasks);
+  console.log('Timeline range:', timelineRange);
+  console.log('Day width:', dayWidth);
+
   const getTaskBarWidth = (task) => {
-    // Simplified calculation - in real implementation, calculate based on date range
-    if (!task.start_date || !task.due_date) return '120px';
+    if (!task.start_date || !task.due_date) {
+      console.log('Task missing dates:', task.title, task);
+      return 0;
+    }
     const start = new Date(task.start_date);
     const end = new Date(task.due_date);
-    const diffDays = Math.ceil(Math.abs(end - start) / (1000 * 60 * 60 * 24));
-    // Scale: 10px per day for week view
-    return `${Math.max(40, diffDays * 10)}px`;
+    const diffDays = Math.max(1, Math.ceil((end - start) / (1000 * 60 * 60 * 24)));
+    const width = diffDays * dayWidth;
+    console.log('Task bar width:', task.title, 'days:', diffDays, 'width:', width);
+    return width;
   };
 
   const getTaskBarPosition = (task) => {
-    // Simplified - calculate offset from project start or current month
-    // In real implementation, calculate based on actual dates
-    return Math.floor(Math.random() * 400) + 20; // Random for demo
+    if (!task.start_date) {
+      console.log('Task missing start_date:', task.title);
+      return 0;
+    }
+    const taskStart = new Date(task.start_date);
+    const { startDate } = timelineRange;
+    const diffDays = Math.floor((taskStart - startDate) / (1000 * 60 * 60 * 24));
+    const position = Math.max(0, diffDays * dayWidth);
+    console.log('Task position:', task.title, 'start:', taskStart.toDateString(), 'timeline start:', startDate.toDateString(), 'position:', position);
+    return position;
   };
+
+  // Generate timeline headers based on time scale
+  const generateTimelineHeaders = () => {
+    const { startDate, endDate } = timelineRange;
+    const headers = [];
+    const dayHeaders = [];
+
+    if (timeScale === 'day') {
+      let current = new Date(startDate);
+      let currentMonth = null;
+
+      while (current <= endDate) {
+        const monthKey = `${current.getFullYear()}-${current.getMonth()}`;
+        
+        if (monthKey !== currentMonth) {
+          const monthStart = new Date(current);
+          let monthEnd = new Date(current.getFullYear(), current.getMonth() + 1, 0);
+          if (monthEnd > endDate) monthEnd = new Date(endDate);
+          
+          const daysInView = Math.ceil((monthEnd - monthStart) / (1000 * 60 * 60 * 24)) + 1;
+          
+          headers.push({
+            label: monthStart.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+            width: daysInView * dayWidth,
+            start: monthStart
+          });
+          
+          currentMonth = monthKey;
+        }
+
+        dayHeaders.push({
+          label: current.getDate(),
+          day: current.toLocaleDateString('en-US', { weekday: 'short' }),
+          isWeekend: current.getDay() === 0 || current.getDay() === 6,
+          isToday: current.toDateString() === new Date().toDateString()
+        });
+
+        current.setDate(current.getDate() + 1);
+      }
+    } else if (timeScale === 'week') {
+      let current = new Date(startDate);
+      let currentMonth = null;
+
+      while (current <= endDate) {
+        const monthKey = `${current.getFullYear()}-${current.getMonth()}`;
+        
+        if (monthKey !== currentMonth) {
+          const monthStart = new Date(current);
+          let monthEnd = new Date(current.getFullYear(), current.getMonth() + 1, 0);
+          if (monthEnd > endDate) monthEnd = new Date(endDate);
+          
+          const daysInMonth = Math.ceil((monthEnd - monthStart) / (1000 * 60 * 60 * 24)) + 1;
+          
+          headers.push({
+            label: monthStart.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+            width: daysInMonth * dayWidth,
+            start: monthStart
+          });
+          
+          currentMonth = monthKey;
+        }
+
+        current.setDate(current.getDate() + 1);
+      }
+
+      // Generate week day markers (every 7 days)
+      current = new Date(startDate);
+      while (current <= endDate) {
+        dayHeaders.push({
+          label: current.getDate(),
+          isWeekend: current.getDay() === 0 || current.getDay() === 6
+        });
+        current.setDate(current.getDate() + 7);
+      }
+    } else {
+      // Month or Quarter view
+      let current = new Date(startDate);
+      current.setDate(1);
+
+      while (current <= endDate) {
+        const nextMonth = new Date(current);
+        nextMonth.setMonth(nextMonth.getMonth() + 1);
+        
+        const daysInMonth = Math.ceil((nextMonth - current) / (1000 * 60 * 60 * 24));
+        
+        headers.push({
+          label: current.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
+          width: daysInMonth * dayWidth,
+          start: new Date(current)
+        });
+
+        current = nextMonth;
+      }
+    }
+
+    return { headers, dayHeaders };
+  };
+
+  const { headers: timelineHeaders, dayHeaders } = generateTimelineHeaders();
 
   const getProgressWidth = (progress) => {
     return `${progress || 0}%`;
+  };
+
+  const handleExportExcel = () => {
+    const taskData = filteredTasks.map(task => ({
+      'Task Name': task.title,
+      'Status': task.status,
+      'Priority': task.priority,
+      'Progress': `${task.progress || 0}%`,
+      'Start Date': task.start_date ? new Date(task.start_date).toLocaleDateString() : '',
+      'Due Date': task.due_date ? new Date(task.due_date).toLocaleDateString() : '',
+      'Duration': getDuration(task),
+      'Assigned To': task.assigned_to?.map(u => u.full_name || u.username).join(', ') || '',
+      'Project': project?.name || 'All Projects'
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(taskData);
+    worksheet['!cols'] = [
+      { wch: 30 },
+      { wch: 15 },
+      { wch: 12 },
+      { wch: 10 },
+      { wch: 15 },
+      { wch: 15 },
+      { wch: 12 },
+      { wch: 30 },
+      { wch: 25 }
+    ];
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Gantt Chart');
+    
+    const timestamp = new Date().toISOString().split('T')[0];
+    const fileName = project?.name ? `${project.name}-gantt-${timestamp}.xlsx` : `gantt-chart-${timestamp}.xlsx`;
+    XLSX.writeFile(workbook, fileName);
+    setShowExportMenu(false);
+  };
+
+  const handleExportCSV = () => {
+    const headers = ['Task Name', 'Status', 'Priority', 'Progress', 'Start Date', 'Due Date', 'Duration', 'Assigned To', 'Project'];
+    const csvData = filteredTasks.map(task => [
+      task.title,
+      task.status,
+      task.priority,
+      `${task.progress || 0}%`,
+      task.start_date ? new Date(task.start_date).toLocaleDateString() : '',
+      task.due_date ? new Date(task.due_date).toLocaleDateString() : '',
+      getDuration(task),
+      task.assigned_to?.map(u => u.full_name || u.username).join('; ') || '',
+      project?.name || 'All Projects'
+    ]);
+
+    const csvString = [
+      headers.join(','),
+      ...csvData.map(row => row.map(val => `"${val}"`).join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvString], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const timestamp = new Date().toISOString().split('T')[0];
+    const fileName = project?.name ? `${project.name}-gantt-${timestamp}.csv` : `gantt-chart-${timestamp}.csv`;
+    a.download = fileName;
+    a.click();
+    window.URL.revokeObjectURL(url);
+    setShowExportMenu(false);
   };
 
   if (loading) {
@@ -149,10 +453,45 @@ const ProjectGantt = () => {
             </select>
           </div>
           <div className="flex items-center gap-3">
-            <button className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 text-sm font-medium transition-colors">
-              <Share2 size={18} />
-              Export
+            <button 
+              onClick={() => setShowFilters(!showFilters)}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 text-sm font-medium transition-colors"
+            >
+              <Filter size={18} />
+              Filters
+              {(filters.status || filters.priority || filters.assignee || filters.search) && (
+                <span className="ml-1 px-2 py-0.5 bg-blue-500 text-white text-xs rounded-full">
+                  Active
+                </span>
+              )}
             </button>
+            <div className="relative">
+              <button 
+                onClick={() => setShowExportMenu(!showExportMenu)}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 text-sm font-medium transition-colors"
+              >
+                <Share2 size={18} />
+                Export
+              </button>
+              {showExportMenu && (
+                <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50">
+                  <button
+                    onClick={handleExportExcel}
+                    className="flex items-center gap-2 w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors rounded-t-lg"
+                  >
+                    <FileSpreadsheet size={16} />
+                    Export to Excel
+                  </button>
+                  <button
+                    onClick={handleExportCSV}
+                    className="flex items-center gap-2 w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors rounded-b-lg"
+                  >
+                    <Download size={16} />
+                    Export to CSV
+                  </button>
+                </div>
+              )}
+            </div>
             <button className="bg-[#135bec] text-white text-sm font-semibold px-4 py-2 rounded-lg flex items-center gap-2 shadow-sm">
               <Plus size={18} />
               New Task
@@ -160,9 +499,129 @@ const ProjectGantt = () => {
           </div>
         </header>
 
+        {/* Filter Section */}
+        {showFilters && (
+          <div className="bg-white dark:bg-[#1a2234] border-b border-gray-200 dark:border-gray-800 px-8 py-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  Search Tasks
+                </label>
+                <input
+                  type="text"
+                  value={filters.search}
+                  onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+                  placeholder="Search by name..."
+                  className="w-full px-4 py-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-[#135bec] focus:border-[#135bec]"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  Status
+                </label>
+                <select
+                  value={filters.status}
+                  onChange={(e) => setFilters({ ...filters, status: e.target.value })}
+                  className="w-full px-4 py-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-[#135bec] focus:border-[#135bec]"
+                >
+                  <option value="">All Statuses</option>
+                  <option value="todo">To Do</option>
+                  <option value="in_progress">In Progress</option>
+                  <option value="review">Review</option>
+                  <option value="done">Done</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  Priority
+                </label>
+                <select
+                  value={filters.priority}
+                  onChange={(e) => setFilters({ ...filters, priority: e.target.value })}
+                  className="w-full px-4 py-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-[#135bec] focus:border-[#135bec]"
+                >
+                  <option value="">All Priorities</option>
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                  <option value="urgent">Urgent</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  Assignee
+                </label>
+                <select
+                  value={filters.assignee}
+                  onChange={(e) => setFilters({ ...filters, assignee: e.target.value })}
+                  className="w-full px-4 py-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-[#135bec] focus:border-[#135bec]"
+                >
+                  <option value="">All Users</option>
+                  {users.map(user => (
+                    <option key={user._id} value={user._id}>
+                      {user.full_name || user.username}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div className="mt-4 flex items-center gap-3">
+              <button
+                onClick={() => setFilters({ status: '', priority: '', assignee: '', search: '' })}
+                className="px-4 py-2 text-sm font-semibold text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+              >
+                Clear Filters
+              </button>
+              <div className="flex items-center gap-2">
+                {filters.status && (
+                  <span className="flex items-center gap-1 px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-xs font-medium">
+                    Status: {filters.status}
+                    <X size={14} className="cursor-pointer" onClick={() => setFilters({ ...filters, status: '' })} />
+                  </span>
+                )}
+                {filters.priority && (
+                  <span className="flex items-center gap-1 px-3 py-1 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 rounded-full text-xs font-medium">
+                    Priority: {filters.priority}
+                    <X size={14} className="cursor-pointer" onClick={() => setFilters({ ...filters, priority: '' })} />
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Project Header & Controls */}
         <div className="bg-white dark:bg-[#1a2234] border-b border-gray-200 dark:border-gray-800 px-8 py-4 shrink-0">
-          <h1 className="text-2xl font-bold mb-4">{project?.name || 'Project Timeline'}</h1>
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h1 className="text-2xl font-bold">{project?.name || 'Project Timeline'}</h1>
+              <p className="text-sm text-gray-500 mt-1">
+                Showing {filteredTasks.length} tasks | 
+                {filteredTasks.filter(t => t.start_date && t.due_date).length} with dates | 
+                Timeline: {timelineRange.startDate.toLocaleDateString()} - {timelineRange.endDate.toLocaleDateString()}
+              </p>
+            </div>
+            {filteredTasks.length > 0 && (
+              <div className="flex items-center gap-3 text-sm">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-sm bg-emerald-500"></div>
+                  <span className="text-gray-600 dark:text-gray-400">Done</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-sm bg-[#135bec]"></div>
+                  <span className="text-gray-600 dark:text-gray-400">In Progress</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-sm bg-purple-500"></div>
+                  <span className="text-gray-600 dark:text-gray-400">Review</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-sm bg-slate-400/40 border border-slate-400"></div>
+                  <span className="text-gray-600 dark:text-gray-400">To Do</span>
+                </div>
+              </div>
+            )}
+          </div>
           <div className="flex items-center justify-between">
             {/* Time Scale Toggle */}
             <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
@@ -184,7 +643,13 @@ const ProjectGantt = () => {
             {/* View Options */}
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2 border-r border-gray-200 dark:border-gray-700 pr-4">
-                <button className="flex items-center gap-1.5 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-[#135bec]">
+                <button 
+                  onClick={() => {
+                    const today = new Date();
+                    // This would scroll to today's position - implementation depends on scroll container ref
+                  }}
+                  className="flex items-center gap-1.5 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-[#135bec] transition-colors"
+                >
                   <Calendar size={18} />
                   Today
                 </button>
@@ -213,7 +678,7 @@ const ProjectGantt = () => {
 
         {/* Main Gantt Content Area */}
         <div className="flex-1 flex overflow-hidden">
-          {tasks.length === 0 ? (
+          {filteredTasks.length === 0 ? (
             <div className="flex-1 flex items-center justify-center p-12">
               <div className="text-center">
                 <div className="w-20 h-20 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mx-auto mb-4">
@@ -236,36 +701,72 @@ const ProjectGantt = () => {
           {/* Task List (Left Side) */}
           <div className="w-[420px] shrink-0 border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1a2234] flex flex-col">
             <div className="flex border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
-              <div className="w-48 px-4 py-2 text-[11px] font-bold text-gray-500 uppercase tracking-wider">Task Name</div>
-              <div className="w-24 px-4 py-2 text-[11px] font-bold text-gray-500 uppercase tracking-wider border-l border-gray-200 dark:border-gray-700">Duration</div>
-              <div className="flex-1 px-4 py-2 text-[11px] font-bold text-gray-500 uppercase tracking-wider border-l border-gray-200 dark:border-gray-700">Assignee</div>
+              <div className="w-64 px-4 py-2 text-[11px] font-bold text-gray-500 uppercase tracking-wider">Task Name</div>
+              <div className="w-28 px-4 py-2 text-[11px] font-bold text-gray-500 uppercase tracking-wider border-l border-gray-200 dark:border-gray-700">Start Date</div>
+              <div className="w-28 px-4 py-2 text-[11px] font-bold text-gray-500 uppercase tracking-wider border-l border-gray-200 dark:border-gray-700">Due Date</div>
             </div>
             <div className="flex-1 overflow-y-auto">
-              {tasks.map((task, index) => (
+              {filteredTasks.map((task, index) => (
                 <div key={task._id} className="flex items-center border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors h-10 group">
-                  <div className="w-48 px-4 flex items-center gap-2">
-                    <span className="text-sm font-medium truncate text-gray-700 dark:text-gray-300">
-                      {task.title}
-                    </span>
-                  </div>
-                  <div className={`w-24 px-4 text-sm border-l border-gray-100 dark:border-gray-800 ${
-                    task.priority === 'urgent' ? 'text-red-500 font-medium' : 'text-gray-500'
-                  }`}>
-                    {getDuration(task)}
-                  </div>
-                  <div className="flex-1 px-4 border-l border-gray-100 dark:border-gray-800">
-                    {task.assigned_to && task.assigned_to.length > 0 && (
-                      <div className="flex -space-x-2">
-                        {task.assigned_to.slice(0, 2).map((user, idx) => (
-                          <div
-                            key={idx}
-                            className="h-6 w-6 rounded-full border-2 border-white dark:border-[#1a2234] bg-gradient-to-br from-blue-400 to-purple-600 flex items-center justify-center text-white text-xs font-bold"
-                          >
-                            {getUserInitials(user.full_name || user.username)}
-                          </div>
-                        ))}
+                  <div className="w-64 px-4 flex items-center gap-2">
+                    {/* Status indicator */}
+                    <div className={`w-2 h-2 rounded-full shrink-0 ${
+                      task.status === 'done' 
+                        ? 'bg-emerald-500' 
+                        : task.status === 'in_progress' 
+                          ? 'bg-blue-500' 
+                          : task.status === 'review' 
+                            ? 'bg-purple-500' 
+                            : 'bg-gray-300'
+                    }`} />
+                    
+                    {/* Task title with priority indicator */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1">
+                        {task.priority === 'urgent' && (
+                          <span className="text-red-500 text-xs">🔥</span>
+                        )}
+                        {task.priority === 'high' && (
+                          <span className="text-orange-500 text-xs">⬆️</span>
+                        )}
+                        <span className="text-sm font-medium truncate text-gray-700 dark:text-gray-300">
+                          {task.title}
+                        </span>
                       </div>
-                    )}
+                      {task.project_id?.name && (
+                        <div className="text-[10px] text-gray-400 truncate">
+                          {task.project_id.name}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="w-28 px-4 border-l border-gray-100 dark:border-gray-800">
+                    <div className="text-xs text-gray-600 dark:text-gray-400">
+                      {task.start_date 
+                        ? new Date(task.start_date).toLocaleDateString('en-US', { 
+                            month: 'short', 
+                            day: 'numeric' 
+                          })
+                        : '-'
+                      }
+                    </div>
+                  </div>
+                  
+                  <div className="w-28 px-4 border-l border-gray-100 dark:border-gray-800">
+                    <div className={`text-xs ${
+                      task.due_date && new Date(task.due_date) < new Date() && task.status !== 'done'
+                        ? 'text-red-500 font-semibold'
+                        : 'text-gray-600 dark:text-gray-400'
+                    }`}>
+                      {task.due_date 
+                        ? new Date(task.due_date).toLocaleDateString('en-US', { 
+                            month: 'short', 
+                            day: 'numeric' 
+                          })
+                        : '-'
+                      }
+                    </div>
                   </div>
                 </div>
               ))}
@@ -276,68 +777,168 @@ const ProjectGantt = () => {
           <div className="flex-1 overflow-x-auto overflow-y-hidden relative bg-white dark:bg-[#1a2234]">
             {/* Timeline Header */}
             <div className="sticky top-0 z-20">
+              {/* Month Headers */}
               <div className="flex border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 h-8">
-                <div className="w-[280px] shrink-0 border-r border-gray-200 dark:border-gray-800 px-4 flex items-center text-xs font-bold text-gray-500">
-                  {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }).toUpperCase()}
-                </div>
-                <div className="w-[280px] shrink-0 border-r border-gray-200 dark:border-gray-800 px-4 flex items-center text-xs font-bold text-gray-500">
-                  {new Date(new Date().setMonth(new Date().getMonth() + 1)).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }).toUpperCase()}
-                </div>
-                <div className="w-[280px] shrink-0 border-r border-gray-200 dark:border-gray-800 px-4 flex items-center text-xs font-bold text-gray-500">
-                  {new Date(new Date().setMonth(new Date().getMonth() + 2)).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }).toUpperCase()}
-                </div>
+                {timelineHeaders.map((header, idx) => (
+                  <div 
+                    key={idx}
+                    className="shrink-0 border-r border-gray-200 dark:border-gray-800 px-4 flex items-center text-xs font-bold text-gray-500"
+                    style={{ width: `${header.width}px` }}
+                  >
+                    {header.label.toUpperCase()}
+                  </div>
+                ))}
               </div>
+              
+              {/* Day Headers */}
               <div className="flex border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1a2234] h-8">
-                <div className="flex w-[280px] justify-around items-center text-[10px] text-gray-400 font-medium px-2">
-                  <span>1</span><span>8</span><span>15</span><span>22</span><span>29</span>
-                </div>
-                <div className="flex w-[280px] justify-around items-center text-[10px] text-gray-400 font-medium px-2">
-                  <span>5</span><span>12</span><span>19</span><span>26</span>
-                </div>
-                <div className="flex w-[280px] justify-around items-center text-[10px] text-gray-400 font-medium px-2">
-                  <span>3</span><span>10</span><span>17</span><span>24</span><span>31</span>
-                </div>
+                {timeScale === 'day' ? (
+                  dayHeaders.map((day, idx) => (
+                    <div 
+                      key={idx}
+                      className={`shrink-0 flex flex-col items-center justify-center text-[10px] font-medium border-r border-gray-100 dark:border-gray-800 ${
+                        day.isToday 
+                          ? 'bg-[#135bec]/10 text-[#135bec] font-bold' 
+                          : day.isWeekend 
+                            ? 'bg-gray-50 dark:bg-gray-800/30 text-gray-400'
+                            : 'text-gray-500'
+                      }`}
+                      style={{ width: `${dayWidth}px` }}
+                    >
+                      <span className="text-[9px] uppercase">{day.day}</span>
+                      <span className={day.isToday ? 'font-bold' : ''}>{day.label}</span>
+                    </div>
+                  ))
+                ) : timeScale === 'week' ? (
+                  dayHeaders.map((day, idx) => (
+                    <div 
+                      key={idx}
+                      className="shrink-0 flex items-center justify-center text-[10px] text-gray-400 font-medium border-r border-gray-100 dark:border-gray-800"
+                      style={{ width: `${dayWidth * 7}px` }}
+                    >
+                      {day.label}
+                    </div>
+                  ))
+                ) : (
+                  <div className="flex flex-1">
+                    {timelineHeaders.map((header, idx) => {
+                      const daysInPeriod = Math.ceil(header.width / dayWidth);
+                      const markers = [];
+                      for (let i = 1; i <= Math.min(5, daysInPeriod); i += Math.ceil(daysInPeriod / 5)) {
+                        markers.push(i);
+                      }
+                      return (
+                        <div 
+                          key={idx}
+                          className="flex justify-around items-center text-[10px] text-gray-400 font-medium px-2 border-r border-gray-200 dark:border-gray-800"
+                          style={{ width: `${header.width}px` }}
+                        >
+                          {markers.map((day, i) => (
+                            <span key={i}>{day}</span>
+                          ))}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </div>
 
             {/* Grid & Bars */}
-            <div className="relative h-full" style={{
-              backgroundImage: 'linear-gradient(to right, #e5e7eb 1px, transparent 1px)',
-              backgroundSize: '40px 100%'
+            <div className="relative" style={{
+              backgroundImage: timeScale === 'day' 
+                ? 'linear-gradient(to right, #e5e7eb 1px, transparent 1px)'
+                : 'linear-gradient(to right, #f3f4f6 1px, transparent 1px)',
+              backgroundSize: `${timeScale === 'day' ? dayWidth : dayWidth * 7}px 100%`,
+              minWidth: `${timelineHeaders.reduce((sum, h) => sum + h.width, 0)}px`
             }}>
               {/* Current Time Indicator */}
-              <div className="absolute left-[340px] top-0 bottom-0 w-px bg-[#135bec] z-10">
-                <div className="absolute -top-1 -left-1.5 w-3 h-3 bg-[#135bec] rounded-full ring-4 ring-[#135bec]/20"></div>
-              </div>
+              {(() => {
+                const today = new Date();
+                const { startDate } = timelineRange;
+                const daysFromStart = Math.floor((today - startDate) / (1000 * 60 * 60 * 24));
+                const position = daysFromStart * dayWidth;
+                
+                if (position >= 0 && position <= timelineHeaders.reduce((sum, h) => sum + h.width, 0)) {
+                  return (
+                    <div className="absolute top-0 bottom-0 w-px bg-[#135bec] z-10" style={{ left: `${position}px` }}>
+                      <div className="absolute -top-1 -left-1.5 w-3 h-3 bg-[#135bec] rounded-full ring-4 ring-[#135bec]/20"></div>
+                      <div className="absolute top-2 -left-8 text-[9px] font-bold text-[#135bec] bg-white dark:bg-gray-800 px-1 rounded">
+                        TODAY
+                      </div>
+                    </div>
+                  );
+                }
+                return null;
+              })()}
 
               {/* Task Bars */}
               <div className="flex flex-col">
-                {tasks.map((task, index) => {
+                {filteredTasks.map((task, index) => {
                   const barColor = getTaskBarColor(task.status);
                   const barWidth = getTaskBarWidth(task);
                   const barPosition = getTaskBarPosition(task);
                   const progressWidth = getProgressWidth(task.progress || 0);
+                  const hasValidDates = task.start_date && task.due_date;
 
                   return (
-                    <div key={task._id} className="h-10 border-b border-gray-100 dark:border-gray-800 flex items-center relative">
-                      {task.status !== 'todo' && (
+                    <div key={task._id} className="h-10 border-b border-gray-100 dark:border-gray-800 flex items-center relative group hover:bg-gray-50 dark:hover:bg-gray-800/30">
+                      {hasValidDates && barWidth > 0 ? (
                         <div
-                          className={`absolute h-6 ${barColor} rounded-md shadow-sm flex items-center overflow-hidden`}
+                          className={`absolute h-6 ${barColor} rounded-md shadow-sm flex items-center overflow-hidden cursor-pointer transition-all hover:shadow-lg hover:scale-105 z-20`}
                           style={{ 
                             left: `${barPosition}px`, 
-                            width: barWidth 
+                            width: `${Math.max(barWidth, 30)}px`,
+                            minWidth: '30px'
                           }}
+                          title={`${task.title} (${task.status})\n${task.start_date ? new Date(task.start_date).toLocaleDateString() : ''} - ${task.due_date ? new Date(task.due_date).toLocaleDateString() : ''}`}
                         >
+                          {/* Progress bar for in-progress tasks */}
                           {task.status === 'in_progress' && task.progress && (
                             <div 
                               className="h-full bg-white/20" 
                               style={{ width: progressWidth }}
                             ></div>
                           )}
-                          <div className="absolute inset-0 flex items-center px-2">
-                            <span className="text-[10px] text-white font-bold uppercase tracking-tighter">
-                              {task.status === 'done' ? '100%' : task.progress ? `${task.progress}%` : ''}
+                          
+                          {/* Task info on bar */}
+                          <div className="absolute inset-0 flex items-center justify-between px-2">
+                            <span className="text-[10px] text-white font-bold truncate">
+                              {barWidth > 80 ? task.title : ''}
                             </span>
+                            <span className="text-[10px] text-white font-bold">
+                              {task.status === 'done' ? '✓' : task.progress ? `${task.progress}%` : ''}
+                            </span>
+                          </div>
+
+                          {/* Task tooltip on hover */}
+                          <div className="absolute hidden group-hover:block bottom-full left-0 mb-2 z-30 w-64 bg-gray-900 text-white text-xs rounded-lg shadow-xl p-3">
+                            <div className="font-bold mb-1">{task.title}</div>
+                            {task.description && (
+                              <div className="text-gray-300 mb-2 line-clamp-2">{task.description}</div>
+                            )}
+                            <div className="space-y-1 text-gray-400">
+                              <div>Status: <span className="text-white">{task.status}</span></div>
+                              <div>Priority: <span className="text-white">{task.priority}</span></div>
+                              {task.start_date && (
+                                <div>Start: <span className="text-white">{new Date(task.start_date).toLocaleDateString()}</span></div>
+                              )}
+                              {task.due_date && (
+                                <div>Due: <span className="text-white">{new Date(task.due_date).toLocaleDateString()}</span></div>
+                              )}
+                              {task.project_id?.name && (
+                                <div>Project: <span className="text-white">{task.project_id.name}</span></div>
+                              )}
+                            </div>
+                            {/* Tooltip arrow */}
+                            <div className="absolute top-full left-4 -mt-1 border-4 border-transparent border-t-gray-900"></div>
+                          </div>
+                        </div>
+                      ) : (
+                        /* Show placeholder for tasks without dates */
+                        <div className="absolute left-4 flex items-center gap-2">
+                          <div className="px-3 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-xs rounded-md border border-yellow-300 dark:border-yellow-700">
+                            ⚠ No dates set
                           </div>
                         </div>
                       )}

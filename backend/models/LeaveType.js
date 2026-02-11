@@ -1,12 +1,6 @@
 import mongoose from 'mongoose';
 
 const leaveTypeSchema = new mongoose.Schema({
-  workspaceId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Workspace',
-    required: true,
-    index: true
-  },
   name: {
     type: String,
     required: true,
@@ -48,7 +42,7 @@ const leaveTypeSchema = new mongoose.Schema({
 });
 
 // Compound unique index
-leaveTypeSchema.index({ workspaceId: 1, code: 1 }, { unique: true });
+leaveTypeSchema.index({ code: 1 }, { unique: true });
 
 const LeaveType = mongoose.model('LeaveType', leaveTypeSchema);
 

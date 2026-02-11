@@ -1,7 +1,6 @@
 import express from 'express';
 import { authenticate } from '../middleware/auth.js';
 import { checkRole } from '../middleware/roleCheck.js';
-import { requireCoreWorkspace } from '../middleware/workspaceGuard.js';
 import Holiday from '../models/Holiday.js';
 import { logChange } from '../utils/changeLogService.js';
 import getClientIP from '../utils/getClientIP.js';
@@ -9,12 +8,11 @@ import getClientIP from '../utils/getClientIP.js';
 const router = express.Router();
 
 // Get all holidays
-router.get('/', authenticate, requireCoreWorkspace, async (req, res) => {
+router.get('/', authenticate, async (req, res) => {
   try {
     const { year } = req.query;
-    const workspaceId = req.context?.workspaceId || req.user.workspaceId;
 
-    const query = { workspaceId, isActive: true };
+    const query = { isActive: true };
 
     if (year) {
       const startDate = new Date(year, 0, 1);
@@ -35,10 +33,8 @@ router.get('/', authenticate, requireCoreWorkspace, async (req, res) => {
 router.post('/', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
   try {
     const { name, date, isRecurring, description } = req.body;
-    const workspaceId = req.context?.workspaceId || req.user.workspaceId;
 
     const holiday = new Holiday({
-      workspaceId,
       name,
       date: new Date(date),
       isRecurring: isRecurring || false,
@@ -49,7 +45,6 @@ router.post('/', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
 
     await logChange({
       userId: req.user._id,
-      workspaceId,
       action: 'create',
       entity: 'holiday',
       entityId: holiday._id,
@@ -68,9 +63,8 @@ router.post('/', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
 router.put('/:id', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
   try {
     const { name, date, isRecurring, description, isActive } = req.body;
-    const workspaceId = req.context?.workspaceId || req.user.workspaceId;
 
-    const holiday = await Holiday.findOne({ _id: req.params.id, workspaceId });
+    const holiday = await Holiday.findOne({ _id: req.params.id });
 
     if (!holiday) {
       return res.status(404).json({ message: 'Holiday not found' });
@@ -86,7 +80,6 @@ router.put('/:id', authenticate, checkRole(['admin', 'hr']), async (req, res) =>
 
     await logChange({
       userId: req.user._id,
-      workspaceId,
       action: 'update',
       entity: 'holiday',
       entityId: holiday._id,
@@ -104,11 +97,8 @@ router.put('/:id', authenticate, checkRole(['admin', 'hr']), async (req, res) =>
 // Delete holiday
 router.delete('/:id', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
   try {
-    const workspaceId = req.context?.workspaceId || req.user.workspaceId;
-
     const holiday = await Holiday.findOneAndDelete({ 
-      _id: req.params.id, 
-      workspaceId 
+      _id: req.params.id
     });
 
     if (!holiday) {
@@ -117,7 +107,6 @@ router.delete('/:id', authenticate, checkRole(['admin', 'hr']), async (req, res)
 
     await logChange({
       userId: req.user._id,
-      workspaceId,
       action: 'delete',
       entity: 'holiday',
       entityId: holiday._id,

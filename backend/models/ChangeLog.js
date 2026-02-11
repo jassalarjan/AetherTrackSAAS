@@ -83,14 +83,6 @@ const changeLogSchema = new mongoose.Schema({
     type: Object,
     default: {}
   },
-  // WORKSPACE SUPPORT: All audit logs belong to a workspace (null for system admins)
-  workspaceId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Workspace',
-    required: false,
-    default: null,
-    index: true
-  },
   created_at: {
     type: Date,
     default: Date.now
@@ -104,8 +96,5 @@ changeLogSchema.index({ created_at: -1 });
 changeLogSchema.index({ event_type: 1 });
 changeLogSchema.index({ user_id: 1 });
 changeLogSchema.index({ target_type: 1, target_id: 1 });
-// WORKSPACE SUPPORT: Workspace-scoped indexes
-changeLogSchema.index({ workspaceId: 1, created_at: -1 });
-changeLogSchema.index({ workspaceId: 1, event_type: 1 });
 
 export default mongoose.model('ChangeLog', changeLogSchema);

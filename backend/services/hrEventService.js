@@ -37,9 +37,8 @@ class HrEventService {
     * Handle HR event by sending appropriate email
     * @param {string} event - HR event type
     * @param {Object} data - Event data (supports both user and external recipients)
-    * @param {string} workspaceId - Workspace ID
     */
-   static async handleEvent(event, data, workspaceId) {
+   static async handleEvent(event, data) {
      try {
        console.log(`🔄 Processing HR event: ${event}`, data);
 
@@ -83,15 +82,11 @@ class HrEventService {
       // Find template
       const template = await EmailTemplate.findOne({
         code: templateCode,
-        isActive: true,
-        $or: [
-          { workspaceId },
-          { workspaceId: null, isPredefined: true }
-        ]
+        isActive: true
       });
 
       if (!template) {
-        console.log(`⚠️ Template not found: ${templateCode} for workspace ${workspaceId}`);
+        console.log(`⚠️ Template not found: ${templateCode}`);
         return { success: false, reason: 'Template not found', event, templateCode };
       }
 
@@ -121,8 +116,7 @@ class HrEventService {
           recipientEmail,
           recipientName,
           source: data.source || 'USER'
-        },
-        workspaceId
+        }
       });
 
       console.log(`✅ HR email sent for ${event}:`, emailResult);
@@ -145,8 +139,7 @@ class HrEventService {
         target_id: data.employeeId,
         action: 'error',
         description: `HR email failed for ${event}: ${error.message}`,
-        metadata: { event, error: error.message },
-        workspaceId
+        metadata: { event, error: error.message }
       });
 
       return {

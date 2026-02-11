@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
-import { useWorkspace } from '../context/WorkspaceContext';
 import { useTheme } from '../context/ThemeContext';
 import ResponsivePageLayout from '../components/layouts/ResponsivePageLayout';
 import ConfirmModal from '../components/modals/ConfirmModal';
@@ -22,7 +21,6 @@ import {
 export default function EmailCenter() {
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
-  const { currentWorkspace } = useWorkspace();
   const { currentTheme, currentColorScheme } = useTheme();
   const confirmModal = useConfirmModal();
 
@@ -53,7 +51,7 @@ export default function EmailCenter() {
   // Load initial data
   useEffect(() => {
     fetchInitialData();
-  }, [currentWorkspace]);
+  }, []);
 
   const fetchInitialData = async () => {
     setLoading(true);
@@ -115,7 +113,7 @@ export default function EmailCenter() {
       role: recipient.role || '',
       jobTitle: recipient.role || '',
       currentDate: new Date().toLocaleDateString(),
-      workspaceName: currentWorkspace?.name || 'AetherTrack',
+      workspaceName: 'AetherTrack',
       appUrl: window.location.origin
     };
 
@@ -146,7 +144,7 @@ export default function EmailCenter() {
       template.variables.forEach(variable => {
         switch (variable.name) {
           case 'workspaceName':
-            systemVariables[variable.name] = currentWorkspace?.name || 'AetherTrack';
+            systemVariables[variable.name] = 'AetherTrack';
             break;
           case 'appUrl':
             systemVariables[variable.name] = window.location.origin;

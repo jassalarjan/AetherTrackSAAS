@@ -2,10 +2,8 @@ import express from 'express';
 import { body, validationResult } from 'express-validator';
 import { authenticate } from '../middleware/auth.js';
 import { checkRole } from '../middleware/roleCheck.js';
-import { checkUserLimit, requireBulkImport } from '../middleware/workspaceGuard.js';
 import User from '../models/User.js';
 import Team from '../models/Team.js';
-import Workspace from '../models/Workspace.js';
 import { sendCredentialEmail, sendPasswordResetEmail } from '../utils/emailService.js';
 import { logChange } from '../utils/changeLogService.js';
 import HrActionService from '../services/hrActionService.js';
@@ -44,11 +42,7 @@ const validateUserCreation = [
 // Get current user
 router.get('/me', authenticate, async (req, res) => {
   try {
-    // WORKSPACE SUPPORT: Scope by workspace
-    const user = await User.findOne({
-      _id: req.user._id,
-      workspaceId: req.context.workspaceId
-    })
+    const user = await User.findOne({ _id: req.user._id })
       .select('-password_hash')
       .populate('team_id')
       .populate('teams', 'name');
@@ -121,8 +115,7 @@ router.post('/me/profile-picture', authenticate, async (req, res) => {
         email: user.email,
         role: user.role,
         profile_picture: user.profile_picture,
-        team_id: user.team_id,
-        workspaceId: user.workspaceId
+        team_id: user.team_id
       }
     });
   } catch (error) {
@@ -148,8 +141,7 @@ router.delete('/me/profile-picture', authenticate, async (req, res) => {
         email: user.email,
         role: user.role,
         profile_picture: null,
-        team_id: user.team_id,
-        workspaceId: user.workspaceId
+        team_id: user.team_id
       }
     });
   } catch (error) {
@@ -197,10 +189,9 @@ router.post('/me/change-password', authenticate, async (req, res) => {
 });
 
 // Get all users (Admin, HR & Community Admin)
-router.get('/', authenticate, checkRole(['admin', 'hr', 'community_admin']), async (req, res) => {
+router.get('/', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
   try {
-    // WORKSPACE SUPPORT: Scope by workspace
-    const users = await User.find({ workspaceId: req.context.workspaceId })
+    const users = await User.find({})
       .select('-password_hash')
       .populate('team_id')
       .populate('teams', 'name')
@@ -246,13 +237,9 @@ router.get('/team-members', authenticate, checkRole(['team_lead']), async (req, 
 });
 
 // Get single user by ID (Admin, HR & Community Admin)
-router.get('/:id', authenticate, checkRole(['admin', 'hr', 'community_admin']), async (req, res) => {
+router.get('/:id', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
   try {
-    // WORKSPACE SUPPORT: Find user only within current workspace
-    const user = await User.findOne({ 
-      _id: req.params.id,
-      workspaceId: req.context.workspaceId 
-    })
+    const user = await User.findOne({ _id: req.params.id })
       .select('-password_hash')
       .populate('team_id', 'name')
       .populate('teams', 'name');
@@ -269,7 +256,7 @@ router.get('/:id', authenticate, checkRole(['admin', 'hr', 'community_admin']), 
 });
 
 // Create new user (Admin, HR & Community Admin)
-router.post('/', authenticate, checkRole(['admin', 'hr', 'community_admin']), checkUserLimit, validateUserCreation, async (req, res) => {
+router.post('/', authenticate, checkRole(['admin', 'hr']), validateUserCreation, async (req, res) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -278,11 +265,7 @@ router.post('/', authenticate, checkRole(['admin', 'hr', 'community_admin']), ch
 
     const { full_name, email, password, role, team_id } = req.body;
 
-    // WORKSPACE SUPPORT: Check if user exists in this workspace
-    const existingUser = await User.findOne({ 
-      email,
-      workspaceId: req.context.workspaceId 
-    });
+    const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ message: 'Email already registered' });
     }
@@ -301,17 +284,10 @@ router.post('/', authenticate, checkRole(['admin', 'hr', 'community_admin']), ch
       email,
       password_hash: password,
       role: role || 'member',
-      team_id: (role === 'admin') ? null : (team_id || null),
-      workspaceId: req.context.workspaceId  // WORKSPACE SUPPORT
+      team_id: (role === 'admin') ? null : (team_id || null)
     });
 
     await user.save();
-
-    // Update workspace user count
-    await Workspace.findByIdAndUpdate(
-      req.context.workspaceId,
-      { $inc: { 'usage.userCount': 1 } }
-    );
 
     // Send credential email with timeout (non-blocking)
     // Don't wait more than 10 seconds for email
@@ -357,8 +333,7 @@ router.post('/', authenticate, checkRole(['admin', 'hr', 'community_admin']), ch
         email,
         role,
         team_id
-      },
-      workspaceId: req.context.workspaceId
+      }
     });
 
     // Emit socket event for user creation
@@ -388,7 +363,7 @@ router.post('/', authenticate, checkRole(['admin', 'hr', 'community_admin']), ch
 });
 
 // Bulk delete users (Admin & HR) - MUST be before /:id routes
-router.post('/bulk-delete', authenticate, checkRole(['admin', 'hr']), ...requireBulkImport, async (req, res) => {
+router.post('/bulk-delete', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
   try {
     const { userIds } = req.body;
 
@@ -403,24 +378,15 @@ router.post('/bulk-delete', authenticate, checkRole(['admin', 'hr']), ...require
       return res.status(400).json({ message: 'Cannot delete your own account' });
     }
 
-    // WORKSPACE SUPPORT: Only delete users in current workspace
-    const usersToDelete = await User.find({ 
-      _id: { $in: idsToDelete },
-      workspaceId: req.context.workspaceId 
-    });
+    const usersToDelete = await User.find({ _id: { $in: idsToDelete } });
 
-    // MULTIPLE TEAMS SUPPORT: Remove users from all teams
-    const isCoreWorkspace = req.context.workspaceType === 'CORE';
-    
     for (const user of usersToDelete) {
-      if (isCoreWorkspace && user.teams && user.teams.length > 0) {
-        // Remove user from all teams' members arrays in Core Workspace
+      if (user.teams && user.teams.length > 0) {
         await Team.updateMany(
-          { _id: { $in: user.teams }, workspaceId: req.context.workspaceId },
+          { _id: { $in: user.teams } },
           { $pull: { members: user._id } }
         );
       } else if (user.team_id) {
-        // Community Workspace: remove from single team
         await Team.findByIdAndUpdate(
           user.team_id,
           { $pull: { members: user._id } }
@@ -428,17 +394,7 @@ router.post('/bulk-delete', authenticate, checkRole(['admin', 'hr']), ...require
       }
     }
 
-    // Delete the users
-    const result = await User.deleteMany({ 
-      _id: { $in: idsToDelete },
-      workspaceId: req.context.workspaceId 
-    });
-
-    // Update workspace user count
-    await Workspace.findByIdAndUpdate(
-      req.context.workspaceId,
-      { $inc: { 'usage.userCount': -result.deletedCount } }
-    );
+    const result = await User.deleteMany({ _id: { $in: idsToDelete } });
 
     // Emit socket event for bulk user deletion
     if (req.app.get('io')) {
@@ -457,21 +413,16 @@ router.post('/bulk-delete', authenticate, checkRole(['admin', 'hr']), ...require
 });
 
 // Update user (Admin, HR & Community Admin)
-router.put('/:id', authenticate, checkRole(['admin', 'hr', 'community_admin']), async (req, res) => {
+router.put('/:id', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
   try {
     const { full_name, email, role, team_id } = req.body;
     const { id } = req.params;
 
-    // Validate role if provided
     if (role && !['admin', 'hr', 'team_lead', 'member'].includes(role)) {
       return res.status(400).json({ message: 'Invalid role' });
     }
 
-    // WORKSPACE SUPPORT: Verify user exists in current workspace
-    const currentUser = await User.findOne({ 
-      _id: id,
-      workspaceId: req.context.workspaceId 
-    });
+    const currentUser = await User.findOne({ _id: id });
     
     if (!currentUser) {
       return res.status(404).json({ message: 'User not found' });
@@ -480,8 +431,7 @@ router.put('/:id', authenticate, checkRole(['admin', 'hr', 'community_admin']), 
     // Check if email is being changed and if it's already taken in this workspace
     if (email && email !== currentUser.email) {
       const existingUser = await User.findOne({ 
-        email, 
-        workspaceId: req.context.workspaceId,
+        email,
         _id: { $ne: id } 
       });
       if (existingUser) {
@@ -519,16 +469,13 @@ router.put('/:id', authenticate, checkRole(['admin', 'hr', 'community_admin']), 
     }
     if (finalTeamId !== undefined && role !== 'admin') {
       updates.team_id = finalTeamId;
-      // MULTIPLE TEAMS SUPPORT: For Core Workspace, also update teams array
-      const isCoreWorkspace = req.context.workspaceType === 'CORE';
-      if (isCoreWorkspace && finalTeamId) {
-        // Note: This sets team_id and adds to teams array if not already present
+      if (finalTeamId) {
         updates.$addToSet = { teams: finalTeamId };
       }
     }
 
-    const user = await User.findOneAndUpdate(
-      { _id: id, workspaceId: req.context.workspaceId },
+    const user = await User.findByIdAndUpdate(
+      id,
       updates,
       { new: true, runValidators: true }
     ).select('-password_hash').populate('team_id', 'name').populate('teams', 'name');
@@ -539,7 +486,7 @@ router.put('/:id', authenticate, checkRole(['admin', 'hr', 'community_admin']), 
 
     // Emit socket event for user update
     if (req.app.get('io')) {
-      req.app.get('io').to(`workspace:${req.context.workspaceId}`).emit('user:updated', user);
+      req.app.get('io').emit('user:updated', user);
     }
 
     res.json({ message: 'User updated successfully', user });
@@ -560,39 +507,25 @@ router.delete('/:id', authenticate, checkRole(['admin', 'hr']), async (req, res)
     }
 
     // WORKSPACE SUPPORT: Find and delete user only within current workspace
-    const user = await User.findOne({ 
-      _id: id, 
-      workspaceId: req.context.workspaceId 
-    });
+    const user = await User.findOne({ _id: id });
 
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // MULTIPLE TEAMS SUPPORT: Remove user from all teams in Core Workspace
-    const isCoreWorkspace = req.context.workspaceType === 'CORE';
-    if (isCoreWorkspace && user.teams && user.teams.length > 0) {
-      // Remove user from all teams' members arrays
+    if (user.teams && user.teams.length > 0) {
       await Team.updateMany(
-        { _id: { $in: user.teams }, workspaceId: req.context.workspaceId },
+        { _id: { $in: user.teams } },
         { $pull: { members: user._id } }
       );
     } else if (user.team_id) {
-      // Community Workspace: remove from single team
       await Team.findByIdAndUpdate(
         user.team_id,
         { $pull: { members: user._id } }
       );
     }
 
-    // Delete the user
     await User.findByIdAndDelete(id);
-
-    // Update workspace user count
-    await Workspace.findByIdAndUpdate(
-      req.context.workspaceId,
-      { $inc: { 'usage.userCount': -1 } }
-    );
 
     // Emit socket event for user deletion
     if (req.app.get('io')) {
@@ -674,7 +607,7 @@ router.patch('/:id/role', authenticate, checkRole(['admin', 'hr']), async (req, 
 // ========== BULK IMPORT ENDPOINTS ==========
 
 // Bulk import users from JSON
-router.post('/bulk-import/json', authenticate, checkRole(['admin', 'hr']), ...requireBulkImport, upload.single('file'), async (req, res) => {
+router.post('/bulk-import/json', authenticate, checkRole(['admin', 'hr']), upload.single('file'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: 'No file uploaded' });
@@ -707,7 +640,7 @@ router.post('/bulk-import/json', authenticate, checkRole(['admin', 'hr']), ...re
 });
 
 // Bulk import users from Excel
-router.post('/bulk-import/excel', authenticate, checkRole(['admin', 'hr']), ...requireBulkImport, upload.single('file'), async (req, res) => {
+router.post('/bulk-import/excel', authenticate, checkRole(['admin', 'hr']), upload.single('file'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: 'No file uploaded' });
@@ -818,11 +751,8 @@ async function processBulkUsers(usersData, currentUser) {
       
       // Process each team
       for (const teamName of teamNames) {
-        // Try to find existing team in current user's workspace
-        let team = await Team.findOne({ 
-          name: teamName,
-          workspaceId: currentUser.workspaceId 
-        });
+        // Try to find existing team
+        let team = await Team.findOne({ name: teamName });
         
         // If team doesn't exist, create it
         if (!team) {
@@ -831,8 +761,7 @@ async function processBulkUsers(usersData, currentUser) {
             description: `Auto-created during bulk user import`,
             hr_id: currentUser._id,
             lead_id: currentUser._id,
-            members: [],
-            workspaceId: currentUser.workspaceId
+            members: []
           });
           await team.save();
           
@@ -876,8 +805,7 @@ async function processBulkUsers(usersData, currentUser) {
         role: role,
         team_id: teamId,
         teams: teamIds,
-        employment_status: employmentStatus,
-        workspaceId: currentUser.workspaceId
+        employment_status: employmentStatus
       });
 
       await newUser.save();
@@ -920,7 +848,7 @@ async function processBulkUsers(usersData, currentUser) {
 }
 
 // Download sample Excel template
-router.get('/bulk-import/template', authenticate, checkRole(['admin', 'hr']), ...requireBulkImport, (req, res) => {
+router.get('/bulk-import/template', authenticate, checkRole(['admin', 'hr']), (req, res) => {
   try {
     // Create sample data
     const sampleData = [
@@ -1025,7 +953,7 @@ router.get('/bulk-import/template-json', authenticate, checkRole(['admin', 'hr']
 });
 
 // Activate employee (HR, Admin, Community Admin)
-router.patch('/:id/activate', authenticate, checkRole(['hr', 'admin', 'community_admin']), async (req, res) => {
+router.patch('/:id/activate', authenticate, checkRole(['hr', 'admin']), async (req, res) => {
  try {
    const { id } = req.params;
    const ipAddress = getClientIP(req);
@@ -1033,7 +961,7 @@ router.patch('/:id/activate', authenticate, checkRole(['hr', 'admin', 'community
    const result = await HrActionService.activateEmployee(
      req.user,
      id,
-     req.context.workspaceId,
+     null,
      ipAddress
    );
 
@@ -1052,31 +980,21 @@ router.patch('/:id/activate', authenticate, checkRole(['hr', 'admin', 'community
 });
 
 // Deactivate employee (HR, Admin, Community Admin)
-router.patch('/:id/deactivate', authenticate, checkRole(['hr', 'admin', 'community_admin']), async (req, res) => {
+router.patch('/:id/deactivate', authenticate, checkRole(['hr', 'admin']), async (req, res) => {
   try {
     const { id } = req.params;
     const ipAddress = getClientIP(req);
 
-    // Check if target user is an admin - only community_admin can deactivate admins
-    const targetUser = await User.findOne({
-      _id: id,
-      workspaceId: req.context.workspaceId
-    });
+    const targetUser = await User.findOne({ _id: id });
 
     if (!targetUser) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    if (targetUser.role === 'admin' && req.user.role !== 'community_admin') {
-      return res.status(403).json({
-        message: 'Only super administrators can deactivate admin accounts'
-      });
-    }
-
     const result = await HrActionService.deactivateEmployee(
       req.user,
       id,
-      req.context.workspaceId,
+      null,
       ipAddress
     );
 

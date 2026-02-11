@@ -1,12 +1,6 @@
 import mongoose from 'mongoose';
 
 const holidaySchema = new mongoose.Schema({
-  workspaceId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Workspace',
-    required: true,
-    index: true
-  },
   name: {
     type: String,
     required: true,
@@ -33,8 +27,8 @@ const holidaySchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Compound index for workspace and date queries
-holidaySchema.index({ workspaceId: 1, date: 1 });
+// Index for date queries
+holidaySchema.index({ date: 1 });
 
 const Holiday = mongoose.model('Holiday', holidaySchema);
 

@@ -9,8 +9,9 @@ import autoTable from 'jspdf-autotable';
  * @param {Object} filters - Applied filters
  * @param {Object} user - Current user
  * @param {String} reportType - 'daily', 'weekly', 'monthly', or 'all'
+ * @param {Array} projects - All projects
  */
-export const generateComprehensivePDFReport = (tasks, analyticsData, filters, user, reportType = 'all') => {
+export const generateComprehensivePDFReport = (tasks, analyticsData, filters, user, reportType = 'all', projects = []) => {
   try {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
@@ -231,8 +232,121 @@ export const generateComprehensivePDFReport = (tasks, analyticsData, filters, us
         });
       }
     }
-    
-    // ========== PAGE 5: USER PERFORMANCE ==========
+        // ========== PAGE: PROJECT ANALYTICS ==========
+    if (projects && projects.length > 0) {
+      doc.addPage();
+      yPosition = 20;
+      
+      addSectionHeader(doc, 'Project Analytics', yPosition);
+      yPosition += 15;
+      
+      // Project Summary Stats
+      const projectKPIs = [
+        ['Total Projects', projects.length.toString()],
+        ['Active Projects', projects.filter(p => p.status === 'active').length.toString()],
+        ['Completed Projects', projects.filter(p => p.status === 'completed').length.toString()],
+        ['On Hold Projects', projects.filter(p => p.status === 'on_hold').length.toString()],
+        ['Avg Progress', (projects.reduce((sum, p) => sum + (p.progress || 0), 0) / projects.length).toFixed(1) + '%']
+      ];
+
+      autoTable(doc, {
+        startY: yPosition,
+        body: projectKPIs,
+        theme: 'plain',
+        styles: { 
+          fontSize: 11,
+          cellPadding: 3,
+          fontStyle: 'bold'
+        },
+        columnStyles: {
+          0: { halign: 'right', cellWidth: 95 },
+          1: { halign: 'left', textColor: [59, 130, 246], fontSize: 13 }
+        },
+        margin: { left: 15, right: 15 },
+      });
+
+      yPosition = doc.lastAutoTable.finalY + 15;
+
+      // Project Details Table
+      const projectData = projects.map((project, index) => [
+        (index + 1).toString(),
+        project.name.substring(0, 25) + (project.name.length > 25 ? '...' : ''),
+        formatStatus(project.status),
+        formatPriority(project.priority),
+        (project.progress || 0) + '%',
+        (project.team_members?.length || 0).toString(),
+        calculateProjectHealth(project).toString()
+      ]);
+
+      autoTable(doc, {
+        startY: yPosition,
+        head: [['#', 'Project Name', 'Status', 'Priority', 'Progress', 'Team', 'Health']],
+        body: projectData,
+        theme: 'grid',
+        headStyles: { 
+          fillColor: [59, 130, 246], 
+          fontStyle: 'bold', 
+          fontSize: 10,
+          halign: 'center'
+        },
+        styles: { 
+          fontSize: 9, 
+          cellPadding: 4
+        },
+        columnStyles: {
+          0: { cellWidth: 10, halign: 'center' },
+          1: { cellWidth: 60 },
+          2: { cellWidth: 25, halign: 'center' },
+          3: { cellWidth: 20, halign: 'center' },
+          4: { cellWidth: 20, halign: 'center', fontStyle: 'bold' },
+          5: { cellWidth: 15, halign: 'center' },
+          6: { cellWidth: 18, halign: 'center', fontStyle: 'bold' }
+        },
+        margin: { left: 15, right: 15 },
+      });
+
+      // Budget Analysis (if applicable)
+      const projectsWithBudget = projects.filter(p => p.budget && p.budget.allocated > 0);
+      if (projectsWithBudget.length > 0) {
+        yPosition = doc.lastAutoTable.finalY + 15;
+        
+        if (yPosition > pageHeight - 80) {
+          doc.addPage();
+          yPosition = 20;
+        }
+
+        addSectionHeader(doc, 'Budget Analysis', yPosition);
+        yPosition += 15;
+
+        const budgetData = projectsWithBudget.map(project => [
+          project.name.substring(0, 30) + (project.name.length > 30 ? '...' : ''),
+          '$' + (project.budget.allocated || 0).toLocaleString(),
+          '$' + (project.budget.spent || 0).toLocaleString(),
+          '$' + ((project.budget.allocated || 0) - (project.budget.spent || 0)).toLocaleString(),
+          project.budget.allocated > 0 
+            ? ((project.budget.spent / project.budget.allocated) * 100).toFixed(1) + '%'
+            : '0%'
+        ]);
+
+        autoTable(doc, {
+          startY: yPosition,
+          head: [['Project', 'Allocated', 'Spent', 'Remaining', 'Utilization']],
+          body: budgetData,
+          theme: 'striped',
+          headStyles: { fillColor: [16, 185, 129], fontStyle: 'bold', fontSize: 10 },
+          styles: { fontSize: 9, cellPadding: 4 },
+          columnStyles: {
+            0: { cellWidth: 70 },
+            1: { halign: 'right', cellWidth: 30 },
+            2: { halign: 'right', cellWidth: 25, textColor: [239, 68, 68] },
+            3: { halign: 'right', cellWidth: 30 },
+            4: { halign: 'center', cellWidth: 25, fontStyle: 'bold' }
+          },
+          margin: { left: 15, right: 15 },
+        });
+      }
+    }
+        // ========== PAGE 5: USER PERFORMANCE ==========
     if (filteredAnalytics.assigneePerformance && filteredAnalytics.assigneePerformance.length > 0) {
       doc.addPage();
       yPosition = 20;
@@ -890,4 +1004,33 @@ function calculateDaysUntilDue(dueDate) {
   const diffTime = due - now;
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   return diffDays;
+}
+
+function calculateProjectHealth(project) {
+  let score = 100;
+  
+  // Progress factor (40 points)
+  const progress = project.progress || 0;
+  score -= (100 - progress) * 0.4;
+  
+  // Status factor (30 points)
+  if (project.status === 'on_hold') score -= 30;
+  if (project.status === 'archived') score -= 50;
+  
+  // Budget factor (20 points)
+  if (project.budget) {
+    const budgetUtilization = project.budget.allocated > 0 
+      ? (project.budget.spent / project.budget.allocated) * 100 
+      : 0;
+    if (budgetUtilization > 100) score -= 20; // Over budget
+    else if (budgetUtilization > 90) score -= 10; // Near budget limit
+  }
+  
+  // Due date factor (10 points)
+  if (project.due_date) {
+    const daysUntilDue = calculateDaysUntilDue(project.due_date);
+    if (daysUntilDue < 0) score -= 10; // Overdue
+  }
+  
+  return Math.max(0, Math.min(100, Math.round(score)));
 }

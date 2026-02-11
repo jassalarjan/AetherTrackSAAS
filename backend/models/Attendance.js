@@ -7,12 +7,6 @@ const attendanceSchema = new mongoose.Schema({
     required: true,
     index: true
   },
-  workspaceId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Workspace',
-    required: true,
-    index: true
-  },
   date: {
     type: Date,
     required: true,
@@ -54,7 +48,7 @@ const attendanceSchema = new mongoose.Schema({
 
 // Compound index for efficient queries
 attendanceSchema.index({ userId: 1, date: 1 }, { unique: true });
-attendanceSchema.index({ workspaceId: 1, date: 1 });
+attendanceSchema.index({ date: 1 });
 
 // Calculate working hours before saving
 attendanceSchema.pre('save', function(next) {

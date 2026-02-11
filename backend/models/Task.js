@@ -40,14 +40,6 @@ const taskSchema = new mongoose.Schema({
     default: null,
     index: true
   },
-  // WORKSPACE SUPPORT: All tasks belong to a workspace (null for system admins)
-  workspaceId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Workspace',
-    required: false,
-    default: null,
-    index: true
-  },
   due_date: {
     type: Date,
     required: [true, 'Due date is required']
@@ -68,12 +60,11 @@ const taskSchema = new mongoose.Schema({
   }
 });
 
-// WORKSPACE SUPPORT: Indexes for workspace-scoped queries
-taskSchema.index({ workspaceId: 1, status: 1 });
-taskSchema.index({ workspaceId: 1, assigned_to: 1 });
-taskSchema.index({ workspaceId: 1, team_id: 1 });
-taskSchema.index({ workspaceId: 1, due_date: 1 });
-taskSchema.index({ workspaceId: 1, project_id: 1 });
+// Indexes for queries
+taskSchema.index({ status: 1 });
+taskSchema.index({ assigned_to: 1 });
+taskSchema.index({ team_id: 1 });
+taskSchema.index({ due_date: 1 });
 taskSchema.index({ project_id: 1, status: 1 });
 
 taskSchema.pre('save', function(next) {

@@ -5,7 +5,7 @@ import autoTable from 'jspdf-autotable';
 /**
  * Generate comprehensive Excel report with multiple sheets
  */
-export const generateExcelReport = (tasks, analyticsData, filters) => {
+export const generateExcelReport = (tasks, analyticsData, filters, projects = []) => {
   const workbook = XLSX.utils.book_new();
 
   // Sheet 1: Task Summary
@@ -144,6 +144,57 @@ export const generateExcelReport = (tasks, analyticsData, filters) => {
     { wch: 15 },  // Status
   ];
   XLSX.utils.book_append_sheet(workbook, overdueSheet, 'Overdue Tasks');
+
+  // Sheet 6.5: Project Summary (if projects data is available)
+  if (projects && projects.length > 0) {
+    const projectSummaryData = projects.map((project, index) => ({
+      '#': index + 1,
+      'Project Name': project.name,
+      'Description': project.description || 'N/A',
+      'Status': formatStatus(project.status),
+      'Priority': formatPriority(project.priority),
+      'Progress': project.progress + '%',
+      'Start Date': project.start_date ? formatDate(project.start_date) : 'N/A',
+      'Due Date': project.due_date ? formatDate(project.due_date) : 'N/A',
+      'Budget Allocated': project.budget?.allocated || 0,
+      'Budget Spent': project.budget?.spent || 0,
+      'Budget Remaining': (project.budget?.allocated || 0) - (project.budget?.spent || 0),
+      'Team Members': project.team_members?.length || 0,
+      'Health Score': calculateProjectHealth(project),
+    }));
+
+    const projectSheet = XLSX.utils.json_to_sheet(projectSummaryData);
+    projectSheet['!cols'] = [
+      { wch: 5 },   // #
+      { wch: 30 },  // Project Name
+      { wch: 40 },  // Description
+      { wch: 15 },  // Status
+      { wch: 12 },  // Priority
+      { wch: 12 },  // Progress
+      { wch: 15 },  // Start Date
+      { wch: 15 },  // Due Date
+      { wch: 18 },  // Budget Allocated
+      { wch: 15 },  // Budget Spent
+      { wch: 18 },  // Budget Remaining
+      { wch: 15 },  // Team Members
+      { wch: 15 },  // Health Score
+    ];
+    XLSX.utils.book_append_sheet(workbook, projectSheet, 'Project Summary');
+
+    // Add Project Statistics
+    const projectStats = [
+      { 'Metric': 'Total Projects', 'Value': projects.length },
+      { 'Metric': 'Active Projects', 'Value': projects.filter(p => p.status === 'active').length },
+      { 'Metric': 'Completed Projects', 'Value': projects.filter(p => p.status === 'completed').length },
+      { 'Metric': 'On Hold Projects', 'Value': projects.filter(p => p.status === 'on_hold').length },
+      { 'Metric': 'Average Progress', 'Value': (projects.reduce((sum, p) => sum + (p.progress || 0), 0) / projects.length).toFixed(2) + '%' },
+      { 'Metric': 'Total Budget Allocated', 'Value': '$' + projects.reduce((sum, p) => sum + (p.budget?.allocated || 0), 0).toLocaleString() },
+      { 'Metric': 'Total Budget Spent', 'Value': '$' + projects.reduce((sum, p) => sum + (p.budget?.spent || 0), 0).toLocaleString() },
+    ];
+    const projectStatsSheet = XLSX.utils.json_to_sheet(projectStats);
+    projectStatsSheet['!cols'] = [{ wch: 25 }, { wch: 20 }];
+    XLSX.utils.book_append_sheet(workbook, projectStatsSheet, 'Project Statistics');
+  }
 
   // Sheet 7: Summary Statistics
   const summaryStats = [
@@ -533,4 +584,33 @@ function calculateTeamPerformance(tasks) {
     'Overdue': stats.overdue,
     'Completion Rate': stats.total > 0 ? ((stats.completed / stats.total) * 100).toFixed(2) + '%' : '0%',
   }));
+}
+
+function calculateProjectHealth(project) {
+  let score = 100;
+  
+  // Progress factor (40 points)
+  const progress = project.progress || 0;
+  score -= (100 - progress) * 0.4;
+  
+  // Status factor (30 points)
+  if (project.status === 'on_hold') score -= 30;
+  if (project.status === 'archived') score -= 50;
+  
+  // Budget factor (20 points)
+  if (project.budget) {
+    const budgetUtilization = project.budget.allocated > 0 
+      ? (project.budget.spent / project.budget.allocated) * 100 
+      : 0;
+    if (budgetUtilization > 100) score -= 20; // Over budget
+    else if (budgetUtilization > 90) score -= 10; // Near budget limit
+  }
+  
+  // Due date factor (10 points)
+  if (project.due_date) {
+    const daysUntilDue = calculateDaysUntilDue(project.due_date);
+    if (daysUntilDue < 0) score -= 10; // Overdue
+  }
+  
+  return Math.max(0, Math.min(100, Math.round(score)));
 }

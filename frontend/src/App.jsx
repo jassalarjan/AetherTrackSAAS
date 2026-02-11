@@ -2,7 +2,6 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { SidebarProvider } from './context/SidebarContext';
-import { WorkspaceProvider } from './context/WorkspaceContext';
 import { ProtectedRoute } from './routes/ProtectedRoute';
 import useNotifications from './hooks/useNotifications';
 import Login from './pages/Login';
@@ -17,7 +16,6 @@ import Kanban from './pages/Kanban';
 import Teams from './pages/Teams';
 import UserManagement from './pages/UserManagement';
 import CommunityUserManagement from './pages/CommunityUserManagement';
-import WorkspaceManagement from './pages/WorkspaceManagement';
 import Analytics from './pages/Analytics';
 import Settings from './pages/Settings';
 import Calendar from './pages/Calendar';
@@ -31,6 +29,7 @@ import LeavesPage from './pages/LeavesPage';
 import HRDashboard from './pages/HRDashboard';
 import EmailCenter from './pages/EmailCenter';
 import ProjectDashboard from './pages/ProjectDashboard';
+import MyProjects from './pages/MyProjects';
 import ProjectDetail from './pages/ProjectDetail';
 import ProjectGantt from './pages/ProjectGantt';
 import SprintManagement from './pages/SprintManagement';
@@ -82,6 +81,15 @@ function AppContent() {
         element={
           <ProtectedRoute>
             <ProjectDashboard />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/my-projects"
+        element={
+          <ProtectedRoute>
+            <MyProjects />
           </ProtectedRoute>
         }
       />
@@ -196,15 +204,6 @@ function AppContent() {
       />
 
       <Route
-        path="/workspaces"
-        element={
-          <ProtectedRoute allowedRoles={['admin']}>
-            <WorkspaceManagement />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
         path="/analytics"
         element={
           <ProtectedRoute>
@@ -259,13 +258,11 @@ function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <WorkspaceProvider>
-          <SidebarProvider>
-            <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-              <AppContent />
-            </BrowserRouter>
-          </SidebarProvider>
-        </WorkspaceProvider>
+        <SidebarProvider>
+          <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+            <AppContent />
+          </BrowserRouter>
+        </SidebarProvider>
       </AuthProvider>
     </ThemeProvider>
   );

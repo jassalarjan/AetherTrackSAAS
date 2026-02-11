@@ -1,7 +1,6 @@
 import express from 'express';
 import { authenticate } from '../middleware/auth.js';
 import { checkRole } from '../middleware/roleCheck.js';
-import { requireCoreWorkspace } from '../middleware/workspaceGuard.js';
 import Attendance from '../models/Attendance.js';
 import User from '../models/User.js';
 import { logChange } from '../utils/changeLogService.js';
@@ -10,16 +9,11 @@ import getClientIP from '../utils/getClientIP.js';
 const router = express.Router();
 
 // Get attendance records (filtered by month/user)
-router.get('/', authenticate, requireCoreWorkspace, async (req, res) => {
+router.get('/', authenticate, async (req, res) => {
   try {
     const { month, year, userId } = req.query;
-    const workspaceId = req.context?.workspaceId || req.user.workspaceId;
 
-    if (!workspaceId) {
-      return res.status(400).json({ message: 'Workspace context required' });
-    }
-
-    const query = { workspaceId };
+    const query = {};
 
     // HR/Admin can view all; members can view only their own
     if (req.user.role === 'member') {
@@ -51,14 +45,11 @@ router.get('/', authenticate, requireCoreWorkspace, async (req, res) => {
 // Check-in
 router.post('/checkin', authenticate, async (req, res) => {
   try {
-    const workspaceId = req.context?.workspaceId || req.user.workspaceId;
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // Check if already checked in
     let attendance = await Attendance.findOne({
       userId: req.user._id,
-      workspaceId,
       date: today
     });
 
@@ -69,7 +60,6 @@ router.post('/checkin', authenticate, async (req, res) => {
     if (!attendance) {
       attendance = new Attendance({
         userId: req.user._id,
-        workspaceId,
         date: today
       });
     }
@@ -80,7 +70,6 @@ router.post('/checkin', authenticate, async (req, res) => {
 
     await logChange({
       userId: req.user._id,
-      workspaceId,
       action: 'create',
       entity: 'attendance',
       entityId: attendance._id,
@@ -98,13 +87,11 @@ router.post('/checkin', authenticate, async (req, res) => {
 // Check-out
 router.post('/checkout', authenticate, async (req, res) => {
   try {
-    const workspaceId = req.context?.workspaceId || req.user.workspaceId;
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
     const attendance = await Attendance.findOne({
       userId: req.user._id,
-      workspaceId,
       date: today
     });
 
@@ -121,7 +108,6 @@ router.post('/checkout', authenticate, async (req, res) => {
 
     await logChange({
       userId: req.user._id,
-      workspaceId,
       action: 'update',
       entity: 'attendance',
       entityId: attendance._id,
@@ -140,16 +126,15 @@ router.post('/checkout', authenticate, async (req, res) => {
 router.post('/mark', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
   try {
     const { userId, date, status, checkIn, checkOut, notes } = req.body;
-    const workspaceId = req.context?.workspaceId || req.user.workspaceId;
 
     if (!userId || !date || !status) {
       return res.status(400).json({ message: 'userId, date, and status are required' });
     }
 
-    // Verify user exists in workspace
-    const targetUser = await User.findOne({ _id: userId, workspaceId });
+    // Verify user exists
+    const targetUser = await User.findOne({ _id: userId });
     if (!targetUser) {
-      return res.status(404).json({ message: 'User not found in workspace' });
+      return res.status(404).json({ message: 'User not found' });
     }
 
     const attendanceDate = new Date(date);
@@ -158,7 +143,6 @@ router.post('/mark', authenticate, checkRole(['admin', 'hr']), async (req, res) 
     // Check if attendance already exists
     let attendance = await Attendance.findOne({
       userId,
-      workspaceId,
       date: attendanceDate
     });
 
@@ -174,7 +158,6 @@ router.post('/mark', authenticate, checkRole(['admin', 'hr']), async (req, res) 
       // Create new
       attendance = new Attendance({
         userId,
-        workspaceId,
         date: attendanceDate,
         status,
         checkIn: checkIn ? new Date(checkIn) : (status === 'present' ? new Date() : null),
@@ -189,7 +172,6 @@ router.post('/mark', authenticate, checkRole(['admin', 'hr']), async (req, res) 
 
     await logChange({
       userId: req.user._id,
-      workspaceId,
       action: attendance.isNew ? 'create' : 'update',
       entity: 'attendance',
       entityId: attendance._id,
@@ -208,11 +190,9 @@ router.post('/mark', authenticate, checkRole(['admin', 'hr']), async (req, res) 
 router.put('/:id', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
   try {
     const { status, checkIn, checkOut, notes } = req.body;
-    const workspaceId = req.context?.workspaceId || req.user.workspaceId;
 
     const attendance = await Attendance.findOne({
-      _id: req.params.id,
-      workspaceId
+      _id: req.params.id
     });
 
     if (!attendance) {
@@ -230,7 +210,6 @@ router.put('/:id', authenticate, checkRole(['admin', 'hr']), async (req, res) =>
 
     await logChange({
       userId: req.user._id,
-      workspaceId,
       action: 'update',
       entity: 'attendance',
       entityId: attendance._id,
@@ -248,7 +227,6 @@ router.put('/:id', authenticate, checkRole(['admin', 'hr']), async (req, res) =>
 // Get attendance summary for a user
 router.get('/summary/:userId?', authenticate, async (req, res) => {
   try {
-    const workspaceId = req.context?.workspaceId || req.user.workspaceId;
     const targetUserId = req.params.userId || req.user._id;
 
     // Members can only view their own summary
@@ -265,7 +243,6 @@ router.get('/summary/:userId?', authenticate, async (req, res) => {
 
     const records = await Attendance.find({
       userId: targetUserId,
-      workspaceId,
       date: { $gte: startDate, $lte: endDate }
     });
 
