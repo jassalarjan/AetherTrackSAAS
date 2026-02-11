@@ -1,14 +1,10 @@
 import express from 'express';
 import { authenticate } from '../middleware/auth.js';
 import { checkRole } from '../middleware/roleCheck.js';
-import { requireAuditLogs } from '../middleware/workspaceGuard.js';
 import { getChangeLogs, getChangeLogStats, exportChangeLogs } from '../utils/changeLogService.js';
 import ChangeLog from '../models/ChangeLog.js';
 
 const router = express.Router();
-
-// WORKSPACE SUPPORT: All changelog routes require auditLogs feature (CORE only)
-router.use(requireAuditLogs);
 
 /**
  * @route   GET /api/changelog
@@ -26,17 +22,8 @@ router.get('/', authenticate, checkRole(['admin']), async (req, res) => {
       start_date,
       end_date,
       search,
-      workspace_id  // Allow system admins to filter by specific workspace
+      workspace_id
     } = req.query;
-
-    // Admins (role: 'admin') can see all logs across all workspaces
-    // Community admins can only see their workspace's logs
-    let workspaceFilter = req.context.workspaceId;
-    
-    if (req.user.role === 'admin') {
-      // Admin: show all logs from all workspaces, or filter by specific workspace if provided
-      workspaceFilter = workspace_id || null;  // null means all workspaces
-    }
 
     const result = await getChangeLogs({
       page: parseInt(page),
@@ -46,9 +33,7 @@ router.get('/', authenticate, checkRole(['admin']), async (req, res) => {
       target_type,
       start_date,
       end_date,
-      search,
-      workspaceId: workspaceFilter,
-      includeAllWorkspaces: req.user.role === 'admin' && !workspace_id  // Admins see all workspaces
+      search
     });
 
     res.json(result);
@@ -67,7 +52,6 @@ router.get('/stats', authenticate, checkRole(['admin']), async (req, res) => {
   try {
     const { start_date, end_date } = req.query;
 
-    // Admins see stats from all workspaces
     const stats = await getChangeLogStats({ start_date, end_date });
 
     res.json(stats);
@@ -95,7 +79,6 @@ router.get('/export', authenticate, checkRole(['admin']), async (req, res) => {
 
     const query = {};
 
-    // Admins see logs from all workspaces (no workspaceId filter)
     if (event_type) query.event_type = event_type;
     if (user_id) query.user_id = user_id;
     if (target_type) query.target_type = target_type;

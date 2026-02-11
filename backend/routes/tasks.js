@@ -1,23 +1,18 @@
 import express from 'express';
 import { authenticate } from '../middleware/auth.js';
 import { checkRole } from '../middleware/roleCheck.js';
-import { checkTaskLimit } from '../middleware/workspaceGuard.js';
 import Task from '../models/Task.js';
 import Notification from '../models/Notification.js';
 import User from '../models/User.js';
-import Workspace from '../models/Workspace.js';
 import { logChange } from '../utils/changeLogService.js';
 import getClientIP from '../utils/getClientIP.js';
 
 const router = express.Router();
 
-// WORKSPACE SUPPORT: All task routes are now scoped by workspace
-// workspaceContext middleware is applied in server.js
-
 // Create task
-router.post('/', authenticate, checkTaskLimit, async (req, res) => {
+router.post('/', authenticate, async (req, res) => {
   try {
-    const { title, description, priority, assigned_to, team_id, due_date } = req.body;
+    const { title, description, priority, assigned_to, team_id, due_date, project_id, status } = req.body;
 
     // Members can only create tasks for themselves
     // Admins, HR, and Team Leads can assign to anyone
@@ -36,23 +31,15 @@ router.post('/', authenticate, checkTaskLimit, async (req, res) => {
       title,
       description,
       priority,
+      status: status || 'todo',
       created_by: req.user._id,
       assigned_to: assigned_to && assigned_to.length > 0 ? assigned_to : [req.user._id],
-      team_id: team_id || undefined, // Fix: Use undefined instead of empty string or null if not valid
-      due_date,
-      workspaceId: req.context?.workspaceId || req.user.workspaceId || null  // WORKSPACE SUPPORT (fallback to user's workspace, null for system admins)
+      team_id: team_id || undefined,
+      project_id: project_id || undefined,
+      due_date
     });
 
     await task.save();
-
-    // Update workspace task count (skip for system admins)
-    const targetWorkspaceId = req.context?.workspaceId || req.user.workspaceId;
-    if (targetWorkspaceId) {
-      await Workspace.findByIdAndUpdate(
-        targetWorkspaceId,
-        { $inc: { 'usage.taskCount': 1 } }
-      );
-    }
 
     // Create notifications if assigned to users
     if (assigned_to && assigned_to.length > 0) {
@@ -63,7 +50,6 @@ router.post('/', authenticate, checkTaskLimit, async (req, res) => {
           type: 'task_assigned',
           message: `${req.user.full_name} assigned you a new task: "${task.title}"`,
           task_id: task._id,
-          workspaceId: targetWorkspaceId,
           payload: {
             task_id: task._id,
             task_title: task.title,
@@ -111,8 +97,7 @@ router.post('/', authenticate, checkTaskLimit, async (req, res) => {
         status: task.status,
         due_date: task.due_date,
         assigned_to: assigned_to
-      },
-      workspaceId: req.context?.workspaceId || req.user.workspaceId
+      }
     });
 
     // Emit socket events for task creation (to all users) and task assignment (to specific users)
@@ -144,8 +129,7 @@ router.get('/', authenticate, async (req, res) => {
   try {
     const { status, priority, team, assigned_to } = req.query;
 
-    // WORKSPACE SUPPORT: Start with workspace filter (system admins see all)
-    let query = req.context.isSystemAdmin ? {} : { workspaceId: req.context.workspaceId };
+    let query = {};
 
     // Role-based filtering
     if (req.user.role === 'member') {
@@ -200,11 +184,7 @@ router.get('/', authenticate, async (req, res) => {
 // Get single task
 router.get('/:id', authenticate, async (req, res) => {
   try {
-    // WORKSPACE SUPPORT: Scope by workspace (system admins see all)
-    const taskQuery = req.context.isSystemAdmin
-      ? { _id: req.params.id }
-      : { _id: req.params.id, workspaceId: req.context.workspaceId };
-    const task = await Task.findOne(taskQuery)
+    const task = await Task.findOne({ _id: req.params.id })
       .populate('created_by', 'full_name email')
       .populate('assigned_to', 'full_name email')
       .populate('team_id', 'name');
@@ -254,11 +234,7 @@ router.get('/:id', authenticate, async (req, res) => {
 // Update task
 router.patch('/:id', authenticate, async (req, res) => {
   try {
-    // WORKSPACE SUPPORT: Scope by workspace (system admins can update all)
-    const taskQuery = req.context.isSystemAdmin
-      ? { _id: req.params.id }
-      : { _id: req.params.id, workspaceId: req.context.workspaceId };
-    const task = await Task.findOne(taskQuery);
+    const task = await Task.findOne({ _id: req.params.id });
 
     if (!task) {
       return res.status(404).json({ message: 'Task not found' });
@@ -446,8 +422,7 @@ router.patch('/:id', authenticate, async (req, res) => {
         status: task.status,
         due_date: task.due_date
       },
-      changes,
-      workspaceId: req.context.workspaceId
+      changes
     });
 
     // Emit socket event
@@ -466,11 +441,7 @@ router.patch('/:id', authenticate, async (req, res) => {
 // Delete task
 router.delete('/:id', authenticate, async (req, res) => {
   try {
-    // WORKSPACE SUPPORT: Scope by workspace (system admins can delete all)
-    const taskQuery = req.context.isSystemAdmin
-      ? { _id: req.params.id }
-      : { _id: req.params.id, workspaceId: req.context.workspaceId };
-    const task = await Task.findOne(taskQuery);
+    const task = await Task.findOne({ _id: req.params.id });
 
     if (!task) {
       return res.status(404).json({ message: 'Task not found' });
@@ -488,7 +459,7 @@ router.delete('/:id', authenticate, async (req, res) => {
       isTeamLead = userTeams.includes(task.team_id.toString());
     }
     
-    const canDelete = req.context?.isSystemAdmin || ['admin', 'hr', 'community_admin'].includes(req.user.role) || isCreator || isTeamLead;
+    const canDelete = ['admin', 'hr'].includes(req.user.role) || isCreator || isTeamLead;
 
     if (!canDelete) {
       return res.status(403).json({ message: 'Access denied' });
@@ -497,15 +468,7 @@ router.delete('/:id', authenticate, async (req, res) => {
     const taskTitle = task.title;
     const taskId = req.params.id;
 
-    await Task.findOneAndDelete(taskQuery);
-
-    // Update workspace task count (skip for system admins without workspace)
-    if (req.context.workspaceId) {
-      await Workspace.findByIdAndUpdate(
-        req.context.workspaceId,
-        { $inc: { 'usage.taskCount': -1 } }
-      );
-    }
+    await Task.findByIdAndDelete(req.params.id);
 
     // Log task deletion
     const user_ip = getClientIP(req);
@@ -517,8 +480,7 @@ router.delete('/:id', authenticate, async (req, res) => {
       target_id: req.params.id,
       target_name: taskTitle,
       action: 'Deleted task',
-      description: `${req.user.full_name} deleted task "${taskTitle}"`,
-      workspaceId: req.context.workspaceId
+      description: `${req.user.full_name} deleted task "${taskTitle}"`
     });
 
     // Emit socket event for task deletion

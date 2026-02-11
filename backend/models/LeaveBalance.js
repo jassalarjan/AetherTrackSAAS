@@ -7,12 +7,6 @@ const leaveBalanceSchema = new mongoose.Schema({
     required: true,
     index: true
   },
-  workspaceId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Workspace',
-    required: true,
-    index: true
-  },
   leaveTypeId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'LeaveType',

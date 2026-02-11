@@ -3,7 +3,9 @@ import { projectsApi } from '../api/projectsApi';
 import { useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import { useSidebar } from '../context/SidebarContext';
-import { Filter, Share2, FolderOpen, DollarSign, Users as UsersIcon, AlertTriangle, PieChart, TrendingUp, ArrowRight, MoreHorizontal, Mail, Plus, X, Edit, Trash2 } from 'lucide-react';
+import { Filter, Share2, FolderOpen, DollarSign, Users as UsersIcon, AlertTriangle, PieChart, TrendingUp, ArrowRight, MoreHorizontal, Mail, Plus, X, Edit, Trash2, Download, FileSpreadsheet, Search, UserPlus } from 'lucide-react';
+import * as XLSX from 'xlsx';
+import api from '../api/axios';
 
 const ProjectDashboard = () => {
   const navigate = useNavigate();
@@ -12,8 +14,15 @@ const ProjectDashboard = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({ status: '', priority: '', search: '' });
+  const [showFilters, setShowFilters] = useState(false);
+  const [showExportMenu, setShowExportMenu] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [showMemberModal, setShowMemberModal] = useState(false);
+  const [selectedProject, setSelectedProject] = useState(null);
+  const [users, setUsers] = useState([]);
+  const [selectedUserId, setSelectedUserId] = useState('');
   const [editingProject, setEditingProject] = useState(null);
+  const [userRole, setUserRole] = useState('member');
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -26,7 +35,14 @@ const ProjectDashboard = () => {
   });
 
   useEffect(() => {
+    // Get user role from localStorage
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      const user = JSON.parse(storedUser);
+      setUserRole(user.role || 'member');
+    }
     fetchDashboardData();
+    fetchUsers();
   }, [filters]);
 
   const fetchDashboardData = async () => {
@@ -42,6 +58,15 @@ const ProjectDashboard = () => {
       console.error('Error fetching dashboard data:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchUsers = async () => {
+    try {
+      const response = await api.get('/users');
+      setUsers(response.data || []);
+    } catch (error) {
+      console.error('Error fetching users:', error);
     }
   };
 
@@ -161,6 +186,109 @@ const ProjectDashboard = () => {
     return name.substring(0, 2).toUpperCase();
   };
 
+  const handleExportExcel = () => {
+    const projectData = projects.map(project => ({
+      'Project Name': project.name,
+      'Description': project.description || '',
+      'Status': project.status,
+      'Priority': project.priority,
+      'Progress': `${project.progress}%`,
+      'Start Date': project.start_date ? new Date(project.start_date).toLocaleDateString() : '',
+      'Due Date': project.due_date ? new Date(project.due_date).toLocaleDateString() : '',
+      'Budget Allocated': project.budget?.allocated || 0,
+      'Budget Spent': project.budget?.spent || 0,
+      'Team Members': project.team_members?.length || 0
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(projectData);
+    worksheet['!cols'] = [
+      { wch: 30 }, // Project Name
+      { wch: 50 }, // Description
+      { wch: 15 }, // Status
+      { wch: 12 }, // Priority
+      { wch: 10 }, // Progress
+      { wch: 15 }, // Start Date
+      { wch: 15 }, // Due Date
+      { wch: 18 }, // Budget Allocated
+      { wch: 15 }, // Budget Spent
+      { wch: 15 }  // Team Members
+    ];
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Projects');
+    
+    const timestamp = new Date().toISOString().split('T')[0];
+    XLSX.writeFile(workbook, `projects-report-${timestamp}.xlsx`);
+    setShowExportMenu(false);
+  };
+
+  const handleExportCSV = () => {
+    const headers = ['Project Name', 'Description', 'Status', 'Priority', 'Progress', 'Start Date', 'Due Date', 'Budget Allocated', 'Budget Spent', 'Team Members'];
+    const csvData = projects.map(project => [
+      project.name,
+      project.description || '',
+      project.status,
+      project.priority,
+      `${project.progress}%`,
+      project.start_date ? new Date(project.start_date).toLocaleDateString() : '',
+      project.due_date ? new Date(project.due_date).toLocaleDateString() : '',
+      project.budget?.allocated || 0,
+      project.budget?.spent || 0,
+      project.team_members?.length || 0
+    ]);
+
+    const csvString = [
+      headers.join(','),
+      ...csvData.map(row => row.map(val => `"${val}"`).join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvString], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const timestamp = new Date().toISOString().split('T')[0];
+    a.download = `projects-report-${timestamp}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+    setShowExportMenu(false);
+  };
+
+  const handleManageMembers = (project) => {
+    setSelectedProject(project);
+    setSelectedUserId('');
+    setShowMemberModal(true);
+  };
+
+  const handleAddMember = async () => {
+    if (!selectedUserId || !selectedProject) return;
+    try {
+      await api.post(`/projects/${selectedProject._id}/members`, { userId: selectedUserId });
+      await fetchDashboardData();
+      setSelectedUserId('');
+      setShowMemberModal(false);
+    } catch (error) {
+      console.error('Error adding member:', error);
+      alert(error.response?.data?.message || 'Failed to add member');
+    }
+  };
+
+  const handleRemoveMember = async (projectId, userId) => {
+    if (!confirm('Remove this member from the project?')) return;
+    try {
+      await api.delete(`/projects/${projectId}/members/${userId}`);
+      await fetchDashboardData();
+      if (selectedProject && selectedProject._id === projectId) {
+        const updatedProject = projects.find(p => p._id === projectId);
+        setSelectedProject(updatedProject);
+      }
+    } catch (error) {
+      console.error('Error removing member:', error);
+      alert(error.response?.data?.message || 'Failed to remove member');
+    }
+  };
+
+  const canManageProjects = ['admin', 'hr', 'team_lead'].includes(userRole);
+
   if (loading && !stats) {
     return (
       <div className="flex h-screen overflow-hidden bg-[#f6f6f8] dark:bg-[#101622]">
@@ -189,23 +317,119 @@ const ProjectDashboard = () => {
           </p>
         </div>
         <div className="flex gap-3">
-          <button className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all shadow-sm">
+          <button 
+            onClick={() => setShowFilters(!showFilters)}
+            className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all shadow-sm"
+          >
             <Filter size={20} />
             <span>Filters</span>
+            {(filters.status || filters.priority || filters.search) && (
+              <span className="ml-1 px-2 py-0.5 bg-blue-500 text-white text-xs rounded-full">
+                Active
+              </span>
+            )}
           </button>
-          <button className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all shadow-sm">
-            <Share2 size={20} />
-            <span>Export</span>
-          </button>
-          <button 
-            onClick={handleCreateProject}
-            className="flex items-center gap-2 px-4 py-2 bg-[#135bec] text-white rounded-lg text-sm font-bold hover:bg-blue-700 transition-all shadow-sm"
-          >
-            <Plus size={20} />
-            <span>New Project</span>
-          </button>
+          <div className="relative">
+            <button 
+              onClick={() => setShowExportMenu(!showExportMenu)}
+              className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all shadow-sm"
+            >
+              <Share2 size={20} />
+              <span>Export</span>
+            </button>
+            {showExportMenu && (
+              <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50">
+                <button
+                  onClick={handleExportExcel}
+                  className="flex items-center gap-2 w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors rounded-t-lg"
+                >
+                  <FileSpreadsheet size={16} />
+                  Export to Excel
+                </button>
+                <button
+                  onClick={handleExportCSV}
+                  className="flex items-center gap-2 w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors rounded-b-lg"
+                >
+                  <Download size={16} />
+                  Export to CSV
+                </button>
+              </div>
+            )}
+          </div>
+          {canManageProjects && (
+            <button 
+              onClick={handleCreateProject}
+              className="flex items-center gap-2 px-4 py-2 bg-[#135bec] text-white rounded-lg text-sm font-bold hover:bg-blue-700 transition-all shadow-sm"
+            >
+              <Plus size={20} />
+              <span>New Project</span>
+            </button>
+          )}
         </div>
       </div>
+
+      {/* Filter Section */}
+      {showFilters && (
+        <div className="bg-white dark:bg-[#1a2234] rounded-xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                Search Projects
+              </label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                <input
+                  type="text"
+                  value={filters.search}
+                  onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+                  placeholder="Search by name..."
+                  className="w-full pl-10 pr-4 py-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-[#135bec] focus:border-[#135bec]"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                Status
+              </label>
+              <select
+                value={filters.status}
+                onChange={(e) => setFilters({ ...filters, status: e.target.value })}
+                className="w-full px-4 py-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-[#135bec] focus:border-[#135bec]"
+              >
+                <option value="">All Statuses</option>
+                <option value="active">Active</option>
+                <option value="on_hold">On Hold</option>
+                <option value="completed">Completed</option>
+                <option value="archived">Archived</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                Priority
+              </label>
+              <select
+                value={filters.priority}
+                onChange={(e) => setFilters({ ...filters, priority: e.target.value })}
+                className="w-full px-4 py-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-[#135bec] focus:border-[#135bec]"
+              >
+                <option value="">All Priorities</option>
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+                <option value="urgent">Urgent</option>
+              </select>
+            </div>
+          </div>
+          <div className="mt-4 flex gap-2">
+            <button
+              onClick={() => setFilters({ status: '', priority: '', search: '' })}
+              className="px-4 py-2 text-sm font-semibold text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+            >
+              Clear Filters
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Stats Grid */}
       {stats && (
@@ -315,26 +539,40 @@ const ProjectDashboard = () => {
                     {project.status.replace('_', ' ')}
                   </span>
                   <div className="flex gap-1">
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleEditProject(project);
-                      }}
-                      className="p-1 text-gray-400 hover:text-[#135bec] hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors"
-                      title="Edit project"
-                    >
-                      <Edit size={16} />
-                    </button>
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteProject(project._id);
-                      }}
-                      className="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
-                      title="Delete project"
-                    >
-                      <Trash2 size={16} />
-                    </button>
+                    {canManageProjects && (
+                      <>
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleManageMembers(project);
+                          }}
+                          className="p-1 text-gray-400 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded transition-colors"
+                          title="Manage members"
+                        >
+                          <UserPlus size={16} />
+                        </button>
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditProject(project);
+                          }}
+                          className="p-1 text-gray-400 hover:text-[#135bec] hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors"
+                          title="Edit project"
+                        >
+                          <Edit size={16} />
+                        </button>
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteProject(project._id);
+                          }}
+                          className="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+                          title="Delete project"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
 
@@ -632,6 +870,119 @@ const ProjectDashboard = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Member Management Modal */}
+      {showMemberModal && selectedProject && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-[#1a2234] rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-gray-200 dark:border-gray-800">
+            {/* Modal Header */}
+            <div className="sticky top-0 bg-white dark:bg-[#1a2234] border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between z-10">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-green-100 dark:bg-green-900/20 flex items-center justify-center">
+                  <UserPlus size={20} className="text-green-600" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold">Manage Team Members</h2>
+                  <p className="text-sm text-gray-500">{selectedProject.name}</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setShowMemberModal(false)}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 space-y-6">
+              {/* Add Member Section */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  Add Team Member
+                </label>
+                <div className="flex gap-3">
+                  <select
+                    value={selectedUserId}
+                    onChange={(e) => setSelectedUserId(e.target.value)}
+                    className="flex-1 px-4 py-2.5 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#135bec] focus:border-[#135bec]"
+                  >
+                    <option value="">Select a user...</option>
+                    {users
+                      .filter(user => !selectedProject.team_members?.some(m => m.user?._id === user._id))
+                      .map(user => (
+                        <option key={user._id} value={user._id}>
+                          {user.name} ({user.email})
+                        </option>
+                      ))
+                    }
+                  </select>
+                  <button
+                    onClick={handleAddMember}
+                    disabled={!selectedUserId}
+                    className="px-6 py-2.5 bg-[#135bec] text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  >
+                    <Plus size={18} />
+                    Add
+                  </button>
+                </div>
+              </div>
+
+              {/* Current Members List */}
+              <div>
+                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+                  Current Team Members ({selectedProject.team_members?.length || 0})
+                </h3>
+                <div className="space-y-2">
+                  {selectedProject.team_members && selectedProject.team_members.length > 0 ? (
+                    selectedProject.team_members.map((member) => (
+                      <div
+                        key={member.user?._id}
+                        className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-purple-600 flex items-center justify-center text-white font-bold">
+                            {getUserInitials(member.user?.name)}
+                          </div>
+                          <div>
+                            <p className="font-semibold text-gray-900 dark:text-white">
+                              {member.user?.name || 'Unknown'}
+                            </p>
+                            <p className="text-sm text-gray-500">
+                              {member.user?.email || 'No email'}
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => handleRemoveMember(selectedProject._id, member.user?._id)}
+                          className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                          title="Remove member"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-center text-gray-500 py-8">
+                      No team members assigned yet
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="sticky bottom-0 bg-white dark:bg-[#1a2234] border-t border-gray-200 dark:border-gray-800 px-6 py-4 flex justify-end">
+              <button
+                onClick={() => setShowMemberModal(false)}
+                className="px-5 py-2.5 text-sm font-semibold text-white bg-[#135bec] rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Done
+              </button>
+            </div>
           </div>
         </div>
       )}

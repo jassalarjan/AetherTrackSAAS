@@ -4,7 +4,7 @@ import Sidebar from '../components/Sidebar';
 import api from '../api/axios';
 import {
   Plus, ChevronRight, Info, Flag, CheckCircle, Circle,
-  ArrowUp, Minus, Check
+  ArrowUp, Minus, Check, X, Calendar, Users, Target, Settings
 } from 'lucide-react';
 
 const SprintManagement = () => {
@@ -13,6 +13,16 @@ const SprintManagement = () => {
   const [projects, setProjects] = useState([]);
   const [selectedProject, setSelectedProject] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [activeSprint, setActiveSprint] = useState(null);
+  const [sprintSettings, setSprintSettings] = useState({
+    name: 'Q4 Engineering Sprint 2',
+    startDate: '2024-10-15',
+    endDate: '2024-10-29',
+    goal: 'Successfully migrate the legacy authentication system to OAuth 2.0 while ensuring zero downtime for current enterprise users.',
+    capacity: 120,
+    teamSize: 8
+  });
   const [sprintGoals, setSprintGoals] = useState([
     { id: 1, text: 'Security Audit Phase 1', completed: true },
     { id: 2, text: 'API Documentation Live', completed: false },
@@ -27,15 +37,29 @@ const SprintManagement = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [tasksResponse, projectsResponse] = await Promise.all([
+      const [tasksResponse, projectsResponse, sprintRes] = await Promise.all([
         api.get('/tasks'),
-        api.get('/projects')
+        api.get('/projects'),
+        api.get('/sprints/active')
       ]);
       setTasks(tasksResponse.data.tasks || []);
       const projectsList = projectsResponse.data || [];
       setProjects(projectsList);
       if (projectsList.length > 0) {
         setSelectedProject(projectsList[0]);
+      }
+      
+      // If active sprint exists, load its data
+      if (sprintRes.data) {
+        setActiveSprint(sprintRes.data);
+        setSprintSettings({
+          name: sprintRes.data.name,
+          startDate: sprintRes.data.startDate.split('T')[0],
+          endDate: sprintRes.data.endDate.split('T')[0],
+          goal: sprintRes.data.goal,
+          capacity: sprintRes.data.capacity,
+          teamSize: sprintRes.data.teamSize
+        });
       }
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -82,6 +106,30 @@ const SprintManagement = () => {
       return (parts[0][0] + parts[1][0]).toUpperCase();
     }
     return name.substring(0, 2).toUpperCase();
+  };
+
+  const handleSaveSettings = async () => {
+    try {
+      if (activeSprint) {
+        // Update existing sprint
+        const response = await api.put(`/sprints/${activeSprint._id}`, sprintSettings);
+        setActiveSprint(response.data);
+        console.log('Sprint updated successfully:', response.data);
+      } else {
+        // Create new sprint
+        const response = await api.post('/sprints', {
+          ...sprintSettings,
+          status: 'active'
+        });
+        setActiveSprint(response.data);
+        console.log('Sprint created successfully:', response.data);
+      }
+      setShowSettingsModal(false);
+      // Optionally show success notification
+    } catch (error) {
+      console.error('Error saving sprint settings:', error);
+      alert('Failed to save sprint settings. Please try again.');
+    }
   };
 
   const totalStoryPoints = tasks.length * 3; // Simplified calculation
@@ -142,7 +190,11 @@ const SprintManagement = () => {
             </span>
           </div>
           <div className="flex gap-3">
-            <button className="px-4 py-1.5 text-sm font-semibold bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+            <button 
+              onClick={() => setShowSettingsModal(true)}
+              className="px-4 py-1.5 text-sm font-semibold bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors flex items-center gap-2"
+            >
+              <Settings size={16} />
               Sprint Settings
             </button>
             <button className="px-4 py-1.5 text-sm font-semibold bg-[#135bec] text-white rounded-lg hover:bg-blue-700 shadow-sm transition-colors">
@@ -361,6 +413,159 @@ const SprintManagement = () => {
             </div>
           </div>
           <div className="flex items-center gap-4">
+
+      {/* Sprint Settings Modal */}
+      {showSettingsModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-[#1a2234] rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-gray-200 dark:border-gray-800">
+            {/* Modal Header */}
+            <div className="sticky top-0 bg-white dark:bg-[#1a2234] border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between z-10">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-[#135bec]/10 flex items-center justify-center">
+                  <Settings size={20} className="text-[#135bec]" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold">Sprint Settings</h2>
+                  <p className="text-sm text-gray-500">Configure sprint details and parameters</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setShowSettingsModal(false)}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 space-y-6">
+              {/* Sprint Name */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+                  <Target size={16} className="text-[#135bec]" />
+                  Sprint Name
+                </label>
+                <input
+                  type="text"
+                  value={sprintSettings.name}
+                  onChange={(e) => setSprintSettings({ ...sprintSettings, name: e.target.value })}
+                  className="w-full px-4 py-2.5 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#135bec] focus:border-[#135bec] transition-all"
+                  placeholder="Enter sprint name..."
+                />
+              </div>
+
+              {/* Date Range */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+                    <Calendar size={16} className="text-[#135bec]" />
+                    Start Date
+                  </label>
+                  <input
+                    type="date"
+                    value={sprintSettings.startDate}
+                    onChange={(e) => setSprintSettings({ ...sprintSettings, startDate: e.target.value })}
+                    className="w-full px-4 py-2.5 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#135bec] focus:border-[#135bec] transition-all"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+                    <Calendar size={16} className="text-[#135bec]" />
+                    End Date
+                  </label>
+                  <input
+                    type="date"
+                    value={sprintSettings.endDate}
+                    onChange={(e) => setSprintSettings({ ...sprintSettings, endDate: e.target.value })}
+                    className="w-full px-4 py-2.5 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#135bec] focus:border-[#135bec] transition-all"
+                  />
+                </div>
+              </div>
+
+              {/* Sprint Goal */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+                  <Flag size={16} className="text-[#135bec]" />
+                  Sprint Goal
+                </label>
+                <textarea
+                  value={sprintSettings.goal}
+                  onChange={(e) => setSprintSettings({ ...sprintSettings, goal: e.target.value })}
+                  rows={4}
+                  className="w-full px-4 py-2.5 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#135bec] focus:border-[#135bec] transition-all resize-none"
+                  placeholder="Define the primary objective for this sprint..."
+                />
+                <p className="mt-2 text-xs text-gray-500">Clear, measurable goal that defines sprint success</p>
+              </div>
+
+              {/* Team Capacity */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+                    <Users size={16} className="text-[#135bec]" />
+                    Team Size
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={sprintSettings.teamSize}
+                    onChange={(e) => setSprintSettings({ ...sprintSettings, teamSize: parseInt(e.target.value) || 1 })}
+                    className="w-full px-4 py-2.5 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#135bec] focus:border-[#135bec] transition-all"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+                    <Target size={16} className="text-[#135bec]" />
+                    Story Points Capacity
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={sprintSettings.capacity}
+                    onChange={(e) => setSprintSettings({ ...sprintSettings, capacity: parseInt(e.target.value) || 0 })}
+                    className="w-full px-4 py-2.5 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#135bec] focus:border-[#135bec] transition-all"
+                  />
+                </div>
+              </div>
+
+              {/* Info Box */}
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                <div className="flex gap-3">
+                  <Info size={20} className="text-[#135bec] flex-shrink-0 mt-0.5" />
+                  <div className="text-sm text-gray-700 dark:text-gray-300">
+                    <p className="font-semibold mb-1">Sprint Duration</p>
+                    <p className="text-gray-600 dark:text-gray-400">
+                      {(() => {
+                        const start = new Date(sprintSettings.startDate);
+                        const end = new Date(sprintSettings.endDate);
+                        const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+                        return `${days} day${days !== 1 ? 's' : ''} (${Math.round(days / 7)} week${Math.round(days / 7) !== 1 ? 's' : ''})`;
+                      })()}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="sticky bottom-0 bg-white dark:bg-[#1a2234] border-t border-gray-200 dark:border-gray-800 px-6 py-4 flex justify-end gap-3">
+              <button
+                onClick={() => setShowSettingsModal(false)}
+                className="px-5 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveSettings}
+                className="px-5 py-2.5 text-sm font-semibold text-white bg-[#135bec] rounded-lg hover:bg-blue-700 transition-colors shadow-sm flex items-center gap-2"
+              >
+                <Check size={16} />
+                Save Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
             <span>Sprint Progress: {Math.round((completedPoints / totalStoryPoints) * 100)}%</span>
           </div>
         </footer>

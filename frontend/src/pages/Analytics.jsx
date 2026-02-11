@@ -15,6 +15,7 @@ const Analytics = () => {
   const { theme } = useTheme();
   const { toggleMobileSidebar } = useSidebar();
   const [tasks, setTasks] = useState([]);
+  const [projects, setProjects] = useState([]);
   const [filteredTasks, setFilteredTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
@@ -22,6 +23,7 @@ const Analytics = () => {
     priority: '',
     team: '',
     user: '',
+    project: '',
     dateRange: 'all',
     customStartDate: '',
     customEndDate: '',
@@ -48,11 +50,25 @@ const Analytics = () => {
     completionRateByTeam: [],
     priorityTrend: [],
     statusTransitions: [],
+    // Project Analytics
+    totalProjects: 0,
+    activeProjects: 0,
+    completedProjects: 0,
+    onHoldProjects: 0,
+    projectStatusDistribution: [],
+    projectPriorityDistribution: [],
+    projectProgressDistribution: [],
+    projectBudgetUtilization: [],
+    projectTimeline: [],
+    projectHealthScore: [],
+    tasksPerProject: [],
+    projectCompletionRate: [],
   });
 
   useEffect(() => {
     const loadData = async () => {
       await fetchTasks();
+      await fetchProjects();
       await fetchTeams();
       if (['admin', 'hr'].includes(user?.role)) {
         await fetchUsers();
@@ -96,6 +112,15 @@ const Analytics = () => {
       if (error.response?.status !== 403) {
         console.error('Error fetching teams:', error);
       }
+    }
+  };
+
+  const fetchProjects = async () => {
+    try {
+      const response = await api.get('/projects/my-projects');
+      setProjects(response.data || []);
+    } catch (error) {
+      console.error('Error fetching projects:', error);
     }
   };
 
@@ -301,6 +326,111 @@ const Analytics = () => {
       total: stats.total,
     })).sort((a, b) => b.rate - a.rate);
 
+    // Project Analytics
+    const activeProjects = projects.filter(p => p.status === 'active');
+    const completedProjects = projects.filter(p => p.status === 'completed');
+    const onHoldProjects = projects.filter(p => p.status === 'on_hold');
+
+    const projectStatusCounts = projects.reduce((acc, project) => {
+      acc[project.status] = (acc[project.status] || 0) + 1;
+      return acc;
+    }, {});
+
+    const projectStatusDistribution = Object.entries(projectStatusCounts).map(([status, count]) => ({
+      name: status.replace('_', ' ').toUpperCase(),
+      value: count,
+      color: status === 'active' ? '#136dec' : status === 'completed' ? '#22c55e' : status === 'on_hold' ? '#f59e0b' : '#6b7280',
+    }));
+
+    const projectPriorityCounts = projects.reduce((acc, project) => {
+      acc[project.priority] = (acc[project.priority] || 0) + 1;
+      return acc;
+    }, {});
+
+    const projectPriorityDistribution = Object.entries(projectPriorityCounts).map(([priority, count]) => ({
+      name: priority.toUpperCase(),
+      value: count,
+      color: getPriorityColor(priority),
+    }));
+
+    // Project Progress Distribution
+    const projectProgressDistribution = [
+      { range: '0-25%', count: 0, color: '#ef4444' },
+      { range: '25-50%', count: 0, color: '#f59e0b' },
+      { range: '50-75%', count: 0, color: '#136dec' },
+      { range: '75-100%', count: 0, color: '#22c55e' },
+    ];
+
+    projects.forEach(project => {
+      const progress = project.progress || 0;
+      if (progress < 25) projectProgressDistribution[0].count++;
+      else if (progress < 50) projectProgressDistribution[1].count++;
+      else if (progress < 75) projectProgressDistribution[2].count++;
+      else projectProgressDistribution[3].count++;
+    });
+
+    // Project Budget Utilization
+    const projectBudgetUtilization = projects
+      .filter(p => p.budget?.allocated > 0)
+      .map(project => ({
+        name: project.name.length > 15 ? project.name.substring(0, 15) + '...' : project.name,
+        allocated: project.budget?.allocated || 0,
+        spent: project.budget?.spent || 0,
+        utilization: project.budget?.allocated > 0 ? Math.round((project.budget.spent / project.budget.allocated) * 100) : 0,
+      }))
+      .sort((a, b) => b.utilization - a.utilization)
+      .slice(0, 10);
+
+    // Project Timeline (Start vs Due Date)
+    const projectTimeline = projects.map(project => ({
+      name: project.name.length > 12 ? project.name.substring(0, 12) + '...' : project.name,
+      start: new Date(project.start_date).getTime(),
+      due: new Date(project.due_date).getTime(),
+      progress: project.progress || 0,
+      status: project.status,
+    })).slice(0, 8);
+
+    // Project Health Score (based on progress, overdue, priority)
+    const projectHealthScore = projects.map(project => {
+      const isOverdue = new Date(project.due_date) < now && project.status !== 'completed';
+      const progressScore = project.progress || 0;
+      const priorityPenalty = project.priority === 'urgent' ? 20 : project.priority === 'high' ? 10 : 0;
+      const overduePenalty = isOverdue ? 30 : 0;
+      const statusBonus = project.status === 'active' ? 10 : project.status === 'completed' ? 20 : -10;
+      
+      const healthScore = Math.max(0, Math.min(100, progressScore + statusBonus - priorityPenalty - overduePenalty));
+      
+      return {
+        name: project.name.length > 15 ? project.name.substring(0, 15) + '...' : project.name,
+        score: Math.round(healthScore),
+        status: project.status,
+      };
+    }).sort((a, b) => a.score - b.score).slice(0, 10);
+
+    // Tasks Per Project
+    const tasksPerProject = projects.map(project => {
+      const projectTasks = taskList.filter(task => task.project_id?._id === project._id || task.project_id === project._id);
+      const completedTasks = projectTasks.filter(t => t.status === 'done');
+      return {
+        name: project.name.length > 15 ? project.name.substring(0, 15) + '...' : project.name,
+        total: projectTasks.length,
+        completed: completedTasks.length,
+        pending: projectTasks.length - completedTasks.length,
+      };
+    }).filter(p => p.total > 0).sort((a, b) => b.total - a.total).slice(0, 10);
+
+    // Project Completion Rate
+    const projectCompletionRate = projects.map(project => {
+      const projectTasks = taskList.filter(task => task.project_id?._id === project._id || task.project_id === project._id);
+      const completedTasks = projectTasks.filter(t => t.status === 'done');
+      return {
+        name: project.name.length > 12 ? project.name.substring(0, 12) + '...' : project.name,
+        rate: projectTasks.length > 0 ? Math.round((completedTasks.length / projectTasks.length) * 100) : 0,
+        completed: completedTasks.length,
+        total: projectTasks.length,
+      };
+    }).filter(p => p.total > 0).sort((a, b) => b.rate - a.rate).slice(0, 8);
+
     setAnalyticsData({
       totalTasks: taskList.length,
       overdueTasks: overdueTasks.length,
@@ -340,6 +470,9 @@ const Analytics = () => {
     }
     if (filters.team) {
       filtered = filtered.filter(task => task.team_id?._id === filters.team);
+    }
+    if (filters.project) {
+      filtered = filtered.filter(task => task.project_id?._id === filters.project || task.project_id === filters.project);
     }
     if (filters.user) {
       if (filters.user === 'unassigned') {
@@ -403,7 +536,7 @@ const Analytics = () => {
 
   const handleExportExcel = () => {
     try {
-      generateExcelReport(filteredTasks, analyticsData, filters);
+      generateExcelReport(filteredTasks, analyticsData, filters, projects);
     } catch (error) {
       console.error('Error generating Excel report:', error);
       alert('Error generating Excel report. Please try again.');
@@ -412,7 +545,7 @@ const Analytics = () => {
 
   const handleExportPDF = () => {
     try {
-      generateComprehensivePDFReport(filteredTasks, analyticsData, filters, user, reportPeriod);
+      generateComprehensivePDFReport(filteredTasks, analyticsData, filters, user, reportPeriod, projects);
       setShowReportOptions(false);
     } catch (error) {
       console.error('Error generating PDF report:', error);
@@ -539,7 +672,7 @@ const Analytics = () => {
               </button>
               {showFilters && (
                 <button
-                  onClick={() => setFilters({ status: '', priority: '', team: '', user: '', dateRange: 'all', customStartDate: '', customEndDate: '' })}
+                  onClick={() => setFilters({ status: '', priority: '', team: '', user: '', project: '', dateRange: 'all', customStartDate: '', customEndDate: '' })}
                   className="text-[10px] sm:text-xs text-[#136dec] hover:text-blue-400 font-medium"
                 >
                   Reset All
@@ -584,6 +717,17 @@ const Analytics = () => {
                     <option value="week">Last 7 Days</option>
                     <option value="month">This Month</option>
                     <option value="custom">Custom</option>
+                  </select>
+
+                  <select
+                    value={filters.project}
+                    onChange={(e) => setFilters({...filters, project: e.target.value})}
+                    className={`h-9 px-2 sm:px-3 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-white'} border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} rounded text-xs sm:text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'} focus:ring-2 focus:ring-[#136dec] focus:border-transparent`}
+                  >
+                    <option value="">All Projects</option>
+                    {projects.map(project => (
+                      <option key={project._id} value={project._id}>{project.name}</option>
+                    ))}
                   </select>
 
                   <select
@@ -900,6 +1044,118 @@ const Analytics = () => {
                 </ResponsiveContainer>
               </div>
             </>
+          )}
+
+          {/* PROJECT ANALYTICS SECTION */}
+          {analyticsData.totalProjects > 0 && (
+            <div className="mb-8">
+              <h2 className={`text-lg font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-4 flex items-center gap-2`}>
+                <BarChart3 size={20} className="text-[#136dec]" />
+                Project Analytics
+              </h2>
+              
+              {/* Project Summary Cards */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-4`}>
+                  <p className={`text-2xl font-black ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                    {analyticsData.totalProjects}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">Total Projects</p>
+                </div>
+                <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-4`}>
+                  <p className={`text-2xl font-black ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                    {analyticsData.activeProjects}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">Active</p>
+                </div>
+                <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-4`}>
+                  <p className={`text-2xl font-black ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                    {analyticsData.completedProjects}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">Completed</p>
+                </div>
+                <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-4`}>
+                  <p className={`text-2xl font-black ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                    {analyticsData.onHoldProjects}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">On Hold</p>
+                </div>
+              </div>
+
+              {/* Project Charts */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+                {analyticsData.projectStatusDistribution.length > 0 && (
+                  <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-4`}>
+                    <h3 className={`text-sm font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-4`}>Project Status</h3>
+                    <ResponsiveContainer width="100%" height={250}>
+                      <RechartsPieChart>
+                        <Pie data={analyticsData.projectStatusDistribution} cx="50%" cy="50%" labelLine={false} outerRadius={80} fill="#8884d8" dataKey="value" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
+                          {analyticsData.projectStatusDistribution.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                      </RechartsPieChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+
+                {analyticsData.projectProgressDistribution.length > 0 && (
+                  <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-4`}>
+                    <h3 className={`text-sm font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-4`}>Progress Distribution</h3>
+                    <ResponsiveContainer width="100%" height={250}>
+                      <BarChart data={analyticsData.projectProgressDistribution}>
+                        <CartesianGrid strokeDasharray="3 3" stroke={theme === 'dark' ? '#282f39' : '#e5e7eb'} />
+                        <XAxis dataKey="range" stroke={theme === 'dark' ? '#9da8b9' : '#6b7280'} />
+                        <YAxis stroke={theme === 'dark' ? '#9da8b9' : '#6b7280'} />
+                        <Tooltip />
+                        <Bar dataKey="count" name="Projects">
+                          {analyticsData.projectProgressDistribution.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+
+                {analyticsData.tasksPerProject.length > 0 && (
+                  <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-4`}>
+                    <h3 className={`text-sm font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-4`}>Tasks Per Project</h3>
+                    <ResponsiveContainer width="100%" height={250}>
+                      <BarChart data={analyticsData.tasksPerProject} layout="horizontal">
+                        <CartesianGrid strokeDasharray="3 3" stroke={theme === 'dark' ? '#282f39' : '#e5e7eb'} />
+                        <XAxis type="number" stroke={theme === 'dark' ? '#9da8b9' : '#6b7280'} />
+                        <YAxis type="category" dataKey="name" stroke={theme === 'dark' ? '#9da8b9' : '#6b7280'} width={80} />
+                        <Tooltip />
+                        <Legend />
+                        <Bar dataKey="completed" stackId="a" fill="#22c55e" name="Done" />
+                        <Bar dataKey="pending" stackId="a" fill="#f59e0b" name="Pending" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+
+                {analyticsData.projectHealthScore.length > 0 && (
+                  <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-4`}>
+                    <h3 className={`text-sm font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-4`}>Project Health Score</h3>
+                    <ResponsiveContainer width="100%" height={250}>
+                      <BarChart data={analyticsData.projectHealthScore} layout="horizontal">
+                        <CartesianGrid strokeDasharray="3 3" stroke={theme === 'dark' ? '#282f39' : '#e5e7eb'} />
+                        <XAxis type="number" domain={[0, 100]} stroke={theme === 'dark' ? '#9da8b9' : '#6b7280'} />
+                        <YAxis type="category" dataKey="name" stroke={theme === 'dark' ? '#9da8b9' : '#6b7280'} width={80} />
+                        <Tooltip />
+                        <Bar dataKey="score" name="Health">
+                          {analyticsData.projectHealthScore.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.score >= 70 ? '#22c55e' : entry.score >= 40 ? '#f59e0b' : '#ef4444'} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+              </div>
+            </div>
           )}
 
           {/* Tasks Table */}

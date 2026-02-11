@@ -1,20 +1,41 @@
 import express from 'express';
 import Project from '../models/Project.js';
 import Task from '../models/Task.js';
+import { checkRole } from '../middleware/roleCheck.js';
 
 const router = express.Router();
 
 // WORKSPACE SUPPORT: All project routes are scoped by workspace
-// authenticate and workspaceContext middleware are applied in server.js
+// authenticate middleware is applied in server.js
 
 // Get all projects for a workspace with stats
 router.get('/', async (req, res) => {
   try {
-    const workspaceId = req.context?.workspaceId || req.user?.workspaceId || null;
     const { status, priority, search } = req.query;
+    const userRole = req.user.role;
+    const userId = req.user._id;
 
-    // Build query
-    const query = { workspaceId };
+    const query = {};
+    
+    // Role-based filtering:
+    // - Members: only projects they're assigned to
+    // - Team Leads: only projects with team members from their team
+    // - HR/Admin: all projects
+    if (userRole === 'member') {
+      query['team_members.user'] = userId;
+    } else if (userRole === 'team_lead') {
+      // Get team members for this team lead
+      const Team = (await import('../models/Team.js')).default;
+      const team = await Team.findOne({ lead_id: userId });
+      if (team) {
+        // Find projects where any team member is assigned
+        const teamMemberIds = [...team.members, team.lead_id];
+        query['team_members.user'] = { $in: teamMemberIds };
+      } else {
+        // Team lead without a team sees only their own projects
+        query['team_members.user'] = userId;
+      }
+    }
     
     if (status) {
       query.status = status;
@@ -43,19 +64,62 @@ router.get('/', async (req, res) => {
   }
 });
 
+// Get user's accessible projects (for "My Projects" view)
+router.get('/my-projects', async (req, res) => {
+  try {
+    const { status, priority, search } = req.query;
+    const userRole = req.user.role;
+    const userId = req.user._id;
+
+    const query = {};
+
+    if (userRole === 'member') {
+      // Members see only projects they're assigned to
+      query['team_members.user'] = userId;
+    } else if (userRole === 'team_lead') {
+      // Team leads see projects with their team members
+      const Team = (await import('../models/Team.js')).default;
+      const team = await Team.findOne({ lead_id: userId });
+      if (team) {
+        const teamMemberIds = [...team.members, team.lead_id];
+        query['team_members.user'] = { $in: teamMemberIds };
+      } else {
+        query['team_members.user'] = userId;
+      }
+    }
+    // HR and admin see all projects (no additional filter)
+
+    // Apply additional filters
+    if (status) query.status = status;
+    if (priority) query.priority = priority;
+    if (search) {
+      query.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    const projects = await Project.find(query)
+      .populate('created_by', 'name email')
+      .populate('team_members.user', 'name email team_id')
+      .sort({ created_at: -1 });
+
+    res.json(projects);
+  } catch (error) {
+    console.error('Error fetching user projects:', error);
+    res.status(500).json({ message: 'Error fetching projects' });
+  }
+});
+
 // Get dashboard stats
 router.get('/dashboard-stats', async (req, res) => {
   try {
-    const workspaceId = req.context?.workspaceId || req.user?.workspaceId || null;
+    const totalProjects = await Project.countDocuments({});
+    const activeProjects = await Project.countDocuments({ status: 'active' });
+    const completedProjects = await Project.countDocuments({ status: 'completed' });
+    const onHoldProjects = await Project.countDocuments({ status: 'on_hold' });
 
-    // Get project counts by status
-    const totalProjects = await Project.countDocuments({ workspaceId });
-    const activeProjects = await Project.countDocuments({ workspaceId, status: 'active' });
-    const completedProjects = await Project.countDocuments({ workspaceId, status: 'completed' });
-    const onHoldProjects = await Project.countDocuments({ workspaceId, status: 'on_hold' });
-
-    // Get budget stats
-    const projects = await Project.find({ workspaceId });
+    const projects = await Project.find({});
     const budgetStats = projects.reduce((acc, project) => {
       acc.allocated += project.budget.allocated || 0;
       acc.spent += project.budget.spent || 0;
@@ -63,13 +127,12 @@ router.get('/dashboard-stats', async (req, res) => {
     }, { allocated: 0, spent: 0 });
 
     // Get task stats
-    const totalTasks = await Task.countDocuments({ workspaceId });
-    const completedTasks = await Task.countDocuments({ workspaceId, status: 'done' });
-    const inProgressTasks = await Task.countDocuments({ workspaceId, status: 'in_progress' });
+    const totalTasks = await Task.countDocuments({});
+    const completedTasks = await Task.countDocuments({ status: 'done' });
+    const inProgressTasks = await Task.countDocuments({ status: 'in_progress' });
 
     // Get critical risks
     const projectsWithRisks = await Project.find({ 
-      workspaceId,
       'risks.severity': { $in: ['high', 'critical'] },
       'risks.status': 'active'
     });
@@ -118,10 +181,9 @@ router.get('/dashboard-stats', async (req, res) => {
 // Get single project by ID
 router.get('/:id', async (req, res) => {
   try {
-    const workspaceId = req.context?.workspaceId || req.user?.workspaceId || null;
     const { id } = req.params;
 
-    const project = await Project.findOne({ _id: id, workspaceId })
+    const project = await Project.findOne({ _id: id })
       .populate('created_by', 'name email')
       .populate('team_members.user', 'name email');
 
@@ -130,7 +192,7 @@ router.get('/:id', async (req, res) => {
     }
 
     // Get associated tasks
-    const tasks = await Task.find({ project_id: id, workspaceId })
+    const tasks = await Task.find({ project_id: id })
       .populate('assigned_to', 'name email')
       .sort({ created_at: -1 });
 
@@ -141,15 +203,13 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// Create new project
-router.post('/', async (req, res) => {
+// Create new project - Only HR, admin, and team_lead can create projects
+router.post('/', checkRole(['admin', 'hr', 'team_lead']), async (req, res) => {
   try {
-    const workspaceId = req.context?.workspaceId || req.user?.workspaceId || null;
     const userId = req.user._id;
 
     const projectData = {
       ...req.body,
-      workspaceId,
       created_by: userId
     };
 
@@ -170,11 +230,10 @@ router.post('/', async (req, res) => {
 // Update project
 router.put('/:id', async (req, res) => {
   try {
-    const workspaceId = req.context?.workspaceId || req.user?.workspaceId || null;
     const { id } = req.params;
 
     const project = await Project.findOneAndUpdate(
-      { _id: id, workspaceId },
+      { _id: id },
       { ...req.body, updated_at: Date.now() },
       { new: true, runValidators: true }
     )
@@ -195,18 +254,16 @@ router.put('/:id', async (req, res) => {
 // Delete project
 router.delete('/:id', async (req, res) => {
   try {
-    const workspaceId = req.context?.workspaceId || req.user?.workspaceId || null;
     const { id } = req.params;
 
-    const project = await Project.findOneAndDelete({ _id: id, workspaceId });
+    const project = await Project.findOneAndDelete({ _id: id });
 
     if (!project) {
       return res.status(404).json({ message: 'Project not found' });
     }
 
-    // Optionally: Remove project_id from associated tasks
     await Task.updateMany(
-      { project_id: id, workspaceId },
+      { project_id: id },
       { $unset: { project_id: 1 } }
     );
 
@@ -217,15 +274,14 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
-// Add team member to project
-router.post('/:id/members', async (req, res) => {
+// Add team member to project - Only HR, admin, and team_lead can manage members
+router.post('/:id/members', checkRole(['admin', 'hr', 'team_lead']), async (req, res) => {
   try {
-    const workspaceId = req.context?.workspaceId || req.user?.workspaceId || null;
     const { id } = req.params;
     const { userId, role } = req.body;
 
     const project = await Project.findOneAndUpdate(
-      { _id: id, workspaceId },
+      { _id: id },
       { 
         $addToSet: { team_members: { user: userId, role: role || 'member' } },
         updated_at: Date.now()
@@ -246,14 +302,13 @@ router.post('/:id/members', async (req, res) => {
   }
 });
 
-// Remove team member from project
-router.delete('/:id/members/:userId', async (req, res) => {
+// Remove team member from project - Only HR, admin, and team_lead can manage members
+router.delete('/:id/members/:userId', checkRole(['admin', 'hr', 'team_lead']), async (req, res) => {
   try {
-    const workspaceId = req.context?.workspaceId || req.user?.workspaceId || null;
     const { id, userId } = req.params;
 
     const project = await Project.findOneAndUpdate(
-      { _id: id, workspaceId },
+      { _id: id },
       { 
         $pull: { team_members: { user: userId } },
         updated_at: Date.now()

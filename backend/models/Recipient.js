@@ -28,11 +28,6 @@ const recipientSchema = new mongoose.Schema({
     ref: 'User',
     default: null
   },
-  workspaceId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Workspace',
-    required: true
-  },
   // Additional metadata for external recipients
   metadata: {
     phone: String,
@@ -65,9 +60,9 @@ const recipientSchema = new mongoose.Schema({
 });
 
 // Indexes
-recipientSchema.index({ email: 1, workspaceId: 1 }, { unique: true });
+recipientSchema.index({ email: 1 }, { unique: true });
 recipientSchema.index({ linkedUserId: 1 });
-recipientSchema.index({ source: 1, workspaceId: 1 });
+recipientSchema.index({ source: 1 });
 recipientSchema.index({ 'preferences.unsubscribe': 1 });
 
 /**
@@ -76,11 +71,11 @@ recipientSchema.index({ 'preferences.unsubscribe': 1 });
  * @returns {Object} Created/updated recipient
  */
 recipientSchema.statics.createOrUpdate = async function(data) {
-  const { email, workspaceId, ...updateData } = data;
+  const { email, ...updateData } = data;
 
   return await this.findOneAndUpdate(
-    { email, workspaceId },
-    { ...updateData, email, workspaceId },
+    { email },
+    { ...updateData, email },
     {
       new: true,
       upsert: true,

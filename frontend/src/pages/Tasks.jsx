@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import api from '../api/axios';
+import { projectsApi } from '../api/projectsApi';
 import useRealtimeSync from '../hooks/useRealtimeSync';
 import { useTheme } from '../context/ThemeContext';
 import { useSidebar } from '../context/SidebarContext';
@@ -179,9 +180,10 @@ const Tasks = () => {
   const fetchProjects = async () => {
     try {
       const data = await projectsApi.getAll();
-      setProjects(data.projects || []);
+      setProjects(Array.isArray(data) ? data : data.projects || []);
     } catch (error) {
       console.error('Error fetching projects:', error);
+      setProjects([]);
     }
   };
 

@@ -1,11 +1,6 @@
 import mongoose from 'mongoose';
 
 const emailTemplateSchema = new mongoose.Schema({
-  workspaceId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Workspace',
-    default: null  // null means global template
-  },
   name: {
     type: String,
     required: true,
@@ -55,7 +50,7 @@ const emailTemplateSchema = new mongoose.Schema({
   timestamps: true
 });
 
-emailTemplateSchema.index({ workspaceId: 1, code: 1 });
+emailTemplateSchema.index({ code: 1 });
 
 const EmailTemplate = mongoose.model('EmailTemplate', emailTemplateSchema);
 

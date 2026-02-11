@@ -13,14 +13,10 @@ const router = express.Router();
 // Get all email templates
 router.get('/', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
   try {
-    const workspaceId = req.context?.workspaceId || req.user.workspaceId;
     const { category } = req.query;
 
     const query = { 
-      $or: [
-        { workspaceId },
-        { workspaceId: null, isPredefined: true }
-      ]
+      isActive: true
     };
 
     if (category) {
@@ -40,10 +36,8 @@ router.get('/', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
 router.post('/', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
   try {
     const { name, code, subject, htmlContent, variables, category } = req.body;
-    const workspaceId = req.context?.workspaceId || req.user.workspaceId;
 
     const template = new EmailTemplate({
-      workspaceId,
       name,
       code: code.toUpperCase(),
       subject,
@@ -57,7 +51,6 @@ router.post('/', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
 
     await logChange({
       userId: req.user._id,
-      workspaceId,
       action: 'create',
       entity: 'email_template',
       entityId: template._id,
@@ -80,11 +73,9 @@ router.post('/', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
 router.put('/:id', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
   try {
     const { name, subject, htmlContent, variables, isActive } = req.body;
-    const workspaceId = req.context?.workspaceId || req.user.workspaceId;
 
     const template = await EmailTemplate.findOne({ 
-      _id: req.params.id, 
-      workspaceId 
+      _id: req.params.id
     });
 
     if (!template) {
@@ -105,7 +96,6 @@ router.put('/:id', authenticate, checkRole(['admin', 'hr']), async (req, res) =>
 
     await logChange({
       userId: req.user._id,
-      workspaceId,
       action: 'update',
       entity: 'email_template',
       entityId: template._id,
@@ -123,11 +113,8 @@ router.put('/:id', authenticate, checkRole(['admin', 'hr']), async (req, res) =>
 // Delete email template
 router.delete('/:id', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
   try {
-    const workspaceId = req.context?.workspaceId || req.user.workspaceId;
-
     const template = await EmailTemplate.findOne({ 
-      _id: req.params.id, 
-      workspaceId 
+      _id: req.params.id
     });
 
     if (!template) {
@@ -142,7 +129,6 @@ router.delete('/:id', authenticate, checkRole(['admin', 'hr']), async (req, res)
 
     await logChange({
       userId: req.user._id,
-      workspaceId,
       action: 'delete',
       entity: 'email_template',
       entityId: template._id,
@@ -161,7 +147,6 @@ router.delete('/:id', authenticate, checkRole(['admin', 'hr']), async (req, res)
 router.post('/test', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
   try {
     const { to, subject, htmlContent, variables = {} } = req.body;
-    const workspaceId = req.context?.workspaceId || req.user.workspaceId;
 
     if (!to || !subject || !htmlContent) {
       return res.status(400).json({ message: 'Recipient, subject, and content are required' });
@@ -176,7 +161,6 @@ router.post('/test', authenticate, checkRole(['admin', 'hr']), async (req, res) 
     if (result.success) {
       await logChange({
         userId: req.user._id,
-        workspaceId,
         action: 'send',
         entity: 'email',
         details: { type: 'test', to, subject },
@@ -197,7 +181,6 @@ router.post('/test', authenticate, checkRole(['admin', 'hr']), async (req, res) 
 router.post('/send', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
   try {
     const { recipients, subject, htmlContent, templateId, variables = {} } = req.body;
-    const workspaceId = req.context?.workspaceId || req.user.workspaceId;
 
     if (!recipients || !subject || !htmlContent) {
       return res.status(400).json({ message: 'Recipients, subject, and content are required' });
@@ -217,7 +200,6 @@ router.post('/send', authenticate, checkRole(['admin', 'hr']), async (req, res) 
             // User IDs - fetch user details
             const users = await User.find({
               _id: { $in: recipients },
-              workspaceId,
               isActive: true
             }).select('email fullName');
             recipientEmails = users.map(user => ({ email: user.email, name: user.fullName }));
@@ -231,7 +213,7 @@ router.post('/send', authenticate, checkRole(['admin', 'hr']), async (req, res) 
         }
       }
     } else if (recipients === 'all') {
-      const users = await User.find({ workspaceId, isActive: true }).select('email fullName');
+      const users = await User.find({ isActive: true }).select('email fullName');
       recipientEmails = users.map(user => ({ email: user.email, name: user.fullName }));
     }
 
@@ -265,7 +247,6 @@ router.post('/send', authenticate, checkRole(['admin', 'hr']), async (req, res) 
     if (result.success) {
       await logChange({
         userId: req.user._id,
-        workspaceId,
         action: 'send',
         entity: 'email',
         details: { type: 'custom', count: recipientEmails.length, subject, templateId },
@@ -289,7 +270,6 @@ router.post('/send', authenticate, checkRole(['admin', 'hr']), async (req, res) 
 // Get users for email recipient selection with advanced search and filters
 router.get('/users', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
   try {
-    const workspaceId = req.context?.workspaceId || req.user.workspaceId;
     const {
       search,
       role,
@@ -300,7 +280,7 @@ router.get('/users', authenticate, checkRole(['admin', 'hr']), async (req, res) 
       page = 1
     } = req.query;
 
-    let query = { workspaceId };
+    let query = {};
 
     // Add filters
     if (isActive !== undefined && isActive !== 'all') {
@@ -340,8 +320,8 @@ router.get('/users', authenticate, checkRole(['admin', 'hr']), async (req, res) 
       .skip((parseInt(page) - 1) * parseInt(limit));
 
     // Get unique departments and roles for filter options
-    const departments = await User.distinct('department', { workspaceId, department: { $ne: null, $ne: '' } });
-    const roles = await User.distinct('role', { workspaceId });
+    const departments = await User.distinct('department', { department: { $ne: null, $ne: '' } });
+    const roles = await User.distinct('role', {});
 
     res.json({
       success: true,
@@ -392,7 +372,6 @@ router.get('/config', authenticate, checkRole(['admin', 'hr']), async (req, res)
 router.post('/test-send', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
   try {
     const { templateId, variables = {}, testRecipient } = req.body;
-    const workspaceId = req.context?.workspaceId || req.user.workspaceId;
 
     if (!templateId || !testRecipient) {
       return res.status(400).json({ message: 'Template ID and test recipient are required' });
@@ -401,11 +380,7 @@ router.post('/test-send', authenticate, checkRole(['admin', 'hr']), async (req, 
     // Find template
     const template = await EmailTemplate.findOne({
       _id: templateId,
-      isActive: true,
-      $or: [
-        { workspaceId },
-        { workspaceId: null, isPredefined: true }
-      ]
+      isActive: true
     });
 
     if (!template) {
@@ -428,7 +403,6 @@ router.post('/test-send', authenticate, checkRole(['admin', 'hr']), async (req, 
     if (result.success) {
       await logChange({
         userId: req.user._id,
-        workspaceId,
         action: 'send',
         entity: 'email',
         details: { type: 'test', templateId, testRecipient },
@@ -449,7 +423,6 @@ router.post('/test-send', authenticate, checkRole(['admin', 'hr']), async (req, 
 router.post('/bulk-send', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
   try {
     const { templateId, variables = {}, recipients } = req.body;
-    const workspaceId = req.context?.workspaceId || req.user.workspaceId;
 
     if (!templateId || !recipients || recipients.length === 0) {
       return res.status(400).json({ message: 'Template ID and recipients are required' });
@@ -458,11 +431,7 @@ router.post('/bulk-send', authenticate, checkRole(['admin', 'hr']), async (req, 
     // Find template
     const template = await EmailTemplate.findOne({
       _id: templateId,
-      isActive: true,
-      $or: [
-        { workspaceId },
-        { workspaceId: null, isPredefined: true }
-      ]
+      isActive: true
     });
 
     if (!template) {
@@ -508,7 +477,6 @@ router.post('/bulk-send', authenticate, checkRole(['admin', 'hr']), async (req, 
     // Log bulk send
     await logChange({
       userId: req.user._id,
-      workspaceId,
       action: 'send',
       entity: 'email',
       details: {

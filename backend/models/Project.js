@@ -58,18 +58,25 @@ const projectSchema = new mongoose.Schema({
     type: Date,
     required: [true, 'Due date is required']
   },
-  workspaceId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Workspace',
-    required: false,
-    default: null,
-    index: true
-  },
   created_by: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true
   },
+  documents: [{
+    name: String,
+    url: String,
+    type: String,
+    size: Number,
+    uploadedAt: {
+      type: Date,
+      default: Date.now
+    },
+    uploadedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    }
+  }],
   tags: [{
     type: String,
     trim: true
@@ -98,10 +105,10 @@ const projectSchema = new mongoose.Schema({
   }
 });
 
-// Indexes for workspace-scoped queries
-projectSchema.index({ workspaceId: 1, status: 1 });
-projectSchema.index({ workspaceId: 1, created_by: 1 });
-projectSchema.index({ workspaceId: 1, due_date: 1 });
+// Indexes for queries
+projectSchema.index({ status: 1 });
+projectSchema.index({ created_by: 1 });
+projectSchema.index({ due_date: 1 });
 projectSchema.index({ 'team_members.user': 1 });
 
 projectSchema.pre('save', function(next) {

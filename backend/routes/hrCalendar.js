@@ -1,6 +1,5 @@
 import express from 'express';
 import { authenticate } from '../middleware/auth.js';
-import { requireCoreWorkspace } from '../middleware/workspaceGuard.js';
 import Attendance from '../models/Attendance.js';
 import LeaveRequest from '../models/LeaveRequest.js';
 import Holiday from '../models/Holiday.js';
@@ -8,10 +7,9 @@ import Holiday from '../models/Holiday.js';
 const router = express.Router();
 
 // Get aggregated calendar data
-router.get('/', authenticate, requireCoreWorkspace, async (req, res) => {
+router.get('/', authenticate, async (req, res) => {
   try {
     const { month, year, userId } = req.query;
-    const workspaceId = req.context?.workspaceId || req.user.workspaceId;
 
     if (!month || !year) {
       return res.status(400).json({ message: 'Month and year are required' });
@@ -24,7 +22,6 @@ router.get('/', authenticate, requireCoreWorkspace, async (req, res) => {
 
     // Fetch attendance
     const attendanceQuery = { 
-      workspaceId, 
       date: { $gte: startDate, $lte: endDate } 
     };
     if (targetUserId) {
@@ -37,7 +34,6 @@ router.get('/', authenticate, requireCoreWorkspace, async (req, res) => {
 
     // Fetch approved leaves
     const leaveQuery = {
-      workspaceId,
       status: 'approved',
       $or: [
         { startDate: { $gte: startDate, $lte: endDate } },
@@ -56,7 +52,6 @@ router.get('/', authenticate, requireCoreWorkspace, async (req, res) => {
 
     // Fetch holidays
     const holidays = await Holiday.find({
-      workspaceId,
       isActive: true,
       date: { $gte: startDate, $lte: endDate }
     }).lean();

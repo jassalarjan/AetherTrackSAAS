@@ -38,19 +38,12 @@ const userSchema = new mongoose.Schema({
     ref: 'Team',
     default: null
   },
-  // MULTIPLE TEAMS SUPPORT: Users in Core Workspace can be part of multiple teams
+  // MULTIPLE TEAMS SUPPORT: Users can be part of multiple teams
   teams: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Team'
   }],
-  // WORKSPACE SUPPORT: All users belong to a workspace (optional for admins)
-  workspaceId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Workspace',
-    required: false,  // Not required - admins can exist without workspace
-    index: true
-  },
-  // EMAIL VERIFICATION: For community user registration
+  // EMAIL VERIFICATION: For user registration
   isEmailVerified: {
     type: Boolean,
     default: false
@@ -81,9 +74,9 @@ const userSchema = new mongoose.Schema({
   }
 });
 
-// WORKSPACE SUPPORT: Compound index for workspace-scoped queries
-userSchema.index({ workspaceId: 1, email: 1 }, { unique: true });
-userSchema.index({ workspaceId: 1, role: 1 });
+// Indexes for queries
+userSchema.index({ email: 1 }, { unique: true });
+userSchema.index({ role: 1 });
 
 // Hash password before saving
 userSchema.pre('save', async function(next) {

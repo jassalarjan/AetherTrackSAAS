@@ -52,7 +52,7 @@ class HrActionService {
   /**
    * Approve leave request
    */
-  static async approveLeave(hrUser, leaveId, workspaceId, ipAddress) {
+  static async approveLeave(hrUser, leaveId, ipAddress) {
     await this.validateHrPermissions(hrUser);
 
     const leave = await LeaveRequest.findById(leaveId).populate('user_id');
@@ -71,7 +71,6 @@ class HrActionService {
     // Audit log
     await logChange({
       userId: hrUser._id,
-      workspaceId,
       action: 'approve',
       entity: 'leave_request',
       entityId: leaveId,
@@ -94,7 +93,7 @@ class HrActionService {
   /**
    * Reject leave request
    */
-  static async rejectLeave(hrUser, leaveId, reason, workspaceId, ipAddress) {
+  static async rejectLeave(hrUser, leaveId, reason, ipAddress) {
     await this.validateHrPermissions(hrUser);
 
     if (!reason || reason.trim() === '') {
@@ -118,7 +117,6 @@ class HrActionService {
     // Audit log
     await logChange({
       userId: hrUser._id,
-      workspaceId,
       action: 'reject',
       entity: 'leave_request',
       entityId: leaveId,
@@ -142,7 +140,7 @@ class HrActionService {
   /**
    * Activate employee
    */
-  static async activateEmployee(hrUser, employeeId, workspaceId, ipAddress) {
+  static async activateEmployee(hrUser, employeeId, ipAddress) {
     await this.validateHrPermissions(hrUser);
 
     const employee = await User.findById(employeeId);
@@ -164,8 +162,7 @@ class HrActionService {
       target_name: employee.full_name,
       action: 'Employee Activated',
       description: `Activated employee ${employee.full_name}`,
-      metadata: { employmentStatus: 'ACTIVE' },
-      workspaceId
+      metadata: { employmentStatus: 'ACTIVE' }
     });
 
     // Emit event
@@ -182,7 +179,7 @@ class HrActionService {
   /**
    * Deactivate employee
    */
-  static async deactivateEmployee(hrUser, employeeId, workspaceId, ipAddress) {
+  static async deactivateEmployee(hrUser, employeeId, ipAddress) {
     await this.validateHrPermissions(hrUser);
 
     const employee = await User.findById(employeeId);
@@ -204,8 +201,7 @@ class HrActionService {
       target_name: employee.full_name,
       action: 'Employee Deactivated',
       description: `Deactivated employee ${employee.full_name}`,
-      metadata: { employmentStatus: 'INACTIVE' },
-      workspaceId
+      metadata: { employmentStatus: 'INACTIVE' }
     });
 
     // Emit event
@@ -222,7 +218,7 @@ class HrActionService {
   /**
    * Override attendance
    */
-  static async overrideAttendance(hrUser, attendanceId, overrideData, workspaceId, ipAddress) {
+  static async overrideAttendance(hrUser, attendanceId, overrideData, ipAddress) {
     await this.validateHrPermissions(hrUser);
 
     const attendance = await Attendance.findById(attendanceId).populate('user_id');
@@ -242,7 +238,6 @@ class HrActionService {
     // Audit log
     await logChange({
       userId: hrUser._id,
-      workspaceId,
       action: 'override',
       entity: 'attendance',
       entityId: attendanceId,

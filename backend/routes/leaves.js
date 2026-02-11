@@ -1,7 +1,6 @@
 import express from 'express';
 import { authenticate } from '../middleware/auth.js';
 import { checkRole } from '../middleware/roleCheck.js';
-import { requireCoreWorkspace } from '../middleware/workspaceGuard.js';
 import LeaveRequest from '../models/LeaveRequest.js';
 import LeaveBalance from '../models/LeaveBalance.js';
 import LeaveType from '../models/LeaveType.js';
@@ -18,9 +17,8 @@ const router = express.Router();
 router.get('/', authenticate, async (req, res) => {
   try {
     const { status, userId } = req.query;
-    const workspaceId = req.context?.workspaceId || req.user.workspaceId;
 
-    const query = { workspaceId };
+    const query = {};
 
     // Members and team_leads see only their own requests
     // HR and Admin see all requests
@@ -52,10 +50,9 @@ router.get('/', authenticate, async (req, res) => {
 router.post('/', authenticate, async (req, res) => {
   try {
     const { leaveTypeId, startDate, endDate, reason, days } = req.body;
-    const workspaceId = req.context?.workspaceId || req.user.workspaceId;
 
     // Validate leave type
-    const leaveType = await LeaveType.findOne({ _id: leaveTypeId, workspaceId });
+    const leaveType = await LeaveType.findOne({ _id: leaveTypeId });
     if (!leaveType) {
       return res.status(404).json({ message: 'Leave type not found' });
     }
@@ -75,7 +72,6 @@ router.post('/', authenticate, async (req, res) => {
     // Create request
     const leaveRequest = new LeaveRequest({
       userId: req.user._id,
-      workspaceId,
       leaveTypeId,
       startDate: new Date(startDate),
       endDate: new Date(endDate),
@@ -91,7 +87,6 @@ router.post('/', authenticate, async (req, res) => {
 
     await logChange({
       userId: req.user._id,
-      workspaceId,
       action: 'create',
       entity: 'leave_request',
       entityId: leaveRequest._id,
@@ -101,7 +96,6 @@ router.post('/', authenticate, async (req, res) => {
 
     // Send notification email to HR/Admin
     const hrUsers = await User.find({ 
-      workspaceId, 
       role: { $in: ['admin', 'hr'] } 
     }).select('email full_name');
 
@@ -124,7 +118,6 @@ router.post('/', authenticate, async (req, res) => {
 router.patch('/:id/status', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
   try {
     const { status, rejectionReason, hrNotes } = req.body;
-    const workspaceId = req.context?.workspaceId || req.user.workspaceId;
     const ipAddress = getClientIP(req);
 
     if (!['approved', 'rejected'].includes(status)) {
@@ -134,7 +127,7 @@ router.patch('/:id/status', authenticate, checkRole(['admin', 'hr']), async (req
     // Use HR Action Service for centralized state management
     let actionResult;
     if (status === 'approved') {
-      actionResult = await HrActionService.approveLeave(req.user, req.params.id, workspaceId, ipAddress);
+      actionResult = await HrActionService.approveLeave(req.user, req.params.id, ipAddress);
       
       // Update hrNotes if provided
       if (hrNotes !== undefined) {
@@ -144,7 +137,7 @@ router.patch('/:id/status', authenticate, checkRole(['admin', 'hr']), async (req
       if (!rejectionReason || rejectionReason.trim() === '') {
         return res.status(400).json({ message: 'Rejection reason is required' });
       }
-      actionResult = await HrActionService.rejectLeave(req.user, req.params.id, rejectionReason, workspaceId, ipAddress);
+      actionResult = await HrActionService.rejectLeave(req.user, req.params.id, rejectionReason, ipAddress);
       
       // Update hrNotes if provided
       if (hrNotes !== undefined) {
@@ -153,7 +146,7 @@ router.patch('/:id/status', authenticate, checkRole(['admin', 'hr']), async (req
     }
 
     // Handle HR event for email dispatch
-    await HrEventService.handleEvent(actionResult.event, actionResult.data, workspaceId);
+    await HrEventService.handleEvent(actionResult.event, actionResult.data);
 
     // Fetch updated leave request for response
     const updatedLeave = await LeaveRequest.findById(req.params.id)
@@ -172,7 +165,6 @@ router.patch('/:id/status', authenticate, checkRole(['admin', 'hr']), async (req
 router.get('/balance/:userId?', authenticate, async (req, res) => {
   try {
     const targetUserId = req.params.userId || req.user._id;
-    const workspaceId = req.context?.workspaceId || req.user.workspaceId;
 
     // Members and team_leads can only view their own balance
     // HR and Admin can view anyone's balance
@@ -187,7 +179,6 @@ router.get('/balance/:userId?', authenticate, async (req, res) => {
 
     const balances = await LeaveBalance.find({
       userId: targetUserId,
-      workspaceId,
       year: currentYear
     }).populate('leaveTypeId', 'name code color annualQuota');
 
@@ -201,11 +192,9 @@ router.get('/balance/:userId?', authenticate, async (req, res) => {
 // Get all leave balances (for HR/Admin)
 router.get('/balances', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
   try {
-    const workspaceId = req.context?.workspaceId || req.user.workspaceId;
     const currentYear = new Date().getFullYear();
 
     const balances = await LeaveBalance.find({
-      workspaceId,
       year: currentYear
     })
     .populate('userId', 'full_name email profile_picture')
@@ -223,11 +212,9 @@ router.get('/balances', authenticate, checkRole(['admin', 'hr']), async (req, re
 router.patch('/:id/notes', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
   try {
     const { hrNotes } = req.body;
-    const workspaceId = req.context?.workspaceId || req.user.workspaceId;
 
     const leaveRequest = await LeaveRequest.findOne({
-      _id: req.params.id,
-      workspaceId
+      _id: req.params.id
     });
 
     if (!leaveRequest) {
@@ -239,7 +226,6 @@ router.patch('/:id/notes', authenticate, checkRole(['admin', 'hr']), async (req,
 
     await logChange({
       userId: req.user._id,
-      workspaceId,
       action: 'update',
       entity: 'leave_request',
       entityId: leaveRequest._id,
@@ -262,11 +248,8 @@ router.patch('/:id/notes', authenticate, checkRole(['admin', 'hr']), async (req,
 // Cancel leave request (by employee, only if pending)
 router.delete('/:id', authenticate, async (req, res) => {
   try {
-    const workspaceId = req.context?.workspaceId || req.user.workspaceId;
-
     const leaveRequest = await LeaveRequest.findOne({
       _id: req.params.id,
-      workspaceId,
       userId: req.user._id
     });
 
@@ -296,7 +279,6 @@ router.delete('/:id', authenticate, async (req, res) => {
 
     await logChange({
       userId: req.user._id,
-      workspaceId,
       action: 'delete',
       entity: 'leave_request',
       entityId: leaveRequest._id,

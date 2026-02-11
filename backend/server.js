@@ -16,8 +16,8 @@ import taskRoutes from './routes/tasks.js';
 import commentRoutes from './routes/comments.js';
 import notificationRoutes from './routes/notifications.js';
 import changelogRoutes from './routes/changelog.js';
-import workspaceRoutes from './routes/workspaces.js';
 import projectRoutes from './routes/projects.js';
+import sprintRoutes from './routes/sprints.js';
 // HR Module routes
 import attendanceRoutes from './routes/attendance.js';
 import leavesRoutes from './routes/leaves.js';
@@ -28,7 +28,6 @@ import emailTemplatesRoutes from './routes/emailTemplates.js';
 
 // Import middleware
 import { authenticate } from './middleware/auth.js';
-import workspaceContext from './middleware/workspaceContext.js';
 
 // Import scheduler
 import { initializeScheduler } from './utils/scheduler.js';
@@ -118,23 +117,22 @@ io.on('connection', (socket) => {
 // Auth routes (public, no workspace context needed for login/register)
 app.use('/api/auth', authRoutes);
 
-// Protected routes with workspace context
-// Apply authentication and workspace context to all protected routes
-app.use('/api/users', authenticate, workspaceContext, userRoutes);
-app.use('/api/teams', authenticate, workspaceContext, teamRoutes);
-app.use('/api/tasks', authenticate, workspaceContext, taskRoutes);
-app.use('/api/projects', authenticate, workspaceContext, projectRoutes);
-app.use('/api/comments', authenticate, workspaceContext, commentRoutes);
-app.use('/api/notifications', authenticate, workspaceContext, notificationRoutes);
-app.use('/api/changelog', authenticate, workspaceContext, changelogRoutes);
-app.use('/api/workspaces', workspaceRoutes); // Workspace routes handle their own auth/context
-// HR Module routes with workspace context
-app.use('/api/hr/attendance', authenticate, workspaceContext, attendanceRoutes);
-app.use('/api/hr/leaves', authenticate, workspaceContext, leavesRoutes);
-app.use('/api/hr/leave-types', authenticate, workspaceContext, leaveTypesRoutes);
-app.use('/api/hr/holidays', authenticate, workspaceContext, holidaysRoutes);
-app.use('/api/hr/calendar', authenticate, workspaceContext, hrCalendarRoutes);
-app.use('/api/hr/email-templates', authenticate, workspaceContext, emailTemplatesRoutes);
+// Protected routes with authentication
+app.use('/api/users', authenticate, userRoutes);
+app.use('/api/teams', authenticate, teamRoutes);
+app.use('/api/tasks', authenticate, taskRoutes);
+app.use('/api/projects', authenticate, projectRoutes);
+app.use('/api/sprints', authenticate, sprintRoutes);
+app.use('/api/comments', authenticate, commentRoutes);
+app.use('/api/notifications', authenticate, notificationRoutes);
+app.use('/api/changelog', authenticate, changelogRoutes);
+// HR Module routes with authentication
+app.use('/api/hr/attendance', authenticate, attendanceRoutes);
+app.use('/api/hr/leaves', authenticate, leavesRoutes);
+app.use('/api/hr/leave-types', authenticate, leaveTypesRoutes);
+app.use('/api/hr/holidays', authenticate, holidaysRoutes);
+app.use('/api/hr/calendar', authenticate, hrCalendarRoutes);
+app.use('/api/hr/email-templates', authenticate, emailTemplatesRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

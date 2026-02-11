@@ -1,7 +1,6 @@
 import express from 'express';
 import { authenticate } from '../middleware/auth.js';
 import { checkRole } from '../middleware/roleCheck.js';
-import { requireCoreWorkspace } from '../middleware/workspaceGuard.js';
 import LeaveType from '../models/LeaveType.js';
 import LeaveBalance from '../models/LeaveBalance.js';
 import User from '../models/User.js';
@@ -13,10 +12,7 @@ const router = express.Router();
 // Get all leave types
 router.get('/', authenticate, async (req, res) => {
   try {
-    const workspaceId = req.context?.workspaceId || req.user.workspaceId;
-
     const leaveTypes = await LeaveType.find({ 
-      workspaceId, 
       isActive: true 
     }).sort({ name: 1 });
 
@@ -31,10 +27,8 @@ router.get('/', authenticate, async (req, res) => {
 router.post('/', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
   try {
     const { name, code, annualQuota, carryForward, maxCarryForward, color, description } = req.body;
-    const workspaceId = req.context?.workspaceId || req.user.workspaceId;
 
     const leaveType = new LeaveType({
-      workspaceId,
       name,
       code: code.toUpperCase(),
       annualQuota,
@@ -46,14 +40,13 @@ router.post('/', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
 
     await leaveType.save();
 
-    // Initialize balances for all users in workspace
-    const users = await User.find({ workspaceId }).select('_id');
+    // Initialize balances for all users
+    const users = await User.find({}).select('_id');
     const currentYear = new Date().getFullYear();
 
     const balancePromises = users.map(user =>
       LeaveBalance.create({
         userId: user._id,
-        workspaceId,
         leaveTypeId: leaveType._id,
         year: currentYear,
         totalQuota: annualQuota
@@ -64,7 +57,6 @@ router.post('/', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
 
     await logChange({
       userId: req.user._id,
-      workspaceId,
       action: 'create',
       entity: 'leave_type',
       entityId: leaveType._id,
@@ -87,9 +79,8 @@ router.post('/', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
 router.put('/:id', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
   try {
     const { name, annualQuota, carryForward, maxCarryForward, color, description, isActive } = req.body;
-    const workspaceId = req.context?.workspaceId || req.user.workspaceId;
 
-    const leaveType = await LeaveType.findOne({ _id: req.params.id, workspaceId });
+    const leaveType = await LeaveType.findOne({ _id: req.params.id });
 
     if (!leaveType) {
       return res.status(404).json({ message: 'Leave type not found' });
@@ -107,7 +98,6 @@ router.put('/:id', authenticate, checkRole(['admin', 'hr']), async (req, res) =>
 
     await logChange({
       userId: req.user._id,
-      workspaceId,
       action: 'update',
       entity: 'leave_type',
       entityId: leaveType._id,
@@ -125,9 +115,7 @@ router.put('/:id', authenticate, checkRole(['admin', 'hr']), async (req, res) =>
 // Delete leave type (soft delete)
 router.delete('/:id', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
   try {
-    const workspaceId = req.context?.workspaceId || req.user.workspaceId;
-
-    const leaveType = await LeaveType.findOne({ _id: req.params.id, workspaceId });
+    const leaveType = await LeaveType.findOne({ _id: req.params.id });
 
     if (!leaveType) {
       return res.status(404).json({ message: 'Leave type not found' });
@@ -138,7 +126,6 @@ router.delete('/:id', authenticate, checkRole(['admin', 'hr']), async (req, res)
 
     await logChange({
       userId: req.user._id,
-      workspaceId,
       action: 'delete',
       entity: 'leave_type',
       entityId: leaveType._id,
