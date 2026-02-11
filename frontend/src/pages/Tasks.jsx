@@ -10,6 +10,10 @@ import Sidebar from '../components/Sidebar';
 import { Plus, X, Edit2, Trash2, MessageSquare, Search, ChevronDown, MoreHorizontal, CheckSquare, BarChart3, Bell, HelpCircle, Download, Grid3x3, Filter, Menu } from 'lucide-react';
 import { ResponsivePageLayout, ResponsiveModal, ResponsiveCard, ResponsiveGrid } from '../components/layouts';
 import TaskCard from '../components/TaskCard';
+import ProjectLabel from '../components/ProjectLabel';
+import TeamLabel from '../components/TeamLabel';
+import SprintLabel from '../components/SprintLabel';
+import ProgressBar from '../components/ProgressBar';
 
 const Tasks = () => {
   const { user, socket } = useAuth();
@@ -48,15 +52,19 @@ const Tasks = () => {
     due_date: '',
     project_id: '',
     team_id: '',
+    sprint_id: '',
+    progress: 0,
     assigned_to: [],
   });
   const [users, setUsers] = useState([]);
   const [teams, setTeams] = useState([]);
   const [projects, setProjects] = useState([]);
+  const [sprints, setSprints] = useState([]);
 
   useEffect(() => {
     fetchTasks();
     fetchProjects();
+    fetchSprints();
     if (['admin', 'hr', 'team_lead'].includes(user?.role)) {
       fetchUsers();
       fetchTeams();
@@ -187,6 +195,16 @@ const Tasks = () => {
     }
   };
 
+  const fetchSprints = async () => {
+    try {
+      const response = await api.get('/sprints');
+      setSprints(response.data.sprints || []);
+    } catch (error) {
+      console.error('Error fetching sprints:', error);
+      setSprints([]);
+    }
+  };
+
   const handleCreateTask = async (e) => {
     e.preventDefault();
     try {
@@ -200,6 +218,8 @@ const Tasks = () => {
         due_date: '',
         project_id: '',
         team_id: '',
+        sprint_id: '',
+        progress: 0,
         assigned_to: [],
       });
       fetchTasks();
@@ -606,10 +626,17 @@ const Tasks = () => {
                       <ChevronDown size={14} className="opacity-0 group-hover:opacity-100 transition-opacity" />
                     </div>
                   </th>
-                  <th className={`py-3 px-3 border-b ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} text-xs font-semibold ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} uppercase tracking-wider w-32`}>Priority</th>
-                  <th className={`py-3 px-3 border-b ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} text-xs font-semibold ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} uppercase tracking-wider w-36`}>Status</th>
-                  <th className={`py-3 px-3 border-b ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} text-xs font-semibold ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} uppercase tracking-wider w-40`}>Assignee</th>
-                  <th className={`py-3 px-3 border-b ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} text-xs font-semibold ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} uppercase tracking-wider w-32`}>Due Date</th>
+                  <th className={`py-3 px-3 border-b ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} text-xs font-semibold ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} uppercase tracking-wider w-28`}>Project</th>
+                  <th className={`py-3 px-3 border-b ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} text-xs font-semibold ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} uppercase tracking-wider w-28`}>Team</th>
+                  <th className={`py-3 px-3 border-b ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} text-xs font-semibold ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} uppercase tracking-wider w-28`}>Sprint</th>
+                  <th className={`py-3 px-3 border-b ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} text-xs font-semibold ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} uppercase tracking-wider w-24`}>Priority</th>
+                  <th className={`py-3 px-3 border-b ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} text-xs font-semibold ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} uppercase tracking-wider w-32`}>Status</th>
+                  <th className={`py-3 px-3 border-b ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} text-xs font-semibold ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} uppercase tracking-wider w-32`}>Progress</th>
+                  <th className={`py-3 px-3 border-b ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} text-xs font-semibold ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} uppercase tracking-wider w-36`}>Assignee</th>
+                  <th className={`py-3 px-3 border-b ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} text-xs font-semibold ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} uppercase tracking-wider w-28`}>Due Date</th>
+                  <th className={`py-3 px-3 border-b ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} text-xs font-semibold ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} uppercase tracking-wider w-16 text-center`}>
+                    <MessageSquare size={14} className="inline" />
+                  </th>
                   <th className={`py-3 px-3 border-b ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} w-16`}></th>
                 </tr>
               </thead>
@@ -627,11 +654,13 @@ const Tasks = () => {
                       />
                     </td>
                     <td className="py-2.5 px-3">
-                      <div className="flex flex-col">
-                        <span className={`text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} group-hover:text-[#136dec] line-clamp-2`}>
-                          {task.title}
-                        </span>
-                      </div>
+                      {task.project_id ? <ProjectLabel project={task.project_id} size="sm" showIcon={false} /> : <span className={`text-xs ${theme === 'dark' ? 'text-[#6b7280]' : 'text-gray-400'}`}>—</span>}
+                    </td>
+                    <td className="py-2.5 px-3">
+                      {task.team_id ? <TeamLabel team={task.team_id} size="sm" showIcon={false} /> : <span className={`text-xs ${theme === 'dark' ? 'text-[#6b7280]' : 'text-gray-400'}`}>—</span>}
+                    </td>
+                    <td className="py-2.5 px-3">
+                      {task.sprint_id ? <SprintLabel sprint={task.sprint_id} size="sm" showIcon={false} /> : <span className={`text-xs ${theme === 'dark' ? 'text-[#6b7280]' : 'text-gray-400'}`}>—</span>}
                     </td>
                     <td className="py-2.5 px-3">
                       <div className="flex items-center gap-2">
@@ -653,17 +682,39 @@ const Tasks = () => {
                       </select>
                     </td>
                     <td className="py-2.5 px-3">
+                      <div className="w-full max-w-[80px]">
+                        <ProgressBar progress={task.progress || 0} size="sm" showPercentage={false} animated={false} />
+                      </div>
+                    </td>
+                    <td className="py-2.5 px-3">
                       {task.assigned_to && task.assigned_to.length > 0 ? (
                         <div className="flex items-center gap-2">
                           <div className="size-6 rounded-full bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center text-[10px] text-white font-bold">
                             {getUserInitials(task.assigned_to[0].full_name)}
                           </div>
-                          <span className={`text-xs ${theme === 'dark' ? 'text-[#d1d5db]' : 'text-gray-700'}`}>
+                          <span className={`text-xs ${theme === 'dark' ? 'text-[#d1d5db]' : 'text-gray-700'} truncate`}>
                             {task.assigned_to[0].full_name}
                             {task.assigned_to.length > 1 && ` +${task.assigned_to.length - 1}`}
                           </span>
                         </div>
                       ) : (
+                        <span className={`text-xs ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-500'}`}>Unassigned</span>
+                      )}
+                    </td>
+                    <td className="py-2.5 px-3">
+                      <span className={`text-xs ${task.due_date && new Date(task.due_date) < new Date() ? 'text-red-400' : (theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600')}`}>
+                        {task.due_date ? new Date(task.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'No date'}
+                      </span>
+                    </td>
+                    <td className="py-2.5 px-3 text-center">
+                      {task.latest_comment ? (
+                        <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full ${theme === 'dark' ? 'bg-blue-500/10 text-blue-400' : 'bg-blue-50 text-blue-600'}`} title={`Latest: ${task.latest_comment.content.slice(0, 50)}...`}>
+                          <MessageSquare size={12} />
+                          <span className="text-[10px] font-semibold">1</span>
+                        </div>
+                      ) : (
+                        <span className={`text-xs ${theme === 'dark' ? 'text-[#6b7280]' : 'text-gray-400'}`}>—</span>
+                      )}
                         <span className={`text-xs ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-500'}`}>Unassigned</span>
                       )}
                     </td>
@@ -940,6 +991,35 @@ const Tasks = () => {
               onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
               className={`w-full px-3 sm:px-4 py-2.5 sm:py-2 ${theme === 'dark' ? 'bg-[#111418] border-[#282f39] text-white' : 'bg-white border-gray-300 text-gray-900'} border rounded-lg text-sm focus:ring-2 focus:ring-[#136dec] focus:border-transparent transition-all`}
               required
+            />
+          </div>
+
+          <div>
+            <label className={`block text-xs sm:text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-1.5 sm:mb-2`}>Sprint (Optional)</label>
+            <select
+              value={formData.sprint_id}
+              onChange={(e) => setFormData({ ...formData, sprint_id: e.target.value })}
+              className={`w-full px-3 sm:px-4 py-2.5 sm:py-2 ${theme === 'dark' ? 'bg-[#111418] border-[#282f39] text-white' : 'bg-white border-gray-300 text-gray-900'} border rounded-lg text-sm focus:ring-2 focus:ring-[#136dec] focus:border-transparent transition-all`}
+            >
+              <option value="">No Sprint</option>
+              {sprints.map((sprint) => (
+                <option key={sprint._id} value={sprint._id}>
+                  {sprint.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className={`block text-xs sm:text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-1.5 sm:mb-2`}>Progress: {formData.progress}%</label>
+            <input
+              type="range"
+              min="0"
+              max="100"
+              step="5"
+              value={formData.progress}
+              onChange={(e) => setFormData({ ...formData, progress: parseInt(e.target.value) })}
+              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#136dec]"
             />
           </div>
 
