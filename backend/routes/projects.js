@@ -2,6 +2,7 @@ import express from 'express';
 import Project from '../models/Project.js';
 import Task from '../models/Task.js';
 import { checkRole } from '../middleware/roleCheck.js';
+import { upload, uploadToCloudinary, deleteFromCloudinary, extractPublicId } from '../config/cloudinary.js';
 
 const router = express.Router();
 
@@ -232,9 +233,45 @@ router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
 
+    // Validate documents array if present
+    const updateData = { ...req.body, updated_at: Date.now() };
+    
+    if (updateData.documents) {
+      // Ensure documents is an array
+      if (!Array.isArray(updateData.documents)) {
+        return res.status(400).json({ 
+          message: 'Documents must be an array' 
+        });
+      }
+      
+      // Validate each document has required structure
+      updateData.documents = updateData.documents.map(doc => {
+        // If doc is a string (legacy format), skip it or convert
+        if (typeof doc === 'string') {
+          return {
+            name: doc,
+            url: doc,
+            type: '',
+            size: 0,
+            uploadedAt: new Date()
+          };
+        }
+        
+        // Ensure document object has required fields
+        return {
+          name: doc.name || '',
+          url: doc.url || '',
+          type: doc.type || '',
+          size: doc.size || 0,
+          uploadedAt: doc.uploadedAt || new Date(),
+          uploadedBy: doc.uploadedBy || req.user._id
+        };
+      });
+    }
+
     const project = await Project.findOneAndUpdate(
       { _id: id },
-      { ...req.body, updated_at: Date.now() },
+      updateData,
       { new: true, runValidators: true }
     )
       .populate('created_by', 'name email')
@@ -247,6 +284,22 @@ router.put('/:id', async (req, res) => {
     res.json(project);
   } catch (error) {
     console.error('Error updating project:', error);
+    
+    // Provide more detailed error messages
+    if (error.name === 'CastError') {
+      return res.status(400).json({ 
+        message: `Invalid data type for field: ${error.path}`,
+        details: error.message 
+      });
+    }
+    
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({ 
+        message: 'Validation failed',
+        details: Object.values(error.errors).map(e => e.message)
+      });
+    }
+    
     res.status(500).json({ message: 'Error updating project' });
   }
 });
@@ -326,6 +379,120 @@ router.delete('/:id/members/:userId', checkRole(['admin', 'hr', 'team_lead']), a
   } catch (error) {
     console.error('Error removing team member:', error);
     res.status(500).json({ message: 'Error removing team member' });
+  }
+});
+
+// Upload document to project
+router.post('/:id/upload-document', upload.single('file'), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name } = req.body;
+    
+    if (!req.file) {
+      return res.status(400).json({ message: 'No file provided' });
+    }
+
+    // Upload to Cloudinary
+    const result = await uploadToCloudinary(
+      req.file.buffer,
+      req.file.originalname,
+      req.file.mimetype
+    );
+
+    // Add document to project
+    const project = await Project.findById(id);
+    if (!project) {
+      // Clean up uploaded file if project not found
+      const publicId = extractPublicId(result.secure_url);
+      if (publicId) {
+        await deleteFromCloudinary(publicId);
+      }
+      return res.status(404).json({ message: 'Project not found' });
+    }
+
+    const newDocument = {
+      name: name || req.file.originalname,
+      url: result.secure_url,
+      type: req.file.mimetype,
+      size: req.file.size,
+      uploadedAt: new Date(),
+      uploadedBy: req.user._id
+    };
+
+    project.documents.push(newDocument);
+    await project.save();
+
+    res.json({
+      success: true,
+      message: 'Document uploaded successfully',
+      document: newDocument,
+      cloudinary: {
+        public_id: result.public_id,
+        url: result.secure_url
+      }
+    });
+  } catch (error) {
+    console.error('Error uploading document:', error);
+    
+    if (error.message.includes('File type')) {
+      return res.status(400).json({ message: error.message });
+    }
+    
+    if (error.message.includes('File size')) {
+      return res.status(400).json({ message: 'File size exceeds 10MB limit' });
+    }
+    
+    res.status(500).json({ 
+      message: 'Error uploading document',
+      error: error.message 
+    });
+  }
+});
+
+// Delete document from project
+router.delete('/:id/documents/:docIndex', async (req, res) => {
+  try {
+    const { id, docIndex } = req.params;
+    const index = parseInt(docIndex);
+
+    const project = await Project.findById(id);
+    if (!project) {
+      return res.status(404).json({ message: 'Project not found' });
+    }
+
+    if (index < 0 || index >= project.documents.length) {
+      return res.status(404).json({ message: 'Document not found' });
+    }
+
+    const document = project.documents[index];
+    
+    // Delete from Cloudinary
+    if (document.url) {
+      const publicId = extractPublicId(document.url);
+      if (publicId) {
+        try {
+          await deleteFromCloudinary(publicId, 'raw');
+        } catch (cloudinaryError) {
+          console.error('Error deleting from Cloudinary:', cloudinaryError);
+          // Continue with database deletion even if Cloudinary fails
+        }
+      }
+    }
+
+    // Remove from database
+    project.documents.splice(index, 1);
+    await project.save();
+
+    res.json({ 
+      success: true,
+      message: 'Document deleted successfully' 
+    });
+  } catch (error) {
+    console.error('Error deleting document:', error);
+    res.status(500).json({ 
+      message: 'Error deleting document',
+      error: error.message 
+    });
   }
 });
 

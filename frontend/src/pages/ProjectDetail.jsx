@@ -140,39 +140,68 @@ const ProjectDetail = () => {
       setUploading(true);
       const formData = new FormData();
       formData.append('file', documentFile);
-      formData.append('upload_preset', 'ml_default'); // Replace with your Cloudinary preset
+      formData.append('name', documentName || documentFile.name);
       
+      const token = localStorage.getItem('token');
       const response = await fetch(
-        `https://api.cloudinary.com/v1_1/${import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || 'YOUR_CLOUD_NAME'}/auto/upload`,
+        `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/projects/${id}/upload-document`,
         {
           method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
           body: formData
         }
       );
       
       const data = await response.json();
       
-      // Save document reference to project
-      const documents = project.documents || [];
-      documents.push({
-        name: documentName || documentFile.name,
-        url: data.secure_url,
-        type: documentFile.type,
-        size: documentFile.size,
-        uploadedAt: new Date()
-      });
-      
-      await projectsApi.update(id, { documents });
+      if (!response.ok) {
+        throw new Error(data.message || 'Upload failed');
+      }
       
       setShowDocumentModal(false);
       setDocumentFile(null);
       setDocumentName('');
       await fetchProjectDetails();
+      alert('Document uploaded successfully!');
     } catch (error) {
       console.error('Error uploading document:', error);
-      alert('Failed to upload document. Please check Cloudinary configuration.');
+      alert(`Failed to upload document: ${error.message}`);
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleDocumentDelete = async (docIndex) => {
+    if (!confirm('Are you sure you want to delete this document?')) {
+      return;
+    }
+    
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/projects/${id}/documents/${docIndex}`,
+        {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || 'Delete failed');
+      }
+      
+      await fetchProjectDetails();
+      alert('Document deleted successfully!');
+    } catch (error) {
+      console.error('Error deleting document:', error);
+      alert(`Failed to delete document: ${error.message}`);
     }
   };
 
@@ -951,14 +980,23 @@ const ProjectDetail = () => {
                           <div className="flex-1 min-w-0">
                             <h4 className="font-bold text-sm mb-1 truncate">{doc.name}</h4>
                             <p className="text-xs text-gray-500 mb-2">{(doc.size / 1024).toFixed(2)} KB</p>
-                            <a 
-                              href={doc.url} 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              className="text-xs text-[#135bec] hover:underline"
-                            >
-                              View Document →
-                            </a>
+                            <div className="flex gap-2">
+                              <a 
+                                href={doc.url} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="text-xs text-[#135bec] hover:underline"
+                              >
+                                View Document →
+                              </a>
+                              <button
+                                onClick={() => handleDocumentDelete(idx)}
+                                className="text-xs text-red-500 hover:text-red-700 hover:underline ml-2"
+                                title="Delete document"
+                              >
+                                Delete
+                              </button>
+                            </div>
                           </div>
                         </div>
                       </div>
