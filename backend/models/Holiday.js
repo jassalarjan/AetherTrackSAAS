@@ -8,8 +8,7 @@ const holidaySchema = new mongoose.Schema({
   },
   date: {
     type: Date,
-    required: true,
-    index: true
+    required: true
   },
   isRecurring: {
     type: Boolean,

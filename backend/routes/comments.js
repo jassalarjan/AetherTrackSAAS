@@ -39,17 +39,37 @@ router.post('/:taskId/comments', authenticate, async (req, res) => {
 
     await comment.save();
 
-    // Create notification for task owner if different from commenter
-    if (task.assigned_to && task.assigned_to.toString() !== req.user._id.toString()) {
-      await Notification.create({
-        user_id: task.assigned_to,
-        type: 'comment_added',
-        payload: {
+    // Create notifications for all assigned users (excluding commenter)
+    if (task.assigned_to && task.assigned_to.length > 0) {
+      const notifications = task.assigned_to
+        .filter(userId => userId.toString() !== req.user._id.toString())
+        .map(userId => ({
+          user_id: userId,
+          type: 'comment_added',
+          message: `${req.user.full_name} commented on "${task.title}"`,
           task_id: taskId,
-          task_title: task.title,
-          comment_by: req.user.full_name
+          payload: {
+            task_id: taskId,
+            task_title: task.title,
+            comment_by: req.user.full_name,
+            comment_content: content
+          }
+        }));
+
+      if (notifications.length > 0) {
+        await Notification.insertMany(notifications);
+        
+        // Emit notification events to assigned users
+        if (req.app.get('io')) {
+          notifications.forEach(notif => {
+            req.app.get('io').to(notif.user_id.toString()).emit('notification:new', {
+              type: 'comment_added',
+              message: notif.message,
+              task: task
+            });
+          });
         }
-      });
+      }
     }
 
     const populatedComment = await Comment.findById(comment._id)
