@@ -9,7 +9,6 @@ const emailTemplateSchema = new mongoose.Schema({
   code: {
     type: String,
     required: true,
-    unique: true,
     uppercase: true
   },
   subject: {
@@ -50,7 +49,7 @@ const emailTemplateSchema = new mongoose.Schema({
   timestamps: true
 });
 
-emailTemplateSchema.index({ code: 1 });
+emailTemplateSchema.index({ code: 1 }, { unique: true });
 
 const EmailTemplate = mongoose.model('EmailTemplate', emailTemplateSchema);
 

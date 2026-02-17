@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import api from '../api/axios';
@@ -28,6 +28,7 @@ const Tasks = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
+  const selectedTaskRef = useRef(null);
   const [editingTask, setEditingTask] = useState(null);
   const [selectedTeamMembers, setSelectedTeamMembers] = useState([]);
   const [comments, setComments] = useState([]);
@@ -87,9 +88,34 @@ const Tasks = () => {
         );
       });
 
+      socket.on('comment:added', ({ taskId, comment }) => {
+        // Update comments if the detail modal is open for this task
+        if (selectedTaskRef.current && selectedTaskRef.current._id === taskId) {
+          setComments((prev) => {
+            // Avoid duplicates
+            const exists = prev.some(c => c._id === comment._id);
+            if (!exists) {
+              return [comment, ...prev];
+            }
+            return prev;
+          });
+        }
+        
+        // Update the task's latest_comment in the task list
+        setTasks((prev) =>
+          prev.map((t) => {
+            if (t._id === taskId) {
+              return { ...t, latest_comment: comment };
+            }
+            return t;
+          })
+        );
+      });
+
       return () => {
         socket.off('task:created');
         socket.off('task:updated');
+        socket.off('comment:added');
       };
     }
   }, [socket]);
@@ -244,6 +270,7 @@ const Tasks = () => {
 
       if (selectedTask?._id === taskId) {
         setSelectedTask(updatedTask);
+        selectedTaskRef.current = updatedTask;
       }
       if (editingTask?._id === taskId) {
         setEditingTask(updatedTask);
@@ -362,6 +389,8 @@ const Tasks = () => {
       await api.delete(`/tasks/${taskId}`);
       fetchTasks();
       setShowDetailModal(false);
+      setSelectedTask(null);
+      selectedTaskRef.current = null;
     } catch (error) {
       console.error('Error deleting task:', error);
       alert(error.response?.data?.message || 'Failed to delete task');
@@ -370,6 +399,7 @@ const Tasks = () => {
 
   const viewTaskDetails = async (task) => {
     setSelectedTask(task);
+    selectedTaskRef.current = task;
     setShowDetailModal(true);
 
     try {
@@ -385,15 +415,28 @@ const Tasks = () => {
     if (!newComment.trim()) return;
 
     try {
-      await api.post(`/comments/${selectedTask._id}/comments`, {
+      const response = await api.post(`/comments/${selectedTask._id}/comments`, {
         content: newComment,
       });
       setNewComment('');
 
-      const response = await api.get(`/comments/${selectedTask._id}/comments`);
-      setComments(response.data.comments);
+      // Add the new comment to the list immediately
+      if (response.data.comment) {
+        setComments((prev) => [response.data.comment, ...prev]);
+        
+        // Update the task's latest_comment
+        setTasks((prev) =>
+          prev.map((t) => {
+            if (t._id === selectedTask._id) {
+              return { ...t, latest_comment: response.data.comment };
+            }
+            return t;
+          })
+        );
+      }
     } catch (error) {
       console.error('Error adding comment:', error);
+      alert('Failed to add comment. Please try again.');
     }
   };
 
@@ -654,6 +697,18 @@ const Tasks = () => {
                       />
                     </td>
                     <td className="py-2.5 px-3">
+                      <div className="flex flex-col gap-0.5">
+                        <span className={`text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                          {task.title}
+                        </span>
+                        {task.description && (
+                          <span className={`text-xs ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-500'} line-clamp-1`}>
+                            {task.description}
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="py-2.5 px-3">
                       {task.project_id ? <ProjectLabel project={task.project_id} size="sm" showIcon={false} /> : <span className={`text-xs ${theme === 'dark' ? 'text-[#6b7280]' : 'text-gray-400'}`}>—</span>}
                     </td>
                     <td className="py-2.5 px-3">
@@ -715,13 +770,6 @@ const Tasks = () => {
                       ) : (
                         <span className={`text-xs ${theme === 'dark' ? 'text-[#6b7280]' : 'text-gray-400'}`}>—</span>
                       )}
-                        <span className={`text-xs ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-500'}`}>Unassigned</span>
-                      )}
-                    </td>
-                    <td className="py-2.5 px-3">
-                      <span className={`text-xs ${task.due_date && new Date(task.due_date) < new Date() ? 'text-red-400' : (theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600')}`}>
-                        {task.due_date ? new Date(task.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'No date'}
-                      </span>
                     </td>
                     <td className="py-2.5 px-3 text-right" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -1281,7 +1329,12 @@ const Tasks = () => {
       {/* Task Detail Modal */}
       <ResponsiveModal
         isOpen={showDetailModal && selectedTask}
-        onClose={() => setShowDetailModal(false)}
+        onClose={() => {
+          setShowDetailModal(false);
+          setSelectedTask(null);
+          selectedTaskRef.current = null;
+          setComments([]);
+        }}
         title={selectedTask?.title || 'Task Details'}
         size="large"
       >

@@ -947,8 +947,8 @@ const Dashboard = () => {
                             </div>
                           </td>
                           <td className="px-4 py-3 text-right">
-                            {task.assigned_to && task.assigned_to.length > 0 && (
-                              <Avatar user={task.assigned_to[0]} size="sm" className="ml-auto" />
+                            {task.created_by && (
+                              <Avatar user={task.created_by} size="sm" className="ml-auto" />
                             )}
                           </td>
                         </tr>
