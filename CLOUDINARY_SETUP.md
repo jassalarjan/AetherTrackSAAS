@@ -1,6 +1,21 @@
 # Cloudinary Setup Guide for Document Upload
 
-This guide will help you set up Cloudinary for document uploads in the Project Details page.
+⚠️ **DEPRECATION NOTICE**: This guide describes the old insecure client-side upload method.
+
+## 🔒 Use the Secure Implementation Instead
+
+**Please refer to [SECURE_CLOUDINARY_SETUP.md](./SECURE_CLOUDINARY_SETUP.md) for the current implementation.**
+
+The new secure implementation:
+- ✅ Uses backend proxy for uploads
+- ✅ Validates files server-side
+- ✅ Protects API credentials
+- ✅ Includes document deletion
+- ✅ Better error handling
+
+---
+
+## Old Documentation (For Reference Only)
 
 ## Quick Setup Steps
 

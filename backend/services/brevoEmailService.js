@@ -1,4 +1,5 @@
 import * as brevoAPI from '@getbrevo/brevo';
+import nodemailer from 'nodemailer';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -8,11 +9,12 @@ const __dirname = path.dirname(__filename);
 
 /**
  * Brevo Email Service
- * Handles transactional email sending via Brevo API
+ * Handles transactional email sending via Brevo API with SMTP fallback
  */
 class BrevoEmailService {
   constructor() {
     this.client = null;
+    this.smtpTransporter = null;
     this.layoutTemplate = null;
     this.initClient();
   }
@@ -34,6 +36,66 @@ class BrevoEmailService {
       }
     }
     return this.client;
+  }
+
+  getSmtpTransporter() {
+    if (!this.smtpTransporter) {
+      try {
+        // Try Brevo SMTP first
+        if (process.env.EMAIL_HOST === 'smtp-relay.brevo.com' && process.env.EMAIL_USER && process.env.EMAIL_PASSWORD) {
+          this.smtpTransporter = nodemailer.createTransport({
+            host: process.env.EMAIL_HOST,
+            port: parseInt(process.env.EMAIL_PORT) || 587,
+            secure: process.env.EMAIL_SECURE === 'true',
+            auth: {
+              user: process.env.EMAIL_USER,
+              pass: process.env.EMAIL_PASSWORD
+            }
+          });
+          console.log('✅ Initialized Brevo SMTP transporter');
+        } 
+        // Fallback to Gmail or other SMTP
+        else if (process.env.EMAIL_HOST && process.env.EMAIL_USER && process.env.EMAIL_PASSWORD) {
+          this.smtpTransporter = nodemailer.createTransport({
+            host: process.env.EMAIL_HOST,
+            port: parseInt(process.env.EMAIL_PORT) || 587,
+            secure: process.env.EMAIL_SECURE === 'true',
+            auth: {
+              user: process.env.EMAIL_USER,
+              pass: process.env.EMAIL_PASSWORD
+            }
+          });
+          console.log('✅ Initialized SMTP transporter');
+        }
+      } catch (error) {
+        console.error('❌ Failed to initialize SMTP transporter:', error.message);
+        this.smtpTransporter = null;
+      }
+    }
+    return this.smtpTransporter;
+  }
+
+  async sendViaSMTP({ to, subject, htmlContent, from }) {
+    const transporter = this.getSmtpTransporter();
+    if (!transporter) {
+      throw new Error('SMTP transporter not configured');
+    }
+
+    const recipients = Array.isArray(to) ? to.join(', ') : to;
+    
+    const result = await transporter.sendMail({
+      from: `"${from.name}" <${from.email}>`,
+      to: recipients,
+      subject: subject,
+      html: htmlContent
+    });
+
+    return {
+      success: true,
+      messageId: result.messageId,
+      status: 'sent',
+      provider: 'smtp'
+    };
   }
 
   /**
@@ -71,7 +133,7 @@ class BrevoEmailService {
       logo_url: params.logo_url || 'https://AetherTrack-nine-phi.vercel.app/logo.png',
       header_title: params.header_title || 'Notification',
       recipient_name: params.fullName || params.candidateName || params.name || 'User',
-      intro_message: content, // The content itself becomes the intro or body
+      intro_message: content,
       website_url: params.websiteUrl || 'https://AetherTrack-nine-phi.vercel.app',
       discord_url: params.discordUrl || 'https://discord.gg/CfwBfFhDZf',
       linkedin_url: params.linkedinUrl || 'https://www.linkedin.com/company/code-catalyst-s/',
@@ -82,21 +144,18 @@ class BrevoEmailService {
       ...params
     };
 
-    // Very basic Handlebars-like conditional replacement for the layout
-    let wrapped = layout;
-    
     // Replace conditionals {{#if var}}...{{/if}}
+    let wrapped = layout;
     const ifRegex = /{{#if\s+(\w+)}}([\s\S]*?){{\/if}}/g;
     wrapped = wrapped.replace(ifRegex, (match, p1, p2) => {
       return layoutParams[p1] ? p2 : '';
     });
 
-    // Replace variables
     return this.interpolateVariables(wrapped, layoutParams);
   }
 
   /**
-   * Send transactional email
+   * Send transactional email with automatic fallback
    * @param {Object} options
    * @param {string|string[]} options.to - Recipient email(s)
    * @param {string} options.subject - Email subject
@@ -109,54 +168,71 @@ class BrevoEmailService {
   async send({ to, subject, htmlContent, params = {}, from, useLayout = false }) {
     if (!from) {
       from = {
-        email: process.env.EMAIL_FROM || 'updates.codecatalyst@gmail.com',
+        email: process.env.EMAIL_USER || process.env.EMAIL_FROM || 'arjanwebcraft@gmail.com',
         name: process.env.EMAIL_FROM_NAME || 'AetherTrack'
       };
     }
+
+    // Interpolate variables in subject
+    const interpolatedSubject = this.interpolateVariables(subject, params);
+    
+    // Prepare HTML content
+    let finalHtml = htmlContent;
+    if (useLayout) {
+      finalHtml = this.wrapInLayout(htmlContent, interpolatedSubject, { ...params, senderName: from.name });
+    } else {
+      finalHtml = this.interpolateVariables(htmlContent, params);
+    }
+
+    // Try Brevo API first
     try {
       const client = this.getClient();
-      if (!client) {
-        throw new Error('Brevo API client not configured');
+      if (client) {
+        console.log('📤 Attempting to send via Brevo API...');
+        const sendSmtpEmail = new brevoAPI.SendSmtpEmail();
+        sendSmtpEmail.sender = from;
+        sendSmtpEmail.to = Array.isArray(to) ? to.map(email => ({ email })) : [{ email: to }];
+        sendSmtpEmail.subject = interpolatedSubject;
+        sendSmtpEmail.htmlContent = finalHtml;
+
+        const result = await client.sendTransacEmail(sendSmtpEmail);
+
+        // Handle different response structures
+        let messageId = null;
+        if (result.body) {
+          messageId = result.body.messageId || result.body.id;
+        }
+
+        console.log('✅ Email sent via Brevo API');
+        return {
+          success: true,
+          messageId: messageId,
+          status: 'sent',
+          provider: 'brevo-api'
+        };
       }
-
-      // Interpolate variables in subject
-      const interpolatedSubject = this.interpolateVariables(subject, params);
-      
-      // Prepare HTML content
-      let finalHtml = htmlContent;
-      if (useLayout) {
-        finalHtml = this.wrapInLayout(htmlContent, interpolatedSubject, { ...params, senderName: from.name });
-      } else {
-        finalHtml = this.interpolateVariables(htmlContent, params);
-      }
-
-      const sendSmtpEmail = new brevoAPI.SendSmtpEmail();
-      sendSmtpEmail.sender = from;
-      sendSmtpEmail.to = Array.isArray(to) ? to.map(email => ({ email })) : [{ email: to }];
-      sendSmtpEmail.subject = interpolatedSubject;
-      sendSmtpEmail.htmlContent = finalHtml;
-
-      const result = await client.sendTransacEmail(sendSmtpEmail);
-
-      // Handle different response structures
-      let messageId = null;
-      if (result.body) {
-        messageId = result.body.messageId || result.body.id;
-      }
-
-      return {
-        success: true,
-        messageId: messageId,
-        status: 'sent',
-        provider: 'brevo-api'
-      };
     } catch (error) {
-      console.error('❌ Brevo email send error:', error.message);
+      console.warn('⚠️ Brevo API failed:', error.message, '- Trying SMTP fallback...');
+    }
+
+    // Fallback to SMTP
+    try {
+      console.log('📤 Attempting to send via SMTP...');
+      const result = await this.sendViaSMTP({
+        to: Array.isArray(to) ? to : [to],
+        subject: interpolatedSubject,
+        htmlContent: finalHtml,
+        from
+      });
+      console.log('✅ Email sent via SMTP fallback');
+      return result;
+    } catch (smtpError) {
+      console.error('❌ SMTP fallback also failed:', smtpError.message);
       return {
         success: false,
-        error: error.message,
+        error: `Failed to send email. API: Unavailable, SMTP: ${smtpError.message}`,
         status: 'failed',
-        provider: 'brevo-api'
+        provider: 'none'
       };
     }
   }
