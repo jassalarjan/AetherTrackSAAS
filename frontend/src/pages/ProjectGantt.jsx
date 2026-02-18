@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useTheme } from '../context/ThemeContext';
 import Sidebar from '../components/Sidebar';
 import { projectsApi } from '../api/projectsApi';
 import api from '../api/axios';
@@ -13,6 +14,7 @@ const ProjectGantt = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const projectId = searchParams.get('project');
+  const { theme, currentColorScheme } = useTheme();
   
   const [project, setProject] = useState(null);
   const [projects, setProjects] = useState([]);
@@ -152,7 +154,7 @@ const ProjectGantt = () => {
       case 'done':
         return 'bg-emerald-500';
       case 'in_progress':
-        return 'bg-[#135bec]';
+        return currentColorScheme.primary;
       case 'review':
         return 'bg-purple-500';
       default:
@@ -417,7 +419,7 @@ const ProjectGantt = () => {
       <div className="flex h-screen overflow-hidden bg-[#f6f6f8] dark:bg-[#101622]">
         <Sidebar />
         <div className="flex-1 flex items-center justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#135bec]"></div>
+          <div className={`animate-spin rounded-full h-12 w-12 border-b-2 ${currentColorScheme.primaryText.replace('text-', 'border-')}`}></div>
         </div>
       </div>
     );
@@ -431,7 +433,7 @@ const ProjectGantt = () => {
         <header className="h-16 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1a2234] flex items-center justify-between px-8 shrink-0">
           <div className="flex items-center gap-4">
             <nav className="flex items-center gap-2 text-sm text-gray-500">
-              <button onClick={() => navigate('/projects')} className="hover:text-[#135bec] transition-colors">
+              <button onClick={() => navigate('/projects')} className={`${currentColorScheme.primaryText.replace('text-', 'hover:text-')} transition-colors`}>
                 Projects
               </button>
               {project && (
@@ -444,7 +446,7 @@ const ProjectGantt = () => {
             <select 
               value={projectId || ''}
               onChange={handleProjectChange}
-              className="ml-4 px-3 py-1.5 border border-gray-300 dark:border-gray-700 rounded-lg text-sm font-medium bg-white dark:bg-gray-800 focus:ring-2 focus:ring-[#135bec] focus:border-transparent"
+              className={`ml-4 px-3 py-1.5 border border-gray-300 dark:border-gray-700 rounded-lg text-sm font-medium bg-white dark:bg-gray-800 focus:ring-2 ${currentColorScheme.primaryText.replace('text-', 'focus:ring-')} focus:border-transparent`}
             >
               <option value="">All Projects</option>
               {projects.map(proj => (
@@ -460,7 +462,7 @@ const ProjectGantt = () => {
               <Filter size={18} />
               Filters
               {(filters.status || filters.priority || filters.assignee || filters.search) && (
-                <span className="ml-1 px-2 py-0.5 bg-blue-500 text-white text-xs rounded-full">
+                <span className={`ml-1 px-2 py-0.5 ${currentColorScheme.primary} text-white text-xs rounded-full`}>
                   Active
                 </span>
               )}
@@ -492,7 +494,7 @@ const ProjectGantt = () => {
                 </div>
               )}
             </div>
-            <button className="bg-[#135bec] text-white text-sm font-semibold px-4 py-2 rounded-lg flex items-center gap-2 shadow-sm">
+            <button className={`${currentColorScheme.primary} text-white text-sm font-semibold px-4 py-2 rounded-lg flex items-center gap-2 shadow-sm ${currentColorScheme.primaryHover}`}>
               <Plus size={18} />
               New Task
             </button>
@@ -512,7 +514,7 @@ const ProjectGantt = () => {
                   value={filters.search}
                   onChange={(e) => setFilters({ ...filters, search: e.target.value })}
                   placeholder="Search by name..."
-                  className="w-full px-4 py-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-[#135bec] focus:border-[#135bec]"
+                  className={`w-full px-4 py-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:ring-2 ${currentColorScheme.primaryText.replace('text-', 'focus:ring-')} ${currentColorScheme.primaryText.replace('text-', 'focus:border-')}`}
                 />
               </div>
               <div>
@@ -522,7 +524,7 @@ const ProjectGantt = () => {
                 <select
                   value={filters.status}
                   onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-                  className="w-full px-4 py-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-[#135bec] focus:border-[#135bec]"
+                  className={`w-full px-4 py-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:ring-2 ${currentColorScheme.primaryText.replace('text-', 'focus:ring-')} ${currentColorScheme.primaryText.replace('text-', 'focus:border-')}`}
                 >
                   <option value="">All Statuses</option>
                   <option value="todo">To Do</option>
@@ -538,7 +540,7 @@ const ProjectGantt = () => {
                 <select
                   value={filters.priority}
                   onChange={(e) => setFilters({ ...filters, priority: e.target.value })}
-                  className="w-full px-4 py-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-[#135bec] focus:border-[#135bec]"
+                  className={`w-full px-4 py-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:ring-2 ${currentColorScheme.primaryText.replace('text-', 'focus:ring-')} ${currentColorScheme.primaryText.replace('text-', 'focus:border-')}`}
                 >
                   <option value="">All Priorities</option>
                   <option value="low">Low</option>
@@ -554,7 +556,7 @@ const ProjectGantt = () => {
                 <select
                   value={filters.assignee}
                   onChange={(e) => setFilters({ ...filters, assignee: e.target.value })}
-                  className="w-full px-4 py-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-[#135bec] focus:border-[#135bec]"
+                  className={`w-full px-4 py-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:ring-2 ${currentColorScheme.primaryText.replace('text-', 'focus:ring-')} ${currentColorScheme.primaryText.replace('text-', 'focus:border-')}`}
                 >
                   <option value="">All Users</option>
                   {users.map(user => (
@@ -574,7 +576,7 @@ const ProjectGantt = () => {
               </button>
               <div className="flex items-center gap-2">
                 {filters.status && (
-                  <span className="flex items-center gap-1 px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-xs font-medium">
+                  <span className={`flex items-center gap-1 px-3 py-1 ${currentColorScheme.primaryLight} dark:${currentColorScheme.primary.replace('bg-', 'bg-')}/30 ${currentColorScheme.primaryText} rounded-full text-xs font-medium`}>
                     Status: {filters.status}
                     <X size={14} className="cursor-pointer" onClick={() => setFilters({ ...filters, status: '' })} />
                   </span>
@@ -608,7 +610,7 @@ const ProjectGantt = () => {
                   <span className="text-gray-600 dark:text-gray-400">Done</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-sm bg-[#135bec]"></div>
+                  <div className={`w-3 h-3 rounded-sm ${currentColorScheme.primary}`}></div>
                   <span className="text-gray-600 dark:text-gray-400">In Progress</span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -631,7 +633,7 @@ const ProjectGantt = () => {
                   onClick={() => setTimeScale(scale)}
                   className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
                     timeScale === scale
-                      ? 'bg-white dark:bg-gray-700 text-[#135bec] shadow-sm font-semibold'
+                      ? `bg-white dark:bg-gray-700 ${currentColorScheme.primaryText} shadow-sm font-semibold`
                       : 'text-gray-600 dark:text-gray-400 hover:text-[#0d121b] dark:hover:text-white'
                   }`}
                 >
@@ -648,7 +650,7 @@ const ProjectGantt = () => {
                     const today = new Date();
                     // This would scroll to today's position - implementation depends on scroll container ref
                   }}
-                  className="flex items-center gap-1.5 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-[#135bec] transition-colors"
+                  className={`flex items-center gap-1.5 text-sm font-medium text-gray-600 dark:text-gray-400 ${currentColorScheme.primaryText.replace('text-', 'hover:text-')} transition-colors`}
                 >
                   <Calendar size={18} />
                   Today
@@ -659,7 +661,7 @@ const ProjectGantt = () => {
                   type="checkbox"
                   checked={showMilestones}
                   onChange={(e) => setShowMilestones(e.target.checked)}
-                  className="w-4 h-4 text-[#135bec] rounded border-gray-300 focus:ring-[#135bec]"
+                  className={`w-4 h-4 ${currentColorScheme.primaryText} rounded border-gray-300 ${currentColorScheme.primaryText.replace('text-', 'focus:ring-')}`}
                 />
                 <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Milestones</span>
               </label>
@@ -690,7 +692,7 @@ const ProjectGantt = () => {
                 </p>
                 <button 
                   onClick={() => projectId ? navigate(`/projects/${projectId}`) : navigate('/tasks')}
-                  className="px-6 py-3 bg-[#135bec] text-white rounded-lg font-semibold hover:bg-blue-700"
+                  className={`px-6 py-3 ${currentColorScheme.primary} text-white rounded-lg font-semibold ${currentColorScheme.primaryHover}`}
                 >
                   {projectId ? 'Go to Project' : 'View Tasks'}
                 </button>
@@ -714,7 +716,7 @@ const ProjectGantt = () => {
                       task.status === 'done' 
                         ? 'bg-emerald-500' 
                         : task.status === 'in_progress' 
-                          ? 'bg-blue-500' 
+                          ? currentColorScheme.primary
                           : task.status === 'review' 
                             ? 'bg-purple-500' 
                             : 'bg-gray-300'
@@ -798,7 +800,7 @@ const ProjectGantt = () => {
                       key={idx}
                       className={`shrink-0 flex flex-col items-center justify-center text-[10px] font-medium border-r border-gray-100 dark:border-gray-800 ${
                         day.isToday 
-                          ? 'bg-[#135bec]/10 text-[#135bec] font-bold' 
+                          ? `${currentColorScheme.primary.replace('bg-', 'bg-')}/10 ${currentColorScheme.primaryText} font-bold` 
                           : day.isWeekend 
                             ? 'bg-gray-50 dark:bg-gray-800/30 text-gray-400'
                             : 'text-gray-500'
@@ -861,9 +863,9 @@ const ProjectGantt = () => {
                 
                 if (position >= 0 && position <= timelineHeaders.reduce((sum, h) => sum + h.width, 0)) {
                   return (
-                    <div className="absolute top-0 bottom-0 w-px bg-[#135bec] z-10" style={{ left: `${position}px` }}>
-                      <div className="absolute -top-1 -left-1.5 w-3 h-3 bg-[#135bec] rounded-full ring-4 ring-[#135bec]/20"></div>
-                      <div className="absolute top-2 -left-8 text-[9px] font-bold text-[#135bec] bg-white dark:bg-gray-800 px-1 rounded">
+                    <div className={`absolute top-0 bottom-0 w-px ${currentColorScheme.primary} z-10`} style={{ left: `${position}px` }}>
+                      <div className={`absolute -top-1 -left-1.5 w-3 h-3 ${currentColorScheme.primary} rounded-full ring-4 ${currentColorScheme.primary.replace('bg-', 'ring-')}/20`}></div>
+                      <div className={`absolute top-2 -left-8 text-[9px] font-bold ${currentColorScheme.primaryText} bg-white dark:bg-gray-800 px-1 rounded`}>
                         TODAY
                       </div>
                     </div>
@@ -962,7 +964,7 @@ const ProjectGantt = () => {
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-[#135bec]"></div>
+              <div className={`w-3 h-3 rounded-full ${currentColorScheme.primary}`}></div>
               <span className="text-xs text-gray-500 font-medium">
                 In Progress: {tasks.filter(t => t.status === 'in_progress').length}
               </span>

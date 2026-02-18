@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 
 const ThemeContext = createContext();
 
@@ -178,7 +178,8 @@ export const ThemeProvider = ({ children }) => {
   };
 
   // Available themes (computed based on colorScheme)
-  const getThemes = () => {
+  // Use useMemo to make themes reactive to colorScheme changes
+  const themes = useMemo(() => {
     const colorName = colorSchemes[colorScheme].primary.split('-')[1]; // e.g., 'blue' from 'bg-blue-600'
     return {
       light: {
@@ -214,21 +215,19 @@ export const ThemeProvider = ({ children }) => {
         // Will be determined by system preference
       }
     };
-  };
-
-  const themes = getThemes();
+  }, [colorScheme]);
 
   // Get current theme (handle auto mode)
-  const getCurrentTheme = () => {
+  const getCurrentTheme = useMemo(() => {
     if (theme === 'auto') {
       return window.matchMedia('(prefers-color-scheme: dark)').matches ? themes.dark : themes.light;
     }
     return themes[theme];
-  };
+  }, [theme, themes]);
 
   // Apply theme to document
   useEffect(() => {
-    const currentThemeObj = getCurrentTheme();
+    const currentThemeObj = getCurrentTheme;
     const root = document.documentElement;
     const currentColorScheme = colorSchemes[colorScheme];
 
@@ -246,7 +245,7 @@ export const ThemeProvider = ({ children }) => {
 
     // Save to localStorage
     localStorage.setItem('theme', theme);
-  }, [theme, colorScheme]);
+  }, [theme, colorScheme, getCurrentTheme]);
 
   // Apply color scheme
   useEffect(() => {
@@ -290,7 +289,7 @@ export const ThemeProvider = ({ children }) => {
   const value = {
     theme,
     colorScheme,
-    currentTheme: getCurrentTheme(),
+    currentTheme: getCurrentTheme,
     currentColorScheme: colorSchemes[colorScheme],
     themes,
     colorSchemes,

@@ -4,6 +4,42 @@ export default {
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
   darkMode: 'class',
+  safelist: [
+    // Color scheme backgrounds
+    'bg-blue-500', 'bg-blue-600', 'bg-blue-50',
+    'bg-purple-500', 'bg-purple-600', 'bg-purple-50',
+    'bg-green-500', 'bg-green-600', 'bg-green-50',
+    'bg-orange-500', 'bg-orange-600', 'bg-orange-50',
+    'bg-pink-500', 'bg-pink-600', 'bg-pink-50',
+    'bg-teal-500', 'bg-teal-600', 'bg-teal-50',
+    'bg-indigo-500', 'bg-indigo-600', 'bg-indigo-50',
+    'bg-rose-500', 'bg-rose-600', 'bg-rose-50',
+    'bg-cyan-500', 'bg-cyan-600', 'bg-cyan-50',
+    'bg-emerald-500', 'bg-emerald-600', 'bg-emerald-50',
+    'bg-amber-500', 'bg-yellow-500', 'bg-red-500',
+    // Color scheme text colors
+    'text-blue-600',
+    'text-purple-600',
+    'text-green-600',
+    'text-orange-600',
+    'text-pink-600',
+    'text-teal-600',
+    'text-indigo-600',
+    'text-rose-600',
+    'text-cyan-600',
+    'text-emerald-600',
+    // Color scheme hover states
+    'hover:bg-blue-600', 'hover:bg-blue-700',
+    'hover:bg-purple-600', 'hover:bg-purple-700',
+    'hover:bg-green-600', 'hover:bg-green-700',
+    'hover:bg-orange-600', 'hover:bg-orange-700',
+    'hover:bg-pink-600', 'hover:bg-pink-700',
+    'hover:bg-teal-600', 'hover:bg-teal-700',
+    'hover:bg-indigo-600', 'hover:bg-indigo-700',
+    'hover:bg-rose-600', 'hover:bg-rose-700',
+    'hover:bg-cyan-600', 'hover:bg-cyan-700',
+    'hover:bg-emerald-600', 'hover:bg-emerald-700',
+  ],
   theme: {
     extend: {
       colors: {

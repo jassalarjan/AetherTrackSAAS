@@ -675,8 +675,11 @@ const Dashboard = () => {
                           backgroundColor: theme === 'dark' ? '#1c2027' : '#ffffff', 
                           border: `1px solid ${theme === 'dark' ? '#282f39' : '#e5e7eb'}`,
                           borderRadius: '4px',
-                          fontSize: '14px'
-                        }} 
+                          fontSize: '14px',
+                          color: theme === 'dark' ? '#ffffff' : '#000000'
+                        }}
+                        labelStyle={{ color: theme === 'dark' ? '#ffffff' : '#000000' }}
+                        itemStyle={{ color: theme === 'dark' ? '#9da8b9' : '#6b7280' }}
                       />
                     </PieChart>
                   </ResponsiveContainer>
@@ -706,8 +709,11 @@ const Dashboard = () => {
                             backgroundColor: theme === 'dark' ? '#1c2027' : '#ffffff', 
                             border: `1px solid ${theme === 'dark' ? '#282f39' : '#e5e7eb'}`,
                             borderRadius: '4px',
-                            fontSize: '14px'
-                          }} 
+                            fontSize: '14px',
+                            color: theme === 'dark' ? '#ffffff' : '#000000'
+                          }}
+                          labelStyle={{ color: theme === 'dark' ? '#ffffff' : '#000000' }}
+                          itemStyle={{ color: theme === 'dark' ? '#9da8b9' : '#6b7280' }}
                         />
                         <Bar dataKey="value" fill="#136dec" radius={[8, 8, 0, 0]} />
                       </BarChart>
@@ -742,8 +748,11 @@ const Dashboard = () => {
                             backgroundColor: theme === 'dark' ? '#1c2027' : '#ffffff', 
                             border: `1px solid ${theme === 'dark' ? '#282f39' : '#e5e7eb'}`,
                             borderRadius: '4px',
-                            fontSize: '14px'
-                          }} 
+                            fontSize: '14px',
+                            color: theme === 'dark' ? '#ffffff' : '#000000'
+                          }}
+                          labelStyle={{ color: theme === 'dark' ? '#ffffff' : '#000000' }}
+                          itemStyle={{ color: theme === 'dark' ? '#9da8b9' : '#6b7280' }}
                         />
                         <Bar dataKey="value" fill="#22c55e" radius={[8, 8, 0, 0]}>
                           {analyticsData.teamDistribution.slice(0, 5).map((entry, index) => (

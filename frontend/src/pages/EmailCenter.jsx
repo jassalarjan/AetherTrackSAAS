@@ -288,7 +288,7 @@ export default function EmailCenter() {
         setShowPreview(false);
 
         await confirmModal.show({
-          title: successCount === emailRecipients.length ? 'Campaign Complete' : 'Campaign Finished with Issues',
+          title: successCount === emailRecipients.length ? '✅ Campaign Complete' : '⚠️ Campaign Finished with Issues',
           message: `${successCount} emails sent successfully.${errorCount > 0 ? ` ${errorCount} failed.` : ''}`,
           confirmText: 'Dismiss',
           variant: successCount === emailRecipients.length ? 'info' : 'warning'
@@ -306,7 +306,15 @@ export default function EmailCenter() {
       } catch (error) {
         console.error('Send campaign error:', error);
         setIsSending(false);
-        alert('An unexpected error occurred during the campaign.');
+        setShowPreview(false);
+        
+        // Show error modal instead of alert
+        await confirmModal.show({
+          title: '❌ Campaign Failed',
+          message: error.response?.data?.message || error.message || 'An unexpected error occurred during the campaign.',
+          confirmText: 'Dismiss',
+          variant: 'danger'
+        });
       }
     };
 
@@ -931,6 +939,19 @@ export default function EmailCenter() {
           </div>
         </div>
       )}
+
+      {/* Confirmation Modal */}
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={confirmModal.onClose}
+        onConfirm={confirmModal.onConfirm}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        confirmText={confirmModal.confirmText}
+        cancelText={confirmModal.cancelText}
+        variant={confirmModal.variant}
+        isLoading={confirmModal.isLoading}
+      />
     </ResponsivePageLayout>
   );
 }

@@ -195,6 +195,13 @@ class BrevoEmailService {
         sendSmtpEmail.subject = interpolatedSubject;
         sendSmtpEmail.htmlContent = finalHtml;
 
+        console.log('📧 Brevo request:', {
+          sender: from,
+          to: sendSmtpEmail.to,
+          subject: interpolatedSubject,
+          htmlLength: finalHtml.length
+        });
+
         const result = await client.sendTransacEmail(sendSmtpEmail);
 
         // Handle different response structures
@@ -212,6 +219,12 @@ class BrevoEmailService {
         };
       }
     } catch (error) {
+      console.error('❌ Brevo API error details:', {
+        message: error.message,
+        response: error.response?.body || error.response,
+        statusCode: error.statusCode,
+        stack: error.stack
+      });
       console.warn('⚠️ Brevo API failed:', error.message, '- Trying SMTP fallback...');
     }
 
