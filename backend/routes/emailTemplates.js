@@ -232,6 +232,10 @@ router.post('/send', authenticate, checkRole(['admin', 'hr']), async (req, res) 
     const interpolatedHtml = brevoService.interpolateVariables(htmlContent, variables);
 
     // Use brevoService for sending
+    console.log('📧 Sending emails to:', recipientEmails.length, 'recipients');
+    console.log('📧 Recipients:', recipientEmails);
+    console.log('📧 Subject:', interpolatedSubject);
+    
     const result = await brevoService.send({
       to: recipientEmails.map(r => r.email),
       subject: interpolatedSubject,
@@ -243,6 +247,8 @@ router.post('/send', authenticate, checkRole(['admin', 'hr']), async (req, res) 
       } : null,
       useLayout: false // Predefined templates already have complete HTML structure
     });
+    
+    console.log('📧 Send result:', result);
 
     if (result.success) {
       await logChange({
@@ -259,11 +265,17 @@ router.post('/send', authenticate, checkRole(['admin', 'hr']), async (req, res) 
         result
       });
     } else {
+      console.error('❌ Email send failed:', result.error);
       res.status(500).json({ message: 'Failed to send emails', error: result.error });
     }
   } catch (error) {
-    console.error('Send email error:', error);
-    res.status(500).json({ message: 'Failed to send emails' });
+    console.error('❌ Send email error:', error);
+    console.error('Error stack:', error.stack);
+    res.status(500).json({ 
+      message: 'Failed to send emails', 
+      error: error.message,
+      details: error.stack 
+    });
   }
 });
 

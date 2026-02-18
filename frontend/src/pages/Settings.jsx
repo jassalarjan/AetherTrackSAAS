@@ -15,7 +15,7 @@ import { User, Settings as SettingsIcon, Palette, Monitor, Lock, Eye, EyeOff, Be
 const Settings = () => {
   const navigate = useNavigate();
   const { user, updateUser, logout } = useAuth();
-  const { theme } = useTheme();
+  const { theme, currentColorScheme } = useTheme();
   const { toggleMobileSidebar } = useSidebar();
   const confirmModal = useConfirmModal();
   const fileInputRef = useRef(null);
@@ -123,14 +123,14 @@ const Settings = () => {
   // Generate a consistent color based on the name
   const getColorFromName = (str) => {
     const colors = [
-      'bg-blue-500',
-      'bg-green-500',
-      'bg-purple-500',
-      'bg-pink-500',
-      'bg-indigo-500',
-      'bg-teal-500',
-      'bg-orange-500',
-      'bg-cyan-500',
+      '#3b82f6', // blue
+      '#10b981', // green
+      '#a855f7', // purple
+      '#ec4899', // pink
+      '#6366f1', // indigo
+      '#14b8a6', // teal
+      '#f97316', // orange
+      '#06b6d4', // cyan
     ];
     let hash = 0;
     for (let i = 0; i < (str || '').length; i++) {
@@ -252,7 +252,7 @@ const Settings = () => {
             {/* Profile Section */}
             <div className={`${theme === 'dark' ? 'bg-[#1c2027] border-[#282f39]' : 'bg-white border-gray-200'} rounded border p-6`}>
               <div className="flex items-center gap-3 mb-6">
-                <User className="text-[#136dec]" size={24} />
+                <User className={currentColorScheme.primaryText} size={24} />
                 <h3 className={`text-lg font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} uppercase tracking-wider`}>Profile</h3>
               </div>
 
@@ -268,10 +268,13 @@ const Settings = () => {
                       <img
                         src={user.profile_picture}
                         alt={user?.full_name || 'User'}
-                        className="w-24 h-24 rounded-full object-cover border-4 border-[#136dec]"
+                        className={`w-24 h-24 rounded-full object-cover border-4 ${currentColorScheme.primaryText.replace('text-', 'border-')}`}
                       />
                     ) : (
-                      <div className={`w-24 h-24 rounded-full ${getColorFromName(user?.full_name)} flex items-center justify-center text-white text-2xl font-bold border-4 border-[#136dec]`}>
+                      <div 
+                        className={`w-24 h-24 rounded-full flex items-center justify-center text-white text-2xl font-bold border-4 ${currentColorScheme.primaryText.replace('text-', 'border-')}`}
+                        style={{ backgroundColor: getColorFromName(user?.full_name) }}
+                      >
                         {getInitials(user?.full_name)}
                       </div>
                     )}
@@ -296,7 +299,7 @@ const Settings = () => {
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
                       disabled={isUploadingPicture}
-                      className="flex items-center gap-2 px-4 py-2 bg-[#136dec] text-white rounded hover:bg-[#1158c7] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className={`flex items-center gap-2 px-4 py-2 ${currentColorScheme.primary} text-white rounded ${currentColorScheme.primaryHover} transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
                     >
                       <Upload size={16} />
                       <span>{user?.profile_picture ? 'Change Picture' : 'Upload Picture'}</span>
@@ -373,7 +376,7 @@ const Settings = () => {
             {/* Security Section */}
             <div className={`${theme === 'dark' ? 'bg-[#1c2027] border-[#282f39]' : 'bg-white border-gray-200'} rounded border p-6`}>
               <div className="flex items-center gap-3 mb-6">
-                <Lock className="text-[#136dec]" size={24} />
+                <Lock className={currentColorScheme.primaryText} size={24} />
                 <h3 className={`text-lg font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} uppercase tracking-wider`}>Security</h3>
               </div>
               <form onSubmit={handlePasswordChange} className="space-y-4">
@@ -386,7 +389,7 @@ const Settings = () => {
                       type={showOldPassword ? "text" : "password"}
                       value={passwordData.oldPassword}
                       onChange={(e) => setPasswordData({ ...passwordData, oldPassword: e.target.value })}
-                      className={`w-full px-3 py-2 pr-10 ${theme === 'dark' ? 'bg-[#111418] border-[#282f39] text-white' : 'bg-white border-gray-300 text-gray-900'} border rounded focus:ring-2 focus:ring-[#136dec] focus:border-transparent`}
+                      className={`w-full px-3 py-2 pr-10 ${theme === 'dark' ? 'bg-[#111418] border-[#282f39] text-white' : 'bg-white border-gray-300 text-gray-900'} border rounded focus:ring-2 ${currentColorScheme.primaryText.replace('text-', 'focus:ring-')} focus:border-transparent`}
                       required
                     />
                     <button
@@ -408,7 +411,7 @@ const Settings = () => {
                       type={showNewPassword ? "text" : "password"}
                       value={passwordData.newPassword}
                       onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
-                      className={`w-full px-3 py-2 pr-10 ${theme === 'dark' ? 'bg-[#111418] border-[#282f39] text-white' : 'bg-white border-gray-300 text-gray-900'} border rounded focus:ring-2 focus:ring-[#136dec] focus:border-transparent`}
+                      className={`w-full px-3 py-2 pr-10 ${theme === 'dark' ? 'bg-[#111418] border-[#282f39] text-white' : 'bg-white border-gray-300 text-gray-900'} border rounded focus:ring-2 ${currentColorScheme.primaryText.replace('text-', 'focus:ring-')} focus:border-transparent`}
                       required
                       minLength={6}
                     />
@@ -431,7 +434,7 @@ const Settings = () => {
                       type={showConfirmPassword ? "text" : "password"}
                       value={passwordData.confirmPassword}
                       onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
-                      className={`w-full px-3 py-2 pr-10 ${theme === 'dark' ? 'bg-[#111418] border-[#282f39] text-white' : 'bg-white border-gray-300 text-gray-900'} border rounded focus:ring-2 focus:ring-[#136dec] focus:border-transparent`}
+                      className={`w-full px-3 py-2 pr-10 ${theme === 'dark' ? 'bg-[#111418] border-[#282f39] text-white' : 'bg-white border-gray-300 text-gray-900'} border rounded focus:ring-2 ${currentColorScheme.primaryText.replace('text-', 'focus:ring-')} focus:border-transparent`}
                       required
                       minLength={6}
                     />
@@ -458,7 +461,7 @@ const Settings = () => {
                 <button
                   type="submit"
                   disabled={isChangingPassword}
-                  className="w-full bg-[#136dec] hover:bg-blue-600 text-white font-bold py-2 px-4 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className={`w-full ${currentColorScheme.primary} ${currentColorScheme.primaryHover} text-white font-bold py-2 px-4 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
                 >
                   {isChangingPassword ? 'Changing Password...' : 'Change Password'}
                 </button>
@@ -468,7 +471,7 @@ const Settings = () => {
             {/* Appearance Section */}
             <div className={`${theme === 'dark' ? 'bg-[#1c2027] border-[#282f39]' : 'bg-white border-gray-200'} rounded border p-6`}>
               <div className="flex items-center gap-3 mb-6">
-                <Palette className="text-[#136dec]" size={24} />
+                <Palette className={currentColorScheme.primaryText} size={24} />
                 <h3 className={`text-lg font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} uppercase tracking-wider`}>Appearance</h3>
               </div>
               <div className="space-y-6">
@@ -497,7 +500,7 @@ const Settings = () => {
             {/* Preferences Section */}
             <div className={`${theme === 'dark' ? 'bg-[#1c2027] border-[#282f39]' : 'bg-white border-gray-200'} rounded border p-6`}>
               <div className="flex items-center gap-3 mb-6">
-                <SettingsIcon className="text-[#136dec]" size={24} />
+                <SettingsIcon className={currentColorScheme.primaryText} size={24} />
                 <h3 className={`text-lg font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} uppercase tracking-wider`}>Preferences</h3>
               </div>
               <div className="space-y-4">
@@ -508,7 +511,7 @@ const Settings = () => {
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input type="checkbox" className="sr-only peer" defaultChecked />
-                    <div className={`w-11 h-6 ${theme === 'dark' ? 'bg-[#282f39] border-[#3e454f]' : 'bg-gray-200 border-gray-300'} peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all border peer-checked:bg-[#136dec]`}></div>
+                    <div className={`w-11 h-6 ${theme === 'dark' ? 'bg-[#282f39] border-[#3e454f]' : 'bg-gray-200 border-gray-300'} peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all border ${currentColorScheme.primary.replace('bg-', 'peer-checked:bg-')}`}></div>
                   </label>
                 </div>
 
@@ -519,7 +522,7 @@ const Settings = () => {
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input type="checkbox" className="sr-only peer" defaultChecked />
-                    <div className={`w-11 h-6 ${theme === 'dark' ? 'bg-[#282f39] border-[#3e454f]' : 'bg-gray-200 border-gray-300'} peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all border peer-checked:bg-[#136dec]`}></div>
+                    <div className={`w-11 h-6 ${theme === 'dark' ? 'bg-[#282f39] border-[#3e454f]' : 'bg-gray-200 border-gray-300'} peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all border ${currentColorScheme.primary.replace('bg-', 'peer-checked:bg-')}`}></div>
                   </label>
                 </div>
               </div>
@@ -528,7 +531,7 @@ const Settings = () => {
             {/* Notification Settings */}
             <div className={`${theme === 'dark' ? 'bg-[#1c2027] border-[#282f39]' : 'bg-white border-gray-200'} rounded border p-6`}>
               <div className="flex items-center gap-3 mb-6">
-                <Bell className="text-[#136dec]" size={24} />
+                <Bell className={currentColorScheme.primaryText} size={24} />
                 <h3 className={`text-lg font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} uppercase tracking-wider`}>Notifications</h3>
               </div>
               <NotificationSettings />

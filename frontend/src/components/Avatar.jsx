@@ -44,14 +44,14 @@ const Avatar = ({
   // Generate a consistent color based on the name
   const getColorFromName = (str) => {
     const colors = [
-      'bg-blue-500',
-      'bg-green-500',
-      'bg-purple-500',
-      'bg-pink-500',
-      'bg-indigo-500',
-      'bg-teal-500',
-      'bg-orange-500',
-      'bg-cyan-500',
+      '#3b82f6', // blue
+      '#10b981', // green
+      '#a855f7', // purple
+      '#ec4899', // pink
+      '#6366f1', // indigo
+      '#14b8a6', // teal
+      '#f97316', // orange
+      '#06b6d4', // cyan
     ];
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
@@ -64,8 +64,8 @@ const Avatar = ({
 
   return (
     <div 
-      className={`${size} rounded-full ${bgColor} flex items-center justify-center text-white font-semibold ${className}`.trim()}
-      style={{ fontSize: 'calc(0.4 * min(100%, 100%))' }}
+      className={`${size} rounded-full flex items-center justify-center text-white font-semibold ${className}`.trim()}
+      style={{ backgroundColor: bgColor, fontSize: 'calc(0.4 * min(100%, 100%))' }}
     >
       <span className="text-xs">{initials}</span>
     </div>

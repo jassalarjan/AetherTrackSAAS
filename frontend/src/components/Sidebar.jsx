@@ -39,7 +39,7 @@ import {
 
 const Sidebar = () => {
   const { user, logout } = useAuth();
-  const { theme, currentTheme } = useTheme();
+  const { theme, currentTheme, currentColorScheme } = useTheme();
   const { isMobileOpen, isMobile, closeMobileSidebar, isCollapsed, toggleCollapse } = useSidebar();
   const navigate = useNavigate();
   const location = useLocation();
@@ -344,8 +344,8 @@ const Sidebar = () => {
                   className={`w-full flex items-center gap-3 px-3 py-2 text-left rounded-lg transition-colors group relative ${
                     active
                       ? isDark
-                        ? 'bg-[#136dec]/10 text-[#136dec]'
-                        : 'bg-blue-50 text-blue-600'
+                        ? `${currentColorScheme.primary.replace('bg-', 'bg-')}/10 ${currentColorScheme.primaryText}`
+                        : `${currentColorScheme.primaryLight} ${currentColorScheme.primaryText}`
                       : isDark
                         ? 'text-[#9da8b9] hover:bg-[#1c2027] hover:text-white'
                         : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
@@ -355,7 +355,7 @@ const Sidebar = () => {
                   <span className="text-sm font-medium flex-1">{item.label}</span>
                   <Pin 
                     size={12} 
-                    className={`opacity-100 fill-current ${active ? 'text-[#136dec]' : 'text-gray-400'}`}
+                    className={`opacity-100 fill-current ${active ? currentColorScheme.primaryText : 'text-gray-400'}`}
                   />
                 </button>
               );
@@ -388,8 +388,8 @@ const Sidebar = () => {
                     className={`w-full flex items-center gap-3 px-3 py-2 text-left rounded-lg transition-colors group relative ${
                       active
                         ? isDark
-                          ? 'bg-[#136dec]/10 text-[#136dec]'
-                          : 'bg-blue-50 text-blue-600'
+                          ? `${currentColorScheme.primary.replace('bg-', 'bg-')}/10 ${currentColorScheme.primaryText}`
+                          : `${currentColorScheme.primaryLight} ${currentColorScheme.primaryText}`
                         : isDark
                           ? 'text-[#9da8b9] hover:bg-[#1c2027] hover:text-white'
                           : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
@@ -439,8 +439,8 @@ const Sidebar = () => {
                 className={`w-full flex items-center gap-3 px-3 py-2.5 text-left rounded-lg transition-colors group relative ${
                   active
                     ? isDark
-                      ? 'bg-[#136dec]/10 text-[#136dec]'
-                      : 'bg-blue-50 text-blue-600'
+                      ? `${currentColorScheme.primary.replace('bg-', 'bg-')}/10 ${currentColorScheme.primaryText}`
+                      : `${currentColorScheme.primaryLight} ${currentColorScheme.primaryText}`
                     : isDark
                       ? 'text-[#9da8b9] hover:bg-[#1c2027] hover:text-white'
                       : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
@@ -500,8 +500,8 @@ const Sidebar = () => {
                   className={`w-full flex items-center gap-3 px-3 py-2.5 text-left rounded-lg transition-colors group ${
                     active
                       ? isDark
-                        ? 'bg-[#136dec]/10 text-[#136dec]'
-                        : 'bg-blue-50 text-blue-600'
+                        ? `${currentColorScheme.primary.replace('bg-', 'bg-')}/10 ${currentColorScheme.primaryText}`
+                        : `${currentColorScheme.primaryLight} ${currentColorScheme.primaryText}`
                       : isDark
                         ? 'text-[#9da8b9] hover:bg-[#1c2027] hover:text-white'
                         : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
@@ -563,8 +563,8 @@ const Sidebar = () => {
                     className={`w-full flex items-center gap-3 px-3 py-2.5 text-left rounded-lg transition-colors group ${
                       active
                         ? isDark
-                          ? 'bg-[#136dec]/10 text-[#136dec]'
-                          : 'bg-blue-50 text-blue-600'
+                          ? `${currentColorScheme.primary.replace('bg-', 'bg-')}/10 ${currentColorScheme.primaryText}`
+                          : `${currentColorScheme.primaryLight} ${currentColorScheme.primaryText}`
                         : isDark
                           ? 'text-[#9da8b9] hover:bg-[#1c2027] hover:text-white'
                           : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
@@ -627,8 +627,8 @@ const Sidebar = () => {
                     className={`w-full flex items-center gap-3 px-3 py-2.5 text-left rounded-lg transition-colors group ${
                       active
                         ? isDark
-                          ? 'bg-[#136dec]/10 text-[#136dec]'
-                          : 'bg-blue-50 text-blue-600'
+                          ? `${currentColorScheme.primary.replace('bg-', 'bg-')}/10 ${currentColorScheme.primaryText}`
+                          : `${currentColorScheme.primaryLight} ${currentColorScheme.primaryText}`
                         : isDark
                           ? 'text-[#9da8b9] hover:bg-[#1c2027] hover:text-white'
                           : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
@@ -765,8 +765,8 @@ const Sidebar = () => {
               className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-md transition-colors group ${
                 isActive('/settings')
                   ? isDark
-                    ? 'bg-[#136dec]/10 text-[#136dec]'
-                    : 'bg-blue-50 text-blue-600'
+                    ? `${currentColorScheme.primary.replace('bg-', 'bg-')}/10 ${currentColorScheme.primaryText}`
+                    : `${currentColorScheme.primaryLight} ${currentColorScheme.primaryText}`
                   : isDark
                     ? 'text-[#9da8b9] hover:bg-[#1c2027] hover:text-white'
                     : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'

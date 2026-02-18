@@ -3,7 +3,7 @@ import { useTheme } from '../context/ThemeContext';
 import { Sun, Moon, Monitor, Palette, ChevronDown } from 'lucide-react';
 
 const ThemeToggle = () => {
-  const { theme, colorScheme, toggleTheme, setThemeMode, setColorSchemeMode, themes, colorSchemes } = useTheme();
+  const { theme, colorScheme, toggleTheme, setThemeMode, setColorSchemeMode, themes, colorSchemes, currentColorScheme } = useTheme();
   const [showThemeMenu, setShowThemeMenu] = useState(false);
   const [showColorMenu, setShowColorMenu] = useState(false);
 
@@ -59,7 +59,7 @@ const ThemeToggle = () => {
                       setShowThemeMenu(false);
                     }}
                     className={`w-full flex items-center space-x-3 px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
-                      theme === key ? 'bg-blue-50 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300'
+                      theme === key ? `${currentColorScheme.primaryLight} dark:bg-${colorScheme}-900/50 ${currentColorScheme.primaryText}` : 'text-gray-700 dark:text-gray-300'
                     }`}
                   >
                     {key === 'light' && <Sun className="w-4 h-4" />}
@@ -109,7 +109,7 @@ const ThemeToggle = () => {
                       setShowColorMenu(false);
                     }}
                     className={`w-full flex items-center space-x-3 px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
-                      colorScheme === key ? 'bg-blue-50 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300'
+                      colorScheme === key ? `${currentColorScheme.primaryLight} dark:bg-${colorScheme}-900/50 ${currentColorScheme.primaryText}` : 'text-gray-700 dark:text-gray-300'
                     }`}
                   >
                     <div className={`w-4 h-4 rounded-full ${schemeData.primary}`} />

@@ -21,7 +21,6 @@ import Settings from './pages/Settings';
 import Calendar from './pages/Calendar';
 import ChangeLog from './pages/ChangeLog';
 import Notifications from './pages/Notifications';
-import Landing from './pages/Landing';
 import ScreenshotDemo from './pages/ScreenshotDemo';
 import AttendancePage from './pages/AttendancePage';
 import HRCalendar from './pages/HRCalendar';
