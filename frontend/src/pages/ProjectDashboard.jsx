@@ -586,7 +586,7 @@ const ProjectDashboard = () => {
                 <div className="space-y-3">
                   <div className="flex justify-between text-xs font-bold">
                     <span className="text-gray-400 uppercase tracking-tighter">Progress</span>
-                    <span className={project.status === 'active' ? 'text-[#135bec]' : project.status === 'on_hold' ? 'text-amber-600' : project.status === 'completed' ? 'text-emerald-600' : 'text-gray-600'}>
+                    <span className={project.status === 'active' ? 'text-[#135bec]' : project.status === 'on_hold' ? 'text-amber-600' : project.status === 'completed' ? 'text-emerald-600' : 'text-gray-600 dark:text-gray-400'}>
                       {project.progress}%
                     </span>
                   </div>
@@ -607,7 +607,7 @@ const ProjectDashboard = () => {
                         </div>
                       ))}
                       {project.team_members?.length > 3 && (
-                        <div className="size-7 rounded-full bg-gray-100 dark:bg-gray-700 border-2 border-white dark:border-[#1a2234] flex items-center justify-center text-[10px] font-bold text-gray-500">
+                        <div className="size-7 rounded-full bg-gray-100 dark:bg-gray-700 border-2 border-white dark:border-[#1a2234] flex items-center justify-center text-[10px] font-bold text-gray-500 dark:text-gray-400">
                           +{project.team_members.length - 3}
                         </div>
                       )}
@@ -627,7 +627,7 @@ const ProjectDashboard = () => {
           {/* Budget & Resource Summary */}
           {stats && (
             <div className="bg-white dark:bg-[#1a2234] rounded-xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm">
-              <h3 className="font-bold mb-6 flex items-center gap-2">
+              <h3 className="font-bold mb-6 flex items-center gap-2 dark:text-white">
                 <PieChart size={20} className="text-[#135bec]" />
                 Budget & Resources
               </h3>
@@ -648,7 +648,7 @@ const ProjectDashboard = () => {
               <div className="mt-6 space-y-4">
                 <div>
                   <div className="flex justify-between text-xs font-bold mb-1.5">
-                    <span className="text-gray-500">Utilization Rate</span>
+                    <span className="text-gray-500 dark:text-gray-400">Utilization Rate</span>
                     <span className="text-[#0d121b] dark:text-gray-200">
                       {stats.budget.utilization}%
                     </span>
@@ -662,7 +662,7 @@ const ProjectDashboard = () => {
                 </div>
                 <div className="grid grid-cols-2 gap-4 pt-2">
                   <div className="p-3 bg-[#f6f6f8] dark:bg-gray-800/50 rounded-lg">
-                    <p className="text-[10px] text-gray-400 font-bold uppercase mb-1">
+                    <p className="text-[10px] text-gray-400 dark:text-gray-500 font-bold uppercase mb-1">
                       Total Allocated
                     </p>
                     <p className="text-sm font-black dark:text-white">
@@ -670,7 +670,7 @@ const ProjectDashboard = () => {
                     </p>
                   </div>
                   <div className="p-3 bg-[#f6f6f8] dark:bg-gray-800/50 rounded-lg">
-                    <p className="text-[10px] text-gray-400 font-bold uppercase mb-1">
+                    <p className="text-[10px] text-gray-400 dark:text-gray-500 font-bold uppercase mb-1">
                       Burn Rate/Mo
                     </p>
                     <p className="text-sm font-black dark:text-white">
@@ -715,15 +715,15 @@ const ProjectDashboard = () => {
                       <p className="text-sm font-bold leading-tight dark:text-gray-200">
                         {risk.title}
                       </p>
-                      <p className="text-xs text-gray-500 mt-1">{risk.description}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{risk.description}</p>
                     </div>
                   </div>
                 ))}
               {projects.flatMap(p => p.risks?.filter(r => r.status === 'active') || []).length === 0 && (
-                <p className="text-sm text-gray-500 text-center py-4">No active risks</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">No active risks</p>
               )}
             </div>
-            <button className="w-full mt-6 py-2 text-xs font-bold text-gray-400 hover:text-[#135bec] transition-colors border-t border-gray-100 dark:border-gray-800 pt-4 flex items-center justify-center gap-2">
+            <button className="w-full mt-6 py-2 text-xs font-bold text-gray-400 dark:text-gray-500 hover:text-[#135bec] transition-colors border-t border-gray-100 dark:border-gray-800 pt-4 flex items-center justify-center gap-2">
               View All Issues
               <ArrowRight size={16} />
             </button>
@@ -738,7 +738,7 @@ const ProjectDashboard = () => {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-[#1a2234] rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800">
-              <h3 className="text-xl font-bold">
+              <h3 className="text-xl font-bold dark:text-white">
                 {editingProject ? 'Edit Project' : 'Create New Project'}
               </h3>
               <button
@@ -751,7 +751,7 @@ const ProjectDashboard = () => {
 
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-semibold mb-2">Project Name *</label>
+                <label className="block text-sm font-semibold mb-2 dark:text-gray-300">Project Name *</label>
                 <input
                   type="text"
                   required
@@ -763,7 +763,7 @@ const ProjectDashboard = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold mb-2">Description</label>
+                <label className="block text-sm font-semibold mb-2 dark:text-gray-300">Description</label>
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
@@ -775,7 +775,7 @@ const ProjectDashboard = () => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold mb-2">Status</label>
+                  <label className="block text-sm font-semibold mb-2 dark:text-gray-300">Status</label>
                   <select
                     value={formData.status}
                     onChange={(e) => setFormData({ ...formData, status: e.target.value })}
@@ -789,7 +789,7 @@ const ProjectDashboard = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold mb-2">Priority</label>
+                  <label className="block text-sm font-semibold mb-2 dark:text-gray-300">Priority</label>
                   <select
                     value={formData.priority}
                     onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
@@ -805,7 +805,7 @@ const ProjectDashboard = () => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold mb-2">Start Date</label>
+                  <label className="block text-sm font-semibold mb-2 dark:text-gray-300">Start Date</label>
                   <input
                     type="date"
                     value={formData.start_date}
@@ -815,7 +815,7 @@ const ProjectDashboard = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold mb-2">Due Date</label>
+                  <label className="block text-sm font-semibold mb-2 dark:text-gray-300">Due Date</label>
                   <input
                     type="date"
                     value={formData.due_date}
@@ -827,7 +827,7 @@ const ProjectDashboard = () => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold mb-2">Budget Allocated</label>
+                  <label className="block text-sm font-semibold mb-2 dark:text-gray-300">Budget Allocated</label>
                   <input
                     type="number"
                     value={formData.budget.allocated}
@@ -841,7 +841,7 @@ const ProjectDashboard = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold mb-2">Progress (%)</label>
+                  <label className="block text-sm font-semibold mb-2 dark:text-gray-300">Progress (%)</label>
                   <input
                     type="number"
                     min="0"
@@ -885,8 +885,8 @@ const ProjectDashboard = () => {
                   <UserPlus size={20} className="text-green-600" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold">Manage Team Members</h2>
-                  <p className="text-sm text-gray-500">{selectedProject.name}</p>
+                  <h2 className="text-xl font-bold dark:text-white">Manage Team Members</h2>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{selectedProject.name}</p>
                 </div>
               </div>
               <button 
@@ -951,7 +951,7 @@ const ProjectDashboard = () => {
                             <p className="font-semibold text-gray-900 dark:text-white">
                               {member.user?.name || 'Unknown'}
                             </p>
-                            <p className="text-sm text-gray-500">
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
                               {member.user?.email || 'No email'}
                             </p>
                           </div>
@@ -966,7 +966,7 @@ const ProjectDashboard = () => {
                       </div>
                     ))
                   ) : (
-                    <p className="text-center text-gray-500 py-8">
+                    <p className="text-center text-gray-500 dark:text-gray-400 py-8">
                       No team members assigned yet
                     </p>
                   )}

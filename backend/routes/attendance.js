@@ -5,6 +5,7 @@ import Attendance from '../models/Attendance.js';
 import User from '../models/User.js';
 import { logChange } from '../utils/changeLogService.js';
 import getClientIP from '../utils/getClientIP.js';
+import { resolveShiftAndComputeMetrics } from '../utils/shiftService.js';
 
 const router = express.Router();
 
@@ -64,8 +65,19 @@ router.post('/checkin', authenticate, async (req, res) => {
       });
     }
 
-    attendance.checkIn = new Date();
+    const checkInTime = new Date();
+    attendance.checkIn = checkInTime;
     attendance.status = 'present';
+
+    // Resolve shift for today and attach shift_id / expected_hours
+    try {
+      const { shift } = await resolveShiftAndComputeMetrics(req.user._id, today, checkInTime, null);
+      if (shift) {
+        attendance.shift_id = shift._id;
+        attendance.expected_hours = shift.total_hours;
+      }
+    } catch (_) { /* silently skip shift resolution on error */ }
+
     await attendance.save();
 
     await logChange({
@@ -103,7 +115,29 @@ router.post('/checkout', authenticate, async (req, res) => {
       return res.status(400).json({ message: 'Already checked out today' });
     }
 
-    attendance.checkOut = new Date();
+    const checkOutTime = new Date();
+    attendance.checkOut = checkOutTime;
+
+    // Compute shift-aware metrics on check-out
+    try {
+      const metrics = await resolveShiftAndComputeMetrics(
+        req.user._id, today, attendance.checkIn, checkOutTime
+      );
+      if (metrics.shift) {
+        attendance.shift_id = metrics.shift._id;
+        attendance.expected_hours = metrics.shift.total_hours;
+      }
+      if (!attendance.isOverride) {
+        attendance.status = metrics.status;
+      }
+      attendance.late_minutes = metrics.late_minutes;
+      attendance.early_exit_minutes = metrics.early_exit_minutes;
+      attendance.overtime_hours = metrics.overtime_hours;
+      attendance.shift_status = metrics.shift_status;
+      // workingHours is also set by pre-save but let's align with shift calc
+      attendance.workingHours = metrics.working_hours;
+    } catch (_) { /* silently skip shift resolution on error */ }
+
     await attendance.save();
 
     await logChange({

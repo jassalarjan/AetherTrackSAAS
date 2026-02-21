@@ -47,6 +47,22 @@ workbox.routing.registerRoute(
   })
 );
 
+// Navigation route - handle SPA routing
+workbox.routing.registerNavigationRoute(
+  workbox.precaching.getCacheKeyForURL('/index.html'),
+  {
+    allowlist: [
+      // Allow all routes except API and socket.io
+      /^(?!\/(api|socket\.io)).*/,
+    ],
+    denylist: [
+      // Explicitly deny API and socket.io routes
+      /^\/api/,
+      /^\/socket\.io/,
+    ],
+  }
+);
+
 // Notification click handler
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();

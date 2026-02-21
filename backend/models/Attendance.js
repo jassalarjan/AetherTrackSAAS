@@ -40,6 +40,35 @@ const attendanceSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     default: null
+  },
+
+  // ── Shift-aware fields ─────────────────────────────────────────────────
+  shift_id: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Shift',
+    default: null
+  },
+  expected_hours: {
+    type: Number,
+    default: null  // populated from shift.total_hours at save time
+  },
+  late_minutes: {
+    type: Number,
+    default: 0
+  },
+  early_exit_minutes: {
+    type: Number,
+    default: 0
+  },
+  overtime_hours: {
+    type: Number,
+    default: 0
+  },
+  // Granular time-quality tag for this record
+  shift_status: {
+    type: String,
+    enum: ['on_time', 'late', 'early_exit', 'late_and_early_exit', null],
+    default: null
   }
 }, {
   timestamps: true
@@ -48,15 +77,19 @@ const attendanceSchema = new mongoose.Schema({
 // Compound index for efficient queries
 attendanceSchema.index({ userId: 1, date: 1 }, { unique: true });
 attendanceSchema.index({ date: 1 });
+attendanceSchema.index({ shift_id: 1 });
 
-// Calculate working hours before saving
+// Calculate working hours before saving.
+// When a shift is attached the route layer calls shiftService and populates
+// late_minutes, early_exit_minutes, overtime_hours, shift_status BEFORE save,
+// so the pre-save hook only needs to handle the generic (no-shift) fallback.
 attendanceSchema.pre('save', function(next) {
   if (this.checkIn && this.checkOut) {
     const hours = (this.checkOut - this.checkIn) / (1000 * 60 * 60);
     this.workingHours = Math.round(hours * 100) / 100;
-    
-    // Auto-determine status based on hours
-    if (!this.isOverride) {
+
+    // Only use generic thresholds when there is no shift context
+    if (!this.isOverride && !this.shift_id) {
       if (hours >= 8) {
         this.status = 'present';
       } else if (hours >= 4) {

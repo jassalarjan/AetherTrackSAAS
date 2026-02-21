@@ -195,7 +195,7 @@ const ResourceWorkload = () => {
     if (percentage > 100) return 'bg-red-500';
     if (percentage >= 90) return 'bg-primary';
     if (percentage >= 70) return 'bg-emerald-500';
-    return 'bg-gray-400';
+    return 'bg-gray-400 dark:bg-gray-600';
   };
 
   const getWorkloadBgColor = (percentage) => {
@@ -268,7 +268,7 @@ const ResourceWorkload = () => {
             <div className="relative w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
               <input
-                className="w-full bg-gray-100 dark:bg-gray-800 border-none rounded-lg py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-[#135bec]/20 placeholder:text-gray-500"
+                className="w-full bg-gray-100 dark:bg-gray-800 border-none rounded-lg py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-[#135bec]/20 placeholder:text-gray-500 dark:placeholder:text-gray-400"
                 placeholder="Search resources..."
                 type="text"
               />
@@ -289,13 +289,13 @@ const ResourceWorkload = () => {
             <div className="flex items-center gap-1">
               <button 
                 onClick={() => navigateWeek(-1)}
-                className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md text-gray-500"
+                className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md text-gray-500 dark:text-gray-400"
               >
                 <ChevronLeft size={20} />
               </button>
               <button 
                 onClick={() => navigateWeek(1)}
-                className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md text-gray-500"
+                className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md text-gray-500 dark:text-gray-400"
               >
                 <ChevronRight size={20} />
               </button>
@@ -313,7 +313,7 @@ const ResourceWorkload = () => {
               <button
                 onClick={() => setTimeView('day')}
                 className={`px-3 h-full text-xs font-medium ${
-                  timeView === 'day' ? 'font-bold bg-white dark:bg-gray-700 rounded-md shadow-sm' : 'text-gray-500'
+                  timeView === 'day' ? 'font-bold bg-white dark:bg-gray-700 rounded-md shadow-sm' : 'text-gray-500 dark:text-gray-400'
                 }`}
               >
                 Day
@@ -321,7 +321,7 @@ const ResourceWorkload = () => {
               <button
                 onClick={() => setTimeView('week')}
                 className={`px-4 h-full text-xs ${
-                  timeView === 'week' ? 'font-bold bg-white dark:bg-gray-700 rounded-md shadow-sm' : 'font-medium text-gray-500'
+                  timeView === 'week' ? 'font-bold bg-white dark:bg-gray-700 rounded-md shadow-sm' : 'font-medium text-gray-500 dark:text-gray-400'
                 }`}
               >
                 Week
@@ -329,7 +329,7 @@ const ResourceWorkload = () => {
               <button
                 onClick={() => setTimeView('month')}
                 className={`px-3 h-full text-xs font-medium ${
-                  timeView === 'month' ? 'font-bold bg-white dark:bg-gray-700 rounded-md shadow-sm' : 'text-gray-500'
+                  timeView === 'month' ? 'font-bold bg-white dark:bg-gray-700 rounded-md shadow-sm' : 'text-gray-500 dark:text-gray-400'
                 }`}
               >
                 Month
@@ -408,7 +408,7 @@ const ResourceWorkload = () => {
                             </div>
                             <div className="flex flex-col min-w-0 flex-1">
                               <span className="text-sm font-bold truncate">{user.full_name || user.username}</span>
-                              <span className="text-xs text-gray-500">{user.role}</span>
+                              <span className="text-xs text-gray-500 dark:text-gray-400">{user.role}</span>
                             </div>
                             <div className="flex items-center gap-2">
                               <div className={`flex items-center gap-1 font-bold text-xs px-1.5 py-0.5 rounded ${getCapacityBadgeColor(avgPercentage)}`}>
@@ -511,7 +511,7 @@ const ResourceWorkload = () => {
                             </div>
                             <div className="flex-1 min-w-0">
                               <h4 className="font-bold text-sm truncate">{user.full_name || user.username}</h4>
-                              <p className="text-xs text-gray-500">{user.role}</p>
+                              <p className="text-xs text-gray-500 dark:text-gray-400">{user.role}</p>
                             </div>
                             <div className={`px-2 py-1 rounded text-xs font-bold ${getCapacityBadgeColor(avgPercentage)}`}>
                               {avgPercentage}%
@@ -519,7 +519,7 @@ const ResourceWorkload = () => {
                           </div>
                           <div className="space-y-2 mb-4">
                             <div className="flex justify-between text-xs">
-                              <span className="text-gray-500">Total Hours</span>
+                              <span className="text-gray-500 dark:text-gray-400">Total Hours</span>
                               <span className="font-bold">{totalHours}h / 56h</span>
                             </div>
                             <div className="w-full h-3 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
@@ -556,7 +556,7 @@ const ResourceWorkload = () => {
                   <div className="bg-white dark:bg-[#1a2234] rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
                     <div className="p-6 border-b border-gray-200 dark:border-gray-700">
                       <h3 className="text-lg font-bold mb-2">Team Capacity Overview</h3>
-                      <p className="text-sm text-gray-500">Visual representation of team workload distribution</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Visual representation of team workload distribution</p>
                     </div>
                     <div className="p-6">
                       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
@@ -586,7 +586,7 @@ const ResourceWorkload = () => {
                                 <div className="text-xs font-bold truncate max-w-full px-1">
                                   {user.full_name || user.username}
                                 </div>
-                                <div className="text-[10px] text-gray-500">{user.role}</div>
+                                <div className="text-[10px] text-gray-500 dark:text-gray-400">{user.role}</div>
                               </div>
                               <div className={`text-lg font-bold ${
                                 avgPercentage > 100
@@ -608,7 +608,7 @@ const ResourceWorkload = () => {
                       {/* Legend */}
                       <div className="mt-8 flex flex-wrap gap-4 justify-center border-t border-gray-200 dark:border-gray-700 pt-6">
                         <div className="flex items-center gap-2">
-                          <div className="w-4 h-4 rounded bg-gray-400"></div>
+                          <div className="w-4 h-4 rounded bg-gray-400 dark:bg-gray-600"></div>
                           <span className="text-xs text-gray-600 dark:text-gray-400">Under 70%</span>
                         </div>
                         <div className="flex items-center gap-2">

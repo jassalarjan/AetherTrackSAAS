@@ -496,4 +496,151 @@ router.delete('/:id/documents/:docIndex', async (req, res) => {
   }
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// SCHEDULE ENDPOINT
+// GET  /api/projects/:id/schedule          - run (or return cached) schedule
+// POST /api/projects/:id/schedule/refresh  - force re-compute + persist
+// PATCH /api/projects/:id/tasks/:taskId/dates - update a single task's dates
+// ─────────────────────────────────────────────────────────────────────────────
+
+router.get('/:id/schedule', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { pixelsPerDay = 8, forceRefresh = 'false' } = req.query;
+
+    const project = await Project.findById(id).lean();
+    if (!project) return res.status(404).json({ message: 'Project not found' });
+
+    const tasks = await Task.find({ project_id: id })
+      .populate('assigned_to', 'name email avatar')
+      .lean();
+
+    // Lazy import — avoids loading the engine unless this route is called
+    const { default: runScheduler } = await import('../services/scheduleEngine.js');
+
+    const schedule = runScheduler(tasks, {
+      pixelsPerDay:    Number(pixelsPerDay),
+      projectStart:    project.start_date  ? new Date(project.start_date)  : undefined,
+      projectDeadline: project.end_date    ? new Date(project.end_date)    : undefined,
+      throwOnError:    false
+    });
+
+    // Persist computed fields back to DB if all went cleanly (background — don't await)
+    if (!schedule.metadata.hasErrors && forceRefresh !== 'false') {
+      const bulkOps = schedule.scheduledTasks.map(t => ({
+        updateOne: {
+          filter: { _id: t._id },
+          update: {
+            $set: {
+              scheduled_start: t.early_start,
+              scheduled_end:   t.early_end,
+              total_float:     t.total_float ?? null,
+              free_float:      t.free_float  ?? null,
+              is_critical:     t.is_critical ?? false
+            }
+          }
+        }
+      }));
+      Task.bulkWrite(bulkOps).catch(e => console.error('[schedule] bulkWrite error:', e));
+    }
+
+    res.json({
+      project:   { _id: project._id, name: project.name },
+      schedule,
+      meta: {
+        generatedAt: new Date().toISOString(),
+        pixelsPerDay: Number(pixelsPerDay)
+      }
+    });
+  } catch (error) {
+    console.error('Error computing schedule:', error);
+    if (error.message === 'CIRCULAR_DEPENDENCY_DETECTED') {
+      return res.status(422).json({ message: 'Circular dependency in task graph', cycleIds: error.cycleIds });
+    }
+    res.status(500).json({ message: 'Error computing schedule' });
+  }
+});
+
+// Force refresh + persist
+router.post('/:id/schedule/refresh', async (req, res) => {
+  req.query.forceRefresh = 'true';
+  // Re-use the GET handler logic by forwarding
+  const { id } = req.params;
+  const { pixelsPerDay = 8 } = req.body;
+
+  try {
+    const project = await Project.findById(id).lean();
+    if (!project) return res.status(404).json({ message: 'Project not found' });
+
+    const tasks = await Task.find({ project_id: id })
+      .populate('assigned_to', 'name email avatar')
+      .lean();
+
+    const { default: runScheduler } = await import('../services/scheduleEngine.js');
+
+    const schedule = runScheduler(tasks, {
+      pixelsPerDay:    Number(pixelsPerDay),
+      projectStart:    project.start_date  ? new Date(project.start_date)  : undefined,
+      projectDeadline: project.end_date    ? new Date(project.end_date)    : undefined,
+      throwOnError:    false
+    });
+
+    // Persist computed fields
+    if (schedule.scheduledTasks.length > 0) {
+      const bulkOps = schedule.scheduledTasks.map(t => ({
+        updateOne: {
+          filter: { _id: t._id },
+          update: {
+            $set: {
+              scheduled_start: t.early_start,
+              scheduled_end:   t.early_end,
+              total_float:     t.total_float ?? null,
+              free_float:      t.free_float  ?? null,
+              is_critical:     t.is_critical ?? false
+            }
+          }
+        }
+      }));
+      await Task.bulkWrite(bulkOps);
+    }
+
+    res.json({
+      message: `Schedule refreshed: ${schedule.scheduledTasks.length} tasks updated`,
+      metadata: schedule.metadata
+    });
+  } catch (error) {
+    console.error('Error refreshing schedule:', error);
+    res.status(500).json({ message: 'Error refreshing schedule' });
+  }
+});
+
+// Update a single task's date fields and return updated schedule
+router.patch('/:id/tasks/:taskId/dates', async (req, res) => {
+  try {
+    const { id, taskId } = req.params;
+    const { start_date, due_date, scheduling_mode, constraint_type, constraint_date } = req.body;
+
+    const allowedFields = {};
+    if (start_date      !== undefined) allowedFields.start_date      = start_date ? new Date(start_date) : null;
+    if (due_date        !== undefined) allowedFields.due_date        = due_date   ? new Date(due_date)   : null;
+    if (scheduling_mode !== undefined) allowedFields.scheduling_mode = scheduling_mode;
+    if (constraint_type !== undefined) allowedFields.constraint_type = constraint_type;
+    if (constraint_date !== undefined) allowedFields.constraint_date = constraint_date ? new Date(constraint_date) : null;
+
+    const task = await Task.findOneAndUpdate(
+      { _id: taskId, project_id: id },
+      { $set: { ...allowedFields, updated_at: new Date() } },
+      { new: true }
+    );
+
+    if (!task) return res.status(404).json({ message: 'Task not found' });
+
+    res.json({ message: 'Task dates updated', task });
+  } catch (error) {
+    console.error('Error updating task dates:', error);
+    res.status(500).json({ message: 'Error updating task dates' });
+  }
+});
+
 export default router;
+

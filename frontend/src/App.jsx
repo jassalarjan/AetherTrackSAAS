@@ -33,6 +33,7 @@ import ProjectDetail from './pages/ProjectDetail';
 import ProjectGantt from './pages/ProjectGantt';
 import SprintManagement from './pages/SprintManagement';
 import ResourceWorkload from './pages/ResourceWorkload';
+import NotFound from './pages/NotFound';
 
 function AppContent() {
   // Initialize notifications
@@ -247,8 +248,14 @@ function AppContent() {
         }
       />
 
+      {/* Shift config lives inside Attendance — redirect old /hr/shifts URL */}
+      <Route path="/hr/shifts" element={<Navigate to="/hr/attendance?tab=shifts" replace />} />
+
       {/* Screenshot Demo - Public route for capturing marketing screenshots */}
       <Route path="/screenshot-demo" element={<ScreenshotDemo />} />
+
+      {/* Catch-all: show 404 page with sidebar for logged-in users */}
+      <Route path="*" element={<NotFound />} />
     </Routes>
   );
 }

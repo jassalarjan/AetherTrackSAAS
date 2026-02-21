@@ -347,7 +347,7 @@ const MyProjects = () => {
                         </div>
                       )}
                       {(!project.team_members || project.team_members.length === 0) && (
-                        <span className="text-xs text-gray-400">No team assigned</span>
+                        <span className="text-xs text-gray-400 dark:text-gray-500">No team assigned</span>
                       )}
                     </div>
 

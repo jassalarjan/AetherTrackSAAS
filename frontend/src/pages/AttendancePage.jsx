@@ -2,9 +2,11 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useSidebar } from '../context/SidebarContext';
+import { useSearchParams } from 'react-router-dom';
 import api from '../api/axios';
 import ResponsivePageLayout from '../components/layouts/ResponsivePageLayout';
-import { Calendar, Clock, CheckCircle, XCircle, AlertCircle, Edit2, Save, X, Menu, Users, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Calendar, Clock, CheckCircle, XCircle, AlertCircle, Edit2, Save, X, Menu, Users, ChevronLeft, ChevronRight, Layers } from 'lucide-react';
+import { ShiftConfigPanel } from './ShiftManagement';
 
 export default function AttendancePage() {
   const { user } = useAuth();
@@ -24,6 +26,10 @@ export default function AttendancePage() {
   const [showDateModal, setShowDateModal] = useState(false);
 
   const isAdmin = user && (user.role === 'admin' || user.role === 'hr');
+  const [searchParams] = useSearchParams();
+  const [pageTab, setPageTab] = useState(
+    searchParams.get('tab') === 'shifts' ? 'shift-config' : 'attendance'
+  );
 
   useEffect(() => {
     fetchAttendance();
@@ -216,6 +222,33 @@ export default function AttendancePage() {
         )
       }
     >
+          {/* ── Page-level tab switcher (admin / HR only) ── */}
+          {isAdmin && (
+            <div className={`flex gap-1 p-1 rounded-xl border ${currentTheme.border} mb-6 w-fit bg-black/[0.02] dark:bg-white/[0.02]`}>
+              {[
+                { id: 'attendance',   label: 'Attendance',  icon: Clock },
+                { id: 'shift-config', label: 'Shift Config', icon: Layers },
+              ].map(({ id, label, icon: Icon }) => (
+                <button
+                  key={id}
+                  onClick={() => setPageTab(id)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                    pageTab === id
+                      ? `bg-white dark:bg-white/10 shadow-sm ${currentTheme.text}`
+                      : `${currentTheme.textSecondary} hover:bg-black/5 dark:hover:bg-white/5`
+                  }`}
+                >
+                  <Icon size={14} />{label}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* ── Shift Config panel ── */}
+          {pageTab === 'shift-config' && isAdmin ? (
+            <ShiftConfigPanel />
+          ) : (
+          <>
           {/* Summary Cards */}
           {summary && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
@@ -660,6 +693,8 @@ export default function AttendancePage() {
                 </div>
               </div>
             </div>
+          )}
+          </>
           )}
     </ResponsivePageLayout>
   );

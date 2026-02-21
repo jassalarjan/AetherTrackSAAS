@@ -8,7 +8,12 @@ const notificationSchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ['task_assigned', 'task_updated', 'task_completed', 'task_overdue', 'comment_added', 'status_changed', 'task_due'],
+    enum: [
+      'task_assigned', 'task_updated', 'task_completed', 'task_overdue',
+      'comment_added', 'status_changed', 'task_due',
+      // Meeting notifications
+      'meeting_created', 'meeting_updated', 'meeting_cancelled'
+    ],
     required: true
   },
   message: {

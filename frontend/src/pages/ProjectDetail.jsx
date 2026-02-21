@@ -391,7 +391,7 @@ const ProjectDetail = () => {
         {/* Top Navigation Bar */}
         <header className="min-h-16 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1a2234] sticky top-0 z-30">
           <div className="px-4 sm:px-8 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="flex items-center gap-4 text-sm text-gray-500 min-w-0">
+            <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400 min-w-0">
               <button onClick={() => navigate('/projects')} className="hover:text-[#135bec] transition-colors whitespace-nowrap">
                 Projects
               </button>
@@ -521,9 +521,9 @@ const ProjectDetail = () => {
                 <h2 className="text-3xl font-black tracking-tight text-[#0d121b] dark:text-white leading-none">
                   {project.name}
                 </h2>
-                <Edit size={20} className="text-gray-400 cursor-pointer hover:text-[#135bec] transition-colors" />
+                <Edit size={20} className="text-gray-400 dark:text-gray-500 cursor-pointer hover:text-[#135bec] transition-colors" />
               </div>
-              <p className="text-gray-500 font-medium">{project.description}</p>
+              <p className="text-gray-500 dark:text-gray-400 font-medium">{project.description}</p>
             </div>
             <div className="flex items-center gap-2">
               <button className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 text-sm font-medium transition-colors">
@@ -582,7 +582,7 @@ const ProjectDetail = () => {
                 <div className="flex-1 bg-gray-100 dark:bg-gray-800 h-1.5 rounded-full overflow-hidden">
                   <div className="bg-[#135bec] h-full" style={{ width: `${project.progress}%` }}></div>
                 </div>
-                <span className="text-sm font-bold">{project.progress}%</span>
+                <span className="text-sm font-bold dark:text-white">{project.progress}%</span>
               </div>
             </div>
           </div>
@@ -673,22 +673,22 @@ const ProjectDetail = () => {
                       </h3>
                       <div className="space-y-3 text-sm">
                         <div>
-                          <span className="text-gray-500">Start Date:</span>
+                          <span className="text-gray-500 dark:text-gray-400">Start Date:</span>
                           <span className="ml-2 font-semibold">{formatDate(project.start_date)}</span>
                         </div>
                         <div>
-                          <span className="text-gray-500">End Date:</span>
+                          <span className="text-gray-500 dark:text-gray-400">End Date:</span>
                           <span className="ml-2 font-semibold">{formatDate(project.due_date)}</span>
                         </div>
                         <div>
-                          <span className="text-gray-500">Team Size:</span>
+                          <span className="text-gray-500 dark:text-gray-400">Team Size:</span>
                           <span className="ml-2 font-semibold">{project.team_members?.length || 0} members</span>
                         </div>
                       </div>
                     </section>
 
                     <section className="bg-white dark:bg-gray-900 p-6 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm">
-                      <h3 className="font-bold text-sm mb-4 flex items-center gap-2">
+                      <h3 className="font-bold text-sm mb-4 flex items-center gap-2 dark:text-white">
                         <DollarSign size={20} className="text-[#135bec]" />
                         Budget Utilization
                       </h3>
@@ -717,7 +717,7 @@ const ProjectDetail = () => {
                   {/* Team Section */}
                   <section className="bg-white dark:bg-gray-900 p-6 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm">
                     <div className="flex items-center justify-between mb-4">
-                      <h3 className="font-bold text-sm">Project Team</h3>
+                      <h3 className="font-bold text-sm dark:text-white">Project Team</h3>
                       <Plus size={18} className="text-gray-400 cursor-pointer" />
                     </div>
                     <div className="space-y-4">
@@ -727,8 +727,8 @@ const ProjectDetail = () => {
                             {getUserInitials(member.user?.name)}
                           </div>
                           <div className="flex-1">
-                            <p className="text-sm font-semibold">{member.user?.name || 'Unknown'}</p>
-                            <p className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">
+                            <p className="text-sm font-semibold dark:text-white">{member.user?.name || 'Unknown'}</p>
+                            <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase font-bold tracking-wider">
                               {member.role || 'Member'}
                             </p>
                           </div>
@@ -740,7 +740,7 @@ const ProjectDetail = () => {
 
                   {/* Recent Activity Feed */}
                   <section className="bg-white dark:bg-gray-900 p-6 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm">
-                    <h3 className="font-bold text-sm mb-4">Latest Activity</h3>
+                    <h3 className="font-bold text-sm mb-4 dark:text-white">Latest Activity</h3>
                     <div className="space-y-6 relative before:content-[''] before:absolute before:left-[11px] before:top-2 before:bottom-2 before:w-[2px] before:bg-gray-100 dark:before:bg-gray-800">
                       <div className="relative flex gap-4 pl-1">
                         <div className="size-[22px] rounded-full bg-blue-500 border-4 border-white dark:border-gray-900 z-10"></div>
@@ -748,7 +748,7 @@ const ProjectDetail = () => {
                           <p className="text-xs text-[#0d121b] dark:text-gray-300 leading-snug">
                             <span className="font-bold">Project created</span>
                           </p>
-                          <span className="text-[10px] text-gray-400">{formatDate(project.created_at)}</span>
+                          <span className="text-[10px] text-gray-400 dark:text-gray-500">{formatDate(project.created_at)}</span>
                         </div>
                       </div>
                     </div>
@@ -760,7 +760,7 @@ const ProjectDetail = () => {
             {activeTab === 'tasks' && (
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-bold">Project Tasks</h3>
+                  <h3 className="text-lg font-bold dark:text-white">Project Tasks</h3>
                   <button className="flex items-center gap-2 px-4 py-2 bg-[#135bec] text-white rounded-lg text-sm font-semibold hover:bg-blue-700">
                     <Plus size={18} />
                     Add Task
@@ -771,8 +771,8 @@ const ProjectDetail = () => {
                     <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mx-auto mb-4">
                       <CheckSquare size={32} className="text-gray-400" />
                     </div>
-                    <h4 className="text-lg font-bold mb-2">No Tasks Yet</h4>
-                    <p className="text-gray-500 mb-6">Create your first task to start tracking progress</p>
+                    <h4 className="text-lg font-bold mb-2 dark:text-white">No Tasks Yet</h4>
+                    <p className="text-gray-500 dark:text-gray-400 mb-6">Create your first task to start tracking progress</p>
                     <button className="px-6 py-3 bg-[#135bec] text-white rounded-lg font-semibold hover:bg-blue-700">
                       Create First Task
                     </button>
@@ -800,7 +800,7 @@ const ProjectDetail = () => {
                                   task.status === 'review' ? 'bg-purple-500' :
                                   'bg-gray-400'
                                 }`}></div>
-                                <span className="font-semibold">{task.title}</span>
+                                <span className="font-semibold dark:text-white">{task.title}</span>
                               </div>
                             </td>
                             <td className="px-6 py-4">
@@ -829,10 +829,10 @@ const ProjectDetail = () => {
                                   <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-purple-600 flex items-center justify-center text-xs font-bold text-white">
                                     {getUserInitials(task.assigned_to[0].full_name || task.assigned_to[0].username)}
                                   </div>
-                                  <span className="text-sm">{task.assigned_to[0].full_name || task.assigned_to[0].username}</span>
+                                  <span className="text-sm dark:text-gray-300">{task.assigned_to[0].full_name || task.assigned_to[0].username}</span>
                                 </div>
                               ) : (
-                                <span className="text-gray-400 text-sm">Unassigned</span>
+                                <span className="text-gray-400 dark:text-gray-500 text-sm">Unassigned</span>
                               )}
                             </td>
                             <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
@@ -850,20 +850,20 @@ const ProjectDetail = () => {
             {activeTab === 'timeline' && (
               <div className="bg-white dark:bg-gray-900 p-6 rounded-xl border border-gray-200 dark:border-gray-800">
                 <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-lg font-bold">Project Timeline</h3>
+                  <h3 className="text-lg font-bold dark:text-white">Project Timeline</h3>
                   <button className="text-sm text-[#135bec] font-semibold hover:underline">View Gantt Chart</button>
                 </div>
                 <div className="space-y-6">
                   <div className="relative pl-8 pb-8 border-l-2 border-gray-200 dark:border-gray-700">
                     <div className="absolute -left-2 top-0 w-4 h-4 rounded-full bg-[#135bec] border-4 border-white dark:border-gray-900"></div>
-                    <div className="mb-1 text-xs text-gray-500">{formatDate(project.start_date)}</div>
+                    <div className="mb-1 text-xs text-gray-500 dark:text-gray-400">{formatDate(project.start_date)}</div>
                     <h4 className="font-bold text-[#135bec]">Project Started</h4>
                     <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Project kickoff and initial planning phase</p>
                   </div>
                   {tasks.filter(t => t.status === 'done').slice(0, 3).map((task, idx) => (
                     <div key={task._id} className="relative pl-8 pb-8 border-l-2 border-gray-200 dark:border-gray-700">
                       <div className="absolute -left-2 top-0 w-4 h-4 rounded-full bg-emerald-500 border-4 border-white dark:border-gray-900"></div>
-                      <div className="mb-1 text-xs text-gray-500">{task.completed_at ? formatDate(task.completed_at) : formatDate(task.updated_at)}</div>
+                      <div className="mb-1 text-xs text-gray-500 dark:text-gray-400">{task.completed_at ? formatDate(task.completed_at) : formatDate(task.updated_at)}</div>
                       <h4 className="font-bold">{task.title}</h4>
                       <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Task completed successfully</p>
                     </div>
@@ -871,7 +871,7 @@ const ProjectDetail = () => {
                   {tasks.filter(t => t.status === 'in_progress').slice(0, 2).map((task) => (
                     <div key={task._id} className="relative pl-8 pb-8 border-l-2 border-dashed border-gray-300 dark:border-gray-700">
                       <div className="absolute -left-2 top-0 w-4 h-4 rounded-full bg-blue-500 border-4 border-white dark:border-gray-900 animate-pulse"></div>
-                      <div className="mb-1 text-xs text-gray-500">In Progress</div>
+                      <div className="mb-1 text-xs text-gray-500 dark:text-gray-400">In Progress</div>
                       <h4 className="font-bold text-blue-600 dark:text-blue-400">{task.title}</h4>
                       <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Currently being worked on</p>
                     </div>
@@ -879,8 +879,8 @@ const ProjectDetail = () => {
                   {project.due_date && (
                     <div className="relative pl-8">
                       <div className="absolute -left-2 top-0 w-4 h-4 rounded-full bg-gray-300 dark:bg-gray-700 border-4 border-white dark:border-gray-900"></div>
-                      <div className="mb-1 text-xs text-gray-500">{formatDate(project.due_date)}</div>
-                      <h4 className="font-bold text-gray-500">Target Completion</h4>
+                      <div className="mb-1 text-xs text-gray-500 dark:text-gray-400">{formatDate(project.due_date)}</div>
+                      <h4 className="font-bold text-gray-500 dark:text-gray-400">Target Completion</h4>
                       <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Planned project completion date</p>
                     </div>
                   )}
@@ -891,7 +891,7 @@ const ProjectDetail = () => {
             {activeTab === 'team' && (
               <div className="space-y-6">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-bold">Team Members</h3>
+                  <h3 className="text-lg font-bold dark:text-white">Team Members</h3>
                   <button 
                     onClick={() => setShowMemberModal(true)}
                     className="flex items-center gap-2 px-4 py-2 bg-[#135bec] text-white rounded-lg text-sm font-semibold hover:bg-blue-700"
@@ -905,8 +905,8 @@ const ProjectDetail = () => {
                     <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mx-auto mb-4">
                       <UsersIcon size={32} className="text-gray-400" />
                     </div>
-                    <h4 className="text-lg font-bold mb-2">No Team Members</h4>
-                    <p className="text-gray-500 mb-6">Add team members to collaborate on this project</p>
+                    <h4 className="text-lg font-bold mb-2 dark:text-white">No Team Members</h4>
+                    <p className="text-gray-500 dark:text-gray-400 mb-6">Add team members to collaborate on this project</p>
                     <button className="px-6 py-3 bg-[#135bec] text-white rounded-lg font-semibold hover:bg-blue-700">
                       Add First Member
                     </button>
@@ -926,8 +926,8 @@ const ProjectDetail = () => {
                             <X size={18} />
                           </button>
                         </div>
-                        <h4 className="font-bold text-lg mb-1">{member.user?.name || 'Unknown User'}</h4>
-                        <p className="text-sm text-gray-500 mb-3">{member.user?.email || ''}</p>
+                        <h4 className="font-bold text-lg mb-1 dark:text-white">{member.user?.name || 'Unknown User'}</h4>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">{member.user?.email || ''}</p>
                         <div className="flex items-center justify-between">
                           <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 rounded-full text-xs font-bold uppercase">
                             {member.role || 'Member'}
@@ -946,7 +946,7 @@ const ProjectDetail = () => {
             {activeTab === 'documents' && (
               <div className="space-y-6">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-bold">Project Documents</h3>
+                  <h3 className="text-lg font-bold dark:text-white">Project Documents</h3>
                   <button 
                     onClick={() => setShowDocumentModal(true)}
                     className="flex items-center gap-2 px-4 py-2 bg-[#135bec] text-white rounded-lg text-sm font-semibold hover:bg-blue-700"
@@ -960,8 +960,8 @@ const ProjectDetail = () => {
                     <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mx-auto mb-4">
                       <FileText size={32} className="text-gray-400" />
                     </div>
-                    <h4 className="text-lg font-bold mb-2">No Documents</h4>
-                    <p className="text-gray-500 mb-6">Upload project documents, specifications, and files</p>
+                    <h4 className="text-lg font-bold mb-2 dark:text-white">No Documents</h4>
+                    <p className="text-gray-500 dark:text-gray-400 mb-6">Upload project documents, specifications, and files</p>
                     <button 
                       onClick={() => setShowDocumentModal(true)}
                       className="px-6 py-3 bg-[#135bec] text-white rounded-lg font-semibold hover:bg-blue-700"
@@ -978,8 +978,8 @@ const ProjectDetail = () => {
                             <FileText size={24} className="text-[#135bec]" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <h4 className="font-bold text-sm mb-1 truncate">{doc.name}</h4>
-                            <p className="text-xs text-gray-500 mb-2">{(doc.size / 1024).toFixed(2)} KB</p>
+                            <h4 className="font-bold text-sm mb-1 truncate dark:text-white">{doc.name}</h4>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">{(doc.size / 1024).toFixed(2)} KB</p>
                             <div className="flex gap-2">
                               <a 
                                 href={doc.url} 
@@ -1008,7 +1008,7 @@ const ProjectDetail = () => {
 
             {activeTab === 'activity' && (
               <div className="bg-white dark:bg-gray-900 p-6 rounded-xl border border-gray-200 dark:border-gray-800">
-                <h3 className="text-lg font-bold mb-6">Activity Feed</h3>
+                <h3 className="text-lg font-bold mb-6 dark:text-white">Activity Feed</h3>
                 <div className="space-y-6 relative before:content-[''] before:absolute before:left-[19px] before:top-8 before:bottom-8 before:w-[2px] before:bg-gray-200 dark:before:bg-gray-800">
                   <div className="relative flex gap-4">
                     <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold z-10">
@@ -1018,7 +1018,7 @@ const ProjectDetail = () => {
                       <p className="text-sm mb-1">
                         <span className="font-bold">Project created</span> by {project.created_by?.name || 'Admin'}
                       </p>
-                      <span className="text-xs text-gray-500">{formatDate(project.created_at)}</span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">{formatDate(project.created_at)}</span>
                     </div>
                   </div>
                   {tasks.slice(0, 5).map((task) => (
@@ -1031,10 +1031,10 @@ const ProjectDetail = () => {
                         {task.status === 'done' ? <CheckCircle size={20} /> : <Circle size={20} />}
                       </div>
                       <div className="flex-1 pt-2">
-                        <p className="text-sm mb-1">
+                        <p className="text-sm mb-1 dark:text-gray-200">
                           <span className="font-bold">Task {task.status === 'done' ? 'completed' : 'updated'}</span>: {task.title}
                         </p>
-                        <span className="text-xs text-gray-500">{formatDate(task.updated_at)}</span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">{formatDate(task.updated_at)}</span>
                       </div>
                     </div>
                   ))}
@@ -1044,10 +1044,10 @@ const ProjectDetail = () => {
                         <Edit size={20} />
                       </div>
                       <div className="flex-1 pt-2">
-                        <p className="text-sm mb-1">
+                        <p className="text-sm mb-1 dark:text-gray-200">
                           <span className="font-bold">Project updated</span>
                         </p>
-                        <span className="text-xs text-gray-500">{formatDate(project.updated_at)}</span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">{formatDate(project.updated_at)}</span>
                       </div>
                     </div>
                   )}
@@ -1129,7 +1129,7 @@ const ProjectDetail = () => {
                   className="w-full px-4 py-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-[#135bec] focus:border-[#135bec]"
                 />
                 {documentFile && (
-                  <p className="mt-2 text-sm text-gray-500">
+                  <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
                     Selected: {documentFile.name} ({(documentFile.size / 1024).toFixed(2)} KB)
                   </p>
                 )}
