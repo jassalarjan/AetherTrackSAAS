@@ -25,6 +25,8 @@ import leaveTypesRoutes from './routes/leaveTypes.js';
 import holidaysRoutes from './routes/holidays.js';
 import hrCalendarRoutes from './routes/hrCalendar.js';
 import emailTemplatesRoutes from './routes/emailTemplates.js';
+import meetingRoutes from './routes/meetings.js';
+import shiftsRoutes from './routes/shifts.js';
 
 // Import middleware
 import { authenticate } from './middleware/auth.js';
@@ -133,6 +135,8 @@ app.use('/api/hr/leave-types', authenticate, leaveTypesRoutes);
 app.use('/api/hr/holidays', authenticate, holidaysRoutes);
 app.use('/api/hr/calendar', authenticate, hrCalendarRoutes);
 app.use('/api/hr/email-templates', authenticate, emailTemplatesRoutes);
+app.use('/api/hr/meetings', authenticate, meetingRoutes);
+app.use('/api/hr/shifts', authenticate, shiftsRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

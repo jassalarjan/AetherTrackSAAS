@@ -34,7 +34,8 @@ import {
   Star,
   History,
   Pin,
-  TrendingUp
+  TrendingUp,
+  Layers
 } from 'lucide-react';
 
 const Sidebar = () => {
@@ -147,6 +148,10 @@ const Sidebar = () => {
   };
 
   const isActive = (path) => {
+    if (path.includes('?')) {
+      const [pathnameCheck, queryCheck] = path.split('?');
+      return location.pathname === pathnameCheck && location.search.includes(queryCheck);
+    }
     return location.pathname === path;
   };
 
@@ -191,6 +196,7 @@ const Sidebar = () => {
   const hrMenuItems = [
     { path: '/hr/dashboard', icon: LayoutDashboard, label: 'HR Dashboard', roles: ['admin', 'hr'] },
     { path: '/hr/attendance', icon: Clock, label: 'Attendance', roles: ['admin', 'hr'] },
+    { path: '/hr/attendance?tab=shifts', icon: Layers, label: 'Shift Config', roles: ['admin', 'hr'] },
     { path: '/hr/leaves', icon: CalendarDays, label: 'Leave Management', roles: ['admin', 'hr', 'member'] },
     { path: '/hr/calendar', icon: Calendar, label: 'HR Calendar', roles: ['admin', 'hr'] },
     { path: '/hr/email-center', icon: FileText, label: 'Email Center', roles: ['admin', 'hr'] },

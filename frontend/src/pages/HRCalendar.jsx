@@ -1,365 +1,419 @@
-import { useState, useEffect } from 'react';
+﻿/**
+ * HRCalendar â€” HR Calendar with native Meeting Management integration.
+ *
+ * Architecture:
+ *  - Attendance / leave / holiday data  â†’ existing /api/hr/calendar endpoint
+ *  - Meetings                           â†’ /api/hr/meetings via useMeetings hook
+ *  - Both layers merged into BigCalendar events
+ *  - RBAC enforced at UI layer: only admin/hr roles see write controls
+ *  - Drag-to-reschedule supported for admin/hr
+ */
+
+import { useState, useEffect, useCallback } from 'react';
 import { Calendar as BigCalendar, momentLocalizer } from 'react-big-calendar';
+import withDragAndDrop from 'react-big-calendar/lib/addons/dragAndDrop';
 import moment from 'moment';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useSidebar } from '../context/SidebarContext';
 import api from '../api/axios';
 import ResponsivePageLayout from '../components/layouts/ResponsivePageLayout';
-import { Calendar as CalendarIcon, Clock, User, Menu, ChevronLeft, ChevronRight, CheckCircle, XCircle, AlertCircle, X } from 'lucide-react';
+import MeetingFormModal from '../components/modals/MeetingFormModal';
+import MeetingDetailPanel from '../components/modals/MeetingDetailPanel';
+import useMeetings, { MEETING_TYPE_COLORS, MEETING_TYPE_LABELS } from '../hooks/useMeetings';
+import {
+  Calendar as CalendarIcon, Clock, User, CheckCircle, XCircle,
+  AlertCircle, X, Plus, RefreshCw, Video, ChevronDown
+} from 'lucide-react';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
+import 'react-big-calendar/lib/addons/dragAndDrop/styles.css';
 
-const localizer = momentLocalizer(moment);
+const localizer   = momentLocalizer(moment);
+const DnDCalendar = withDragAndDrop(BigCalendar);
 
+// â”€â”€ Roles with write access â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+const MANAGER_ROLES = ['admin', 'hr', 'community_admin'];
+
+// â”€â”€ Colour map for non-meeting events â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+const ATTENDANCE_COLORS = {
+  present:  '#22c55e',
+  absent:   '#dc2626',
+  half_day: '#eab308',
+  leave:    '#3b82f6',
+  holiday:  '#9333ea',
+};
+
+// â”€â”€ Legend â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+const LEGEND = [
+  { color: '#22c55e', label: 'Present' },
+  { color: '#dc2626', label: 'Absent' },
+  { color: '#eab308', label: 'Half Day' },
+  { color: '#3b82f6', label: 'Leave' },
+  { color: '#9333ea', label: 'Holiday' },
+  ...Object.entries(MEETING_TYPE_COLORS).map(([k, v]) => ({
+    color: v, label: `Mtg: ${MEETING_TYPE_LABELS[k]}`, isDot: true
+  })),
+];
+
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export default function HRCalendar({ embedded = false }) {
-  const { user } = useAuth();
+  const { user }                = useAuth();
   const { theme, currentTheme } = useTheme();
-  const { toggleMobileSidebar } = useSidebar();
-  const [calendarEvents, setCalendarEvents] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [attendanceData, setAttendanceData] = useState({});
-  const [selectedEvent, setSelectedEvent] = useState(null);
+  const canManage               = MANAGER_ROLES.includes(user?.role);
+
+  // â”€â”€ Attendance / leave / holiday state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  const [hrEvents, setHrEvents]     = useState([]);
+  const [hrLoading, setHrLoading]   = useState(true);
+
+  // â”€â”€ Calendar navigation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  const [currentDate, setCurrentDate] = useState(new Date());
   const [currentView, setCurrentView] = useState('month');
 
-  useEffect(() => {
-    fetchCalendarData();
+  // â”€â”€ Meeting hook â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  const {
+    calendarEvents: meetingEvents,
+    loading: meetingLoading,
+    saving,
+    fetchMeetings,
+    createMeeting,
+    updateMeeting,
+    cancelMeeting,
+    deleteMeeting,
+  } = useMeetings();
+
+  // â”€â”€ UI state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  const [selectedHREvent,  setSelectedHREvent]  = useState(null);
+  const [selectedMeeting,  setSelectedMeeting]  = useState(null);
+  const [showForm,         setShowForm]          = useState(false);
+  const [editingMeeting,   setEditingMeeting]    = useState(null);
+  const [formDefaultStart, setFormDefaultStart]  = useState(null);
+  const [typeFilter,       setTypeFilter]        = useState('');
+  const [showLegend,       setShowLegend]        = useState(false);
+
+  // â”€â”€ Date range helper â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  const getRangeFromView = useCallback((date, view) => {
+    const m = moment(date);
+    if (view === 'week')  return { start: m.clone().startOf('week').toDate(),  end: m.clone().endOf('week').toDate() };
+    if (view === 'day')   return { start: m.clone().startOf('day').toDate(),   end: m.clone().endOf('day').toDate() };
+    return { start: m.clone().startOf('month').toDate(), end: m.clone().endOf('month').toDate() };
   }, []);
 
-  const fetchCalendarData = async () => {
+  // â”€â”€ Load HR events â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  const fetchHRData = useCallback(async (date) => {
     try {
-      setLoading(true);
-      const currentDate = new Date();
-      const month = currentDate.getMonth() + 1; // getMonth() returns 0-11, so add 1
-      const year = currentDate.getFullYear();
-
-      const [calendarResponse, attendanceResponse] = await Promise.all([
+      setHrLoading(true);
+      const month = date.getMonth() + 1;
+      const year  = date.getFullYear();
+      const [calRes, attRes] = await Promise.all([
         api.get('/hr/calendar', { params: { month, year } }),
-        api.get('/hr/attendance')
+        api.get('/hr/attendance'),
       ]);
 
-      // Process attendance data to count by date
-      const attendanceByDate = {};
-      attendanceResponse.data.records.forEach(record => {
-        const dateKey = record.date;
-        if (!attendanceByDate[dateKey]) {
-          attendanceByDate[dateKey] = { present: 0, absent: 0, half_day: 0, leave: 0, holiday: 0 };
-        }
-        attendanceByDate[dateKey][record.status]++;
+      const byDate = {};
+      (attRes.data.records || []).forEach(r => {
+        if (!byDate[r.date]) byDate[r.date] = { present: 0, absent: 0, half_day: 0, leave: 0, holiday: 0 };
+        byDate[r.date][r.status]++;
       });
-      setAttendanceData(attendanceByDate);
 
-      // Transform data into calendar events
-      transformDataToEvents(attendanceByDate, calendarResponse.data.events);
-    } catch (error) {
-      console.error('Error fetching calendar data:', error);
+      const events = [];
+      Object.entries(byDate).forEach(([ds, counts]) => {
+        const d = new Date(ds);
+        Object.entries(counts).forEach(([type, count]) => {
+          if (count > 0 && ATTENDANCE_COLORS[type]) {
+            events.push({ id: `att-${type}-${ds}`, title: `${type.replace('_', ' ')}: ${count}`, start: d, end: d, allDay: true, resource: { type, data: { count, total: counts } } });
+          }
+        });
+      });
+
+      (calRes.data.events || []).forEach(ev => {
+        if (ev.type === 'holiday') {
+          events.push({ id: `holiday-${ev.date}`, title: ev.name || 'Holiday', start: new Date(ev.date), end: new Date(ev.date), allDay: true, resource: { type: 'holiday', data: ev } });
+        }
+      });
+
+      setHrEvents(events);
+    } catch (err) {
+      console.error('HRCalendar fetchHRData:', err);
     } finally {
-      setLoading(false);
+      setHrLoading(false);
     }
-  };
+  }, []);
 
-  const transformDataToEvents = (attendanceData, events) => {
-    const calendarEvents = [];
+  // â”€â”€ Sync loads on navigation / filter â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  useEffect(() => {
+    fetchHRData(currentDate);
+    const { start, end } = getRangeFromView(currentDate, currentView);
+    fetchMeetings({ start, end, type: typeFilter || undefined });
+  }, [currentDate, currentView, typeFilter]);
 
-    // Create separate events for each attendance type
-    Object.entries(attendanceData).forEach(([dateString, counts]) => {
-      const date = new Date(dateString);
+  // â”€â”€ Merged event stream â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  const allEvents = [...hrEvents, ...meetingEvents];
 
-      // Create separate event for each attendance type
-      if (counts.present > 0) {
-        calendarEvents.push({
-          id: `present-${dateString}`,
-          title: `Present: ${counts.present}`,
-          start: date,
-          end: date,
-          resource: { type: 'present', data: { count: counts.present, total: counts } },
-          allDay: true,
-        });
-      }
-
-      if (counts.absent > 0) {
-        calendarEvents.push({
-          id: `absent-${dateString}`,
-          title: `Absent: ${counts.absent}`,
-          start: date,
-          end: date,
-          resource: { type: 'absent', data: { count: counts.absent, total: counts } },
-          allDay: true,
-        });
-      }
-
-      if (counts.half_day > 0) {
-        calendarEvents.push({
-          id: `half_day-${dateString}`,
-          title: `Half Day: ${counts.half_day}`,
-          start: date,
-          end: date,
-          resource: { type: 'half_day', data: { count: counts.half_day, total: counts } },
-          allDay: true,
-        });
-      }
-
-      if (counts.leave > 0) {
-        calendarEvents.push({
-          id: `leave-${dateString}`,
-          title: `Leave: ${counts.leave}`,
-          start: date,
-          end: date,
-          resource: { type: 'leave', data: { count: counts.leave, total: counts } },
-          allDay: true,
-        });
-      }
-    });
-
-    // Add holiday events
-    events.forEach(event => {
-      if (event.type === 'holiday') {
-        calendarEvents.push({
-          id: `holiday-${event.date}`,
-          title: event.name || 'Holiday',
-          start: new Date(event.date),
-          end: new Date(event.date),
-          resource: { type: 'holiday', data: event },
-          allDay: true,
-        });
-      }
-    });
-
-    setCalendarEvents(calendarEvents);
-  };
-
-  const getStatusColor = (event) => {
-    if (event.resource.type === 'holiday') {
-      return '#9333ea'; // Purple for holidays
-    }
-
-    // Individual attendance types
-    switch (event.resource.type) {
-      case 'present':
-        return '#22c55e'; // Green for present
-      case 'absent':
-        return '#dc2626'; // Red for absent
-      case 'half_day':
-        return '#eab308'; // Yellow for half day
-      case 'leave':
-        return '#3b82f6'; // Blue for leave
-      default:
-        return '#6b7280'; // Gray for unknown
-    }
-  };
-
+  // â”€â”€ Event colour getter â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const eventStyleGetter = (event) => {
-    const backgroundColor = getStatusColor(event);
-
+    const bg = event.resource?.type === 'meeting'
+      ? (MEETING_TYPE_COLORS[event.resource.subtype] || '#6b7280')
+      : (ATTENDANCE_COLORS[event.resource?.type]     || '#6b7280');
     return {
       style: {
-        backgroundColor,
-        borderRadius: '0.125rem',
+        backgroundColor: bg,
+        borderRadius: '4px',
         opacity: 0.95,
         color: 'white',
         border: 'none',
-        display: 'block',
         fontWeight: '600',
-        fontSize: '0.75rem',
+        fontSize: '0.7rem',
         padding: '2px 6px',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.25)',
       },
     };
   };
 
+  // â”€â”€ Click handlers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const handleSelectEvent = (event) => {
-    setSelectedEvent(event);
+    if (event.resource?.type === 'meeting') { setSelectedMeeting(event.resource.data); setSelectedHREvent(null); }
+    else { setSelectedHREvent(event); setSelectedMeeting(null); }
   };
 
+  const handleSelectSlot = ({ start }) => {
+    if (!canManage) return;
+    setFormDefaultStart(start);
+    setEditingMeeting(null);
+    setShowForm(true);
+  };
+
+  // â”€â”€ Drag-to-reschedule â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  const handleEventDrop = useCallback(async ({ event, start, end }) => {
+    if (!canManage || event.resource?.type !== 'meeting') return;
+    await updateMeeting(event.resource.data._id, { start_time: start.toISOString(), end_time: end.toISOString() });
+  }, [canManage, updateMeeting]);
+
+  const handleEventResize = useCallback(async ({ event, start, end }) => {
+    if (!canManage || event.resource?.type !== 'meeting') return;
+    await updateMeeting(event.resource.data._id, { start_time: start.toISOString(), end_time: end.toISOString() });
+  }, [canManage, updateMeeting]);
+
+  // â”€â”€ Form save â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  const handleSaveMeeting = async (payload) => {
+    if (editingMeeting) return updateMeeting(editingMeeting._id, payload);
+    const result = await createMeeting(payload);
+    if (result.success) {
+      const { start, end } = getRangeFromView(currentDate, currentView);
+      fetchMeetings({ start, end });
+    }
+    return result;
+  };
+
+  const loading = hrLoading || meetingLoading;
+
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const calendarContent = (
-    <>
-      {loading ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="flex gap-3">
-            {[0, 1, 2, 3].map((i) => (
-              <div key={i} className="w-4 h-12 bg-blue-600 rounded-full animate-pulse" style={{ animationDelay: `${i * 0.15}s` }}></div>
+    <div className="space-y-4">
+
+      {/* Toolbar */}
+      <div className={`flex flex-wrap items-center gap-3 p-3 rounded-xl border ${currentTheme.surface} ${currentTheme.border}`}>
+        <div className="relative">
+          <select
+            value={typeFilter}
+            onChange={e => setTypeFilter(e.target.value)}
+            className={`pl-3 pr-8 py-2 text-sm rounded-lg border appearance-none cursor-pointer ${theme === 'dark' ? 'bg-slate-800 border-slate-600 text-white' : 'bg-white border-slate-300 text-slate-700'} focus:outline-none focus:ring-1 focus:ring-blue-500`}
+          >
+            <option value="">All meeting types</option>
+            {Object.entries(MEETING_TYPE_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+          </select>
+          <ChevronDown className={`absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none ${currentTheme.textSecondary}`} />
+        </div>
+
+        <button
+          onClick={() => setShowLegend(v => !v)}
+          className={`flex items-center gap-2 px-3 py-2 text-sm rounded-lg border transition-colors ${theme === 'dark' ? 'border-slate-600 text-slate-300 hover:bg-slate-800' : 'border-slate-300 text-slate-600 hover:bg-slate-50'}`}
+        >
+          <div className="flex gap-1">
+            {Object.values(ATTENDANCE_COLORS).slice(0, 3).map((c, i) => <div key={i} className="w-2 h-2 rounded-full" style={{ background: c }} />)}
+          </div>
+          Legend
+        </button>
+
+        <div className="flex-1" />
+
+        <button
+          onClick={() => { fetchHRData(currentDate); const r = getRangeFromView(currentDate, currentView); fetchMeetings({ start: r.start, end: r.end }); }}
+          className={`p-2 rounded-lg border transition-colors ${theme === 'dark' ? 'border-slate-600 text-slate-400 hover:bg-slate-800' : 'border-slate-300 text-slate-500 hover:bg-slate-50'}`}
+          title="Refresh"
+        >
+          <RefreshCw className="w-4 h-4" />
+        </button>
+
+        {canManage && (
+          <button
+            onClick={() => { setEditingMeeting(null); setFormDefaultStart(new Date()); setShowForm(true); }}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors shadow-sm"
+          >
+            <Plus className="w-4 h-4" /> Schedule Meeting
+          </button>
+        )}
+      </div>
+
+      {/* Legend */}
+      {showLegend && (
+        <div className={`p-4 rounded-xl border ${currentTheme.surface} ${currentTheme.border}`}>
+          <p className={`text-xs font-semibold uppercase tracking-wide mb-3 ${currentTheme.textSecondary}`}>Calendar Legend</p>
+          <div className="flex flex-wrap gap-x-5 gap-y-2">
+            {LEGEND.map((item, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <div className={item.isDot ? 'w-2.5 h-2.5 rounded-full' : 'w-3 h-3 rounded-sm'} style={{ background: item.color }} />
+                <span className={`text-xs ${currentTheme.textSecondary}`}>{item.label}</span>
+              </div>
             ))}
           </div>
-          <p className={`ml-4 ${currentTheme.textSecondary} font-medium`}>Loading calendar...</p>
+        </div>
+      )}
+
+      {/* Calendar */}
+      {loading ? (
+        <div className={`flex items-center justify-center py-16 rounded-xl border ${currentTheme.surface} ${currentTheme.border}`}>
+          <div className="flex gap-3 items-center">
+            {[0, 1, 2, 3].map(i => <div key={i} className="w-3 h-10 bg-blue-600 rounded-full animate-pulse" style={{ animationDelay: `${i * 0.15}s` }} />)}
+            <p className={`ml-3 ${currentTheme.textSecondary} font-medium`}>Loading calendarâ€¦</p>
+          </div>
         </div>
       ) : (
-        <div className={`${currentTheme.surface} rounded-lg border ${currentTheme.border} p-4`}>
-          <BigCalendar
+        <div className={`calendar-container ${currentTheme.surface} rounded-xl border ${currentTheme.border} p-4`}>
+          <DnDCalendar
             localizer={localizer}
-            events={calendarEvents}
+            events={allEvents}
             startAccessor="start"
             endAccessor="end"
-            style={{ height: embedded ? 500 : 700, minHeight: embedded ? 400 : 500 }}
+            allDayAccessor="allDay"
+            style={{ height: embedded ? 520 : 720, minHeight: embedded ? 420 : 540 }}
             eventPropGetter={eventStyleGetter}
             onSelectEvent={handleSelectEvent}
-            views={['month']}
-            defaultView="month"
-            popup={false}
-            tooltipAccessor={(event) => event.title}
+            onSelectSlot={handleSelectSlot}
+            onEventDrop={canManage ? handleEventDrop : undefined}
+            onEventResize={canManage ? handleEventResize : undefined}
+            resizable={canManage}
+            selectable={canManage}
+            views={['month', 'week', 'day', 'agenda']}
+            view={currentView}
+            date={currentDate}
+            onNavigate={setCurrentDate}
+            onView={setCurrentView}
+            popup
+            tooltipAccessor={e => e.resource?.type === 'meeting' ? `${e.title} Â· ${e.resource.data?.organizer_role?.toUpperCase()}` : e.title}
+            components={{ event: CalendarEventComponent }}
           />
         </div>
       )}
 
-      {/* Event Detail Modal */}
-      {selectedEvent && (
+      {/* HR event detail modal */}
+      {selectedHREvent && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-          <div className={`${currentTheme.surface} rounded-lg p-8 max-w-md w-full max-h-[90vh] overflow-y-auto border ${currentTheme.border}`}>
-            <div className="flex justify-between items-center mb-6">
-              <h2 className={`text-2xl font-bold ${currentTheme.text}`}>{selectedEvent.title}</h2>
-              <button
-                onClick={() => setSelectedEvent(null)}
-                className={`${currentTheme.textSecondary} hover:${currentTheme.text}`}
-              >
+          <div className={`${currentTheme.surface} rounded-xl p-7 max-w-md w-full border ${currentTheme.border} shadow-2xl`}>
+            <div className="flex justify-between items-center mb-5">
+              <h2 className={`text-xl font-bold ${currentTheme.text}`}>{selectedHREvent.title}</h2>
+              <button onClick={() => setSelectedHREvent(null)} className={`${currentTheme.textSecondary} p-1`}>
                 <X className="w-6 h-6" />
               </button>
             </div>
-
-            <div className="space-y-4">
-              <div>
-                <p className={`text-sm ${currentTheme.textSecondary} mb-1`}>Date:</p>
-                <p className={`text-sm ${currentTheme.text} flex items-center gap-2`}>
-                  <CalendarIcon size={14} />
-                  {selectedEvent.start.toLocaleDateString('en-US', {
-                    weekday: 'long',
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                  })}
-                </p>
-              </div>
-
-              {(selectedEvent.resource.type === 'present' || selectedEvent.resource.type === 'absent' || selectedEvent.resource.type === 'half_day' || selectedEvent.resource.type === 'leave') && (
-                <div>
-                  <p className={`text-sm ${currentTheme.textSecondary} mb-2`}>Attendance Details:</p>
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      {selectedEvent.resource.type === 'present' && <CheckCircle className="w-4 h-4 text-green-500" />}
-                      {selectedEvent.resource.type === 'absent' && <XCircle className="w-4 h-4 text-red-500" />}
-                      {selectedEvent.resource.type === 'half_day' && <AlertCircle className="w-4 h-4 text-yellow-500" />}
-                      {selectedEvent.resource.type === 'leave' && <CalendarIcon className="w-4 h-4 text-blue-500" />}
-                      <span className={`text-sm ${currentTheme.text}`}>
-                        {selectedEvent.resource.type === 'present' && `Present: ${selectedEvent.resource.data.count}`}
-                        {selectedEvent.resource.type === 'absent' && `Absent: ${selectedEvent.resource.data.count}`}
-                        {selectedEvent.resource.type === 'half_day' && `Half Day: ${selectedEvent.resource.data.count}`}
-                        {selectedEvent.resource.type === 'leave' && `Leave: ${selectedEvent.resource.data.count}`}
-                      </span>
-                    </div>
-                    <div className={`text-xs ${currentTheme.textSecondary} mt-2`}>
-                      <p>Total attendance for this day:</p>
-                      <div className="grid grid-cols-2 gap-2 mt-1">
-                        {selectedEvent.resource.data.total.present > 0 && (
-                          <span>Present: {selectedEvent.resource.data.total.present}</span>
-                        )}
-                        {selectedEvent.resource.data.total.absent > 0 && (
-                          <span>Absent: {selectedEvent.resource.data.total.absent}</span>
-                        )}
-                        {selectedEvent.resource.data.total.half_day > 0 && (
-                          <span>Half Day: {selectedEvent.resource.data.total.half_day}</span>
-                        )}
-                        {selectedEvent.resource.data.total.leave > 0 && (
-                          <span>Leave: {selectedEvent.resource.data.total.leave}</span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
+            <div className="space-y-3">
+              <p className={`text-sm flex items-center gap-2 ${currentTheme.text}`}>
+                <CalendarIcon size={14} />
+                {selectedHREvent.start.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+              </p>
+              {['present', 'absent', 'half_day', 'leave'].includes(selectedHREvent.resource?.type) && (
+                <div className="flex items-center gap-2">
+                  {selectedHREvent.resource.type === 'present'  && <CheckCircle className="w-4 h-4 text-green-400" />}
+                  {selectedHREvent.resource.type === 'absent'   && <XCircle     className="w-4 h-4 text-red-400" />}
+                  {selectedHREvent.resource.type === 'half_day' && <AlertCircle className="w-4 h-4 text-yellow-400" />}
+                  {selectedHREvent.resource.type === 'leave'    && <CalendarIcon className="w-4 h-4 text-blue-400" />}
+                  <span className={`text-sm ${currentTheme.text}`}>Count: {selectedHREvent.resource.data?.count}</span>
                 </div>
               )}
-
-              {selectedEvent.resource.type === 'holiday' && (
-                <div>
-                  <p className={`text-sm ${currentTheme.textSecondary} mb-1`}>Holiday:</p>
-                  <p className={`text-sm ${currentTheme.text}`}>{selectedEvent.resource.data.name || 'Holiday'}</p>
-                </div>
+              {selectedHREvent.resource?.type === 'holiday' && (
+                <p className={`text-sm ${currentTheme.text}`}>{selectedHREvent.resource.data.name || 'Public Holiday'}</p>
               )}
             </div>
           </div>
         </div>
       )}
 
-      <style dangerouslySetInnerHTML={{__html: `
-        .calendar-container .rbc-calendar {
-          font-family: 'Inter', sans-serif;
-          color: ${theme === 'dark' ? '#ffffff' : '#111827'};
-        }
-        .calendar-container .rbc-header {
-          padding: 12px;
-          font-weight: 600;
-          font-size: 0.75rem;
-          text-transform: uppercase;
-          letter-spacing: 0.05em;
-          background: ${theme === 'dark' ? '#1c2027' : '#f9fafb'};
-          color: ${theme === 'dark' ? '#d1d5db' : '#374151'};
-          border-color: ${theme === 'dark' ? '#374151' : '#d1d5db'};
-        }
-        .calendar-container .rbc-today {
-          background-color: ${theme === 'dark' ? '#1e293b' : '#dbeafe'};
-        }
-        .calendar-container .rbc-off-range-bg {
-          background: ${theme === 'dark' ? '#0f172a' : '#f8fafc'};
-        }
-        .calendar-container .rbc-date-cell {
-          color: ${theme === 'dark' ? '#e2e8f0' : '#1e293b'};
-          padding: 4px;
-        }
-        .calendar-container .rbc-off-range {
-          color: ${theme === 'dark' ? '#64748b' : '#94a3b8'};
-        }
-        .calendar-container .rbc-month-view {
-          background: ${theme === 'dark' ? '#1e293b' : '#ffffff'};
-          border-color: ${theme === 'dark' ? '#334155' : '#e2e8f0'};
-        }
-        .calendar-container .rbc-day-bg {
-          background: ${theme === 'dark' ? '#1e293b' : '#ffffff'};
-          border-color: ${theme === 'dark' ? '#334155' : '#e2e8f0'};
-        }
-        .calendar-container .rbc-event {
-          transition: all 0.2s ease;
-          border-radius: 4px;
-          font-weight: 500;
-        }
-        .calendar-container .rbc-event:hover {
-          transform: translateY(-1px);
-          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        }
-        .calendar-container .rbc-toolbar {
-          color: ${theme === 'dark' ? '#f1f5f9' : '#1e293b'};
-          margin-bottom: 20px;
-          padding: 12px;
-          background: ${theme === 'dark' ? '#0f172a' : '#f8fafc'};
-          border-radius: 0.375rem;
-          border: 1px solid ${theme === 'dark' ? '#334155' : '#e2e8f0'};
-        }
-        .calendar-container .rbc-toolbar button {
-          color: ${theme === 'dark' ? '#cbd5e1' : '#475569'};
-          background: ${theme === 'dark' ? '#1e293b' : '#ffffff'};
-          border: 1px solid ${theme === 'dark' ? '#475569' : '#cbd5e1'};
-          border-radius: 0.25rem;
-          padding: 6px 12px;
-          font-size: 0.875rem;
-          font-weight: 500;
-        }
-        .calendar-container .rbc-toolbar button:hover {
-          background: ${theme === 'dark' ? '#334155' : '#f1f5f9'};
-          color: ${theme === 'dark' ? '#f1f5f9' : '#1e293b'};
-        }
-        .calendar-container .rbc-toolbar button.rbc-active {
-          background: ${theme === 'dark' ? '#3b82f6' : '#2563eb'};
-          color: white;
-          border-color: ${theme === 'dark' ? '#3b82f6' : '#2563eb'};
-        }
-      `}} />
-    </>
+      {/* Meeting detail panel */}
+      <MeetingDetailPanel
+        meeting={selectedMeeting}
+        isOpen={!!selectedMeeting}
+        onClose={() => setSelectedMeeting(null)}
+        canManage={canManage}
+        saving={saving}
+        onEdit={(m) => { setEditingMeeting(m); setSelectedMeeting(null); setShowForm(true); }}
+        onCancel={async (id, reason) => { const r = await cancelMeeting(id, reason); if (r.success) setSelectedMeeting(null); return r; }}
+        onDelete={async (id) => { const r = await deleteMeeting(id); if (r.success) setSelectedMeeting(null); return r; }}
+      />
+
+      {/* Meeting form */}
+      {canManage && (
+        <MeetingFormModal
+          isOpen={showForm}
+          initialData={editingMeeting}
+          defaultStart={formDefaultStart}
+          saving={saving}
+          onClose={() => { setShowForm(false); setEditingMeeting(null); }}
+          onSave={handleSaveMeeting}
+        />
+      )}
+
+      <style dangerouslySetInnerHTML={{ __html: calendarStyles(theme) }} />
+    </div>
   );
 
-  if (embedded) {
-    return calendarContent;
-  }
+  if (embedded) return calendarContent;
 
   return (
-    <ResponsivePageLayout
-      title="HR Calendar"
-      subtitle="View attendance and holiday information"
-    >
+    <ResponsivePageLayout title="HR Calendar" subtitle="Attendance, leaves, holidays and meetings">
       {calendarContent}
     </ResponsivePageLayout>
   );
+}
+
+// â”€â”€ Custom event â€” recurring + video icons for meetings â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+function CalendarEventComponent({ event }) {
+  const isMeeting   = event.resource?.type === 'meeting';
+  const isRecurring = isMeeting && event.resource.data?.is_recurring;
+  const hasLink     = isMeeting && event.resource.data?.conference_link;
+  return (
+    <div className="flex items-center gap-1 w-full overflow-hidden">
+      {isRecurring && <RefreshCw className="w-2.5 h-2.5 flex-shrink-0 opacity-80" />}
+      {hasLink     && <Video     className="w-2.5 h-2.5 flex-shrink-0 opacity-80" />}
+      <span className="truncate text-[0.68rem] font-semibold leading-tight">{event.title}</span>
+    </div>
+  );
+}
+
+// â”€â”€ Theme-aware calendar CSS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+function calendarStyles(theme) {
+  const d = theme === 'dark';
+  return `
+    .calendar-container .rbc-calendar { font-family: 'Inter', sans-serif; color: ${d ? '#f1f5f9' : '#111827'}; }
+    .calendar-container .rbc-header { padding: 10px; font-weight: 700; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; background: ${d ? '#1c2027' : '#f9fafb'}; color: ${d ? '#94a3b8' : '#374151'}; border-color: ${d ? '#334155' : '#e2e8f0'}; }
+    .calendar-container .rbc-today { background-color: ${d ? '#1e3a5f' : '#dbeafe'}; }
+    .calendar-container .rbc-off-range-bg { background: ${d ? '#0f172a' : '#f8fafc'}; }
+    .calendar-container .rbc-day-bg { background: ${d ? '#1e293b' : '#fff'}; border-color: ${d ? '#334155' : '#e2e8f0'}; }
+    .calendar-container .rbc-month-view { background: ${d ? '#1e293b' : '#fff'}; border-color: ${d ? '#334155' : '#e2e8f0'}; }
+    .calendar-container .rbc-date-cell { color: ${d ? '#e2e8f0' : '#1e293b'}; padding: 4px; font-size: 0.78rem; }
+    .calendar-container .rbc-off-range { color: ${d ? '#475569' : '#94a3b8'}; }
+    .calendar-container .rbc-event { transition: transform 0.15s, box-shadow 0.15s; }
+    .calendar-container .rbc-event:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+    .calendar-container .rbc-toolbar { color: ${d ? '#f1f5f9' : '#1e293b'}; margin-bottom: 16px; }
+    .calendar-container .rbc-toolbar button { color: ${d ? '#cbd5e1' : '#475569'}; background: ${d ? '#1e293b' : '#fff'}; border: 1px solid ${d ? '#475569' : '#cbd5e1'}; border-radius: 0.375rem; padding: 6px 14px; font-size: 0.83rem; font-weight: 500; transition: all 0.15s; }
+    .calendar-container .rbc-toolbar button:hover { background: ${d ? '#334155' : '#f1f5f9'}; }
+    .calendar-container .rbc-toolbar button.rbc-active { background: #3b82f6; color: #fff; border-color: #3b82f6; }
+    .calendar-container .rbc-time-view { background: ${d ? '#1e293b' : '#fff'}; border-color: ${d ? '#334155' : '#e2e8f0'}; }
+    .calendar-container .rbc-time-header { background: ${d ? '#1c2027' : '#f9fafb'}; border-color: ${d ? '#334155' : '#e2e8f0'}; }
+    .calendar-container .rbc-time-content { border-color: ${d ? '#334155' : '#e2e8f0'}; }
+    .calendar-container .rbc-time-slot { color: ${d ? '#94a3b8' : '#6b7280'}; border-color: ${d ? '#1e293b' : '#f1f5f9'}; }
+    .calendar-container .rbc-current-time-indicator { background: #3b82f6; height: 2px; }
+    .calendar-container .rbc-agenda-view table.rbc-agenda-table { border-color: ${d ? '#334155' : '#e2e8f0'}; }
+    .calendar-container .rbc-agenda-view table.rbc-agenda-table tbody > tr { color: ${d ? '#e2e8f0' : '#111827'}; }
+    .calendar-container .rbc-agenda-view table.rbc-agenda-table tbody > tr > td { border-color: ${d ? '#334155' : '#e2e8f0'}; }
+    .rbc-addons-dnd .rbc-addons-dnd-drag-preview { opacity: 0.75; }
+  `;
 }

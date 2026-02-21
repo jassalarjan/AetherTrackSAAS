@@ -72,7 +72,7 @@ const SprintManagement = () => {
     if (priority === 'urgent' || priority === 'high') {
       return <ArrowUp size={16} className="text-red-600 dark:text-red-400" />;
     }
-    return <Minus size={16} className="text-gray-500" />;
+    return <Minus size={16} className="text-gray-500 dark:text-gray-400" />;
   };
 
   const getPriorityText = (priority) => {
@@ -81,7 +81,7 @@ const SprintManagement = () => {
 
   const getStatusBadge = (status) => {
     const badges = {
-      todo: 'bg-gray-100 text-gray-700 border-gray-200',
+      todo: 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700',
       in_progress: 'bg-blue-100 dark:bg-blue-900/20 text-[#135bec] border-[#135bec]/20',
       review: 'bg-purple-100 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400 border-purple-200',
       done: 'bg-emerald-100 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border-emerald-200'
@@ -161,17 +161,17 @@ const SprintManagement = () => {
           <div className="flex items-center gap-8">
             <h2 className="text-xl font-bold tracking-tight">Sprint Management</h2>
             <nav className="hidden md:flex items-center gap-6">
-              <button onClick={() => navigate('/projects')} className="text-sm font-medium text-gray-500 hover:text-[#135bec] transition-colors">
+              <button onClick={() => navigate('/projects')} className="text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-[#135bec] transition-colors">
                 Projects
               </button>
               <button className="text-sm font-semibold text-[#135bec]">Sprints</button>
-              <button onClick={() => navigate('/teams')} className="text-sm font-medium text-gray-500 hover:text-[#135bec] transition-colors">
+              <button onClick={() => navigate('/teams')} className="text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-[#135bec] transition-colors">
                 Team
               </button>
             </nav>
           </div>
           <div className="flex items-center gap-4">
-            <button className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">
+            <button className="p-2 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">
               <Info size={20} />
             </button>
           </div>
@@ -180,7 +180,7 @@ const SprintManagement = () => {
         {/* Secondary Navigation / Breadcrumbs */}
         <div className="bg-white dark:bg-[#1a2234] border-b border-gray-200 dark:border-gray-800 px-8 py-3 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2 text-sm">
-            <button onClick={() => navigate('/projects')} className="text-gray-500 hover:text-[#135bec]">
+            <button onClick={() => navigate('/projects')} className="text-gray-500 dark:text-gray-400 hover:text-[#135bec]">
               {selectedProject?.name || 'All Projects'}
             </button>
             <ChevronRight size={16} className="text-gray-400" />
@@ -211,7 +211,7 @@ const SprintManagement = () => {
               <div className="flex items-end justify-between mb-6">
                 <div>
                   <h1 className="text-3xl font-black tracking-tight mb-1">Q4 Engineering Sprint 2</h1>
-                  <p className="text-gray-500 text-sm">
+                  <p className="text-gray-500 dark:text-gray-400 text-sm">
                     Oct 15 - Oct 29 • {totalStoryPoints} Story Points • {tasks.length} Tasks
                   </p>
                 </div>
@@ -256,7 +256,7 @@ const SprintManagement = () => {
                             <span className="text-xs text-gray-400 font-medium mb-1 tracking-wider uppercase">
                               TASK-{String(index + 100).padStart(3, '0')}
                             </span>
-                            <span className="font-semibold group-hover:text-[#135bec]">{task.title}</span>
+                            <span className="font-semibold dark:text-white group-hover:text-[#135bec]">{task.title}</span>
                           </div>
                         </td>
                         <td className="px-4 py-4">
@@ -294,7 +294,7 @@ const SprintManagement = () => {
             {/* Burndown Chart */}
             <div className="bg-white dark:bg-[#1a2234] rounded-xl border border-gray-200 dark:border-gray-800 p-5 shadow-sm">
               <div className="flex items-center justify-between mb-6">
-                <h3 className="font-bold">Burndown Chart</h3>
+                <h3 className="font-bold dark:text-white">Burndown Chart</h3>
                 <Info size={18} className="text-gray-400 cursor-help" />
               </div>
               <div className="h-40 w-full rounded-lg flex items-center justify-center relative bg-gradient-to-b from-[#135bec]/5 to-transparent">
@@ -326,7 +326,7 @@ const SprintManagement = () => {
             {/* Velocity Graph */}
             <div className="bg-white dark:bg-[#1a2234] rounded-xl border border-gray-200 dark:border-gray-800 p-5 shadow-sm">
               <div className="flex items-center justify-between mb-6">
-                <h3 className="font-bold">Velocity Graph</h3>
+                <h3 className="font-bold dark:text-white">Velocity Graph</h3>
                 <div className="flex gap-1">
                   <div className="w-2.5 h-2.5 rounded-full bg-[#135bec]/30"></div>
                   <div className="w-2.5 h-2.5 rounded-full bg-[#135bec]"></div>
@@ -388,7 +388,7 @@ const SprintManagement = () => {
                     )}
                     <span className={`text-sm ${
                       goal.completed 
-                        ? 'text-gray-500 line-through' 
+                        ? 'text-gray-500 dark:text-gray-400 line-through' 
                         : 'text-gray-700 dark:text-gray-300'
                     }`}>
                       {goal.text}
@@ -401,7 +401,7 @@ const SprintManagement = () => {
         </div>
 
         {/* Footer / Status Bar */}
-        <footer className="bg-white dark:bg-[#1a2234] border-t border-gray-200 dark:border-gray-800 px-6 py-2 flex items-center justify-between text-[11px] font-medium text-gray-500 shrink-0">
+        <footer className="bg-white dark:bg-[#1a2234] border-t border-gray-200 dark:border-gray-800 px-6 py-2 flex items-center justify-between text-[11px] font-medium text-gray-500 dark:text-gray-400 shrink-0">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-1.5">
               <span className="w-2 h-2 bg-emerald-500 rounded-full"></span>
@@ -426,7 +426,7 @@ const SprintManagement = () => {
                 </div>
                 <div>
                   <h2 className="text-xl font-bold">Sprint Settings</h2>
-                  <p className="text-sm text-gray-500">Configure sprint details and parameters</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Configure sprint details and parameters</p>
                 </div>
               </div>
               <button 
@@ -495,7 +495,7 @@ const SprintManagement = () => {
                   className="w-full px-4 py-2.5 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#135bec] focus:border-[#135bec] transition-all resize-none"
                   placeholder="Define the primary objective for this sprint..."
                 />
-                <p className="mt-2 text-xs text-gray-500">Clear, measurable goal that defines sprint success</p>
+                <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">Clear, measurable goal that defines sprint success</p>
               </div>
 
               {/* Team Capacity */}

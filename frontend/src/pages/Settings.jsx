@@ -222,25 +222,25 @@ const Settings = () => {
   };
 
   return (
-    <div className={`flex h-screen w-full ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'}`}>
+    <div className="flex h-screen w-full bg-gray-50 dark:bg-[#111418]">
       <Sidebar />
 
-      <main className={`flex-1 flex flex-col h-full w-full min-w-0 ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'} overflow-hidden`}>
+      <main className="flex-1 flex flex-col h-full w-full min-w-0 bg-gray-50 dark:bg-[#111418] overflow-hidden">
         {/* Header */}
-        <header className={`border-b ${theme === 'dark' ? 'border-[#282f39] bg-[#111418]' : 'border-gray-200 bg-white'} shrink-0`}>
+        <header className="border-b border-gray-200 dark:border-[#282f39] bg-white dark:bg-[#111418] shrink-0">
           <div className="flex items-center justify-between px-6 py-4">
             <div className="flex items-center gap-4">
               {/* Mobile Menu Button */}
               <button
                 onClick={toggleMobileSidebar}
-                className={`lg:hidden ${theme === 'dark' ? 'text-[#9da8b9] hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}
+                className="lg:hidden text-gray-600 dark:text-[#9da8b9] hover:text-gray-900 dark:hover:text-white transition-colors"
                 aria-label="Toggle menu"
               >
                 <Menu size={24} />
               </button>
               <div>
-                <h2 className={`${theme === 'dark' ? 'text-white' : 'text-gray-900'} text-xl font-bold leading-tight`}>Settings</h2>
-                <p className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} text-xs mt-1`}>Customize your AetherTrack experience</p>
+                <h2 className="text-gray-900 dark:text-white text-xl font-bold leading-tight">Settings</h2>
+                <p className="text-gray-600 dark:text-[#9da8b9] text-xs mt-1">Customize your AetherTrack experience</p>
               </div>
             </div>
           </div>
@@ -250,15 +250,15 @@ const Settings = () => {
         <div className="flex-1 overflow-auto p-6">
           <div className="max-w-4xl mx-auto space-y-6">
             {/* Profile Section */}
-            <div className={`${theme === 'dark' ? 'bg-[#1c2027] border-[#282f39]' : 'bg-white border-gray-200'} rounded border p-6`}>
+            <div className="bg-white dark:bg-[#1c2027] border-gray-200 dark:border-[#282f39] rounded border p-6">
               <div className="flex items-center gap-3 mb-6">
                 <User className={currentColorScheme.primaryText} size={24} />
-                <h3 className={`text-lg font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} uppercase tracking-wider`}>Profile</h3>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white uppercase tracking-wider">Profile</h3>
               </div>
 
               {/* Profile Picture Section */}
               <div className="mb-6">
-                <label className={`block text-xs font-bold ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} uppercase tracking-wider mb-3`}>
+                <label className="block text-xs font-bold text-gray-600 dark:text-[#9da8b9] uppercase tracking-wider mb-3">
                   Profile Picture
                 </label>
                 <div className="flex items-center gap-6">
@@ -315,7 +315,7 @@ const Settings = () => {
                         <span>Remove</span>
                       </button>
                     )}
-                    <p className={`text-xs ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-500'}`}>
+                    <p className="text-xs text-gray-500 dark:text-[#9da8b9]">
                       JPEG, PNG, GIF or WebP. Max 2MB.
                     </p>
                   </div>
@@ -335,67 +335,72 @@ const Settings = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className={`block text-xs font-bold ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} uppercase tracking-wider mb-2`}>Full Name</label>
+                  <label htmlFor="profile-full-name" className="block text-xs font-bold text-gray-600 dark:text-[#9da8b9] uppercase tracking-wider mb-2">Full Name</label>
                   <input
+                    id="profile-full-name"
                     type="text"
                     value={user?.full_name || ''}
                     readOnly
-                    className={`w-full px-3 py-2 ${theme === 'dark' ? 'bg-[#111418] border-[#282f39] text-white' : 'bg-gray-50 border-gray-300 text-gray-900'} border rounded`}
+                    className="w-full px-3 py-2 bg-gray-50 dark:bg-[#111418] border-gray-300 dark:border-[#282f39] text-gray-900 dark:text-white border rounded"
                   />
                 </div>
                 <div>
-                  <label className={`block text-xs font-bold ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} uppercase tracking-wider mb-2`}>Email</label>
+                  <label htmlFor="profile-email" className="block text-xs font-bold text-gray-600 dark:text-[#9da8b9] uppercase tracking-wider mb-2">Email</label>
                   <input
+                    id="profile-email"
                     type="email"
                     value={user?.email || ''}
                     readOnly
-                    className={`w-full px-3 py-2 ${theme === 'dark' ? 'bg-[#111418] border-[#282f39] text-white' : 'bg-gray-50 border-gray-300 text-gray-900'} border rounded`}
+                    className="w-full px-3 py-2 bg-gray-50 dark:bg-[#111418] border-gray-300 dark:border-[#282f39] text-gray-900 dark:text-white border rounded"
                   />
                 </div>
                 <div>
-                  <label className={`block text-xs font-bold ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} uppercase tracking-wider mb-2`}>Role</label>
+                  <label htmlFor="profile-role" className="block text-xs font-bold text-gray-600 dark:text-[#9da8b9] uppercase tracking-wider mb-2">Role</label>
                   <input
+                    id="profile-role"
                     type="text"
                     value={user?.role?.replace('_', ' ') || ''}
                     readOnly
-                    className={`w-full px-3 py-2 ${theme === 'dark' ? 'bg-[#111418] border-[#282f39] text-white' : 'bg-gray-50 border-gray-300 text-gray-900'} border rounded capitalize`}
+                    className="w-full px-3 py-2 bg-gray-50 dark:bg-[#111418] border-gray-300 dark:border-[#282f39] text-gray-900 dark:text-white border rounded capitalize"
                   />
                 </div>
                 <div>
-                  <label className={`block text-xs font-bold ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} uppercase tracking-wider mb-2`}>Member Since</label>
+                  <label htmlFor="profile-member-since" className="block text-xs font-bold text-gray-600 dark:text-[#9da8b9] uppercase tracking-wider mb-2">Member Since</label>
                   <input
+                    id="profile-member-since"
                     type="text"
                     value={user?.created_at ? new Date(user.created_at).toLocaleDateString() : ''}
                     readOnly
-                    className={`w-full px-3 py-2 ${theme === 'dark' ? 'bg-[#111418] border-[#282f39] text-white' : 'bg-gray-50 border-gray-300 text-gray-900'} border rounded`}
+                    className="w-full px-3 py-2 bg-gray-50 dark:bg-[#111418] border-gray-300 dark:border-[#282f39] text-gray-900 dark:text-white border rounded"
                   />
                 </div>
               </div>
             </div>
 
             {/* Security Section */}
-            <div className={`${theme === 'dark' ? 'bg-[#1c2027] border-[#282f39]' : 'bg-white border-gray-200'} rounded border p-6`}>
+            <div className="bg-white dark:bg-[#1c2027] border-gray-200 dark:border-[#282f39] rounded border p-6">
               <div className="flex items-center gap-3 mb-6">
                 <Lock className={currentColorScheme.primaryText} size={24} />
-                <h3 className={`text-lg font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} uppercase tracking-wider`}>Security</h3>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white uppercase tracking-wider">Security</h3>
               </div>
               <form onSubmit={handlePasswordChange} className="space-y-4">
                 <div>
-                  <label className={`block text-xs font-bold ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} uppercase tracking-wider mb-2`}>
+                  <label htmlFor="current-password" className="block text-xs font-bold text-gray-600 dark:text-[#9da8b9] uppercase tracking-wider mb-2">
                     Current Password
                   </label>
                   <div className="relative">
                     <input
+                      id="current-password"
                       type={showOldPassword ? "text" : "password"}
                       value={passwordData.oldPassword}
                       onChange={(e) => setPasswordData({ ...passwordData, oldPassword: e.target.value })}
-                      className={`w-full px-3 py-2 pr-10 ${theme === 'dark' ? 'bg-[#111418] border-[#282f39] text-white' : 'bg-white border-gray-300 text-gray-900'} border rounded focus:ring-2 ${currentColorScheme.primaryText.replace('text-', 'focus:ring-')} focus:border-transparent`}
+                      className={`w-full px-3 py-2 pr-10 bg-white dark:bg-[#111418] border-gray-300 dark:border-[#282f39] text-gray-900 dark:text-white border rounded focus:ring-2 ${currentColorScheme.primaryText.replace('text-', 'focus:ring-')} focus:border-transparent`}
                       required
                     />
                     <button
                       type="button"
                       onClick={() => setShowOldPassword(!showOldPassword)}
-                      className={`absolute right-2 top-1/2 -translate-y-1/2 ${theme === 'dark' ? 'text-[#9da8b9] hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-600 dark:text-[#9da8b9] hover:text-gray-900 dark:hover:text-white"
                     >
                       {showOldPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                     </button>
@@ -403,22 +408,23 @@ const Settings = () => {
                 </div>
 
                 <div>
-                  <label className={`block text-xs font-bold ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} uppercase tracking-wider mb-2`}>
+                  <label htmlFor="new-password" className="block text-xs font-bold text-gray-600 dark:text-[#9da8b9] uppercase tracking-wider mb-2">
                     New Password
                   </label>
                   <div className="relative">
                     <input
+                      id="new-password"
                       type={showNewPassword ? "text" : "password"}
                       value={passwordData.newPassword}
                       onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
-                      className={`w-full px-3 py-2 pr-10 ${theme === 'dark' ? 'bg-[#111418] border-[#282f39] text-white' : 'bg-white border-gray-300 text-gray-900'} border rounded focus:ring-2 ${currentColorScheme.primaryText.replace('text-', 'focus:ring-')} focus:border-transparent`}
+                      className={`w-full px-3 py-2 pr-10 bg-white dark:bg-[#111418] border-gray-300 dark:border-[#282f39] text-gray-900 dark:text-white border rounded focus:ring-2 ${currentColorScheme.primaryText.replace('text-', 'focus:ring-')} focus:border-transparent`}
                       required
                       minLength={6}
                     />
                     <button
                       type="button"
                       onClick={() => setShowNewPassword(!showNewPassword)}
-                      className={`absolute right-2 top-1/2 -translate-y-1/2 ${theme === 'dark' ? 'text-[#9da8b9] hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-600 dark:text-[#9da8b9] hover:text-gray-900 dark:hover:text-white"
                     >
                       {showNewPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                     </button>
@@ -426,22 +432,23 @@ const Settings = () => {
                 </div>
 
                 <div>
-                  <label className={`block text-xs font-bold ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} uppercase tracking-wider mb-2`}>
+                  <label htmlFor="confirm-password" className="block text-xs font-bold text-gray-600 dark:text-[#9da8b9] uppercase tracking-wider mb-2">
                     Confirm New Password
                   </label>
                   <div className="relative">
                     <input
+                      id="confirm-password"
                       type={showConfirmPassword ? "text" : "password"}
                       value={passwordData.confirmPassword}
                       onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
-                      className={`w-full px-3 py-2 pr-10 ${theme === 'dark' ? 'bg-[#111418] border-[#282f39] text-white' : 'bg-white border-gray-300 text-gray-900'} border rounded focus:ring-2 ${currentColorScheme.primaryText.replace('text-', 'focus:ring-')} focus:border-transparent`}
+                      className={`w-full px-3 py-2 pr-10 bg-white dark:bg-[#111418] border-gray-300 dark:border-[#282f39] text-gray-900 dark:text-white border rounded focus:ring-2 ${currentColorScheme.primaryText.replace('text-', 'focus:ring-')} focus:border-transparent`}
                       required
                       minLength={6}
                     />
                     <button
                       type="button"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className={`absolute right-2 top-1/2 -translate-y-1/2 ${theme === 'dark' ? 'text-[#9da8b9] hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-600 dark:text-[#9da8b9] hover:text-gray-900 dark:hover:text-white"
                     >
                       {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                     </button>
@@ -469,26 +476,26 @@ const Settings = () => {
             </div>
 
             {/* Appearance Section */}
-            <div className={`${theme === 'dark' ? 'bg-[#1c2027] border-[#282f39]' : 'bg-white border-gray-200'} rounded border p-6`}>
+            <div className="bg-white dark:bg-[#1c2027] border-gray-200 dark:border-[#282f39] rounded border p-6">
               <div className="flex items-center gap-3 mb-6">
                 <Palette className={currentColorScheme.primaryText} size={24} />
-                <h3 className={`text-lg font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} uppercase tracking-wider`}>Appearance</h3>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white uppercase tracking-wider">Appearance</h3>
               </div>
               <div className="space-y-6">
                 <div>
-                  <h4 className={`text-sm font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-4`}>Theme & Color Scheme</h4>
-                  <p className={`text-sm ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} mb-4`}>
+                  <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">Theme & Color Scheme</h4>
+                  <p className="text-sm text-gray-600 dark:text-[#9da8b9] mb-4">
                     Customize how AetherTrack looks and feels. Changes are saved automatically.
                   </p>
                   <ThemeToggle />
                 </div>
 
-                <div className={`border-t ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} pt-6`}>
+                <div className="border-t border-gray-200 dark:border-[#282f39] pt-6">
                   <div className="flex items-center gap-3">
-                    <Monitor className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`} size={20} />
+                    <Monitor className="text-gray-600 dark:text-[#9da8b9]" size={20} />
                     <div>
-                      <h4 className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} text-sm`}>System Integration</h4>
-                      <p className={`text-xs ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} mt-1`}>
+                      <h4 className="font-medium text-gray-900 dark:text-white text-sm">System Integration</h4>
+                      <p className="text-xs text-gray-600 dark:text-[#9da8b9] mt-1">
                         Your theme preferences are automatically synced across devices and saved locally.
                       </p>
                     </div>
@@ -498,71 +505,71 @@ const Settings = () => {
             </div>
 
             {/* Preferences Section */}
-            <div className={`${theme === 'dark' ? 'bg-[#1c2027] border-[#282f39]' : 'bg-white border-gray-200'} rounded border p-6`}>
+            <div className="bg-white dark:bg-[#1c2027] border-gray-200 dark:border-[#282f39] rounded border p-6">
               <div className="flex items-center gap-3 mb-6">
                 <SettingsIcon className={currentColorScheme.primaryText} size={24} />
-                <h3 className={`text-lg font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} uppercase tracking-wider`}>Preferences</h3>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white uppercase tracking-wider">Preferences</h3>
               </div>
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h4 className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} text-sm`}>Email Notifications</h4>
-                    <p className={`text-xs ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} mt-1`}>Receive email updates about your tasks</p>
+                    <h4 className="font-medium text-gray-900 dark:text-white text-sm">Email Notifications</h4>
+                    <p className="text-xs text-gray-600 dark:text-[#9da8b9] mt-1">Receive email updates about your tasks</p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input type="checkbox" className="sr-only peer" defaultChecked />
-                    <div className={`w-11 h-6 ${theme === 'dark' ? 'bg-[#282f39] border-[#3e454f]' : 'bg-gray-200 border-gray-300'} peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all border ${currentColorScheme.primary.replace('bg-', 'peer-checked:bg-')}`}></div>
+                    <div className={`w-11 h-6 bg-gray-200 dark:bg-[#282f39] border-gray-300 dark:border-[#3e454f] peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all border ${currentColorScheme.primary.replace('bg-', 'peer-checked:bg-')}`}></div>
                   </label>
                 </div>
 
                 <div className="flex items-center justify-between">
                   <div>
-                    <h4 className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} text-sm`}>Task Reminders</h4>
-                    <p className={`text-xs ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} mt-1`}>Get reminded about upcoming due dates</p>
+                    <h4 className="font-medium text-gray-900 dark:text-white text-sm">Task Reminders</h4>
+                    <p className="text-xs text-gray-600 dark:text-[#9da8b9] mt-1">Get reminded about upcoming due dates</p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input type="checkbox" className="sr-only peer" defaultChecked />
-                    <div className={`w-11 h-6 ${theme === 'dark' ? 'bg-[#282f39] border-[#3e454f]' : 'bg-gray-200 border-gray-300'} peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all border ${currentColorScheme.primary.replace('bg-', 'peer-checked:bg-')}`}></div>
+                    <div className={`w-11 h-6 bg-gray-200 dark:bg-[#282f39] border-gray-300 dark:border-[#3e454f] peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all border ${currentColorScheme.primary.replace('bg-', 'peer-checked:bg-')}`}></div>
                   </label>
                 </div>
               </div>
             </div>
 
             {/* Notification Settings */}
-            <div className={`${theme === 'dark' ? 'bg-[#1c2027] border-[#282f39]' : 'bg-white border-gray-200'} rounded border p-6`}>
+            <div className="bg-white dark:bg-[#1c2027] border-gray-200 dark:border-[#282f39] rounded border p-6">
               <div className="flex items-center gap-3 mb-6">
                 <Bell className={currentColorScheme.primaryText} size={24} />
-                <h3 className={`text-lg font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} uppercase tracking-wider`}>Notifications</h3>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white uppercase tracking-wider">Notifications</h3>
               </div>
               <NotificationSettings />
             </div>
 
             {/* Debug Info - Admin Only */}
             {user?.role === 'admin' && (
-              <div className={`${theme === 'dark' ? 'bg-[#1c2027] border-[#282f39]' : 'bg-white border-gray-200'} rounded border p-6`}>
+              <div className="bg-white dark:bg-[#1c2027] border-gray-200 dark:border-[#282f39] rounded border p-6">
                 <div className="flex items-center gap-3 mb-4">
                   <AlertCircle className="text-yellow-500" size={24} />
-                  <h3 className={`text-sm font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} uppercase tracking-wider`}>Notification Debug (Admin Only)</h3>
+                  <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider">Notification Debug (Admin Only)</h3>
                 </div>
                 <div className="space-y-2 text-xs font-mono">
                   <div className="grid grid-cols-2 gap-2">
-                    <span className={theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}>Browser Support:</span>
-                    <span className={theme === 'dark' ? 'text-white' : 'text-gray-900'}>
+                    <span className="text-gray-600 dark:text-[#9da8b9]">Browser Support:</span>
+                    <span className="text-gray-900 dark:text-white">
                       {'Notification' in window ? '✅ Supported' : '❌ Not Supported'}
                     </span>
                     
-                    <span className={theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}>Permission:</span>
-                    <span className={theme === 'dark' ? 'text-white' : 'text-gray-900'}>
+                    <span className="text-gray-600 dark:text-[#9da8b9]">Permission:</span>
+                    <span className="text-gray-900 dark:text-white">
                       {typeof Notification !== 'undefined' ? Notification.permission : 'N/A'}
                     </span>
                     
-                    <span className={theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}>Service Worker:</span>
-                    <span className={theme === 'dark' ? 'text-white' : 'text-gray-900'}>
+                    <span className="text-gray-600 dark:text-[#9da8b9]">Service Worker:</span>
+                    <span className="text-gray-900 dark:text-white">
                       {'serviceWorker' in navigator ? '✅ Available' : '❌ Not Available'}
                     </span>
                     
-                    <span className={theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}>SW Registered:</span>
-                    <span className={theme === 'dark' ? 'text-white' : 'text-gray-900'}>
+                    <span className="text-gray-600 dark:text-[#9da8b9]">SW Registered:</span>
+                    <span className="text-gray-900 dark:text-white">
                       {navigator.serviceWorker?.controller ? '✅ Yes' : '⚠️ No'}
                     </span>
                   </div>
@@ -582,30 +589,30 @@ const Settings = () => {
 
             {/* Danger Zone - Community Admin Only */}
             {user?.role === 'community_admin' && (
-              <div className={`${theme === 'dark' ? 'bg-red-950/20 border-red-900/50' : 'bg-red-50 border-red-200'} rounded border p-6`}>
+              <div className="bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-900/50 rounded border p-6">
                 <div className="flex items-center gap-3 mb-4">
                   <AlertTriangle className="text-red-500" size={24} />
-                  <h3 className={`text-lg font-bold ${theme === 'dark' ? 'text-red-400' : 'text-red-700'} uppercase tracking-wider`}>Danger Zone</h3>
+                  <h3 className="text-lg font-bold text-red-700 dark:text-red-400 uppercase tracking-wider">Danger Zone</h3>
                 </div>
                 
-                <div className={`${theme === 'dark' ? 'bg-red-950/40 border-red-900' : 'bg-white border-red-200'} border rounded-lg p-5`}>
+                <div className="bg-white dark:bg-red-950/40 border-red-200 dark:border-red-900 border rounded-lg p-5">
                   <div className="flex items-start gap-4">
                     <div className="flex-shrink-0">
                       <Trash2 className="text-red-500" size={28} />
                     </div>
                     <div className="flex-1">
-                      <h4 className={`font-bold text-base ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2`}>
+                      <h4 className="font-bold text-base text-gray-900 dark:text-white mb-2">
                         Delete Workspace & Account
                       </h4>
-                      <p className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} mb-3 leading-relaxed`}>
+                      <p className="text-sm text-gray-700 dark:text-gray-300 mb-3 leading-relaxed">
                         Permanently delete your workspace "<strong>{user?.workspace?.name}</strong>" and your account.
                       </p>
-                      <div className={`${theme === 'dark' ? 'bg-red-950/60' : 'bg-red-50'} border ${theme === 'dark' ? 'border-red-900' : 'border-red-200'} rounded-lg p-4 mb-4`}>
-                        <p className={`font-semibold ${theme === 'dark' ? 'text-red-400' : 'text-red-700'} mb-2 flex items-center gap-2`}>
+                      <div className="bg-red-50 dark:bg-red-950/60 border-red-200 dark:border-red-900 border rounded-lg p-4 mb-4">
+                        <p className="font-semibold text-red-700 dark:text-red-400 mb-2 flex items-center gap-2">
                           <AlertTriangle size={16} />
                           This action will permanently delete:
                         </p>
-                        <ul className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'} space-y-1.5 ml-6 list-disc`}>
+                        <ul className="text-sm text-gray-700 dark:text-gray-300 space-y-1.5 ml-6 list-disc">
                           <li>Your account and login credentials</li>
                           <li>All users in this workspace</li>
                           <li>All tasks and projects</li>
@@ -614,21 +621,21 @@ const Settings = () => {
                           <li>All settings and configurations</li>
                           <li>All activity history and logs</li>
                         </ul>
-                        <p className={`text-sm ${theme === 'dark' ? 'text-red-400' : 'text-red-700'} mt-3 font-bold`}>
+                        <p className="text-sm text-red-700 dark:text-red-400 mt-3 font-bold">
                           ⚠️ This action cannot be undone! All data will be lost forever.
                         </p>
                       </div>
                       <button
                         onClick={handleDeleteWorkspace}
-                        className={`
+                        className="
                           px-6 py-3 rounded-lg font-semibold text-sm
                           bg-red-600 hover:bg-red-700 text-white
                           transition-all duration-200
                           flex items-center gap-2
                           shadow-lg hover:shadow-xl
                           focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2
-                          ${theme === 'dark' ? 'focus:ring-offset-[#111418]' : 'focus:ring-offset-white'}
-                        `}
+                          focus:ring-offset-white dark:focus:ring-offset-[#111418]
+                        "
                       >
                         <Trash2 size={18} />
                         Delete My Workspace & Account

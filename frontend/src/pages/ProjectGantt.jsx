@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import Sidebar from '../components/Sidebar';
@@ -7,8 +7,11 @@ import api from '../api/axios';
 import * as XLSX from 'xlsx';
 import {
   Plus, Share2, Calendar, ChevronRight, Check, Loader, Database,
-  Lock, MoreHorizontal, ChevronDown, Filter, Download, FileSpreadsheet, X
+  Lock, MoreHorizontal, ChevronDown, Filter, Download, FileSpreadsheet, X, History, AlertCircle
 } from 'lucide-react';
+import { normalizeGanttData, recalculateForZoom, buildDependencyArrows } from '../utils/ganttNormalization.js';
+import { formatDate, isToday, isWeekend } from '../utils/dateNormalization.js';
+import { DebugOverlay, logNormalizedDataSummary } from '../utils/ganttDebugger.jsx';
 
 const ProjectGantt = () => {
   const navigate = useNavigate();
@@ -77,6 +80,40 @@ const ProjectGantt = () => {
     setFilteredTasks(filtered);
   };
 
+  // Get pixels per day based on time scale
+  const getPixelsPerDay = () => {
+    switch (timeScale) {
+      case 'day': return 40;
+      case 'week': return 8;
+      case 'month': return 3;
+      case 'quarter': return 1;
+      default: return 8;
+    }
+  };
+
+  // Main normalization pipeline - runs when tasks or zoom level changes
+  const ganttData = useMemo(() => {
+    if (filteredTasks.length === 0) {
+      return {
+        scheduledTasks: [],
+        unscheduledTasks: [],
+        timelineRange: { startDate: new Date(), endDate: new Date() },
+        pixelsPerDay: getPixelsPerDay(),
+        todayMarker: { position: 0, visible: false, date: new Date() },
+        metadata: { totalTasks: 0, scheduledCount: 0, unscheduledCount: 0, validationErrors: [], hasErrors: false }
+      };
+    }
+
+    const normalized = normalizeGanttData(filteredTasks, {
+      pixelsPerDay: getPixelsPerDay()
+    });
+
+    // Log debug summary if enabled
+    logNormalizedDataSummary(normalized);
+
+    return normalized;
+  }, [filteredTasks, timeScale]);
+
   const fetchData = async () => {
     try {
       setLoading(true);
@@ -132,12 +169,11 @@ const ProjectGantt = () => {
   };
 
   const getDuration = (task) => {
-    if (!task.start_date || !task.due_date) return 'N/A';
-    const start = new Date(task.start_date);
-    const end = new Date(task.due_date);
-    const diffTime = Math.abs(end - start);
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return `${diffDays} days`;
+    // Use pre-computed duration from normalized data
+    if (task.duration_days) {
+      return `${task.duration_days} days`;
+    }
+    return 'N/A';
   };
 
   const getUserInitials = (name) => {
@@ -149,194 +185,114 @@ const ProjectGantt = () => {
     return name.substring(0, 2).toUpperCase();
   };
 
-  const getTaskBarColor = (status) => {
-    switch (status) {
-      case 'done':
-        return 'bg-emerald-500';
-      case 'in_progress':
-        return currentColorScheme.primary;
-      case 'review':
-        return 'bg-purple-500';
-      default:
-        return 'bg-slate-400/40 border border-slate-400';
+  const getTaskBarColor = (task) => {
+    if (task.is_critical && showCriticalPath) return 'bg-rose-600';
+    switch (task.status) {
+      case 'done':        return 'bg-emerald-500';
+      case 'in_progress': return currentColorScheme.primary;
+      case 'review':      return 'bg-purple-500';
+      default:            return 'bg-slate-400/40 border border-slate-400';
     }
   };
 
-  // Calculate timeline range based on tasks
-  const getTimelineRange = () => {
-    if (filteredTasks.length === 0) {
-      const today = new Date();
-      const startDate = new Date(today);
-      startDate.setDate(1); // Start of current month
-      const endDate = new Date(today);
-      endDate.setMonth(endDate.getMonth() + 3);
-      return { startDate, endDate };
-    }
+  // Build dependency arrows for SVG overlay
+  const dependencyArrows = useMemo(
+    () => buildDependencyArrows(ganttData.scheduledTasks ?? [], 48),
+    [ganttData.scheduledTasks]
+  );
 
-    const dates = filteredTasks
-      .filter(t => t.start_date || t.due_date)
-      .flatMap(t => [t.start_date, t.due_date].filter(Boolean))
-      .map(d => new Date(d));
+  // Extract normalized data (already computed in useMemo above)
+  const { scheduledTasks, unscheduledTasks, timelineRange, pixelsPerDay, todayMarker } = ganttData;
 
-    if (dates.length === 0) {
-      const today = new Date();
-      const startDate = new Date(today);
-      startDate.setDate(1);
-      const endDate = new Date(today);
-      endDate.setMonth(endDate.getMonth() + 3);
-      return { startDate, endDate };
-    }
-
-    const minDate = new Date(Math.min(...dates));
-    const maxDate = new Date(Math.max(...dates));
-
-    // Add padding
-    const startDate = new Date(minDate);
-    startDate.setDate(startDate.getDate() - 7);
-    const endDate = new Date(maxDate);
-    endDate.setDate(endDate.getDate() + 14);
-
-    return { startDate, endDate };
-  };
-
-  const timelineRange = getTimelineRange();
-
-  // Get day width based on time scale
-  const getDayWidth = () => {
-    switch (timeScale) {
-      case 'day': return 40;
-      case 'week': return 8;
-      case 'month': return 3;
-      case 'quarter': return 1;
-      default: return 8;
-    }
-  };
-
-  const dayWidth = getDayWidth();
-
-  // Debug: Log filtered tasks
-  console.log('Filtered tasks:', filteredTasks.length, filteredTasks);
-  console.log('Timeline range:', timelineRange);
-  console.log('Day width:', dayWidth);
-
-  const getTaskBarWidth = (task) => {
-    if (!task.start_date || !task.due_date) {
-      console.log('Task missing dates:', task.title, task);
-      return 0;
-    }
-    const start = new Date(task.start_date);
-    const end = new Date(task.due_date);
-    const diffDays = Math.max(1, Math.ceil((end - start) / (1000 * 60 * 60 * 24)));
-    const width = diffDays * dayWidth;
-    console.log('Task bar width:', task.title, 'days:', diffDays, 'width:', width);
-    return width;
-  };
-
-  const getTaskBarPosition = (task) => {
-    if (!task.start_date) {
-      console.log('Task missing start_date:', task.title);
-      return 0;
-    }
-    const taskStart = new Date(task.start_date);
-    const { startDate } = timelineRange;
-    const diffDays = Math.floor((taskStart - startDate) / (1000 * 60 * 60 * 24));
-    const position = Math.max(0, diffDays * dayWidth);
-    console.log('Task position:', task.title, 'start:', taskStart.toDateString(), 'timeline start:', startDate.toDateString(), 'position:', position);
-    return position;
-  };
-
-  // Generate timeline headers based on time scale
+  // Generate timeline headers based on time scale.
+  // All arithmetic is UTC to match task bar pixel positions.
   const generateTimelineHeaders = () => {
-    const { startDate, endDate } = timelineRange;
-    const headers = [];
+    if (!timelineRange?.startDate || !timelineRange?.endDate) {
+      return { headers: [], dayHeaders: [] };
+    }
+
+    const MS  = 86_400_000; // ms per day
+    const rangeStart = timelineRange.startDate;
+    const rangeEnd   = timelineRange.endDate;
+
+    // Pixel offset for any UTC-midnight date (same formula as buildRenderModel)
+    const toPixel = (d) =>
+      Math.max(0, Math.floor((d.getTime() - rangeStart.getTime()) / MS) * pixelsPerDay);
+
+    // First day of the month containing d (UTC)
+    const utcMonthStart = (d) =>
+      new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1));
+
+    // First day of the NEXT month (UTC)
+    const utcNextMonth = (d) =>
+      new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 1));
+
+    const DOW = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+    const headers    = [];
     const dayHeaders = [];
 
+    // ── shared: build one header entry per month spanning the range ──
+    const buildMonthHeaders = (labelFmt) => {
+      let mStart = utcMonthStart(rangeStart);
+      while (mStart <= rangeEnd) {
+        const mEnd    = new Date(utcNextMonth(mStart).getTime() - MS); // last day of month
+        // Clamp to visible range
+        const visStart = mStart < rangeStart ? rangeStart : mStart;
+        const visEnd   = mEnd   > rangeEnd   ? rangeEnd   : mEnd;
+
+        // Width = pixels from start of this month slice to start of next day after end
+        const widthPx = toPixel(new Date(visEnd.getTime() + MS)) - toPixel(visStart);
+
+        if (widthPx > 0) {
+          headers.push({
+            label: visStart.toLocaleDateString('en-US', { ...labelFmt, timeZone: 'UTC' }),
+            width: widthPx,
+            start: visStart
+          });
+        }
+
+        mStart = utcNextMonth(mStart);
+      }
+    };
+
     if (timeScale === 'day') {
-      let current = new Date(startDate);
-      let currentMonth = null;
+      buildMonthHeaders({ month: 'long', year: 'numeric' });
 
-      while (current <= endDate) {
-        const monthKey = `${current.getFullYear()}-${current.getMonth()}`;
-        
-        if (monthKey !== currentMonth) {
-          const monthStart = new Date(current);
-          let monthEnd = new Date(current.getFullYear(), current.getMonth() + 1, 0);
-          if (monthEnd > endDate) monthEnd = new Date(endDate);
-          
-          const daysInView = Math.ceil((monthEnd - monthStart) / (1000 * 60 * 60 * 24)) + 1;
-          
-          headers.push({
-            label: monthStart.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
-            width: daysInView * dayWidth,
-            start: monthStart
-          });
-          
-          currentMonth = monthKey;
-        }
-
+      // One cell per calendar day
+      let d = new Date(rangeStart);
+      while (d <= rangeEnd) {
+        const dow = d.getUTCDay();
         dayHeaders.push({
-          label: current.getDate(),
-          day: current.toLocaleDateString('en-US', { weekday: 'short' }),
-          isWeekend: current.getDay() === 0 || current.getDay() === 6,
-          isToday: current.toDateString() === new Date().toDateString()
+          label:     d.getUTCDate(),
+          day:       DOW[dow],
+          isWeekend: dow === 0 || dow === 6,
+          isToday:   isToday(d)
         });
-
-        current.setDate(current.getDate() + 1);
+        d = new Date(d.getTime() + MS);
       }
+
     } else if (timeScale === 'week') {
-      let current = new Date(startDate);
-      let currentMonth = null;
+      buildMonthHeaders({ month: 'long', year: 'numeric' });
 
-      while (current <= endDate) {
-        const monthKey = `${current.getFullYear()}-${current.getMonth()}`;
-        
-        if (monthKey !== currentMonth) {
-          const monthStart = new Date(current);
-          let monthEnd = new Date(current.getFullYear(), current.getMonth() + 1, 0);
-          if (monthEnd > endDate) monthEnd = new Date(endDate);
-          
-          const daysInMonth = Math.ceil((monthEnd - monthStart) / (1000 * 60 * 60 * 24)) + 1;
-          
-          headers.push({
-            label: monthStart.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
-            width: daysInMonth * dayWidth,
-            start: monthStart
-          });
-          
-          currentMonth = monthKey;
-        }
-
-        current.setDate(current.getDate() + 1);
-      }
-
-      // Generate week day markers (every 7 days)
-      current = new Date(startDate);
-      while (current <= endDate) {
+      // One cell per week — label shows "MMM D" of the week's Monday (or range start)
+      let w = new Date(rangeStart);
+      while (w <= rangeEnd) {
+        const dow = w.getUTCDay();
         dayHeaders.push({
-          label: current.getDate(),
-          isWeekend: current.getDay() === 0 || current.getDay() === 6
+          label:     w.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' }),
+          isWeekend: dow === 0 || dow === 6,
+          date:      new Date(w)
         });
-        current.setDate(current.getDate() + 7);
+        w = new Date(w.getTime() + 7 * MS);
       }
+
+    } else if (timeScale === 'month') {
+      buildMonthHeaders({ month: 'short', year: 'numeric' });
+
     } else {
-      // Month or Quarter view
-      let current = new Date(startDate);
-      current.setDate(1);
-
-      while (current <= endDate) {
-        const nextMonth = new Date(current);
-        nextMonth.setMonth(nextMonth.getMonth() + 1);
-        
-        const daysInMonth = Math.ceil((nextMonth - current) / (1000 * 60 * 60 * 24));
-        
-        headers.push({
-          label: current.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
-          width: daysInMonth * dayWidth,
-          start: new Date(current)
-        });
-
-        current = nextMonth;
-      }
+      // Quarter view — month cells in top row, quarter label above (use month abbreviations)
+      buildMonthHeaders({ month: 'short' });
     }
 
     return { headers, dayHeaders };
@@ -432,7 +388,7 @@ const ProjectGantt = () => {
         {/* Top Navigation Bar */}
         <header className="h-16 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1a2234] flex items-center justify-between px-8 shrink-0">
           <div className="flex items-center gap-4">
-            <nav className="flex items-center gap-2 text-sm text-gray-500">
+            <nav className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
               <button onClick={() => navigate('/projects')} className={`${currentColorScheme.primaryText.replace('text-', 'hover:text-')} transition-colors`}>
                 Projects
               </button>
@@ -494,6 +450,13 @@ const ProjectGantt = () => {
                 </div>
               )}
             </div>
+            <button 
+              onClick={() => navigate('/changelog')}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 text-sm font-medium transition-colors"
+            >
+              <History size={18} />
+              View History
+            </button>
             <button className={`${currentColorScheme.primary} text-white text-sm font-semibold px-4 py-2 rounded-lg flex items-center gap-2 shadow-sm ${currentColorScheme.primaryHover}`}>
               <Plus size={18} />
               New Task
@@ -596,8 +559,8 @@ const ProjectGantt = () => {
         <div className="bg-white dark:bg-[#1a2234] border-b border-gray-200 dark:border-gray-800 px-8 py-4 shrink-0">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h1 className="text-2xl font-bold">{project?.name || 'Project Timeline'}</h1>
-              <p className="text-sm text-gray-500 mt-1">
+              <h1 className="text-2xl font-bold dark:text-white">{project?.name || 'Project Timeline'}</h1>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                 Showing {filteredTasks.length} tasks | 
                 {filteredTasks.filter(t => t.start_date && t.due_date).length} with dates | 
                 Timeline: {timelineRange.startDate.toLocaleDateString()} - {timelineRange.endDate.toLocaleDateString()}
@@ -621,6 +584,14 @@ const ProjectGantt = () => {
                   <div className="w-3 h-3 rounded-sm bg-slate-400/40 border border-slate-400"></div>
                   <span className="text-gray-600 dark:text-gray-400">To Do</span>
                 </div>
+                {ganttData.metadata?.criticalPathCount > 0 && (
+                  <div className="flex items-center gap-2 ml-2 pl-2 border-l border-gray-200 dark:border-gray-700">
+                    <div className="w-3 h-3 rounded-sm bg-rose-600"></div>
+                    <span className="text-gray-600 dark:text-gray-400">
+                      Critical Path ({ganttData.metadata.criticalPathCount})
+                    </span>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -680,71 +651,102 @@ const ProjectGantt = () => {
 
         {/* Main Gantt Content Area */}
         <div className="flex-1 flex overflow-hidden">
-          {filteredTasks.length === 0 ? (
+          {scheduledTasks.length === 0 && unscheduledTasks.length === 0 ? (
             <div className="flex-1 flex items-center justify-center p-12">
               <div className="text-center">
                 <div className="w-20 h-20 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mx-auto mb-4">
                   <Calendar size={40} className="text-gray-400" />
                 </div>
                 <h3 className="text-xl font-bold mb-2">No Tasks to Display</h3>
-                <p className="text-gray-500 mb-6">
+                <p className="text-gray-500 dark:text-gray-400 mb-6">
                   {projectId ? 'This project has no tasks yet. Create tasks to see them in the timeline.' : 'No tasks found. Select a project or create tasks to get started.'}
                 </p>
                 <button 
-                  onClick={() => projectId ? navigate(`/projects/${projectId}`) : navigate('/tasks')}
-                  className={`px-6 py-3 ${currentColorScheme.primary} text-white rounded-lg font-semibold ${currentColorScheme.primaryHover}`}
+                  className={`${currentColorScheme.primary} text-white text-sm font-semibold px-6 py-3 rounded-lg flex items-center gap-2 shadow-sm ${currentColorScheme.primaryHover} mx-auto`}
                 >
-                  {projectId ? 'Go to Project' : 'View Tasks'}
+                  <Plus size={18} />
+                  Create First Task
                 </button>
               </div>
             </div>
           ) : (
             <>
+          {/* Warning Banner for Unscheduled Tasks */}
+          {unscheduledTasks.length > 0 && (
+            <div className="absolute top-0 left-0 right-0 bg-yellow-50 dark:bg-yellow-900/20 border-b border-yellow-200 dark:border-yellow-800 px-6 py-2 flex items-center justify-between z-20">
+              <div className="flex items-center gap-2">
+                <AlertCircle size={18} className="text-yellow-600 dark:text-yellow-400" />
+                <span className="text-sm font-medium text-yellow-800 dark:text-yellow-300">
+                  {unscheduledTasks.length} task(s) without dates won't appear on the timeline
+                </span>
+              </div>
+              <button 
+                onClick={() => navigate('/tasks')}
+                className="text-sm font-semibold text-yellow-700 dark:text-yellow-400 hover:text-yellow-900 dark:hover:text-yellow-200 underline"
+              >
+                Edit Tasks
+              </button>
+            </div>
+          )}
           {/* Task List (Left Side) */}
-          <div className="w-[420px] shrink-0 border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1a2234] flex flex-col">
-            <div className="flex border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
-              <div className="w-64 px-4 py-2 text-[11px] font-bold text-gray-500 uppercase tracking-wider">Task Name</div>
-              <div className="w-28 px-4 py-2 text-[11px] font-bold text-gray-500 uppercase tracking-wider border-l border-gray-200 dark:border-gray-700">Start Date</div>
-              <div className="w-28 px-4 py-2 text-[11px] font-bold text-gray-500 uppercase tracking-wider border-l border-gray-200 dark:border-gray-700">Due Date</div>
+          <div className="w-[420px] shrink-0 border-r-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-[#1a2234] flex flex-col shadow-sm">
+            <div className="flex border-b-2 border-gray-300 dark:border-gray-700 bg-gradient-to-b from-gray-100 to-gray-50 dark:from-gray-800 dark:to-gray-800/50">
+              <div className="w-64 px-4 py-2.5 text-[11px] font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Task Name</div>
+              <div className="w-28 px-4 py-2.5 text-[11px] font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider border-l border-gray-300 dark:border-gray-600">Start</div>
+              <div className="w-28 px-4 py-2.5 text-[11px] font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider border-l border-gray-300 dark:border-gray-600">Due</div>
             </div>
             <div className="flex-1 overflow-y-auto">
-              {filteredTasks.map((task, index) => (
-                <div key={task._id} className="flex items-center border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors h-10 group">
-                  <div className="w-64 px-4 flex items-center gap-2">
-                    {/* Status indicator */}
-                    <div className={`w-2 h-2 rounded-full shrink-0 ${
+              {scheduledTasks.map((task, index) => (
+                <div key={task._id} className="flex items-center border-b border-gray-100 dark:border-gray-800/50 hover:bg-blue-50/30 dark:hover:bg-blue-900/10 transition-colors h-12 group cursor-pointer">
+                  <div className="w-64 px-4 flex items-center gap-2.5">
+                    {/* Enhanced status indicator */}
+                    <div className={`w-2.5 h-2.5 rounded-full shrink-0 ring-2 ring-offset-1 ${
                       task.status === 'done' 
-                        ? 'bg-emerald-500' 
+                        ? 'bg-emerald-500 ring-emerald-200 dark:ring-emerald-900' 
                         : task.status === 'in_progress' 
-                          ? currentColorScheme.primary
+                          ? `${currentColorScheme.primary} ${currentColorScheme.primary.replace('bg-', 'ring-')}/30`
                           : task.status === 'review' 
-                            ? 'bg-purple-500' 
-                            : 'bg-gray-300'
+                            ? 'bg-purple-500 ring-purple-200 dark:ring-purple-900' 
+                            : 'bg-gray-400 ring-gray-200 dark:ring-gray-700'
                     }`} />
                     
                     {/* Task title with priority indicator */}
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-1.5 mb-0.5">
                         {task.priority === 'urgent' && (
-                          <span className="text-red-500 text-xs">🔥</span>
+                          <span className="text-red-500 text-xs" title="Urgent">🔥</span>
                         )}
                         {task.priority === 'high' && (
-                          <span className="text-orange-500 text-xs">⬆️</span>
+                          <span className="text-orange-500 text-xs" title="High">⬆️</span>
                         )}
-                        <span className="text-sm font-medium truncate text-gray-700 dark:text-gray-300">
+                        <span className="text-sm font-semibold truncate text-gray-800 dark:text-gray-200">
                           {task.title}
                         </span>
+                        {task.status === 'in_progress' && task.progress > 0 && (
+                          <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 ml-1">
+                            {task.progress}%
+                          </span>
+                        )}
                       </div>
+                      {/* Progress bar for in-progress tasks */}
+                      {task.status === 'in_progress' && task.progress > 0 && (
+                        <div className="h-1 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden mb-0.5">
+                          <div 
+                            className={`h-full ${currentColorScheme.primary} transition-all duration-300`}
+                            style={{ width: `${task.progress}%` }}
+                          />
+                        </div>
+                      )}
                       {task.project_id?.name && (
-                        <div className="text-[10px] text-gray-400 truncate">
-                          {task.project_id.name}
+                        <div className="text-[10px] text-gray-500 dark:text-gray-400 truncate">
+                          📁 {task.project_id.name}
                         </div>
                       )}
                     </div>
                   </div>
                   
-                  <div className="w-28 px-4 border-l border-gray-100 dark:border-gray-800">
-                    <div className="text-xs text-gray-600 dark:text-gray-400">
+                  <div className="w-28 px-4 border-l border-gray-100 dark:border-gray-800/50">
+                    <div className="text-xs font-medium text-gray-700 dark:text-gray-300">
                       {task.start_date 
                         ? new Date(task.start_date).toLocaleDateString('en-US', { 
                             month: 'short', 
@@ -755,11 +757,11 @@ const ProjectGantt = () => {
                     </div>
                   </div>
                   
-                  <div className="w-28 px-4 border-l border-gray-100 dark:border-gray-800">
-                    <div className={`text-xs ${
+                  <div className="w-28 px-4 border-l border-gray-100 dark:border-gray-800/50">
+                    <div className={`text-xs font-medium ${
                       task.due_date && new Date(task.due_date) < new Date() && task.status !== 'done'
-                        ? 'text-red-500 font-semibold'
-                        : 'text-gray-600 dark:text-gray-400'
+                        ? 'text-red-600 dark:text-red-400 font-bold'
+                        : 'text-gray-700 dark:text-gray-300'
                     }`}>
                       {task.due_date 
                         ? new Date(task.due_date).toLocaleDateString('en-US', { 
@@ -776,15 +778,15 @@ const ProjectGantt = () => {
           </div>
 
           {/* Timeline Grid (Right Side) */}
-          <div className="flex-1 overflow-x-auto overflow-y-hidden relative bg-white dark:bg-[#1a2234]">
+          <div className="flex-1 overflow-x-auto overflow-y-hidden relative bg-gradient-to-b from-gray-50/50 to-white dark:from-gray-900/50 dark:to-[#1a2234]">
             {/* Timeline Header */}
-            <div className="sticky top-0 z-20">
+            <div className="sticky top-0 z-20 shadow-sm">
               {/* Month Headers */}
-              <div className="flex border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 h-8">
+              <div className="flex border-b-2 border-gray-300 dark:border-gray-700 bg-gradient-to-b from-gray-100 to-gray-50 dark:from-gray-800 dark:to-gray-800/50 h-10">
                 {timelineHeaders.map((header, idx) => (
                   <div 
                     key={idx}
-                    className="shrink-0 border-r border-gray-200 dark:border-gray-800 px-4 flex items-center text-xs font-bold text-gray-500"
+                    className="shrink-0 border-r border-gray-200 dark:border-gray-700 px-4 flex items-center text-[11px] font-bold tracking-wide text-gray-700 dark:text-gray-300"
                     style={{ width: `${header.width}px` }}
                   >
                     {header.label.toUpperCase()}
@@ -793,50 +795,61 @@ const ProjectGantt = () => {
               </div>
               
               {/* Day Headers */}
-              <div className="flex border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1a2234] h-8">
+              <div className="flex border-b border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-[#1a2234]/80 backdrop-blur-sm h-9">
                 {timeScale === 'day' ? (
                   dayHeaders.map((day, idx) => (
                     <div 
                       key={idx}
-                      className={`shrink-0 flex flex-col items-center justify-center text-[10px] font-medium border-r border-gray-100 dark:border-gray-800 ${
+                      className={`shrink-0 flex flex-col items-center justify-center text-[10px] font-medium border-r border-gray-200 dark:border-gray-700 transition-colors ${
                         day.isToday 
-                          ? `${currentColorScheme.primary.replace('bg-', 'bg-')}/10 ${currentColorScheme.primaryText} font-bold` 
+                          ? `${currentColorScheme.primary.replace('bg-', 'bg-')}/20 ${currentColorScheme.primaryText} font-bold border-x-2 ${currentColorScheme.primary.replace('bg-', 'border-')}` 
                           : day.isWeekend 
-                            ? 'bg-gray-50 dark:bg-gray-800/30 text-gray-400'
-                            : 'text-gray-500'
+                            ? 'bg-gray-100/60 dark:bg-gray-800/40 text-gray-500 dark:text-gray-500'
+                            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/20'
                       }`}
-                      style={{ width: `${dayWidth}px` }}
+                      style={{ width: `${pixelsPerDay}px` }}
                     >
-                      <span className="text-[9px] uppercase">{day.day}</span>
-                      <span className={day.isToday ? 'font-bold' : ''}>{day.label}</span>
+                      <span className="text-[9px] uppercase tracking-wider">{day.day}</span>
+                      <span className={`${day.isToday ? 'font-bold text-sm' : ''}`}>{day.label}</span>
                     </div>
                   ))
                 ) : timeScale === 'week' ? (
                   dayHeaders.map((day, idx) => (
                     <div 
                       key={idx}
-                      className="shrink-0 flex items-center justify-center text-[10px] text-gray-400 font-medium border-r border-gray-100 dark:border-gray-800"
-                      style={{ width: `${dayWidth * 7}px` }}
+                      className="shrink-0 flex items-center justify-center text-[10px] text-gray-500 dark:text-gray-400 font-medium border-r border-gray-100 dark:border-gray-800"
+                      style={{ width: `${pixelsPerDay * 7}px` }}
                     >
                       {day.label}
                     </div>
                   ))
                 ) : (
+                  // Month / Quarter view sub-row: week-start day markers within each month band
                   <div className="flex flex-1">
                     {timelineHeaders.map((header, idx) => {
-                      const daysInPeriod = Math.ceil(header.width / dayWidth);
-                      const markers = [];
-                      for (let i = 1; i <= Math.min(5, daysInPeriod); i += Math.ceil(daysInPeriod / 5)) {
-                        markers.push(i);
+                      const MS_D = 86_400_000;
+                      const weekMarkers = [];
+                      let w = new Date(header.start);
+                      const bandEnd = new Date(header.start.getTime() + (header.width / pixelsPerDay) * MS_D);
+                      while (w < bandEnd) {
+                        const offsetPx = Math.round((w.getTime() - header.start.getTime()) / MS_D * pixelsPerDay);
+                        weekMarkers.push({ label: w.getUTCDate(), offsetPx });
+                        w = new Date(w.getTime() + 7 * MS_D);
                       }
                       return (
-                        <div 
+                        <div
                           key={idx}
-                          className="flex justify-around items-center text-[10px] text-gray-400 font-medium px-2 border-r border-gray-200 dark:border-gray-800"
+                          className="relative border-r border-gray-200 dark:border-gray-800 shrink-0"
                           style={{ width: `${header.width}px` }}
                         >
-                          {markers.map((day, i) => (
-                            <span key={i}>{day}</span>
+                          {weekMarkers.map((wm, i) => (
+                            <span
+                              key={i}
+                              className="absolute top-1/2 -translate-y-1/2 text-[10px] text-gray-500 dark:text-gray-400 font-medium"
+                              style={{ left: `${wm.offsetPx + 2}px` }}
+                            >
+                              {wm.label}
+                            </span>
                           ))}
                         </div>
                       );
@@ -850,97 +863,237 @@ const ProjectGantt = () => {
             <div className="relative" style={{
               backgroundImage: timeScale === 'day' 
                 ? 'linear-gradient(to right, #e5e7eb 1px, transparent 1px)'
-                : 'linear-gradient(to right, #f3f4f6 1px, transparent 1px)',
-              backgroundSize: `${timeScale === 'day' ? dayWidth : dayWidth * 7}px 100%`,
+                : 'linear-gradient(to right, #d1d5db 1px, transparent 1px)',
+              backgroundSize: `${timeScale === 'day' ? pixelsPerDay : pixelsPerDay * 7}px 100%`,
               minWidth: `${timelineHeaders.reduce((sum, h) => sum + h.width, 0)}px`
             }}>
-              {/* Current Time Indicator */}
-              {(() => {
-                const today = new Date();
-                const { startDate } = timelineRange;
-                const daysFromStart = Math.floor((today - startDate) / (1000 * 60 * 60 * 24));
-                const position = daysFromStart * dayWidth;
-                
-                if (position >= 0 && position <= timelineHeaders.reduce((sum, h) => sum + h.width, 0)) {
-                  return (
-                    <div className={`absolute top-0 bottom-0 w-px ${currentColorScheme.primary} z-10`} style={{ left: `${position}px` }}>
-                      <div className={`absolute -top-1 -left-1.5 w-3 h-3 ${currentColorScheme.primary} rounded-full ring-4 ${currentColorScheme.primary.replace('bg-', 'ring-')}/20`}></div>
-                      <div className={`absolute top-2 -left-8 text-[9px] font-bold ${currentColorScheme.primaryText} bg-white dark:bg-gray-800 px-1 rounded`}>
-                        TODAY
-                      </div>
-                    </div>
-                  );
-                }
-                return null;
-              })()}
+              {/* Weekend Highlighting */}
+              {timeScale === 'day' && dayHeaders.map((day, idx) => 
+                day.isWeekend ? (
+                  <div 
+                    key={`weekend-${idx}`}
+                    className="absolute top-0 bottom-0 bg-gray-100/40 dark:bg-gray-800/20 pointer-events-none"
+                    style={{
+                      left: `${idx * pixelsPerDay}px`,
+                      width: `${pixelsPerDay}px`
+                    }}
+                  />
+                ) : null
+              )}
+              {/* Current Time Indicator (using normalized data) */}
+              {todayMarker.visible && (
+                <div className="absolute top-0 bottom-0 z-30 pointer-events-none" style={{ left: `${todayMarker.position}px` }}>
+                  {/* Vertical line */}
+                  <div className={`absolute top-0 bottom-0 w-0.5 ${currentColorScheme.primary} opacity-70`} />
+                  {/* Top marker */}
+                  <div className={`absolute -top-2 -left-2 w-4 h-4 ${currentColorScheme.primary} rounded-full ring-4 ring-white dark:ring-gray-900 shadow-lg`}>
+                    <div className={`absolute inset-0.5 bg-white dark:bg-gray-900 rounded-full`} />
+                  </div>
+                  {/* Label */}
+                  <div className={`absolute top-6 -left-10 text-[10px] font-bold ${currentColorScheme.primaryText} bg-white dark:bg-gray-800 px-2 py-0.5 rounded-full shadow-sm border ${currentColorScheme.primary.replace('bg-', 'border-')}`}>
+                    TODAY
+                  </div>
+                </div>
+              )}
 
-              {/* Task Bars */}
+              {/* Task Bars (using pre-computed positions) */}
               <div className="flex flex-col">
-                {filteredTasks.map((task, index) => {
-                  const barColor = getTaskBarColor(task.status);
-                  const barWidth = getTaskBarWidth(task);
-                  const barPosition = getTaskBarPosition(task);
+                {scheduledTasks.map((task, index) => {
+                  const barColor = getTaskBarColor(task);
+                  const barWidth    = task.bar_width    || 0;
+                  const barPosition = task.position_x   || 0;
+                  const slackWidth  = task.slack_width  || 0;
                   const progressWidth = getProgressWidth(task.progress || 0);
-                  const hasValidDates = task.start_date && task.due_date;
+                  const isMilestone = task.task_type === 'milestone';
 
                   return (
-                    <div key={task._id} className="h-10 border-b border-gray-100 dark:border-gray-800 flex items-center relative group hover:bg-gray-50 dark:hover:bg-gray-800/30">
-                      {hasValidDates && barWidth > 0 ? (
+                    <div key={task._id || task.id} className="h-12 border-b border-gray-100 dark:border-gray-800/50 flex items-center relative group hover:bg-blue-50/30 dark:hover:bg-blue-900/10 transition-colors">
+
+                      {/* Slack / float zone */}
+                      {showCriticalPath && slackWidth > 2 && (
                         <div
-                          className={`absolute h-6 ${barColor} rounded-md shadow-sm flex items-center overflow-hidden cursor-pointer transition-all hover:shadow-lg hover:scale-105 z-20`}
+                          className="absolute h-3 rounded-r-full bg-amber-300/30 dark:bg-amber-500/20 border-t border-b border-r border-dashed border-amber-400/50"
+                          style={{ left: `${barPosition + barWidth}px`, width: `${slackWidth}px`, top: '50%', transform: 'translateY(-50%)' }}
+                          title={`Float: ${task.total_float} working day(s)`}
+                        />
+                      )}
+
+                      {/* Milestone diamond */}
+                      {isMilestone ? (
+                        <div
+                          className={`absolute w-5 h-5 rotate-45 shadow-lg cursor-pointer z-10 transition-transform hover:scale-125 ${
+                            task.is_critical && showCriticalPath ? 'bg-rose-600 ring-2 ring-rose-400' : 'bg-amber-500 ring-2 ring-amber-300'
+                          }`}
+                          style={{ left: `${barPosition - 2}px`, top: '50%', transform: 'translateY(-50%) rotate(45deg)' }}
+                          title={`Milestone: ${task.title}\n${task.effective_start ? new Date(task.effective_start).toLocaleDateString() : ''}`}
+                        />
+                      ) : (
+                      <div
+                          className={`absolute h-7 ${barColor} rounded-lg shadow-md flex items-center overflow-hidden cursor-pointer transition-all duration-200 hover:shadow-xl hover:scale-[1.02] hover:z-30 ${
+                            task.is_critical && showCriticalPath ? 'ring-2 ring-rose-400 ring-inset' : 'border border-white/20 dark:border-black/20'
+                          } ${
+                            task.is_overdue ? 'opacity-90' : ''
+                          }`}
                           style={{ 
                             left: `${barPosition}px`, 
-                            width: `${Math.max(barWidth, 30)}px`,
-                            minWidth: '30px'
+                            width: `${Math.max(barWidth, 40)}px`,
+                            minWidth: '40px',
+                            top: '50%',
+                            transform: 'translateY(-50%)'
                           }}
-                          title={`${task.title} (${task.status})\n${task.start_date ? new Date(task.start_date).toLocaleDateString() : ''} - ${task.due_date ? new Date(task.due_date).toLocaleDateString() : ''}`}
+                          title={`${task.title} (${task.status})\n${formatDate(task.start_date, 'short')} - ${formatDate(task.end_date, 'short')}\nDuration: ${task.duration_days} days`}
                         >
                           {/* Progress bar for in-progress tasks */}
                           {task.status === 'in_progress' && task.progress && (
                             <div 
-                              className="h-full bg-white/20" 
+                              className="h-full bg-white/30 backdrop-blur-sm" 
                               style={{ width: progressWidth }}
-                            ></div>
+                            >
+                              <div className="h-1 bg-white/50 absolute top-0 left-0 right-0" />
+                            </div>
                           )}
                           
                           {/* Task info on bar */}
-                          <div className="absolute inset-0 flex items-center justify-between px-2">
-                            <span className="text-[10px] text-white font-bold truncate">
-                              {barWidth > 80 ? task.title : ''}
-                            </span>
-                            <span className="text-[10px] text-white font-bold">
+                          <div className="absolute inset-0 flex items-center justify-between px-2.5">
+                            <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                              {/* Priority indicator */}
+                              {task.priority === 'urgent' && barWidth > 50 && (
+                                <span className="text-xs">🔥</span>
+                              )}
+                              <span className="text-[11px] text-white font-semibold truncate drop-shadow-sm">
+                                {barWidth > 60 ? task.title : barWidth > 40 ? task.title.substring(0, 15) + '...' : ''}
+                              </span>
+                            </div>
+                            <span className="text-[11px] text-white font-bold ml-1 drop-shadow-sm">
                               {task.status === 'done' ? '✓' : task.progress ? `${task.progress}%` : ''}
                             </span>
                           </div>
+                          
+                          {/* Overdue diagonal stripe overlay */}
+                          {task.is_overdue && (
+                            <div
+                              className="absolute inset-0 pointer-events-none rounded-lg"
+                              style={{
+                                background: 'repeating-linear-gradient(135deg, transparent, transparent 4px, rgba(0,0,0,0.15) 4px, rgba(0,0,0,0.15) 8px)'
+                              }}
+                            />
+                          )}
 
-                          {/* Task tooltip on hover */}
-                          <div className="absolute hidden group-hover:block bottom-full left-0 mb-2 z-30 w-64 bg-gray-900 text-white text-xs rounded-lg shadow-xl p-3">
-                            <div className="font-bold mb-1">{task.title}</div>
-                            {task.description && (
-                              <div className="text-gray-300 mb-2 line-clamp-2">{task.description}</div>
-                            )}
-                            <div className="space-y-1 text-gray-400">
-                              <div>Status: <span className="text-white">{task.status}</span></div>
-                              <div>Priority: <span className="text-white">{task.priority}</span></div>
-                              {task.start_date && (
-                                <div>Start: <span className="text-white">{new Date(task.start_date).toLocaleDateString()}</span></div>
-                              )}
-                              {task.due_date && (
-                                <div>Due: <span className="text-white">{new Date(task.due_date).toLocaleDateString()}</span></div>
-                              )}
-                              {task.project_id?.name && (
-                                <div>Project: <span className="text-white">{task.project_id.name}</span></div>
-                              )}
+                          {/* At-risk indicator dot */}
+                          {task.is_at_risk && !task.is_overdue && (
+                            <div className="absolute -top-1 -right-1 w-3 h-3 bg-orange-400 rounded-full ring-2 ring-white dark:ring-gray-900 z-10" title="At risk: low float" />
+                          )}
+
+                          {/* Enhanced Task tooltip on hover */}
+                          <div className="absolute hidden group-hover:block bottom-full left-0 mb-3 z-50 w-72 bg-gradient-to-br from-gray-900 to-gray-800 text-white text-xs rounded-xl shadow-2xl p-4 border border-gray-700">
+                            {/* Header */}
+                            <div className="flex items-start justify-between mb-2 pb-2 border-b border-gray-700">
+                              <div className="flex-1">
+                                <div className="font-bold text-sm mb-1">{task.title}</div>
+                                {task.project_id?.name && (
+                                  <div className="text-gray-400 text-[10px]">{task.project_id.name}</div>
+                                )}
+                              </div>
+                              {/* Status badge */}
+                              <div className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase ${
+                                task.status === 'done' ? 'bg-emerald-500/20 text-emerald-300' :
+                                task.status === 'in_progress' ? 'bg-blue-500/20 text-blue-300' :
+                                task.status === 'review' ? 'bg-purple-500/20 text-purple-300' :
+                                'bg-gray-500/20 text-gray-300'
+                              }`}>
+                                {task.status.replace('_', ' ')}
+                              </div>
                             </div>
+                            
+                            {task.description && (
+                              <div className="text-gray-300 mb-3 text-[11px] line-clamp-2">{task.description}</div>
+                            )}
+                            
+                            {/* Details Grid */}
+                            <div className="grid grid-cols-2 gap-2 text-[11px]">
+                              <div>
+                                <div className="text-gray-500 uppercase tracking-wide text-[9px] mb-0.5">Priority</div>
+                                <div className={`font-semibold ${
+                                  task.priority === 'urgent' ? 'text-red-400' :
+                                  task.priority === 'high' ? 'text-orange-400' :
+                                  task.priority === 'medium' ? 'text-yellow-400' :
+                                  'text-gray-400'
+                                }`}>
+                                  {task.priority === 'urgent' && '🔥 '}
+                                  {task.priority?.toUpperCase()}
+                                </div>
+                              </div>
+                              <div>
+                                <div className="text-gray-500 uppercase tracking-wide text-[9px] mb-0.5">Duration</div>
+                                <div className="text-white font-semibold">{task.duration_days} day{task.duration_days !== 1 ? 's' : ''}</div>
+                              </div>
+                              <div>
+                                <div className="text-gray-500 uppercase tracking-wide text-[9px] mb-0.5">Start</div>
+                                <div className="text-white font-semibold">{formatDate(task.start_date, 'short')}</div>
+                              </div>
+                              <div>
+                                <div className="text-gray-500 uppercase tracking-wide text-[9px] mb-0.5">Due</div>
+                                <div className="text-white font-semibold">{formatDate(task.end_date, 'short')}</div>
+                              </div>
+                            </div>
+                            
+                            {/* Schedule intelligence */}
+                            {(task.is_critical || task.total_float != null || task.is_overdue || task.is_at_risk) && (
+                              <div className="mt-3 pt-2 border-t border-gray-700 flex flex-wrap gap-1.5">
+                                {task.is_critical && showCriticalPath && (
+                                  <span className="px-2 py-0.5 bg-rose-600/25 text-rose-300 text-[9px] font-bold uppercase rounded-full">⚠ Critical Path</span>
+                                )}
+                                {task.is_overdue && (
+                                  <span className="px-2 py-0.5 bg-red-600/25 text-red-300 text-[9px] font-bold uppercase rounded-full">Overdue</span>
+                                )}
+                                {task.is_at_risk && !task.is_overdue && (
+                                  <span className="px-2 py-0.5 bg-orange-500/25 text-orange-300 text-[9px] font-bold uppercase rounded-full">At Risk</span>
+                                )}
+                                {task.total_float != null && (
+                                  <span className="px-2 py-0.5 bg-gray-600/40 text-gray-300 text-[9px] rounded-full">Float: {task.total_float}d</span>
+                                )}
+                              </div>
+                            )}
+
+                            {/* Progress */}
+                            {task.status === 'in_progress' && task.progress > 0 && (
+                              <div className="mt-3 pt-2 border-t border-gray-700">
+                                <div className="flex items-center justify-between text-[10px] mb-1">
+                                  <span className="text-gray-400">Progress</span>
+                                  <span className="text-white font-bold">{task.progress}%</span>
+                                </div>
+                                <div className="h-1.5 bg-gray-700 rounded-full overflow-hidden">
+                                  <div 
+                                    className="h-full bg-gradient-to-r from-blue-500 to-blue-400 rounded-full transition-all"
+                                    style={{ width: `${task.progress}%` }}
+                                  />
+                                </div>
+                              </div>
+                            )}
+                            
+                            {/* Assignees */}
+                            {task.assigned_to && task.assigned_to.length > 0 && (
+                              <div className="mt-2 pt-2 border-t border-gray-700">
+                                <div className="text-gray-500 uppercase tracking-wide text-[9px] mb-1">Assigned to</div>
+                                <div className="flex flex-wrap gap-1">
+                                  {task.assigned_to.slice(0, 3).map((user, idx) => (
+                                    <div key={idx} className="px-2 py-0.5 bg-gray-700/50 rounded text-[10px] text-gray-300">
+                                      {user.full_name || user.username || 'Unknown'}
+                                    </div>
+                                  ))}
+                                  {task.assigned_to.length > 3 && (
+                                    <div className="px-2 py-0.5 bg-gray-700/50 rounded text-[10px] text-gray-400">
+                                      +{task.assigned_to.length - 3}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                            
                             {/* Tooltip arrow */}
-                            <div className="absolute top-full left-4 -mt-1 border-4 border-transparent border-t-gray-900"></div>
-                          </div>
-                        </div>
-                      ) : (
-                        /* Show placeholder for tasks without dates */
-                        <div className="absolute left-4 flex items-center gap-2">
-                          <div className="px-3 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 text-xs rounded-md border border-yellow-300 dark:border-yellow-700">
-                            ⚠ No dates set
+                            <div className="absolute top-full left-6 -mt-1">
+                              <div className="border-8 border-transparent border-t-gray-800" />
+                            </div>
                           </div>
                         </div>
                       )}
@@ -948,6 +1101,45 @@ const ProjectGantt = () => {
                   );
                 })}
               </div>
+
+              {/* Dependency Arrows — SVG overlay */}
+              {dependencyArrows.length > 0 && (
+                <svg
+                  className="absolute inset-0 pointer-events-none z-20"
+                  style={{
+                    width: `${timelineHeaders.reduce((sum, h) => sum + h.width, 0)}px`,
+                    height: `${scheduledTasks.length * 48}px`
+                  }}
+                >
+                  <defs>
+                    <marker id="arrow-normal" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+                      <path d="M0,0 L0,6 L6,3 z" fill="#94a3b8" />
+                    </marker>
+                    <marker id="arrow-critical" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+                      <path d="M0,0 L0,6 L6,3 z" fill="#f43f5e" />
+                    </marker>
+                  </defs>
+                  {dependencyArrows.map(arrow => {
+                    const isCrit = arrow.isCritical && showCriticalPath;
+                    const color  = isCrit ? '#f43f5e' : '#94a3b8';
+                    const stroke = isCrit ? 1.5 : 1;
+                    const midX   = Math.max(arrow.startX + 16, (arrow.startX + arrow.endX) / 2);
+                    const d = `M ${arrow.startX} ${arrow.startY} H ${midX} V ${arrow.endY} H ${arrow.endX}`;
+                    return (
+                      <path
+                        key={arrow.id}
+                        d={d}
+                        fill="none"
+                        stroke={color}
+                        strokeWidth={stroke}
+                        strokeDasharray={isCrit ? undefined : '4 2'}
+                        markerEnd={isCrit ? 'url(#arrow-critical)' : 'url(#arrow-normal)'}
+                        opacity={0.7}
+                      />
+                    );
+                  })}
+                </svg>
+              )}
             </div>
           </div>
             </>
@@ -958,29 +1150,38 @@ const ProjectGantt = () => {
         <footer className="h-10 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1a2234] flex items-center justify-between px-6 shrink-0">
           <div className="flex items-center gap-6">
             <div className="flex items-center gap-2">
+              <Calendar size={14} className="text-gray-500 dark:text-gray-400" />
+              <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                Scheduled: {scheduledTasks.length} / {filteredTasks.length}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
-              <span className="text-xs text-gray-500 font-medium">
+              <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
                 Completed: {tasks.filter(t => t.status === 'done').length}
               </span>
             </div>
             <div className="flex items-center gap-2">
               <div className={`w-3 h-3 rounded-full ${currentColorScheme.primary}`}></div>
-              <span className="text-xs text-gray-500 font-medium">
+              <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
                 In Progress: {tasks.filter(t => t.status === 'in_progress').length}
               </span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-full bg-red-500"></div>
-              <span className="text-xs text-gray-500 font-medium">
+              <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
                 Critical: {tasks.filter(t => t.priority === 'urgent').length}
               </span>
             </div>
           </div>
-          <div className="text-xs text-gray-400 italic">
+          <div className="text-xs text-gray-500 dark:text-gray-400 italic">
             Last synced: Just now
           </div>
         </footer>
       </main>
+      
+      {/* Debug Overlay (only visible with ?debug=gantt or localStorage.gantt_debug=true) */}
+      <DebugOverlay normalizedData={ganttData} />
     </div>
   );
 };
