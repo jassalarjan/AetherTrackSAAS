@@ -213,7 +213,7 @@ export const useNotifications = () => {
     }
     
     await notificationService.showNotification('Test Notification', {
-      body: 'This is a test notification from TaskFlow! If you see this, notifications are working correctly.',
+      body: 'This is a test notification from AetherTrack! If you see this, notifications are working correctly.',
       icon: '/icons/pwa-192x192.png',
       tag: 'test',
       requireInteraction: true,

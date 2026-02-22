@@ -1,5 +1,5 @@
 // Node.js 18+ has native fetch
-const RENDER_URL = 'https://taskflow-henr.onrender.com';
+const RENDER_URL = 'https://AetherTrack-henr.onrender.com';
 
 console.log('═══════════════════════════════════════════════════');
 console.log('   TESTING RENDER DEPLOYMENT - EMAIL SERVICE');
@@ -138,7 +138,7 @@ async function runTests() {
     console.log('═══════════════════════════════════════════════════');
     console.log('\n🔧 To fix this:');
     console.log('   1. Go to: https://dashboard.render.com');
-    console.log('   2. Select your service: taskflow-henr');
+    console.log('   2. Select your service: AetherTrack-henr');
     console.log('   3. Click: "Environment" tab');
     console.log('   4. Add these variables:');
     console.log('');
@@ -173,7 +173,7 @@ async function runTests() {
     console.log('═══════════════════════════════════════════════════');
     console.log('\n🔍 Check Render Logs:');
     console.log('   1. Go to Render Dashboard');
-    console.log('   2. Select: taskflow-henr');
+    console.log('   2. Select: AetherTrack-henr');
     console.log('   3. Click: "Logs" tab');
     console.log('   4. Look for email errors\n');
     console.log('💡 Common issues:');

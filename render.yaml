@@ -1,7 +1,7 @@
 services:
   # Backend Service
   - type: web
-    name: taskflow-backend
+    name: AetherTrack-backend
     env: node
     region: oregon
     plan: free

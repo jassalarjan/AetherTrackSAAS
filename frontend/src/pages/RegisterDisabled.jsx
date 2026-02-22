@@ -8,7 +8,7 @@ export default function RegisterDisabled() {
           <div className="flex justify-center mb-4">
             <img 
               src="/logo.png" 
-              alt="TaskFlow Logo" 
+              alt="AetherTrack Logo" 
               className="w-16 h-16 object-contain"
             />
           </div>

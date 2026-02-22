@@ -126,7 +126,7 @@ const getCredentialEmailTemplate = (fullName, email, password, appUrl) => {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Welcome to TaskFlow</title>
+  <title>Welcome to AetherTrack</title>
   <style>
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
@@ -405,9 +405,9 @@ const getCredentialEmailTemplate = (fullName, email, password, appUrl) => {
     <div class="container">
       <div class="header">
         <div class="logo-container">
-          <img src="https://taskflow-nine-phi.vercel.app/logo.png" alt="TaskFlow Logo" />
+          <img src="https://AetherTrack-nine-phi.vercel.app/logo.png" alt="AetherTrack Logo" />
         </div>
-        <h1>Welcome to TaskFlow! 🚀</h1>
+        <h1>Welcome to AetherTrack! 🚀</h1>
         <p>Your account is ready to go</p>
       </div>
       
@@ -417,8 +417,8 @@ const getCredentialEmailTemplate = (fullName, email, password, appUrl) => {
         </div>
         
         <div class="message">
-          <p>We're excited to have you on board! Your TaskFlow account has been created and you're all set to start managing tasks like a pro.</p>
-          <p>TaskFlow is your all-in-one collaborative workspace where teams come together to get things done efficiently.</p>
+          <p>We're excited to have you on board! Your AetherTrack account has been created and you're all set to start managing tasks like a pro.</p>
+          <p>AetherTrack is your all-in-one collaborative workspace where teams come together to get things done efficiently.</p>
         </div>
 
         <div class="credentials-box">
@@ -442,7 +442,7 @@ const getCredentialEmailTemplate = (fullName, email, password, appUrl) => {
         </div>
 
         <div class="button-container">
-          <a href="${appUrl}" class="btn">🚀 Launch TaskFlow</a>
+          <a href="${appUrl}" class="btn">🚀 Launch AetherTrack</a>
         </div>
 
         <div class="divider"></div>
@@ -486,12 +486,12 @@ const getCredentialEmailTemplate = (fullName, email, password, appUrl) => {
       </div>
 
       <div class="footer">
-        <img src="https://taskflow-nine-phi.vercel.app/logo.png" alt="TaskFlow" class="footer-logo" />
-        <p><strong>TaskFlow</strong></p>
+        <img src="https://AetherTrack-nine-phi.vercel.app/logo.png" alt="AetherTrack" class="footer-logo" />
+        <p><strong>AetherTrack</strong></p>
         <p>Collaborative Task Management System</p>
         <p style="margin-top: 20px; font-size: 12px; opacity: 0.8;">This is an automated message. Please do not reply.</p>
         <p style="margin-top: 15px;">
-          <a href="${appUrl}">🌐 Visit TaskFlow</a>
+          <a href="${appUrl}">🌐 Visit AetherTrack</a>
         </p>
       </div>
     </div>
@@ -507,24 +507,24 @@ export const sendCredentialEmail = async (fullName, email, password) => {
     const transporter = createTransporter();
     // Use Vercel URL in production, fallback to CLIENT_URL or localhost
     const appUrl = process.env.NODE_ENV === 'production' 
-      ? 'https://taskflow-nine-phi.vercel.app'
-      : (process.env.CLIENT_URL || 'https://taskflow-nine-phi.vercel.app');
+      ? 'https://AetherTrack-nine-phi.vercel.app'
+      : (process.env.CLIENT_URL || 'https://AetherTrack-nine-phi.vercel.app');
 
     const mailOptions = {
       from: {
-        name: 'TaskFlow Team',
+        name: 'AetherTrack Team',
         address: process.env.EMAIL_USER
       },
       to: email,
-      subject: '🎉 Welcome to TaskFlow - Your Account is Ready!',
+      subject: '🎉 Welcome to AetherTrack - Your Account is Ready!',
       html: getCredentialEmailTemplate(fullName, email, password, appUrl),
       // Plain text fallback
       text: `
-Welcome to TaskFlow!
+Welcome to AetherTrack!
 
 Hi ${fullName},
 
-Your TaskFlow account has been successfully created! 🎉
+Your AetherTrack account has been successfully created! 🎉
 
 LOGIN CREDENTIALS:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -545,10 +545,10 @@ WHAT YOU CAN DO:
 Need help? Contact your administrator!
 
 Best regards,
-The TaskFlow Team
+The AetherTrack Team
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-TaskFlow - Collaborative Task Management
+AetherTrack - Collaborative Task Management
 ${appUrl}
       `.trim()
     };
@@ -578,16 +578,16 @@ export const sendPasswordResetEmail = async (fullName, email, newPassword) => {
     const transporter = createTransporter();
     // Use Vercel URL in production, fallback to CLIENT_URL or localhost
     const appUrl = process.env.NODE_ENV === 'production' 
-      ? 'https://taskflow-nine-phi.vercel.app'
+      ? 'https://AetherTrack-nine-phi.vercel.app'
       : (process.env.CLIENT_URL || 'http://localhost:3000');
 
     const mailOptions = {
       from: {
-        name: 'TaskFlow Team',
+        name: 'AetherTrack Team',
         address: process.env.EMAIL_USER
       },
       to: email,
-      subject: '🔑 TaskFlow - Password Reset',
+      subject: '🔑 AetherTrack - Password Reset',
       html: `
 <!DOCTYPE html>
 <html lang="en">
@@ -712,12 +712,12 @@ export const sendPasswordResetEmail = async (fullName, email, newPassword) => {
       </div>
 
       <div class="button-container">
-        <a href="${appUrl}" class="btn">Login to TaskFlow</a>
+        <a href="${appUrl}" class="btn">Login to AetherTrack</a>
       </div>
     </div>
 
     <div class="footer">
-      <p><strong>TaskFlow</strong> - Collaborative Task Management System</p>
+      <p><strong>AetherTrack</strong> - Collaborative Task Management System</p>
       <p>This is an automated email. Please do not reply to this message.</p>
     </div>
   </div>
@@ -739,7 +739,7 @@ Please login at: ${appUrl}
 Important: Please change this password immediately after logging in.
 
 Best regards,
-TaskFlow Team
+AetherTrack Team
       `.trim()
     };
 
@@ -865,7 +865,7 @@ const getOverdueTaskEmailTemplate = (fullName, tasks, appUrl) => {
     <div class="container">
       <div class="header">
         <div class="logo-circle">
-          <img src="https://taskflow-nine-phi.vercel.app/logo.png" alt="TaskFlow Logo" />
+          <img src="https://AetherTrack-nine-phi.vercel.app/logo.png" alt="AetherTrack Logo" />
         </div>
         <h1 style="margin: 0; font-size: 28px;">⚠️ Overdue Tasks Alert</h1>
         <p style="margin: 10px 0 0 0; opacity: 0.9;">You have ${tasks.length} overdue task${tasks.length > 1 ? 's' : ''} requiring immediate attention</p>
@@ -904,8 +904,8 @@ const getOverdueTaskEmailTemplate = (fullName, tasks, appUrl) => {
       </div>
 
       <div class="footer">
-        <img src="https://taskflow-nine-phi.vercel.app/logo.png" alt="TaskFlow" style="width: 30px; height: 30px; margin-bottom: 10px;" />
-        <p><strong>TaskFlow</strong></p>
+        <img src="https://AetherTrack-nine-phi.vercel.app/logo.png" alt="AetherTrack" style="width: 30px; height: 30px; margin-bottom: 10px;" />
+        <p><strong>AetherTrack</strong></p>
         <p>Collaborative Task Management System</p>
         <p style="margin-top: 20px; font-size: 12px; opacity: 0.8;">This is an automated reminder. Please do not reply.</p>
       </div>
@@ -932,12 +932,12 @@ export const sendOverdueTaskReminder = async (fullName, email, tasks) => {
   try {
     const transporter = createTransporter();
     const appUrl = process.env.NODE_ENV === 'production' 
-      ? 'https://taskflow-nine-phi.vercel.app'
+      ? 'https://AetherTrack-nine-phi.vercel.app'
       : (process.env.CLIENT_URL || 'http://localhost:3000');
 
     const mailOptions = {
       from: {
-        name: 'TaskFlow Reminders',
+        name: 'AetherTrack Reminders',
         address: process.env.EMAIL_USER
       },
       to: email,
@@ -956,10 +956,10 @@ ${tasks.map((task, i) => `${i + 1}. ${task.title}
    Due Date: ${new Date(task.due_date).toLocaleDateString()}
 `).join('\n')}
 
-Please login to TaskFlow to review and update these tasks: ${appUrl}/tasks
+Please login to AetherTrack to review and update these tasks: ${appUrl}/tasks
 
 Best regards,
-TaskFlow Team
+AetherTrack Team
       `.trim()
     };
 
@@ -980,7 +980,7 @@ const getWeeklyReportEmailTemplate = (adminName, reportData, appUrl) => {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Weekly TaskFlow Report</title>
+  <title>Weekly AetherTrack Report</title>
   <style>
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
@@ -1085,7 +1085,7 @@ const getWeeklyReportEmailTemplate = (adminName, reportData, appUrl) => {
     <div class="container">
       <div class="header">
         <div class="logo-circle">
-          <img src="https://taskflow-nine-phi.vercel.app/logo.png" alt="TaskFlow Logo" />
+          <img src="https://AetherTrack-nine-phi.vercel.app/logo.png" alt="AetherTrack Logo" />
         </div>
         <h1 style="margin: 0; font-size: 28px;">📊 Weekly Report</h1>
         <p style="margin: 10px 0 0 0; opacity: 0.9;">${reportData.weekRange}</p>
@@ -1094,7 +1094,7 @@ const getWeeklyReportEmailTemplate = (adminName, reportData, appUrl) => {
       <div class="content">
         <p style="font-size: 16px; color: #2d3748;">Hi <strong>${adminName}</strong>,</p>
         
-        <p style="font-size: 16px; color: #4a5568;">Here's your weekly TaskFlow summary:</p>
+        <p style="font-size: 16px; color: #4a5568;">Here's your weekly AetherTrack summary:</p>
 
         <div class="stat-grid">
           <div class="stat-card">
@@ -1134,8 +1134,8 @@ const getWeeklyReportEmailTemplate = (adminName, reportData, appUrl) => {
       </div>
 
       <div class="footer">
-        <img src="https://taskflow-nine-phi.vercel.app/logo.png" alt="TaskFlow" style="width: 30px; height: 30px; margin-bottom: 10px;" />
-        <p><strong>TaskFlow</strong></p>
+        <img src="https://AetherTrack-nine-phi.vercel.app/logo.png" alt="AetherTrack" style="width: 30px; height: 30px; margin-bottom: 10px;" />
+        <p><strong>AetherTrack</strong></p>
         <p>Collaborative Task Management System</p>
         <p style="margin-top: 20px; font-size: 12px; opacity: 0.8;">This is an automated report. Please do not reply.</p>
       </div>
@@ -1151,24 +1151,24 @@ export const sendWeeklyReport = async (adminName, email, reportData, attachments
   try {
     const transporter = createTransporter();
     const appUrl = process.env.NODE_ENV === 'production' 
-      ? 'https://taskflow-nine-phi.vercel.app'
+      ? 'https://AetherTrack-nine-phi.vercel.app'
       : (process.env.CLIENT_URL || 'http://localhost:3000');
 
     const mailOptions = {
       from: {
-        name: 'TaskFlow Reports',
+        name: 'AetherTrack Reports',
         address: process.env.EMAIL_USER
       },
       to: email,
-      subject: `📊 Weekly TaskFlow Report - ${reportData.weekRange}`,
+      subject: `📊 Weekly AetherTrack Report - ${reportData.weekRange}`,
       html: getWeeklyReportEmailTemplate(adminName, reportData, appUrl),
       text: `
-Weekly TaskFlow Report
+Weekly AetherTrack Report
 ${reportData.weekRange}
 
 Hi ${adminName},
 
-Here's your weekly TaskFlow summary:
+Here's your weekly AetherTrack summary:
 
 STATISTICS:
 • Total Tasks: ${reportData.totalTasks}
@@ -1184,7 +1184,7 @@ Detailed reports (Excel & PDF) are attached to this email.
 View full analytics: ${appUrl}/analytics
 
 Best regards,
-TaskFlow Team
+AetherTrack Team
       `.trim(),
       attachments: attachments
     };

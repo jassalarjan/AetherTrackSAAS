@@ -103,7 +103,7 @@ const NotificationPrompt = () => {
             {isMobile && (
               <div className="bg-white/10 rounded-lg p-2 mb-3 text-xs">
                 <p className="font-medium mb-1">📌 Quick Tip:</p>
-                <p>For best results on iOS, add TaskFlow to your Home Screen first.</p>
+                <p>For best results on iOS, add AetherTrack to your Home Screen first.</p>
               </div>
             )}
 
