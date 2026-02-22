@@ -49,7 +49,8 @@ const io = new Server(httpServer, {
     origin: [
       'http://localhost:3000',
       'http://localhost:5173',
-      'https://AetherTrack-nine-phi.vercel.app'
+      'https://AetherTrack-nine-phi.vercel.app',
+      'https://aether-track.vercel.app',
     ],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
     credentials: true,
