@@ -35,7 +35,8 @@ import {
   History,
   Pin,
   TrendingUp,
-  Layers
+  Layers,
+  ArrowLeftRight
 } from 'lucide-react';
 
 const Sidebar = () => {
@@ -198,6 +199,7 @@ const Sidebar = () => {
     { path: '/hr/attendance', icon: Clock, label: 'Attendance', roles: ['admin', 'hr'] },
     { path: '/hr/attendance?tab=shifts', icon: Layers, label: 'Shift Config', roles: ['admin', 'hr'] },
     { path: '/hr/leaves', icon: CalendarDays, label: 'Leave Management', roles: ['admin', 'hr', 'member'] },
+    { path: '/hr/reallocation', icon: ArrowLeftRight, label: 'Task Reallocation', roles: ['admin', 'hr', 'team_lead'] },
     { path: '/hr/calendar', icon: Calendar, label: 'HR Calendar', roles: ['admin', 'hr'] },
     { path: '/hr/email-center', icon: FileText, label: 'Email Center', roles: ['admin', 'hr'] },
     { path: '/teams', icon: Users, label: 'Teams', roles: ['admin', 'hr', 'team_lead', 'community_admin'] },

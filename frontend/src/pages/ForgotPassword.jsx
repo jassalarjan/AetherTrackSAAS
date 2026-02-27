@@ -17,6 +17,33 @@ const ForgotPassword = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // Password strength validation
+  const [passwordChecks, setPasswordChecks] = useState({
+    length: false,
+    uppercase: false,
+    lowercase: false,
+    number: false,
+    special: false
+  });
+
+  // Password requirements: 12+ chars, uppercase, lowercase, number, special char
+  const passwordRequirements = [
+    { key: 'length', label: 'At least 12 characters', test: (p) => p.length >= 12 },
+    { key: 'uppercase', label: 'One uppercase letter (A-Z)', test: (p) => /[A-Z]/.test(p) },
+    { key: 'lowercase', label: 'One lowercase letter (a-z)', test: (p) => /[a-z]/.test(p) },
+    { key: 'number', label: 'One number (0-9)', test: (p) => /[0-9]/.test(p) },
+    { key: 'special', label: 'One special character (!@#$%^&*)', test: (p) => /[!@#$%^&*()_+\-=\[\]{}|;:',.<>?]/.test(p) }
+  ];
+
+  const handlePasswordChange = (value) => {
+    setNewPassword(value);
+    const checks = {};
+    passwordRequirements.forEach(req => {
+      checks[req.key] = req.test(value);
+    });
+    setPasswordChecks(checks);
+  };
+
   const handleEmailSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -44,8 +71,13 @@ const ForgotPassword = () => {
       return;
     }
 
-    if (newPassword.length < 6) {
-      setError('Password must be at least 6 characters');
+    // Validate password against requirements
+    const passwordValid = passwordRequirements.every(req => req.test(newPassword));
+    if (!newPassword) {
+      setError('Password is required');
+      return;
+    } else if (!passwordValid) {
+      setError('Password does not meet the security requirements');
       return;
     }
 
@@ -205,11 +237,10 @@ const ForgotPassword = () => {
                     <input
                       type={showPassword ? 'text' : 'password'}
                       value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      placeholder="Enter new password (min 6 characters)"
+                      onChange={(e) => handlePasswordChange(e.target.value)}
+                      placeholder="Enter new password"
                       className={`w-full p-3 pr-10 ${theme === 'dark' ? 'bg-[#111418] border-[#282f39] text-white placeholder:text-[#58606e]' : 'bg-white border-gray-300 text-gray-900'} border rounded-lg focus:ring-2 focus:ring-[#136dec] focus:border-transparent`}
                       required
-                      minLength={6}
                     />
                     <button
                       type="button"
@@ -219,6 +250,36 @@ const ForgotPassword = () => {
                       {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                     </button>
                   </div>
+                  
+                  {/* Password Requirements Display */}
+                  {newPassword && (
+                    <div className="mt-2 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                      <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">Password requirements:</p>
+                      <ul className="space-y-1">
+                        {passwordRequirements.map((req) => (
+                          <li 
+                            key={req.key} 
+                            className={`text-xs flex items-center gap-1.5 ${
+                              passwordChecks[req.key] 
+                                ? 'text-green-600 dark:text-green-400' 
+                                : 'text-gray-500 dark:text-gray-400'
+                            }`}
+                          >
+                            {passwordChecks[req.key] ? (
+                              <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                              </svg>
+                            ) : (
+                              <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                              </svg>
+                            )}
+                            {req.label}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </div>
 
                 <div className="mb-6">

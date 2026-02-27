@@ -3,11 +3,12 @@ import { authenticate } from '../middleware/auth.js';
 import { checkRole } from '../middleware/roleCheck.js';
 import Team from '../models/Team.js';
 import User from '../models/User.js';
+import { validateIdParam, sanitizeBody } from '../utils/validation.js';
 
 const router = express.Router();
 
 // Create team (HR, Admin & Community Admin)
-router.post('/', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
+router.post('/', authenticate, checkRole(['admin', 'hr']), sanitizeBody(['name', 'description']), async (req, res) => {
   try {
     const { name, hr_id, lead_id, members } = req.body;
 
@@ -112,7 +113,7 @@ router.get('/', authenticate, checkRole(['admin', 'hr', 'team_lead']), async (re
 });
 
 // Get single team
-router.get('/:id', authenticate, async (req, res) => {
+router.get('/:id', authenticate, validateIdParam(), async (req, res) => {
   try {
     const team = await Team.findOne({ _id: req.params.id })
       .populate('hr_id', 'full_name email')
@@ -131,7 +132,7 @@ router.get('/:id', authenticate, async (req, res) => {
 });
 
 // Update team (HR, Admin & Community Admin)
-router.patch('/:id', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
+router.patch('/:id', authenticate, checkRole(['admin', 'hr']), validateIdParam(), sanitizeBody(['name', 'description']), async (req, res) => {
   try {
     const { name, lead_id } = req.body;
     const updates = {};
@@ -180,7 +181,7 @@ router.patch('/:id', authenticate, checkRole(['admin', 'hr']), async (req, res) 
 });
 
 // Toggle team pin status (Admin, HR & Community Admin)
-router.patch('/:id/pin', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
+router.patch('/:id/pin', authenticate, checkRole(['admin', 'hr']), validateIdParam(), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -215,7 +216,7 @@ router.patch('/:id/pin', authenticate, checkRole(['admin', 'hr']), async (req, r
 });
 
 // Update team priority (Admin, HR & Community Admin)
-router.patch('/:id/priority', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
+router.patch('/:id/priority', authenticate, checkRole(['admin', 'hr']), validateIdParam(), async (req, res) => {
   try {
     const { id } = req.params;
     const { priority } = req.body;
@@ -267,7 +268,7 @@ router.post('/reorder', authenticate, checkRole(['admin', 'hr']), async (req, re
 });
 
 // Add member to team (Admin, HR & Community Admin)
-router.post('/:id/members', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
+router.post('/:id/members', authenticate, checkRole(['admin', 'hr']), validateIdParam(), async (req, res) => {
   try {
     const { userId } = req.body;
     const teamId = req.params.id;
@@ -305,7 +306,7 @@ router.post('/:id/members', authenticate, checkRole(['admin', 'hr']), async (req
 });
 
 // Add multiple members to team (Admin, HR & Community Admin)
-router.post('/:id/members/bulk', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
+router.post('/:id/members/bulk', authenticate, checkRole(['admin', 'hr']), validateIdParam(), async (req, res) => {
   try {
     const { userIds } = req.body;
     const teamId = req.params.id;
@@ -369,7 +370,7 @@ router.post('/:id/members/bulk', authenticate, checkRole(['admin', 'hr']), async
 
 // Remove member from team (Admin, HR & Community Admin)
 // This route MUST come before DELETE /:id to avoid route conflict
-router.delete('/:id/members/:userId', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
+router.delete('/:id/members/:userId', authenticate, checkRole(['admin', 'hr']), validateIdParam(), async (req, res) => {
   try {
     const { id, userId } = req.params;
 
@@ -412,7 +413,7 @@ router.delete('/:id/members/:userId', authenticate, checkRole(['admin', 'hr']), 
 
 // Delete team (Admin, HR & Community Admin)
 // This route MUST come after DELETE /:id/members/:userId to avoid route conflict
-router.delete('/:id', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
+router.delete('/:id', authenticate, checkRole(['admin', 'hr']), validateIdParam(), async (req, res) => {
   try {
     const { id } = req.params;
 

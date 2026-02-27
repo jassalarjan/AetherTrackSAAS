@@ -3,11 +3,12 @@ import { authenticate } from '../middleware/auth.js';
 import Comment from '../models/Comment.js';
 import Task from '../models/Task.js';
 import Notification from '../models/Notification.js';
+import { validateIdParam, sanitizeBody, isValidObjectId } from '../utils/validation.js';
 
 const router = express.Router();
 
 // Get comments for a task
-router.get('/:taskId/comments', authenticate, async (req, res) => {
+router.get('/:taskId/comments', authenticate, validateIdParam('taskId'), async (req, res) => {
   try {
     const comments = await Comment.find({ task_id: req.params.taskId })
       .populate('author_id', 'full_name email')
@@ -21,7 +22,7 @@ router.get('/:taskId/comments', authenticate, async (req, res) => {
 });
 
 // Add comment to task
-router.post('/:taskId/comments', authenticate, async (req, res) => {
+router.post('/:taskId/comments', authenticate, validateIdParam('taskId'), sanitizeBody(['content']), async (req, res) => {
   try {
     const { content } = req.body;
     const taskId = req.params.taskId;

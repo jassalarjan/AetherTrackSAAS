@@ -55,17 +55,18 @@ class HrActionService {
   static async approveLeave(hrUser, leaveId, ipAddress) {
     await this.validateHrPermissions(hrUser);
 
-    const leave = await LeaveRequest.findById(leaveId).populate('user_id');
+    // Field is 'userId' (camelCase) in the LeaveRequest schema
+    const leave = await LeaveRequest.findById(leaveId).populate('userId');
     if (!leave) {
       throw new Error('Leave request not found');
     }
 
-    await this.validateEmployeeStatus(leave.user_id._id);
+    await this.validateEmployeeStatus(leave.userId._id);
 
-    // Apply state mutation
+    // Apply state mutation — use schema field names (approvedBy / approvedAt)
     leave.status = 'approved';
-    leave.approved_by = hrUser._id;
-    leave.approved_at = new Date();
+    leave.approvedBy = hrUser._id;
+    leave.approvedAt = new Date();
     await leave.save();
 
     // Audit log
@@ -74,7 +75,7 @@ class HrActionService {
       action: 'approve',
       entity: 'leave_request',
       entityId: leaveId,
-      details: `Approved leave request for ${leave.user_id.full_name}`,
+      details: `Approved leave request for ${leave.userId.full_name}`,
       ipAddress
     });
 
@@ -83,9 +84,9 @@ class HrActionService {
       event: HR_EVENTS.LEAVE_APPROVED,
       data: {
         leaveId,
-        employeeId: leave.user_id._id,
-        employeeEmail: leave.user_id.email,
-        employeeName: leave.user_id.full_name
+        employeeId: leave.userId._id,
+        employeeEmail: leave.userId.email,
+        employeeName: leave.userId.full_name
       }
     };
   }
@@ -100,18 +101,19 @@ class HrActionService {
       throw new Error('Rejection reason is required');
     }
 
-    const leave = await LeaveRequest.findById(leaveId).populate('user_id');
+    // Field is 'userId' (camelCase) in the LeaveRequest schema
+    const leave = await LeaveRequest.findById(leaveId).populate('userId');
     if (!leave) {
       throw new Error('Leave request not found');
     }
 
-    await this.validateEmployeeStatus(leave.user_id._id);
+    await this.validateEmployeeStatus(leave.userId._id);
 
-    // Apply state mutation
+    // Apply state mutation — use schema field names (rejectionReason)
     leave.status = 'rejected';
-    leave.rejected_by = hrUser._id;
-    leave.rejected_at = new Date();
-    leave.rejection_reason = reason;
+    leave.approvedBy = hrUser._id;
+    leave.approvedAt = new Date();
+    leave.rejectionReason = reason;
     await leave.save();
 
     // Audit log
@@ -120,7 +122,7 @@ class HrActionService {
       action: 'reject',
       entity: 'leave_request',
       entityId: leaveId,
-      details: `Rejected leave request for ${leave.user_id.full_name}: ${reason}`,
+      details: `Rejected leave request for ${leave.userId.full_name}: ${reason}`,
       ipAddress
     });
 
@@ -129,9 +131,9 @@ class HrActionService {
       event: HR_EVENTS.LEAVE_REJECTED,
       data: {
         leaveId,
-        employeeId: leave.user_id._id,
-        employeeEmail: leave.user_id.email,
-        employeeName: leave.user_id.full_name,
+        employeeId: leave.userId._id,
+        employeeEmail: leave.userId.email,
+        employeeName: leave.userId.full_name,
         reason
       }
     };

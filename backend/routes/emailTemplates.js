@@ -382,6 +382,11 @@ router.get('/config', authenticate, checkRole(['admin', 'hr']), async (req, res)
 
 // Test send email using template
 router.post('/test-send', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
+  // Block in production for security
+  if (process.env.NODE_ENV === 'production') {
+    return res.status(404).json({ error: 'Not found' });
+  }
+  
   try {
     const { templateId, variables = {}, testRecipient } = req.body;
 

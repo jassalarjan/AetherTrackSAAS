@@ -104,10 +104,20 @@ export const AuthProvider = ({ children }) => {
 
   const initializeSocket = (userId) => {
     const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
-    const newSocket = io(SOCKET_URL);
+    const accessToken = localStorage.getItem('accessToken');
+    
+    const newSocket = io(SOCKET_URL, {
+      auth: { token: accessToken },
+      transports: ['websocket', 'polling']
+    });
     
     newSocket.on('connect', () => {
+      console.log('Socket connected with auth token');
       newSocket.emit('join', userId);
+    });
+
+    newSocket.on('connect_error', (error) => {
+      console.error('Socket connection error:', error.message);
     });
 
     newSocket.on('disconnect', () => {

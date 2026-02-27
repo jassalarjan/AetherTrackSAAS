@@ -10,6 +10,8 @@ import HrActionService from '../services/hrActionService.js';
 import multer from 'multer';
 import xlsx from 'xlsx';
 import getClientIP from '../utils/getClientIP.js';
+import { validatePassword } from '../utils/passwordValidator.js';
+import { validateIdParam, sanitizeBody, isValidObjectId } from '../utils/validation.js';
 
 const router = express.Router();
 
@@ -35,7 +37,13 @@ const upload = multer({
 const validateUserCreation = [
   body('full_name').trim().notEmpty().withMessage('Full name is required'),
   body('email').isEmail().withMessage('Valid email is required'),
-  body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
+  body('password').custom((value) => {
+    const validation = validatePassword(value);
+    if (!validation.isValid) {
+      throw new Error(validation.errors.join('. '));
+    }
+    return true;
+  }),
   body('role').isIn(['admin', 'hr', 'team_lead', 'member', 'community_admin']).withMessage('Invalid role')
 ];
 
@@ -55,7 +63,7 @@ router.get('/me', authenticate, async (req, res) => {
 });
 
 // Update current user profile
-router.patch('/me', authenticate, async (req, res) => {
+router.patch('/me', authenticate, sanitizeBody(['full_name']), async (req, res) => {
   try {
     const { full_name } = req.body;
     const updates = {};
@@ -160,8 +168,13 @@ router.post('/me/change-password', authenticate, async (req, res) => {
       return res.status(400).json({ message: 'Both old and new passwords are required' });
     }
 
-    if (newPassword.length < 6) {
-      return res.status(400).json({ message: 'New password must be at least 6 characters long' });
+    // Validate new password strength
+    const passwordValidation = validatePassword(newPassword);
+    if (!passwordValidation.isValid) {
+      return res.status(400).json({ 
+        message: 'Password does not meet security requirements',
+        errors: passwordValidation.errors 
+      });
     }
 
     // Get user with password hash
@@ -237,7 +250,7 @@ router.get('/team-members', authenticate, checkRole(['team_lead']), async (req, 
 });
 
 // Get single user by ID (Admin, HR & Community Admin)
-router.get('/:id', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
+router.get('/:id', authenticate, checkRole(['admin', 'hr']), validateIdParam(), async (req, res) => {
   try {
     const user = await User.findOne({ _id: req.params.id })
       .select('-password_hash')
@@ -413,7 +426,7 @@ router.post('/bulk-delete', authenticate, checkRole(['admin', 'hr']), async (req
 });
 
 // Update user (Admin, HR & Community Admin)
-router.put('/:id', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
+router.put('/:id', authenticate, checkRole(['admin', 'hr']), validateIdParam(), sanitizeBody(['full_name']), async (req, res) => {
   try {
     const { full_name, email, role, team_id } = req.body;
     const { id } = req.params;
@@ -497,7 +510,7 @@ router.put('/:id', authenticate, checkRole(['admin', 'hr']), async (req, res) =>
 });
 
 // Delete user (Admin & HR)
-router.delete('/:id', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
+router.delete('/:id', authenticate, checkRole(['admin', 'hr']), validateIdParam(), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -540,13 +553,18 @@ router.delete('/:id', authenticate, checkRole(['admin', 'hr']), async (req, res)
 });
 
 // Reset user password (Admin, HR & Community Admin)
-router.patch('/:id/password', authenticate, checkRole(['admin', 'hr', 'community_admin']), async (req, res) => {
+router.patch('/:id/password', authenticate, checkRole(['admin', 'hr', 'community_admin']), validateIdParam(), async (req, res) => {
   try {
     const { password } = req.body;
     const { id } = req.params;
 
-    if (!password || password.length < 6) {
-      return res.status(400).json({ message: 'Password must be at least 6 characters' });
+    // Validate password strength
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.isValid) {
+      return res.status(400).json({ 
+        message: 'Password does not meet security requirements',
+        errors: passwordValidation.errors 
+      });
     }
 
     const user = await User.findById(id);
@@ -578,7 +596,7 @@ router.patch('/:id/password', authenticate, checkRole(['admin', 'hr', 'community
 });
 
 // Update user role (Admin & HR only)
-router.patch('/:id/role', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
+router.patch('/:id/role', authenticate, checkRole(['admin', 'hr']), validateIdParam(), async (req, res) => {
   try {
     const { role } = req.body;
     const { id } = req.params;
@@ -693,6 +711,17 @@ async function processBulkUsers(usersData, currentUser) {
           row: rowNumber,
           email: userData.email || 'N/A',
           reason: 'Missing required fields (full_name, email, password)'
+        });
+        continue;
+      }
+
+      // Validate password strength
+      const passwordValidation = validatePassword(userData.password);
+      if (!passwordValidation.isValid) {
+        results.failed.push({
+          row: rowNumber,
+          email: userData.email,
+          reason: `Password requirements not met: ${passwordValidation.errors.join(', ')}`
         });
         continue;
       }
@@ -953,7 +982,7 @@ router.get('/bulk-import/template-json', authenticate, checkRole(['admin', 'hr']
 });
 
 // Activate employee (HR, Admin, Community Admin)
-router.patch('/:id/activate', authenticate, checkRole(['hr', 'admin']), async (req, res) => {
+router.patch('/:id/activate', authenticate, checkRole(['hr', 'admin']), validateIdParam(), async (req, res) => {
  try {
    const { id } = req.params;
    const ipAddress = getClientIP(req);
@@ -980,7 +1009,7 @@ router.patch('/:id/activate', authenticate, checkRole(['hr', 'admin']), async (r
 });
 
 // Deactivate employee (HR, Admin, Community Admin)
-router.patch('/:id/deactivate', authenticate, checkRole(['hr', 'admin']), async (req, res) => {
+router.patch('/:id/deactivate', authenticate, checkRole(['hr', 'admin']), validateIdParam(), async (req, res) => {
   try {
     const { id } = req.params;
     const ipAddress = getClientIP(req);

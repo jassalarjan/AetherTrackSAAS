@@ -32,6 +32,35 @@ const Settings = () => {
   const [isUploadingPicture, setIsUploadingPicture] = useState(false);
   const [pictureMessage, setPictureMessage] = useState({ type: '', text: '' });
 
+  // Password strength validation
+  const [passwordChecks, setPasswordChecks] = useState({
+    length: false,
+    uppercase: false,
+    lowercase: false,
+    number: false,
+    special: false
+  });
+
+  // Password requirements: 12+ chars, uppercase, lowercase, number, special char
+  const passwordRequirements = [
+    { key: 'length', label: 'At least 12 characters', test: (p) => p.length >= 12 },
+    { key: 'uppercase', label: 'One uppercase letter (A-Z)', test: (p) => /[A-Z]/.test(p) },
+    { key: 'lowercase', label: 'One lowercase letter (a-z)', test: (p) => /[a-z]/.test(p) },
+    { key: 'number', label: 'One number (0-9)', test: (p) => /[0-9]/.test(p) },
+    { key: 'special', label: 'One special character (!@#$%^&*)', test: (p) => /[!@#$%^&*()_+\-=\[\]{}|;:',.<>?]/.test(p) }
+  ];
+
+  const handlePasswordFieldChange = (field, value) => {
+    setPasswordData({ ...passwordData, [field]: value });
+    if (field === 'newPassword') {
+      const checks = {};
+      passwordRequirements.forEach(req => {
+        checks[req.key] = req.test(value);
+      });
+      setPasswordChecks(checks);
+    }
+  };
+
   const handleProfilePictureChange = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -148,8 +177,13 @@ const Settings = () => {
       return;
     }
 
-    if (passwordData.newPassword.length < 6) {
-      setPasswordMessage({ type: 'error', text: 'Password must be at least 6 characters long' });
+    // Validate password against requirements
+    const passwordValid = passwordRequirements.every(req => req.test(passwordData.newPassword));
+    if (!passwordData.newPassword) {
+      setPasswordMessage({ type: 'error', text: 'Password is required' });
+      return;
+    } else if (!passwordValid) {
+      setPasswordMessage({ type: 'error', text: 'Password does not meet the security requirements' });
       return;
     }
 
@@ -416,7 +450,7 @@ const Settings = () => {
                       id="new-password"
                       type={showNewPassword ? "text" : "password"}
                       value={passwordData.newPassword}
-                      onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                      onChange={(e) => handlePasswordFieldChange('newPassword', e.target.value)}
                       className={`w-full px-3 py-2 pr-10 bg-white dark:bg-[#111418] border-gray-300 dark:border-[#282f39] text-gray-900 dark:text-white border rounded focus:ring-2 ${currentColorScheme.primaryText.replace('text-', 'focus:ring-')} focus:border-transparent`}
                       required
                       minLength={6}
@@ -429,6 +463,36 @@ const Settings = () => {
                       {showNewPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                     </button>
                   </div>
+                  
+                  {/* Password Requirements Display */}
+                  {passwordData.newPassword && (
+                    <div className="mt-2 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                      <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">Password requirements:</p>
+                      <ul className="space-y-1">
+                        {passwordRequirements.map((req) => (
+                          <li 
+                            key={req.key} 
+                            className={`text-xs flex items-center gap-1.5 ${
+                              passwordChecks[req.key] 
+                                ? 'text-green-600 dark:text-green-400' 
+                                : 'text-gray-500 dark:text-gray-400'
+                            }`}
+                          >
+                            {passwordChecks[req.key] ? (
+                              <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                              </svg>
+                            ) : (
+                              <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                              </svg>
+                            )}
+                            {req.label}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </div>
 
                 <div>
@@ -440,7 +504,7 @@ const Settings = () => {
                       id="confirm-password"
                       type={showConfirmPassword ? "text" : "password"}
                       value={passwordData.confirmPassword}
-                      onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                      onChange={(e) => handlePasswordFieldChange('confirmPassword', e.target.value)}
                       className={`w-full px-3 py-2 pr-10 bg-white dark:bg-[#111418] border-gray-300 dark:border-[#282f39] text-gray-900 dark:text-white border rounded focus:ring-2 ${currentColorScheme.primaryText.replace('text-', 'focus:ring-')} focus:border-transparent`}
                       required
                       minLength={6}

@@ -56,7 +56,19 @@ const leaveRequestSchema = new mongoose.Schema({
   },
   attachments: [{
     type: String
-  }]
+  }],
+
+  // ── Reallocation tracking ─────────────────────────────────────────────
+  /** Set to true once the reallocation job has been triggered for this leave */
+  reallocationTriggered: {
+    type: Boolean,
+    default: false
+  },
+  /** Number of tasks reallocated */
+  reallocationCount: {
+    type: Number,
+    default: 0
+  }
 }, {
   timestamps: true
 });

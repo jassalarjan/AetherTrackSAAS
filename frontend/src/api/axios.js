@@ -89,6 +89,20 @@ api.interceptors.response.use(
     // Handle 403 Forbidden errors silently
     // User permissions are managed by the application
 
+    // Handle 429 Rate Limit errors
+    if (error.response?.status === 429) {
+      const retryAfter = error.response?.headers?.['retry-after'];
+      const retrySeconds = retryAfter ? parseInt(retryAfter, 10) : 60;
+      
+      // Create a user-friendly rate limit error
+      const rateLimitError = new Error(`Too many requests. Please wait ${retrySeconds} seconds before trying again.`);
+      rateLimitError.code = 'RATE_LIMIT_EXCEEDED';
+      rateLimitError.retryAfter = retrySeconds;
+      rateLimitError.isRateLimit = true;
+      
+      return Promise.reject(rateLimitError);
+    }
+
     return Promise.reject(error);
   }
 );

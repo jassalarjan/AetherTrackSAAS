@@ -10,6 +10,7 @@ const changeLogSchema = new mongoose.Schema({
       'user_created',
       'user_updated',
       'user_deleted',
+      'user_action',
       'task_created',
       'task_updated',
       'task_deleted',
@@ -30,6 +31,10 @@ const changeLogSchema = new mongoose.Schema({
       'bulk_import',
       'password_reset_request',
       'password_reset',
+      'leave_action',
+      'leave_type_action',
+      'holiday_action',
+      'email_action',
       'system_event'
     ]
   },

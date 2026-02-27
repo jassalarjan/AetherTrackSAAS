@@ -10,6 +10,8 @@ import { logChange } from '../utils/changeLogService.js';
 import getClientIP from '../utils/getClientIP.js';
 import HrActionService from '../services/hrActionService.js';
 import HrEventService from '../services/hrEventService.js';
+import { triggerReallocation } from '../services/taskReallocationService.js';
+import { validateIdParam, sanitizeBody, isValidObjectId } from '../utils/validation.js';
 
 const router = express.Router();
 
@@ -47,7 +49,7 @@ router.get('/', authenticate, async (req, res) => {
 });
 
 // Create leave request
-router.post('/', authenticate, async (req, res) => {
+router.post('/', authenticate, sanitizeBody(['reason']), async (req, res) => {
   try {
     const { leaveTypeId, startDate, endDate, reason, days } = req.body;
 
@@ -115,7 +117,7 @@ router.post('/', authenticate, async (req, res) => {
 });
 
 // Approve/Reject leave request (HR Action-Driven)
-router.patch('/:id/status', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
+router.patch('/:id/status', authenticate, checkRole(['admin', 'hr']), validateIdParam(), async (req, res) => {
   try {
     const { status, rejectionReason, hrNotes } = req.body;
     const ipAddress = getClientIP(req);
@@ -147,6 +149,26 @@ router.patch('/:id/status', authenticate, checkRole(['admin', 'hr']), async (req
 
     // Handle HR event for email dispatch
     await HrEventService.handleEvent(actionResult.event, actionResult.data);
+
+    // ── Trigger task reallocation when leave is approved ─────────────────
+    if (status === 'approved') {
+      const freshLeave = await LeaveRequest.findById(req.params.id).lean();
+      if (freshLeave) {
+        // Fire-and-forget: run async but don't block the HTTP response
+        triggerReallocation({
+          triggerType: 'leave_approved',
+          triggerRefId: freshLeave._id,
+          absentUserId: freshLeave.userId,
+          leaveStartDate: freshLeave.startDate,
+          leaveEndDate: freshLeave.endDate,
+          actorUser: req.user,
+          ipAddress: getClientIP(req),
+          app: req.app
+        }).catch(err =>
+          console.error('[Reallocation] Background trigger failed:', err.message)
+        );
+      }
+    }
 
     // Fetch updated leave request for response
     const updatedLeave = await LeaveRequest.findById(req.params.id)
@@ -209,7 +231,7 @@ router.get('/balances', authenticate, checkRole(['admin', 'hr']), async (req, re
 });
 
 // Update HR notes for a leave request (Admin/HR only)
-router.patch('/:id/notes', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
+router.patch('/:id/notes', authenticate, checkRole(['admin', 'hr']), validateIdParam(), sanitizeBody(['hrNotes']), async (req, res) => {
   try {
     const { hrNotes } = req.body;
 
@@ -246,7 +268,7 @@ router.patch('/:id/notes', authenticate, checkRole(['admin', 'hr']), async (req,
 });
 
 // Cancel leave request (by employee, only if pending)
-router.delete('/:id', authenticate, async (req, res) => {
+router.delete('/:id', authenticate, validateIdParam(), async (req, res) => {
   try {
     const leaveRequest = await LeaveRequest.findOne({
       _id: req.params.id,

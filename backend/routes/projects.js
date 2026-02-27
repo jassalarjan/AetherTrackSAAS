@@ -3,6 +3,7 @@ import Project from '../models/Project.js';
 import Task from '../models/Task.js';
 import { checkRole } from '../middleware/roleCheck.js';
 import { upload, uploadToCloudinary, deleteFromCloudinary, extractPublicId } from '../config/cloudinary.js';
+import { validateIdParam, sanitizeBody } from '../utils/validation.js';
 
 const router = express.Router();
 
@@ -180,7 +181,7 @@ router.get('/dashboard-stats', async (req, res) => {
 });
 
 // Get single project by ID
-router.get('/:id', async (req, res) => {
+router.get('/:id', validateIdParam(), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -205,7 +206,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // Create new project - Only HR, admin, and team_lead can create projects
-router.post('/', checkRole(['admin', 'hr', 'team_lead']), async (req, res) => {
+router.post('/', checkRole(['admin', 'hr', 'team_lead']), sanitizeBody(['name', 'description', 'client_name']), async (req, res) => {
   try {
     const userId = req.user._id;
 
@@ -229,7 +230,7 @@ router.post('/', checkRole(['admin', 'hr', 'team_lead']), async (req, res) => {
 });
 
 // Update project
-router.put('/:id', async (req, res) => {
+router.put('/:id', validateIdParam(), sanitizeBody(['name', 'description', 'client_name']), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -305,7 +306,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // Delete project
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', validateIdParam(), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -328,7 +329,7 @@ router.delete('/:id', async (req, res) => {
 });
 
 // Add team member to project - Only HR, admin, and team_lead can manage members
-router.post('/:id/members', checkRole(['admin', 'hr', 'team_lead']), async (req, res) => {
+router.post('/:id/members', checkRole(['admin', 'hr', 'team_lead']), validateIdParam(), async (req, res) => {
   try {
     const { id } = req.params;
     const { userId, role } = req.body;
@@ -356,7 +357,7 @@ router.post('/:id/members', checkRole(['admin', 'hr', 'team_lead']), async (req,
 });
 
 // Remove team member from project - Only HR, admin, and team_lead can manage members
-router.delete('/:id/members/:userId', checkRole(['admin', 'hr', 'team_lead']), async (req, res) => {
+router.delete('/:id/members/:userId', checkRole(['admin', 'hr', 'team_lead']), validateIdParam(), async (req, res) => {
   try {
     const { id, userId } = req.params;
 
@@ -383,7 +384,7 @@ router.delete('/:id/members/:userId', checkRole(['admin', 'hr', 'team_lead']), a
 });
 
 // Upload document to project
-router.post('/:id/upload-document', upload.single('file'), async (req, res) => {
+router.post('/:id/upload-document', validateIdParam(), upload.single('file'), async (req, res) => {
   try {
     const { id } = req.params;
     const { name } = req.body;
@@ -450,7 +451,7 @@ router.post('/:id/upload-document', upload.single('file'), async (req, res) => {
 });
 
 // Delete document from project
-router.delete('/:id/documents/:docIndex', async (req, res) => {
+router.delete('/:id/documents/:docIndex', validateIdParam(), async (req, res) => {
   try {
     const { id, docIndex } = req.params;
     const index = parseInt(docIndex);
@@ -503,7 +504,7 @@ router.delete('/:id/documents/:docIndex', async (req, res) => {
 // PATCH /api/projects/:id/tasks/:taskId/dates - update a single task's dates
 // ─────────────────────────────────────────────────────────────────────────────
 
-router.get('/:id/schedule', async (req, res) => {
+router.get('/:id/schedule', validateIdParam(), async (req, res) => {
   try {
     const { id } = req.params;
     const { pixelsPerDay = 8, forceRefresh = 'false' } = req.query;
@@ -562,7 +563,7 @@ router.get('/:id/schedule', async (req, res) => {
 });
 
 // Force refresh + persist
-router.post('/:id/schedule/refresh', async (req, res) => {
+router.post('/:id/schedule/refresh', validateIdParam(), async (req, res) => {
   req.query.forceRefresh = 'true';
   // Re-use the GET handler logic by forwarding
   const { id } = req.params;
@@ -615,7 +616,7 @@ router.post('/:id/schedule/refresh', async (req, res) => {
 });
 
 // Update a single task's date fields and return updated schedule
-router.patch('/:id/tasks/:taskId/dates', async (req, res) => {
+router.patch('/:id/tasks/:taskId/dates', validateIdParam(), async (req, res) => {
   try {
     const { id, taskId } = req.params;
     const { start_date, due_date, scheduling_mode, constraint_type, constraint_date } = req.body;

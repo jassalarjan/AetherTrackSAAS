@@ -2,20 +2,112 @@ import express from 'express';
 import mongoose from 'mongoose';
 import crypto from 'crypto';
 import { body, validationResult } from 'express-validator';
+import rateLimit from 'express-rate-limit';
 import User from '../models/User.js';
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '../utils/jwt.js';
 import { logChange } from '../utils/changeLogService.js';
 import { authenticate } from '../middleware/auth.js';
 import getClientIP from '../utils/getClientIP.js';
 import { sendVerificationEmail, sendPasswordResetLink } from '../utils/emailService.js';
+import { validatePassword } from '../utils/passwordValidator.js';
 
 const router = express.Router();
+
+// ============================================================================
+// SECURITY: Rate Limiting Configuration
+// ============================================================================
+// Protect authentication endpoints from brute force and token farming attacks
+
+/**
+ * Login Rate Limiter (Stricter)
+ * - 5 attempts per 15 minutes per IP
+ * - Prevents brute force password attacks
+ * - Uses express-rate-limit's built-in IP detection (handles IPv6 properly)
+ * - Note: IP-based limiting only (email tracking removed for IPv6 compatibility)
+ */
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // 5 attempts per window
+  message: { error: 'Too many login attempts, please try again later' },
+  standardHeaders: true, // Return rate limit info in RateLimit-* headers
+  legacyHeaders: false, // Disable X-RateLimit-* headers
+  // Use built-in IP detection (trust proxy is enabled in server.js)
+  // Removed custom keyGenerator to fix IPv6 validation issues
+  // The built-in handler properly normalizes IPv6 addresses
+  validate: {
+    xForwardedForHeader: false
+  },
+  // Skip successful requests (don't count them against the limit)
+  skipSuccessfulRequests: false,
+  // Handler for when limit is exceeded
+  handler: (req, res) => {
+    console.warn(`[SECURITY] Login rate limit exceeded for IP: ${req.ip}`);
+    res.status(429).json({
+      error: 'Too many login attempts, please try again later',
+      retryAfter: Math.ceil(15 * 60 / 60) // minutes
+    });
+  }
+});
+
+/**
+ * Refresh Token Rate Limiter
+ * - 20 refresh requests per hour per IP
+ * - Prevents token farming attacks
+ * - Uses built-in IP detection (handles IPv6 properly)
+ */
+const refreshLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 20, // 20 refresh requests per hour per IP
+  message: { error: 'Too many token refresh requests' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  validate: {
+    xForwardedForHeader: false
+  },
+  handler: (req, res) => {
+    console.warn(`[SECURITY] Refresh token rate limit exceeded for IP: ${req.ip}`);
+    res.status(429).json({
+      error: 'Too many token refresh requests',
+      retryAfter: 60 // minutes
+    });
+  }
+});
+
+/**
+ * Forgot Password Rate Limiter
+ * - 3 requests per 15 minutes per IP
+ * - Prevents email enumeration and spam attacks
+ * - Uses built-in IP detection (handles IPv6 properly)
+ */
+const forgotPasswordLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 3, // 3 requests per window
+  message: { error: 'Too many password reset requests, please try again later' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  validate: {
+    xForwardedForHeader: false
+  },
+  handler: (req, res) => {
+    console.warn(`[SECURITY] Forgot password rate limit exceeded for IP: ${req.ip}`);
+    res.status(429).json({
+      error: 'Too many password reset requests, please try again later',
+      retryAfter: 15 // minutes
+    });
+  }
+});
 
 // Validation middleware
 const validateRegistration = [
   body('full_name').trim().notEmpty().withMessage('Full name is required'),
   body('email').isEmail().withMessage('Valid email is required'),
-  body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters')
+  body('password').custom((value) => {
+    const validation = validatePassword(value);
+    if (!validation.isValid) {
+      throw new Error(validation.errors.join('. '));
+    }
+    return true;
+  })
 ];
 
 const validateLogin = [
@@ -38,8 +130,8 @@ router.post('/register-community', (req, res) => {
   });
 });
 
-// Login
-router.post('/login', validateLogin, async (req, res) => {
+// Login - Protected by rate limiter to prevent brute force attacks
+router.post('/login', loginLimiter, validateLogin, async (req, res) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -108,8 +200,8 @@ router.post('/login', validateLogin, async (req, res) => {
   }
 });
 
-// Refresh token
-router.post('/refresh', async (req, res) => {
+// Refresh token - Protected by rate limiter to prevent token farming
+router.post('/refresh', refreshLimiter, async (req, res) => {
   try {
     const { refreshToken } = req.body;
 
@@ -299,8 +391,8 @@ router.post('/logout', authenticate, async (req, res) => {
   res.json({ message: 'Logged out successfully' });
 });
 
-// Forgot Password - Send reset link
-router.post('/forgot-password', [
+// Forgot Password - Send reset link (rate limited to prevent abuse)
+router.post('/forgot-password', forgotPasswordLimiter, [
   body('email').isEmail().withMessage('Valid email is required')
 ], async (req, res) => {
   try {
@@ -364,7 +456,13 @@ router.post('/forgot-password', [
 router.post('/reset-password', [
   body('email').isEmail().withMessage('Valid email is required'),
   body('token').notEmpty().withMessage('Reset token is required'),
-  body('newPassword').isLength({ min: 6 }).withMessage('Password must be at least 6 characters')
+  body('newPassword').custom((value) => {
+    const validation = validatePassword(value);
+    if (!validation.isValid) {
+      throw new Error(validation.errors.join('. '));
+    }
+    return true;
+  })
 ], async (req, res) => {
   try {
     const errors = validationResult(req);

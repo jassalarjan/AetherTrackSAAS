@@ -113,6 +113,29 @@ const taskSchema = new mongoose.Schema({
   free_float:      { type: Number, default: null },
   is_critical:     { type: Boolean, default: false },
 
+  // ── Reallocation tracking (populated by taskReallocationService) ───────
+  /** Populated when a task is reallocated due to leave/absence */
+  reallocation_status: {
+    type: String,
+    enum: ['none', 'reallocated', 'redistributed', 'restored'],
+    default: 'none',
+    index: true
+  },
+  reallocated_from: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
+  },
+  reallocation_reason: {
+    type: String,
+    default: null
+  },
+  reallocation_log_id: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'TaskReallocationLog',
+    default: null
+  },
+
   created_at: {
     type: Date,
     default: Date.now

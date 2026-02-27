@@ -27,6 +27,24 @@ const CommunityRegister = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [apiError, setApiError] = useState('');
 
+  // Password strength validation
+  const [passwordChecks, setPasswordChecks] = useState({
+    length: false,
+    uppercase: false,
+    lowercase: false,
+    number: false,
+    special: false
+  });
+
+  // Password requirements: 12+ chars, uppercase, lowercase, number, special char
+  const passwordRequirements = [
+    { key: 'length', label: 'At least 12 characters', test: (p) => p.length >= 12 },
+    { key: 'uppercase', label: 'One uppercase letter (A-Z)', test: (p) => /[A-Z]/.test(p) },
+    { key: 'lowercase', label: 'One lowercase letter (a-z)', test: (p) => /[a-z]/.test(p) },
+    { key: 'number', label: 'One number (0-9)', test: (p) => /[0-9]/.test(p) },
+    { key: 'special', label: 'One special character (!@#$%^&*)', test: (p) => /[!@#$%^&*()_+\-=\[\]{}|;:',.<>?]/.test(p) }
+  ];
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -36,6 +54,14 @@ const CommunityRegister = () => {
     // Clear error for this field
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
+    }
+    // Validate password in real-time
+    if (name === 'password') {
+      const checks = {};
+      passwordRequirements.forEach(req => {
+        checks[req.key] = req.test(value);
+      });
+      setPasswordChecks(checks);
     }
   };
 
@@ -58,10 +84,12 @@ const CommunityRegister = () => {
       newErrors.email = 'Email is invalid';
     }
 
+    // Validate password against requirements
+    const passwordValid = passwordRequirements.every(req => req.test(formData.password));
     if (!formData.password) {
       newErrors.password = 'Password is required';
-    } else if (formData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
+    } else if (!passwordValid) {
+      newErrors.password = 'Password does not meet requirements';
     }
 
     if (formData.password !== formData.confirmPassword) {
@@ -245,12 +273,42 @@ const CommunityRegister = () => {
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
-                placeholder="At least 6 characters"
+                placeholder="Create a strong password"
                 className={`w-full px-4 py-2 border ${errors.password ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'} rounded-lg focus:ring-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-white`}
                 disabled={isLoading}
               />
               {errors.password && (
                 <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.password}</p>
+              )}
+              
+              {/* Password Requirements Display */}
+              {formData.password && (
+                <div className="mt-2 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                  <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">Password requirements:</p>
+                  <ul className="space-y-1">
+                    {passwordRequirements.map((req) => (
+                      <li 
+                        key={req.key} 
+                        className={`text-xs flex items-center gap-1.5 ${
+                          passwordChecks[req.key] 
+                            ? 'text-green-600 dark:text-green-400' 
+                            : 'text-gray-500 dark:text-gray-400'
+                        }`}
+                      >
+                        {passwordChecks[req.key] ? (
+                          <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                        ) : (
+                          <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                          </svg>
+                        )}
+                        {req.label}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               )}
             </div>
 

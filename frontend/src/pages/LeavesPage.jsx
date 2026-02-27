@@ -2,14 +2,16 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useSidebar } from '../context/SidebarContext';
+import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 import ResponsivePageLayout from '../components/layouts/ResponsivePageLayout';
-import { Briefcase, Plus, Calendar, CheckCircle, XCircle, Clock, Menu, X } from 'lucide-react';
+import { Briefcase, Plus, Calendar, CheckCircle, XCircle, Clock, Menu, X, ArrowLeftRight } from 'lucide-react';
 
 export default function LeavesPage() {
   const { user } = useAuth();
   const { theme, currentTheme, currentColorScheme } = useTheme();
   const { toggleMobileSidebar } = useSidebar();
+  const navigate = useNavigate();
   const [leaveRequests, setLeaveRequests] = useState([]);
   const [leaveBalances, setLeaveBalances] = useState([]);
   const [leaveTypes, setLeaveTypes] = useState([]);
@@ -56,9 +58,14 @@ export default function LeavesPage() {
       });
 
       if (response.data.success) {
-        setSuccess(`Leave request ${status} successfully!`);
+        const baseMsg = `Leave request ${status} successfully!`;
+        // Inform HR that reallocation has been triggered if tasks exist
+        const reallocationMsg = status === 'approved'
+          ? ' Task reallocation will be triggered automatically if the employee has active tasks.'
+          : '';
+        setSuccess(baseMsg + reallocationMsg);
         fetchData();
-        setTimeout(() => setSuccess(''), 5000);
+        setTimeout(() => setSuccess(''), 7000);
       }
     } catch (error) {
       console.error('Error updating leave status:', error);
@@ -871,6 +878,31 @@ export default function LeavesPage() {
                   <div className={`p-4 rounded-lg bg-purple-500/10 border border-purple-500/30`}>
                     <h4 className="text-sm font-bold text-purple-400 mb-2">HR Notes</h4>
                     <p className="text-sm text-purple-300 whitespace-pre-wrap">{selectedRequest.hrNotes}</p>
+                  </div>
+                )}
+
+                {/* Reallocation status (shown on approved leaves) */}
+                {selectedRequest.status === 'approved' && (
+                  <div className={`p-4 rounded-lg bg-blue-500/10 border border-blue-500/30`}>
+                    <h4 className="text-sm font-bold text-blue-400 mb-1 flex items-center gap-1.5">
+                      <ArrowLeftRight className="w-3.5 h-3.5" /> Task Reallocation
+                    </h4>
+                    {selectedRequest.reallocationTriggered ? (
+                      <p className="text-sm text-blue-300">
+                        ✅ {selectedRequest.reallocationCount || 0} task{selectedRequest.reallocationCount !== 1 ? 's' : ''} were
+                        automatically reallocated to the Team Lead.
+                        <button
+                          className="ml-2 underline text-blue-400 hover:text-blue-300"
+                          onClick={() => { setShowDetailsModal(false); navigate('/hr/reallocation'); }}
+                        >
+                          View details →
+                        </button>
+                      </p>
+                    ) : (
+                      <p className="text-sm text-blue-300/70">
+                        Reallocation will run automatically if the employee has active tasks during this period.
+                      </p>
+                    )}
                   </div>
                 )}
               </div>

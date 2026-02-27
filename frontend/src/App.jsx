@@ -33,6 +33,7 @@ import ProjectDetail from './pages/ProjectDetail';
 import ProjectGantt from './pages/ProjectGantt';
 import SprintManagement from './pages/SprintManagement';
 import ResourceWorkload from './pages/ResourceWorkload';
+import ReallocationDashboard from './pages/ReallocationDashboard';
 import NotFound from './pages/NotFound';
 
 function AppContent() {
@@ -244,6 +245,15 @@ function AppContent() {
         element={
           <ProtectedRoute allowedRoles={['admin']}>
             <ChangeLog />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/hr/reallocation"
+        element={
+          <ProtectedRoute allowedRoles={['admin', 'hr', 'team_lead']}>
+            <ReallocationDashboard />
           </ProtectedRoute>
         }
       />

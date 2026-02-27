@@ -9,6 +9,9 @@
  *   /assignments              EmployeeShiftAssignment CRUD
  *   /rotations                ShiftRotationRule CRUD
  *   /my-shift                 Authenticated employee's current shift
+ *
+ * IMPORTANT: Define specific routes BEFORE parameterized routes
+ * Otherwise /:id will match /assignments, /rotations, etc.
  */
 import express from 'express';
 import Shift from '../models/Shift.js';
@@ -22,103 +25,17 @@ const router = express.Router();
 const HR_ADMIN = checkRole(['admin', 'hr']);
 
 // ═══════════════════════════════════════════════════════════════════════════
-//  SHIFTS
+//  POLICY ROUTES (must be before /:id)
 // ═══════════════════════════════════════════════════════════════════════════
 
-/** GET /api/hr/shifts — list all active shifts */
-router.get('/', async (req, res) => {
-  try {
-    const filter = { is_active: true };
-    if (req.query.include_inactive === 'true') delete filter.is_active;
-
-    const shifts = await Shift.find(filter)
-      .populate('created_by', 'name email')
-      .sort({ shift_type: 1, shift_name: 1 });
-    res.json(shifts);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
-
-/** GET /api/hr/shifts/:id */
-router.get('/:id', async (req, res) => {
-  try {
-    const shift = await Shift.findById(req.params.id).populate('created_by', 'name email');
-    if (!shift) return res.status(404).json({ message: 'Shift not found' });
-    res.json(shift);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
-
-/** POST /api/hr/shifts — create shift (admin/hr) */
-router.post('/', HR_ADMIN, async (req, res) => {
-  try {
-    const {
-      shift_name, start_time, end_time, total_hours,
-      grace_period_minutes, early_exit_threshold_minutes,
-      min_hours_for_present, min_hours_for_half_day,
-      is_night_shift, break_policy, shift_color, shift_type, notes,
-    } = req.body;
-
-    const shift = new Shift({
-      shift_name, start_time, end_time, total_hours,
-      grace_period_minutes, early_exit_threshold_minutes,
-      min_hours_for_present, min_hours_for_half_day,
-      is_night_shift, break_policy, shift_color, shift_type, notes,
-      created_by: req.user._id,
-    });
-
-    await shift.save();
-    res.status(201).json(shift);
-  } catch (err) {
-    if (err.name === 'ValidationError') return res.status(400).json({ message: err.message });
-    res.status(500).json({ message: err.message });
-  }
-});
-
-/** PUT /api/hr/shifts/:id — update shift (admin/hr) */
-router.put('/:id', HR_ADMIN, async (req, res) => {
-  try {
-    const shift = await Shift.findByIdAndUpdate(
-      req.params.id,
-      { ...req.body, updated_at: new Date() },
-      { new: true, runValidators: true }
-    );
-    if (!shift) return res.status(404).json({ message: 'Shift not found' });
-    res.json(shift);
-  } catch (err) {
-    res.status(400).json({ message: err.message });
-  }
-});
-
-/** DELETE /api/hr/shifts/:id — soft-delete (admin/hr) */
-router.delete('/:id', HR_ADMIN, async (req, res) => {
-  try {
-    const shift = await Shift.findByIdAndUpdate(
-      req.params.id,
-      { is_active: false },
-      { new: true }
-    );
-    if (!shift) return res.status(404).json({ message: 'Shift not found' });
-    res.json({ message: 'Shift deactivated', shift });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
-
-// ═══════════════════════════════════════════════════════════════════════════
-//  SHIFT POLICY
-// ═══════════════════════════════════════════════════════════════════════════
-
-/** GET /api/hr/shifts/policy — get active policy */
+/** GET /api/hr/shifts/policy/active — get active policy */
 router.get('/policy/active', async (req, res) => {
   try {
     const policy = await ShiftPolicy.findOne({ is_active: true })
       .sort({ effective_from: -1 })
       .populate('shift_slots.shift_id')
       .populate('created_by', 'name email');
-    res.json(policy || null);
+    res.json(policy);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -137,30 +54,31 @@ router.get('/policy/all', HR_ADMIN, async (req, res) => {
   }
 });
 
-/** POST /api/hr/shifts/policy — create/activate a new policy (deactivates all previous) */
+/** POST /api/hr/shifts/policy — create/activate a new policy */
 router.post('/policy', HR_ADMIN, async (req, res) => {
   try {
     const {
       policy_name, shift_mode, allowed_hours, shift_slots,
       overtime_enabled, overtime_threshold_hours, overtime_rate_multiplier,
-      rotation_enabled, effective_from, notes,
+      effective_from, notes
     } = req.body;
 
-    // Deactivate previous active policies
-    await ShiftPolicy.updateMany({ is_active: true }, { is_active: false });
+    // Deactivate all existing policies first
+    await ShiftPolicy.updateMany({}, { is_active: false });
 
     const policy = new ShiftPolicy({
       policy_name, shift_mode, allowed_hours, shift_slots,
       overtime_enabled, overtime_threshold_hours, overtime_rate_multiplier,
-      rotation_enabled, effective_from, notes,
+      effective_from: effective_from ? new Date(effective_from) : new Date(),
+      notes,
       created_by: req.user._id,
-      is_active: true,
+      is_active: true
     });
 
     await policy.save();
+    await policy.populate(['shift_slots.shift_id', 'created_by']);
     res.status(201).json(policy);
   } catch (err) {
-    if (err.name === 'ValidationError') return res.status(400).json({ message: err.message });
     res.status(500).json({ message: err.message });
   }
 });
@@ -176,19 +94,15 @@ router.put('/policy/:id', HR_ADMIN, async (req, res) => {
     if (!policy) return res.status(404).json({ message: 'Policy not found' });
     res.json(policy);
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    res.status(500).json({ message: err.message });
   }
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
-//  EMPLOYEE SHIFT ASSIGNMENTS
+//  ASSIGNMENTS ROUTES (must be before /:id)
 // ═══════════════════════════════════════════════════════════════════════════
 
-/**
- * GET /api/hr/shifts/assignments
- * admin/hr: all assignments (filterable by user_id, shift_id)
- * member:   own assignments only
- */
+/** GET /api/hr/shifts/assignments */
 router.get('/assignments', async (req, res) => {
   try {
     const isAdminOrHr = ['admin', 'hr'].includes(req.user.role);
@@ -236,7 +150,7 @@ router.get('/assignments/:id', async (req, res) => {
   }
 });
 
-/** POST /api/hr/shifts/assignments — assign shift to employee (admin/hr) */
+/** POST /api/hr/shifts/assignments — assign shift to employee */
 router.post('/assignments', HR_ADMIN, async (req, res) => {
   try {
     const { user_id, shift_id, effective_from, effective_to, assignment_type, notes } = req.body;
@@ -248,9 +162,8 @@ router.post('/assignments', HR_ADMIN, async (req, res) => {
           user_id,
           assignment_type: 'fixed',
           effective_to: null,
-          effective_from: { $lt: new Date(effective_from) },
         },
-        { effective_to: new Date(new Date(effective_from).getTime() - 86_400_000) }
+        { effective_to: new Date(new Date(effective_from).getTime() - 1) }
       );
     }
 
@@ -260,20 +173,19 @@ router.post('/assignments', HR_ADMIN, async (req, res) => {
       effective_from: effective_from ? new Date(effective_from) : new Date(),
       effective_to: effective_to ? new Date(effective_to) : null,
       assignment_type: assignment_type || 'fixed',
-      assigned_by: req.user._id,
       notes,
+      assigned_by: req.user._id,
     });
 
     await assignment.save();
     await assignment.populate(['user_id', 'shift_id', 'assigned_by']);
     res.status(201).json(assignment);
   } catch (err) {
-    if (err.name === 'ValidationError') return res.status(400).json({ message: err.message });
     res.status(500).json({ message: err.message });
   }
 });
 
-/** PUT /api/hr/shifts/assignments/:id — update assignment (admin/hr) */
+/** PUT /api/hr/shifts/assignments/:id — update assignment */
 router.put('/assignments/:id', HR_ADMIN, async (req, res) => {
   try {
     const assignment = await EmployeeShiftAssignment.findByIdAndUpdate(
@@ -284,15 +196,14 @@ router.put('/assignments/:id', HR_ADMIN, async (req, res) => {
       .populate('user_id', 'name email')
       .populate('shift_id')
       .populate('assigned_by', 'name email');
-
     if (!assignment) return res.status(404).json({ message: 'Assignment not found' });
     res.json(assignment);
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    res.status(500).json({ message: err.message });
   }
 });
 
-/** DELETE /api/hr/shifts/assignments/:id — remove assignment (admin/hr) */
+/** DELETE /api/hr/shifts/assignments/:id — remove assignment */
 router.delete('/assignments/:id', HR_ADMIN, async (req, res) => {
   try {
     const assignment = await EmployeeShiftAssignment.findByIdAndDelete(req.params.id);
@@ -304,13 +215,13 @@ router.delete('/assignments/:id', HR_ADMIN, async (req, res) => {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
-//  SHIFT ROTATION RULES
+//  ROTATIONS ROUTES (must be before /:id)
 // ═══════════════════════════════════════════════════════════════════════════
 
 /** GET /api/hr/shifts/rotations */
 router.get('/rotations', HR_ADMIN, async (req, res) => {
   try {
-    const rules = await ShiftRotationRule.find()
+    const rules = await ShiftRotationRule.find({ is_active: true })
       .populate('user_ids', 'name email department')
       .populate('shift_sequence.shift_id')
       .populate('created_by', 'name email')
@@ -335,7 +246,7 @@ router.get('/rotations/:id', HR_ADMIN, async (req, res) => {
   }
 });
 
-/** POST /api/hr/shifts/rotations — create rotation rule (admin/hr) */
+/** POST /api/hr/shifts/rotations — create rotation rule */
 router.post('/rotations', HR_ADMIN, async (req, res) => {
   try {
     const {
@@ -344,16 +255,21 @@ router.post('/rotations', HR_ADMIN, async (req, res) => {
     } = req.body;
 
     const rule = new ShiftRotationRule({
-      rule_name, cadence, shift_sequence, rotation_start,
-      user_ids, rotation_end, notes,
+      rule_name,
+      cadence,
+      shift_sequence: shift_sequence.map((s, i) => ({ ...s, slot_order: i })),
+      rotation_start: rotation_start ? new Date(rotation_start) : new Date(),
+      rotation_end: rotation_end ? new Date(rotation_end) : null,
+      user_ids,
+      notes,
       created_by: req.user._id,
+      is_active: true,
     });
 
     await rule.save();
     await rule.populate(['user_ids', 'shift_sequence.shift_id', 'created_by']);
     res.status(201).json(rule);
   } catch (err) {
-    if (err.name === 'ValidationError') return res.status(400).json({ message: err.message });
     res.status(500).json({ message: err.message });
   }
 });
@@ -363,17 +279,16 @@ router.put('/rotations/:id', HR_ADMIN, async (req, res) => {
   try {
     const rule = await ShiftRotationRule.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      { ...req.body, updated_at: new Date() },
       { new: true, runValidators: true }
     )
       .populate('user_ids', 'name email')
       .populate('shift_sequence.shift_id')
       .populate('created_by', 'name email');
-
     if (!rule) return res.status(404).json({ message: 'Rotation rule not found' });
     res.json(rule);
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    res.status(500).json({ message: err.message });
   }
 });
 
@@ -393,7 +308,7 @@ router.delete('/rotations/:id', HR_ADMIN, async (req, res) => {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
-//  MY SHIFT (employee self-service)
+//  MY SHIFT ROUTE (must be before /:id)
 // ═══════════════════════════════════════════════════════════════════════════
 
 /** GET /api/hr/shifts/my-shift — current authenticated user's shift */
@@ -402,6 +317,92 @@ router.get('/my-shift', async (req, res) => {
     const today = new Date();
     const result = await getActiveShiftForEmployee(req.user._id, today);
     res.json(result);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  SHIFTS BASE ROUTES - /:id route must be LAST
+// ═══════════════════════════════════════════════════════════════════════════
+
+/** GET /api/hr/shifts — list all active shifts */
+router.get('/', async (req, res) => {
+  try {
+    const filter = { is_active: true };
+    if (req.query.include_inactive === 'true') delete filter.is_active;
+
+    const shifts = await Shift.find(filter)
+      .populate('created_by', 'name email')
+      .sort({ shift_type: 1, shift_name: 1 });
+    res.json(shifts);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+/** POST /api/hr/shifts — create shift (admin/hr) */
+router.post('/', HR_ADMIN, async (req, res) => {
+  try {
+    const {
+      shift_name, start_time, end_time, total_hours,
+      grace_period_minutes, early_exit_threshold_minutes,
+      min_hours_for_present, min_hours_for_half_day,
+      is_night_shift, break_policy, shift_color, shift_type, notes,
+    } = req.body;
+
+    const shift = new Shift({
+      shift_name, start_time, end_time, total_hours,
+      grace_period_minutes, early_exit_threshold_minutes,
+      min_hours_for_present, min_hours_for_half_day,
+      is_night_shift, break_policy, shift_color, shift_type, notes,
+      created_by: req.user._id,
+      is_active: true,
+    });
+
+    await shift.save();
+    res.status(201).json(shift);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+/** GET /api/hr/shifts/:id */
+router.get('/:id', async (req, res) => {
+  try {
+    const shift = await Shift.findById(req.params.id).populate('created_by', 'name email');
+    if (!shift) return res.status(404).json({ message: 'Shift not found' });
+    res.json(shift);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+/** PUT /api/hr/shifts/:id — update shift (admin/hr) */
+router.put('/:id', HR_ADMIN, async (req, res) => {
+  try {
+    const shift = await Shift.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true, runValidators: true }
+    ).populate('created_by', 'name email');
+    if (!shift) return res.status(404).json({ message: 'Shift not found' });
+    res.json(shift);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+/** DELETE /api/hr/shifts/:id — soft-delete (admin/hr) */
+router.delete('/:id', HR_ADMIN, async (req, res) => {
+  try {
+    const shift = await Shift.findByIdAndUpdate(
+      req.params.id,
+      { is_active: false },
+      { new: true }
+    );
+    if (!shift) return res.status(404).json({ message: 'Shift not found' });
+    res.json({ message: 'Shift deactivated', shift });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

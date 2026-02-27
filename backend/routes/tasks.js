@@ -7,6 +7,15 @@ import User from '../models/User.js';
 import Comment from '../models/Comment.js';
 import { logChange } from '../utils/changeLogService.js';
 import getClientIP from '../utils/getClientIP.js';
+import LeaveRequest from '../models/LeaveRequest.js';
+import { triggerReallocation } from '../services/taskReallocationService.js';
+import { 
+  validateIdParam, 
+  validateIdBody, 
+  sanitizeBody, 
+  isValidObjectId,
+  sanitizeInput 
+} from '../utils/validation.js';
 
 const router = express.Router();
 
@@ -201,7 +210,7 @@ router.get('/', authenticate, async (req, res) => {
 });
 
 // Get single task
-router.get('/:id', authenticate, async (req, res) => {
+router.get('/:id', authenticate, validateIdParam(), async (req, res) => {
   try {
     const task = await Task.findOne({ _id: req.params.id })
       .populate('created_by', 'full_name email')
@@ -262,7 +271,7 @@ router.get('/:id', authenticate, async (req, res) => {
 });
 
 // Update task
-router.patch('/:id', authenticate, async (req, res) => {
+router.patch('/:id', authenticate, validateIdParam(), sanitizeBody(['title', 'description', 'notes']), async (req, res) => {
   try {
     const task = await Task.findOne({ _id: req.params.id });
 
@@ -317,6 +326,42 @@ router.patch('/:id', authenticate, async (req, res) => {
 
     task.updated_at = Date.now();
     await task.save();
+
+    // ── Reallocation re-trigger ────────────────────────────────────────────
+    // If the due_date changed (or assignees changed) and the task now falls
+    // inside an active approved leave window for any of its assignees,
+    // fire the reallocation engine so it isn't missed.
+    const dueDateChanged = due_date !== undefined &&
+      new Date(due_date).getTime() !== new Date(oldDueDate || 0).getTime();
+
+    if (dueDateChanged && task.reallocation_log_id == null) {
+      const newDue = new Date(task.due_date);
+      // Find any approved leave for any assignee that overlaps this due date
+      const assigneeIds = task.assigned_to.map(id => id.toString());
+      const overlappingLeave = await LeaveRequest.findOne({
+        userId: { $in: assigneeIds },
+        status: 'approved',
+        startDate: { $lte: newDue },
+        endDate:   { $gte: newDue }
+      }).lean();
+
+      if (overlappingLeave) {
+        console.log(`[Reallocation] Due-date update on task ${task._id} overlaps leave ${overlappingLeave._id} — triggering reallocation.`);
+        triggerReallocation({
+          triggerType:    'leave_approved',
+          triggerRefId:   overlappingLeave._id,
+          absentUserId:   overlappingLeave.userId,
+          leaveStartDate: overlappingLeave.startDate,
+          leaveEndDate:   overlappingLeave.endDate,
+          actorUser:      req.user,
+          ipAddress:      getClientIP(req),
+          app:            req.app
+        }).catch(err =>
+          console.error('[Reallocation] Re-trigger after task update failed:', err.message)
+        );
+      }
+    }
+    // ── End reallocation re-trigger ───────────────────────────────────────
 
     // Create notification for status change
     if (status && status !== oldStatus && task.assigned_to && task.assigned_to.length > 0) {
@@ -469,7 +514,7 @@ router.patch('/:id', authenticate, async (req, res) => {
 
 // Delete task (Admin, HR, Team Lead, Community Admin only)
 // Delete task
-router.delete('/:id', authenticate, async (req, res) => {
+router.delete('/:id', authenticate, validateIdParam(), async (req, res) => {
   try {
     const task = await Task.findOne({ _id: req.params.id });
 

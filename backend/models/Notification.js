@@ -12,7 +12,11 @@ const notificationSchema = new mongoose.Schema({
       'task_assigned', 'task_updated', 'task_completed', 'task_overdue',
       'comment_added', 'status_changed', 'task_due',
       // Meeting notifications
-      'meeting_created', 'meeting_updated', 'meeting_cancelled'
+      'meeting_created', 'meeting_updated', 'meeting_cancelled',
+      // Leave / reallocation notifications
+      'leave_approved', 'leave_rejected', 'leave_pending',
+      'task_reallocated', 'reallocation_pending', 'reallocation_accepted',
+      'reallocation_rejected', 'reallocation_redistributed'
     ],
     required: true
   },
