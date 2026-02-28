@@ -603,7 +603,7 @@ const ProjectDashboard = () => {
                           key={idx}
                           className="size-7 rounded-full border-2 border-white dark:border-[#1a2234] bg-gradient-to-br from-blue-400 to-purple-600 flex items-center justify-center text-white text-xs font-bold"
                         >
-                          {getUserInitials(member.user?.name)}
+                          {getUserInitials(member.user?.full_name)}
                         </div>
                       ))}
                       {project.team_members?.length > 3 && (
@@ -945,11 +945,11 @@ const ProjectDashboard = () => {
                       >
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-purple-600 flex items-center justify-center text-white font-bold">
-                            {getUserInitials(member.user?.name)}
+                            {getUserInitials(member.user?.full_name)}
                           </div>
                           <div>
                             <p className="font-semibold text-gray-900 dark:text-white">
-                              {member.user?.name || 'Unknown'}
+                              {member.user?.full_name || 'Unknown'}
                             </p>
                             <p className="text-sm text-gray-500 dark:text-gray-400">
                               {member.user?.email || 'No email'}

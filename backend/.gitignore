@@ -78,3 +78,7 @@ jspm_packages/
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Test / debug scripts — do not deploy to production
+test-*.js
+check-*.js

@@ -171,6 +171,21 @@ body:not(.dark) .shadow-md {
   border-color: rgb(75, 85, 99) !important; /* gray-600 instead of lighter grays */
 }
 
+/* Fix: light border colors not overridden in dark mode */
+/* bg-white elements keep bg-white class in dark mode even with dark:bg-* override */
+/* Tailwind's default border color (#e5e7eb / gray-200) shows as white-ish in dark mode */
+@layer base {
+  .dark .border-gray-200,
+  .dark .border-gray-100 {
+    border-color: rgb(55, 65, 81); /* gray-700 — subtle, non-intrusive dark border */
+  }
+
+  /* bg-white elements in dark mode: override Tailwind's default border so they don't show white lines */
+  .dark .bg-white {
+    border-color: rgb(55, 65, 81); /* gray-700 */
+  }
+}
+
 /* Custom Loading Animations */
 @keyframes spin-fast {
   to {

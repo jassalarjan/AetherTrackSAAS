@@ -134,7 +134,7 @@ router.post('/', authenticate, async (req, res) => {
     res.status(201).json({ message: 'Task created', task: populatedTask });
   } catch (error) {
     console.error('Create task error:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
@@ -205,7 +205,7 @@ router.get('/', authenticate, async (req, res) => {
     res.json({ tasks: tasksWithComments, count: tasksWithComments.length });
   } catch (error) {
     console.error('Get tasks error:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
@@ -266,7 +266,7 @@ router.get('/:id', authenticate, validateIdParam(), async (req, res) => {
     res.json({ task: taskWithComment });
   } catch (error) {
     console.error('Get task error:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
@@ -508,7 +508,7 @@ router.patch('/:id', authenticate, validateIdParam(), sanitizeBody(['title', 'de
     res.json({ message: 'Task updated', task: updatedTask });
   } catch (error) {
     console.error('Update task error:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
@@ -566,7 +566,7 @@ router.delete('/:id', authenticate, validateIdParam(), async (req, res) => {
     res.json({ message: 'Task deleted' });
   } catch (error) {
     console.error('Delete task error:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ message: 'Server error' });
   }
 });
 

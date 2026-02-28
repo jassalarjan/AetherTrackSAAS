@@ -280,7 +280,7 @@ router.patch(
 // ─────────────────────────────────────────────────────────────────────────────
 router.delete(
   '/:id',
-  checkRole(['admin', 'community_admin']),
+  checkRole(ADMIN_ROLES),
   auditLogger({ event_type: 'system_event', target_type: 'Meeting', action: 'DELETE_MEETING' }),
   async (req, res) => {
     try {

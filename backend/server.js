@@ -128,12 +128,11 @@ const io = new Server(httpServer, {
       if (!origin) {
         return callback(null, false);
       }
-      // Handle common variations (with/without trailing slash, http/https)
-      const normalizedOrigin = origin.replace(/\/$/, '').replace('https://', 'http://');
-      const isAllowed = allowedOrigins.some(allowed => {
-        const normalizedAllowed = allowed.replace(/\/$/, '').replace('https://', 'http://');
-        return normalizedOrigin === normalizedAllowed;
-      });
+      // Trailing-slash normalisation only – never strip scheme (http ≠ https)
+      const normalizedOrigin = origin.replace(/\/$/, '');
+      const isAllowed = allowedOrigins.some(
+        allowed => normalizedOrigin === allowed.replace(/\/$/, '')
+      );
       
       if (isAllowed) {
         callback(null, true);
@@ -157,7 +156,9 @@ connectDB();
 initializeScheduler();
 
 // Trust proxy - required to get real client IP behind reverse proxies (Render, Vercel, Nginx, etc.)
-app.set('trust proxy', true);
+// Use 1 instead of true to trust only the first proxy hop, satisfying express-rate-limit's
+// ERR_ERL_PERMISSIVE_TRUST_PROXY validation while still correctly reading client IPs.
+app.set('trust proxy', 1);
 
 // ============================================================================
 // SECURITY: Global Security Middleware (Helmet)
@@ -236,12 +237,11 @@ app.use(cors({
     }
     
     // Strict whitelist check - only allow explicitly listed origins
-    // Also handle common variations (with/without trailing slash, http/https)
-    const normalizedOrigin = origin.replace(/\/$/, '').replace('https://', 'http://');
-    const isAllowed = allowedOrigins.some(allowed => {
-      const normalizedAllowed = allowed.replace(/\/$/, '').replace('https://', 'http://');
-      return normalizedOrigin === normalizedAllowed;
-    });
+    // Trailing-slash normalisation only – never strip scheme (http ≠ https).
+    const normalizedOrigin = origin.replace(/\/$/, '');
+    const isAllowed = allowedOrigins.some(
+      allowed => normalizedOrigin === allowed.replace(/\/$/, '')
+    );
     
     if (isAllowed) {
       callback(null, true);
@@ -350,7 +350,7 @@ io.on('connection', (socket) => {
   // Room Join Handler with Authorization
   // ============================================================================
   // SECURITY: Validate room access before allowing clients to join
-  socket.on('join', (room, callback) => {
+  socket.on('join', async (room, callback) => {
     // Get user's team ID (handle both populated and unpopulated cases)
     const userTeamId = socket.user?.team_id?._id?.toString() || socket.user?.team_id?.toString();
     
@@ -370,10 +370,36 @@ io.on('connection', (socket) => {
       console.log(`📢 User ${socket.userId} joined team room: ${room}`);
       if (callback) callback({ success: true, room });
     } else if (isProjectRoom) {
-      // For project rooms, allow joining (project membership should be validated at API level)
-      socket.join(room);
-      console.log(`📢 User ${socket.userId} joined project room: ${room}`);
-      if (callback) callback({ success: true, room });
+      // SECURITY: Verify the user is actually a member of this project before
+      // allowing them to join the room.  Extract the project ID from the
+      // room name (format: "project-<id>").
+      const projectId = room.replace('project-', '');
+      try {
+        const ProjectModel = (await import('./models/Project.js')).default;
+        const project = await ProjectModel.findById(projectId, 'team_members created_by');
+        if (!project) {
+          console.warn(`[SECURITY] User ${socket.userId} tried to join non-existent project room: ${room}`);
+          if (callback) callback({ success: false, error: 'Project not found' });
+          return;
+        }
+        const userIdStr = socket.userId.toString();
+        const isMember = project.team_members.some(
+          m => m.user?.toString() === userIdStr
+        );
+        const isCreator = project.created_by?.toString() === userIdStr;
+        const isAdminOrHr = ['admin', 'hr'].includes(socket.userRole);
+        if (!isMember && !isCreator && !isAdminOrHr) {
+          console.warn(`[SECURITY] User ${socket.userId} unauthorised join attempt for project room: ${room}`);
+          if (callback) callback({ success: false, error: 'Not authorized to join this room' });
+          return;
+        }
+        socket.join(room);
+        console.log(`📢 User ${socket.userId} joined project room: ${room}`);
+        if (callback) callback({ success: true, room });
+      } catch (err) {
+        console.error(`[SOCKET] Error verifying project membership for room ${room}:`, err);
+        if (callback) callback({ success: false, error: 'Authorization check failed' });
+      }
     } else {
       // SECURITY: Log unauthorized room join attempts
       console.warn(`[SECURITY] User ${socket.userId} attempted to join unauthorized room: ${room}`);
@@ -431,7 +457,7 @@ app.use('/api/hr/reallocation', authenticate, reallocationRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'OK', message: 'CTMS Backend is running' });
+  res.json({ status: 'OK' });
 });
 
 // 404 handler
@@ -442,8 +468,9 @@ app.use((req, res) => {
 // Error handler
 app.use((err, req, res, next) => {
   console.error('Error:', err);
+  // Never leak internal error details to clients in production
   res.status(err.status || 500).json({
-    message: err.message || 'Internal server error',
+    message: process.env.NODE_ENV === 'production' ? 'Internal server error' : (err.message || 'Internal server error'),
     ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
   });
 });

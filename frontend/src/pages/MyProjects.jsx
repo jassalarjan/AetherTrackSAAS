@@ -336,9 +336,9 @@ const MyProjects = () => {
                         <div
                           key={idx}
                           className="w-8 h-8 rounded-full border-2 border-white dark:border-[#1a2234] bg-gradient-to-br from-blue-400 to-purple-600 flex items-center justify-center text-white text-xs font-bold"
-                          title={member.user?.name}
+                          title={member.user?.full_name}
                         >
-                          {getUserInitials(member.user?.name)}
+                          {getUserInitials(member.user?.full_name)}
                         </div>
                       ))}
                       {project.team_members?.length > 3 && (

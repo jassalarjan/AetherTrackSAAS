@@ -86,7 +86,7 @@ router.post('/', authenticate, checkRole(['admin', 'hr']), sanitizeBody(['name',
     res.status(201).json({ message: 'Team created', team: populatedTeam });
   } catch (error) {
     console.error('Create team error:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
@@ -108,7 +108,7 @@ router.get('/', authenticate, checkRole(['admin', 'hr', 'team_lead']), async (re
     res.json({ teams, count: teams.length });
   } catch (error) {
     console.error('Get teams error:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
@@ -127,7 +127,7 @@ router.get('/:id', authenticate, validateIdParam(), async (req, res) => {
     res.json({ team });
   } catch (error) {
     console.error('Get team error:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
@@ -176,7 +176,7 @@ router.patch('/:id', authenticate, checkRole(['admin', 'hr']), validateIdParam()
     res.json({ message: 'Team updated', team });
   } catch (error) {
     console.error('Update team error:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
@@ -211,7 +211,7 @@ router.patch('/:id/pin', authenticate, checkRole(['admin', 'hr']), validateIdPar
     });
   } catch (error) {
     console.error('Toggle pin error:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
@@ -238,7 +238,7 @@ router.patch('/:id/priority', authenticate, checkRole(['admin', 'hr']), validate
     res.json({ message: 'Team priority updated', team });
   } catch (error) {
     console.error('Update priority error:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
@@ -263,7 +263,7 @@ router.post('/reorder', authenticate, checkRole(['admin', 'hr']), async (req, re
     res.json({ message: 'Teams reordered successfully' });
   } catch (error) {
     console.error('Reorder teams error:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
@@ -301,7 +301,7 @@ router.post('/:id/members', authenticate, checkRole(['admin', 'hr']), validateId
     res.json({ message: 'Member added to team', team: updatedTeam });
   } catch (error) {
     console.error('Add member error:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
@@ -364,7 +364,7 @@ router.post('/:id/members/bulk', authenticate, checkRole(['admin', 'hr']), valid
     });
   } catch (error) {
     console.error('Bulk add members error:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
@@ -407,7 +407,7 @@ router.delete('/:id/members/:userId', authenticate, checkRole(['admin', 'hr']), 
     res.json({ message: 'Member removed from team', team: updatedTeam });
   } catch (error) {
     console.error('Remove member error:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
@@ -458,7 +458,7 @@ router.delete('/:id', authenticate, checkRole(['admin', 'hr']), validateIdParam(
     });
   } catch (error) {
     console.error('Delete team error:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
@@ -496,7 +496,7 @@ router.delete('/bulk/all', authenticate, checkRole(['admin', 'hr']), async (req,
     });
   } catch (error) {
     console.error('Bulk delete teams error:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ message: 'Server error' });
   }
 });
 

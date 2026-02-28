@@ -1,5 +1,6 @@
 import { createContext, useState, useContext, useEffect, useRef } from 'react';
 import api from '../api/axios';
+import { setAccessToken, getAccessToken, clearAccessToken } from '../api/tokenStore';
 import { io } from 'socket.io-client';
 import notificationService from '../utils/notificationService';
 
@@ -11,35 +12,44 @@ export const AuthProvider = ({ children }) => {
   const [socket, setSocket] = useState(null);
 
   useEffect(() => {
-    // Check if user is logged in and validate token
+    // Restore session using the httpOnly refresh-token cookie.
+    // On page load there is no access token in memory yet, so we ask the
+    // server to issue a fresh one.  If the cookie is absent/expired the
+    // call will 401 and we stay logged-out.
     const initAuth = async () => {
-      const storedUser = localStorage.getItem('user');
-      const token = localStorage.getItem('accessToken');
+      try {
+        const response = await api.post('/auth/refresh', {});
+        const { accessToken, user: refreshedUser } = response.data;
 
-      if (storedUser && token) {
-        try {
-          // Validate token by making a request to verify user
-          const response = await api.get('/auth/verify');
-          const validatedUser = response.data.user;
-          
-          // Update stored user with latest data from server
-          const userWithWorkspace = {
-            ...validatedUser,
-            workspace: validatedUser.workspace
-          };
-          
-          localStorage.setItem('user', JSON.stringify(userWithWorkspace));
-          setUser(userWithWorkspace);
-          initializeSocket(validatedUser.id);
-        } catch (error) {
-          // Token is invalid or expired, clear everything
-          console.error('Token validation failed:', error);
-          localStorage.removeItem('user');
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('refreshToken');
-          localStorage.removeItem('lastActivityTime');
-          setUser(null);
+        setAccessToken(accessToken);
+
+        // Prefer the user payload that comes with the refresh response;
+        // fall back to whatever is cached in localStorage.
+        const storedUser = localStorage.getItem('user');
+        const baseUser = refreshedUser ||
+          (storedUser ? JSON.parse(storedUser) : null);
+
+        if (baseUser) {
+          // Fetch latest profile so UI always shows up-to-date data.
+          try {
+            const verifyResponse = await api.get('/auth/verify');
+            const validatedUser = verifyResponse.data.user;
+            const userWithWorkspace = { ...validatedUser, workspace: validatedUser.workspace };
+            localStorage.setItem('user', JSON.stringify(userWithWorkspace));
+            setUser(userWithWorkspace);
+            initializeSocket(validatedUser.id);
+          } catch {
+            localStorage.setItem('user', JSON.stringify(baseUser));
+            setUser(baseUser);
+            initializeSocket(baseUser.id);
+          }
         }
+      } catch {
+        // No valid refresh-token cookie — user is not logged in.
+        clearAccessToken();
+        localStorage.removeItem('user');
+        localStorage.removeItem('lastActivityTime');
+        setUser(null);
       }
       setLoading(false);
     };
@@ -81,7 +91,7 @@ export const AuthProvider = ({ children }) => {
     // Check for inactivity periodically
     const checkInactivity = setInterval(() => {
       const lastActivity = localStorage.getItem('lastActivityTime');
-      const token = localStorage.getItem('accessToken');
+      const token = getAccessToken();
       
       if (lastActivity && token) {
         const timeSinceActivity = Date.now() - parseInt(lastActivity, 10);
@@ -104,7 +114,7 @@ export const AuthProvider = ({ children }) => {
 
   const initializeSocket = (userId) => {
     const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
-    const accessToken = localStorage.getItem('accessToken');
+    const accessToken = getAccessToken();
     
     const newSocket = io(SOCKET_URL, {
       auth: { token: accessToken },
@@ -133,7 +143,7 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       const response = await api.post('/auth/login', { email, password });
-      const { user, workspace, accessToken, refreshToken } = response.data;
+      const { user, workspace, accessToken } = response.data;
 
       // Include workspace info in user object for easy access
       const userWithWorkspace = {
@@ -142,9 +152,8 @@ export const AuthProvider = ({ children }) => {
       };
 
       localStorage.setItem('user', JSON.stringify(userWithWorkspace));
-      localStorage.setItem('accessToken', accessToken);
-      localStorage.setItem('refreshToken', refreshToken);
       localStorage.setItem('lastActivityTime', Date.now().toString());
+      setAccessToken(accessToken);
 
       setUser(userWithWorkspace);
       initializeSocket(user.id);
@@ -169,12 +178,11 @@ export const AuthProvider = ({ children }) => {
         password,
         role,
       });
-      const { user, accessToken, refreshToken } = response.data;
+      const { user, accessToken } = response.data;
 
       localStorage.setItem('user', JSON.stringify(user));
-      localStorage.setItem('accessToken', accessToken);
-      localStorage.setItem('refreshToken', refreshToken);
       localStorage.setItem('lastActivityTime', Date.now().toString());
+      setAccessToken(accessToken);
 
       setUser(user);
       initializeSocket(user.id);
@@ -188,10 +196,10 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
+    try { await api.post('/auth/logout'); } catch { /* best-effort */ }
+    clearAccessToken();
     localStorage.removeItem('user');
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
     localStorage.removeItem('lastActivityTime');
     setUser(null);
     if (socket) {

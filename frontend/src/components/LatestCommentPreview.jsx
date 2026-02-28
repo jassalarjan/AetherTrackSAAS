@@ -1,7 +1,11 @@
 import React from 'react';
 import { MessageCircleIcon, ClockIcon } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
 
 const LatestCommentPreview = ({ comment, size = 'md', maxLength = 60 }) => {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
+
   if (!comment) return null;
 
   const sizeStyles = {
@@ -55,10 +59,14 @@ const LatestCommentPreview = ({ comment, size = 'md', maxLength = 60 }) => {
 
   return (
     <div
-      className={`flex items-start bg-gray-50 border border-gray-200 rounded-lg ${sizeStyles[size]} hover:bg-gray-100 transition-colors`}
+      className={`flex items-start border rounded-lg ${sizeStyles[size]} transition-colors ${
+        isDark
+          ? 'bg-[#282f39]/50 border-[#3a4454] hover:bg-[#282f39]'
+          : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
+      }`}
       title={`${comment.author_id?.full_name || 'Someone'}: ${comment.content}`}
     >
-      <MessageCircleIcon className={`${iconSizes[size]} text-gray-400 flex-shrink-0 mt-0.5`} />
+      <MessageCircleIcon className={`${iconSizes[size]} flex-shrink-0 mt-0.5 ${isDark ? 'text-[#9da8b9]' : 'text-gray-400'}`} />
       
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5 mb-0.5">
@@ -67,15 +75,15 @@ const LatestCommentPreview = ({ comment, size = 'md', maxLength = 60 }) => {
               {getInitials(comment.author_id?.full_name)}
             </span>
           </div>
-          <span className="font-semibold text-gray-700 truncate">
+          <span className={`font-semibold truncate ${isDark ? 'text-white' : 'text-gray-700'}`}>
             {comment.author_id?.full_name || 'Unknown'}
           </span>
-          <span className="flex items-center gap-0.5 text-gray-400 ml-auto flex-shrink-0">
+          <span className={`flex items-center gap-0.5 ml-auto flex-shrink-0 ${isDark ? 'text-[#9da8b9]' : 'text-gray-400'}`}>
             <ClockIcon className="size-2.5" />
             <span className="text-[9px]">{getRelativeTime(comment.created_at)}</span>
           </span>
         </div>
-        <p className="text-gray-600 leading-snug truncate">
+        <p className={`leading-snug truncate ${isDark ? 'text-[#9da8b9]' : 'text-gray-600'}`}>
           {truncateText(comment.content, maxLength)}
         </p>
       </div>

@@ -884,7 +884,7 @@ router.get('/bulk-import/template', authenticate, checkRole(['admin', 'hr']), (r
       {
         full_name: 'John Doe',
         email: 'john.doe@example.com',
-        password: 'password123',
+        password: 'ChangeMe@2024!',
         role: 'member',
         team: 'Development',
         teams: 'Development, QA',
@@ -893,7 +893,7 @@ router.get('/bulk-import/template', authenticate, checkRole(['admin', 'hr']), (r
       {
         full_name: 'Jane Smith',
         email: 'jane.smith@example.com',
-        password: 'password456',
+        password: 'ChangeMe@2024!',
         role: 'team_lead',
         team: 'Design',
         teams: 'Design, Marketing',
@@ -902,7 +902,7 @@ router.get('/bulk-import/template', authenticate, checkRole(['admin', 'hr']), (r
       {
         full_name: 'Bob Johnson',
         email: 'bob.johnson@example.com',
-        password: 'password789',
+        password: 'ChangeMe@2024!',
         role: 'hr',
         team: 'Human Resources',
         teams: 'Human Resources',
@@ -935,7 +935,7 @@ router.get('/bulk-import/template', authenticate, checkRole(['admin', 'hr']), (r
     res.send(excelBuffer);
   } catch (error) {
     console.error('Template download error:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
@@ -946,7 +946,7 @@ router.get('/bulk-import/template-json', authenticate, checkRole(['admin', 'hr']
       {
         full_name: 'John Doe',
         email: 'john.doe@example.com',
-        password: 'password123',
+        password: 'ChangeMe@2024!',
         role: 'member',
         team: 'Development',
         teams: ['Development', 'QA'],
@@ -955,7 +955,7 @@ router.get('/bulk-import/template-json', authenticate, checkRole(['admin', 'hr']
       {
         full_name: 'Jane Smith',
         email: 'jane.smith@example.com',
-        password: 'password456',
+        password: 'ChangeMe@2024!',
         role: 'team_lead',
         team: 'Design',
         teams: ['Design', 'Marketing'],
@@ -964,7 +964,7 @@ router.get('/bulk-import/template-json', authenticate, checkRole(['admin', 'hr']
       {
         full_name: 'Bob Johnson',
         email: 'bob.johnson@example.com',
-        password: 'password789',
+        password: 'ChangeMe@2024!',
         role: 'hr',
         team: 'Human Resources',
         teams: ['Human Resources'],
@@ -977,7 +977,7 @@ router.get('/bulk-import/template-json', authenticate, checkRole(['admin', 'hr']
     res.json(sampleData);
   } catch (error) {
     console.error('JSON template download error:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ message: 'Server error' });
   }
 });
 

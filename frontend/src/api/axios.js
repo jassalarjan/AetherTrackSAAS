@@ -1,84 +1,62 @@
 import axios from 'axios';
+import { getAccessToken, setAccessToken, clearAccessToken } from './tokenStore';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 const api = axios.create({
   baseURL: API_URL,
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Add token to requests
+// -- Request interceptor ------------------------------------------------------
+// Attach the in-memory access token as a Bearer header.  The refresh token
+// travels as an httpOnly cookie; we never touch it from JS.
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('accessToken');
+    const token = getAccessToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
-      // Update last activity time on each request
       localStorage.setItem('lastActivityTime', Date.now().toString());
     }
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
-// Handle token refresh
+// -- Response interceptor -----------------------------------------------------
+// On 401: attempt a silent token refresh using the httpOnly refresh-token
+// cookie, then replay the original request.
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
 
-    // If 401 and not already retrying
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
       try {
-        const refreshToken = localStorage.getItem('refreshToken');
-        
-        // If no refresh token, redirect to login
-        if (!refreshToken) {
-          console.error('🔐 Authentication required. Redirecting to login...');
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('refreshToken');
-          localStorage.removeItem('user');
-          localStorage.removeItem('lastActivityTime');
-          
-          // Dispatch custom event for logout
-          window.dispatchEvent(new CustomEvent('auth:logout', { detail: { reason: 'no-refresh-token' } }));
-          
-          // Only redirect if not already on login page
-          if (!window.location.pathname.includes('/login')) {
-            window.location.href = '/login';
-          }
-          return Promise.reject(error);
-        }
+        const { data } = await axios.post(
+          `${API_URL}/auth/refresh`,
+          {},
+          { withCredentials: true }
+        );
 
-        const response = await axios.post(`${API_URL}/auth/refresh`, {
-          refreshToken,
-        });
-
-        const { accessToken, refreshToken: newRefreshToken } = response.data;
-        localStorage.setItem('accessToken', accessToken);
-        localStorage.setItem('refreshToken', newRefreshToken);
-        // Update last activity time when token is refreshed
+        const { accessToken } = data;
+        setAccessToken(accessToken);
         localStorage.setItem('lastActivityTime', Date.now().toString());
 
         originalRequest.headers.Authorization = `Bearer ${accessToken}`;
         return api(originalRequest);
       } catch (refreshError) {
-        console.error('🔐 Session expired. Please log in again.');
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
+        clearAccessToken();
         localStorage.removeItem('user');
         localStorage.removeItem('lastActivityTime');
-        
-        // Dispatch custom event for logout
+
         window.dispatchEvent(new CustomEvent('auth:logout', { detail: { reason: 'refresh-failed' } }));
-        
-        // Only redirect if not already on login page
+
         if (!window.location.pathname.includes('/login')) {
           window.location.href = '/login';
         }
@@ -86,20 +64,17 @@ api.interceptors.response.use(
       }
     }
 
-    // Handle 403 Forbidden errors silently
-    // User permissions are managed by the application
-
-    // Handle 429 Rate Limit errors
     if (error.response?.status === 429) {
       const retryAfter = error.response?.headers?.['retry-after'];
       const retrySeconds = retryAfter ? parseInt(retryAfter, 10) : 60;
-      
-      // Create a user-friendly rate limit error
-      const rateLimitError = new Error(`Too many requests. Please wait ${retrySeconds} seconds before trying again.`);
+
+      const rateLimitError = new Error(
+        `Too many requests. Please wait ${retrySeconds} seconds before trying again.`
+      );
       rateLimitError.code = 'RATE_LIMIT_EXCEEDED';
       rateLimitError.retryAfter = retrySeconds;
       rateLimitError.isRateLimit = true;
-      
+
       return Promise.reject(rateLimitError);
     }
 

@@ -8,7 +8,7 @@ import api from '../api/axios';
 
 const Navbar = () => {
   const { user, logout } = useAuth();
-  const { currentTheme, currentColorScheme } = useTheme();
+  const { currentTheme, currentColorScheme, theme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
   const [notifications, setNotifications] = useState([]);
@@ -54,12 +54,13 @@ const Navbar = () => {
   };
 
   const getRoleBadge = (role) => {
+    const isDark = theme === 'dark';
     const badges = {
-      admin: 'bg-purple-100 text-purple-800',
-      community_admin: 'bg-teal-100 text-teal-800',
-      hr: 'bg-green-100 text-green-800',
-      team_lead: 'bg-blue-100 text-blue-800',
-      member: 'bg-gray-100 text-gray-800',
+      admin: isDark ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' : 'bg-purple-100 text-purple-800',
+      community_admin: isDark ? 'bg-teal-500/20 text-teal-300 border border-teal-500/30' : 'bg-teal-100 text-teal-800',
+      hr: isDark ? 'bg-green-500/20 text-green-300 border border-green-500/30' : 'bg-green-100 text-green-800',
+      team_lead: isDark ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' : 'bg-blue-100 text-blue-800',
+      member: isDark ? 'bg-gray-500/20 text-gray-300 border border-gray-500/30' : 'bg-gray-100 text-gray-800',
     };
     return badges[role] || badges.member;
   };
@@ -150,7 +151,7 @@ const Navbar = () => {
       <div className="md:hidden fixed top-4 left-4 z-50">
         <button
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          className="bg-white p-2 rounded-lg shadow-lg border"
+          className="bg-white dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 p-2 rounded-lg shadow-lg border"
         >
           {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
         </button>

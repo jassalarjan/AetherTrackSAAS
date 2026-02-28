@@ -1,6 +1,7 @@
 import express from 'express';
 import Project from '../models/Project.js';
 import Task from '../models/Task.js';
+import User from '../models/User.js';
 import { checkRole } from '../middleware/roleCheck.js';
 import { upload, uploadToCloudinary, deleteFromCloudinary, extractPublicId } from '../config/cloudinary.js';
 import { validateIdParam, sanitizeBody } from '../utils/validation.js';
@@ -10,10 +11,44 @@ const router = express.Router();
 // WORKSPACE SUPPORT: All project routes are scoped by workspace
 // authenticate middleware is applied in server.js
 
+/**
+ * Verify that the requesting user is allowed to access the given project.
+ * Returns the project document on success; sends the appropriate HTTP error and returns null on failure.
+ */
+async function checkProjectAccess(req, res, projectId) {
+  const userRole = req.user.role;
+  const userId   = req.user._id.toString();
+
+  const project = await Project.findById(projectId).lean();
+  if (!project) {
+    res.status(404).json({ message: 'Project not found' });
+    return null;
+  }
+
+  if (userRole === 'member') {
+    const isMember = project.team_members.some(m => m.user?.toString() === userId);
+    if (!isMember) { res.status(403).json({ message: 'Access denied' }); return null; }
+  } else if (userRole === 'team_lead') {
+    const Team = (await import('../models/Team.js')).default;
+    const team = await Team.findOne({ lead_id: userId }).lean();
+    const teamMemberIds = team
+      ? [...team.members.map(id => id.toString()), userId]
+      : [userId];
+    const hasAccess = project.team_members.some(m => teamMemberIds.includes(m.user?.toString()));
+    if (!hasAccess) { res.status(403).json({ message: 'Access denied' }); return null; }
+  }
+  // admin / hr / community_admin see all projects
+
+  return project;
+}
+
 // Get all projects for a workspace with stats
 router.get('/', async (req, res) => {
   try {
-    const { status, priority, search } = req.query;
+    const { status, priority, search, page = 1, limit = 100 } = req.query;
+    const pageNum = Math.max(1, parseInt(page) || 1);
+    const limitNum = Math.min(200, Math.max(1, parseInt(limit) || 100)); // cap at 200
+    const skip = (pageNum - 1) * limitNum;
     const userRole = req.user.role;
     const userId = req.user._id;
 
@@ -55,9 +90,11 @@ router.get('/', async (req, res) => {
     }
 
     const projects = await Project.find(query)
-      .populate('created_by', 'name email')
-      .populate('team_members.user', 'name email')
-      .sort({ created_at: -1 });
+      .populate('created_by', 'full_name email')
+      .populate('team_members.user', 'full_name email')
+      .sort({ created_at: -1 })
+      .skip(skip)
+      .limit(limitNum);
 
     res.json(projects);
   } catch (error) {
@@ -69,7 +106,10 @@ router.get('/', async (req, res) => {
 // Get user's accessible projects (for "My Projects" view)
 router.get('/my-projects', async (req, res) => {
   try {
-    const { status, priority, search } = req.query;
+    const { status, priority, search, page = 1, limit = 100 } = req.query;
+    const pageNum = Math.max(1, parseInt(page) || 1);
+    const limitNum = Math.min(200, Math.max(1, parseInt(limit) || 100));
+    const skip = (pageNum - 1) * limitNum;
     const userRole = req.user.role;
     const userId = req.user._id;
 
@@ -102,9 +142,11 @@ router.get('/my-projects', async (req, res) => {
     }
 
     const projects = await Project.find(query)
-      .populate('created_by', 'name email')
-      .populate('team_members.user', 'name email team_id')
-      .sort({ created_at: -1 });
+      .populate('created_by', 'full_name email')
+      .populate('team_members.user', 'full_name email team_id')
+      .sort({ created_at: -1 })
+      .skip(skip)
+      .limit(limitNum);
 
     res.json(projects);
   } catch (error) {
@@ -116,37 +158,55 @@ router.get('/my-projects', async (req, res) => {
 // Get dashboard stats
 router.get('/dashboard-stats', async (req, res) => {
   try {
-    const totalProjects = await Project.countDocuments({});
-    const activeProjects = await Project.countDocuments({ status: 'active' });
-    const completedProjects = await Project.countDocuments({ status: 'completed' });
-    const onHoldProjects = await Project.countDocuments({ status: 'on_hold' });
+    const userRole = req.user.role;
+    const userId = req.user._id;
 
-    const projects = await Project.find({});
+    // Build the same scope-query used by the list endpoint so stats never
+    // include projects the requesting user has no visibility of.
+    const scopeQuery = {};
+    if (userRole === 'member') {
+      scopeQuery['team_members.user'] = userId;
+    } else if (userRole === 'team_lead') {
+      const Team = (await import('../models/Team.js')).default;
+      const team = await Team.findOne({ lead_id: userId });
+      if (team) {
+        scopeQuery['team_members.user'] = { $in: [...team.members, team.lead_id] };
+      } else {
+        scopeQuery['team_members.user'] = userId;
+      }
+    }
+    // HR / Admin: no filter – all projects visible
+
+    const [totalProjects, activeProjects, completedProjects, onHoldProjects, projects] =
+      await Promise.all([
+        Project.countDocuments(scopeQuery),
+        Project.countDocuments({ ...scopeQuery, status: 'active' }),
+        Project.countDocuments({ ...scopeQuery, status: 'completed' }),
+        Project.countDocuments({ ...scopeQuery, status: 'on_hold' }),
+        Project.find(scopeQuery, 'budget risks'),
+      ]);
+
     const budgetStats = projects.reduce((acc, project) => {
       acc.allocated += project.budget.allocated || 0;
       acc.spent += project.budget.spent || 0;
       return acc;
     }, { allocated: 0, spent: 0 });
 
-    // Get task stats
-    const totalTasks = await Task.countDocuments({});
-    const completedTasks = await Task.countDocuments({ status: 'done' });
-    const inProgressTasks = await Task.countDocuments({ status: 'in_progress' });
+    // Task stats scoped to accessible projects
+    const projectIds = projects.map(p => p._id);
+    const [totalTasks, completedTasks] = await Promise.all([
+      Task.countDocuments({ project_id: { $in: projectIds } }),
+      Task.countDocuments({ project_id: { $in: projectIds }, status: 'done' }),
+    ]);
 
-    // Get critical risks
-    const projectsWithRisks = await Project.find({ 
-      'risks.severity': { $in: ['high', 'critical'] },
-      'risks.status': 'active'
-    });
-    
-    const criticalRisks = projectsWithRisks.reduce((acc, project) => {
-      const activeRisks = project.risks.filter(
+    // Critical risks
+    const criticalRisks = projects.reduce((acc, project) => {
+      const activeRisks = (project.risks || []).filter(
         r => r.status === 'active' && (r.severity === 'high' || r.severity === 'critical')
       );
       return acc + activeRisks.length;
     }, 0);
 
-    // Calculate team capacity (placeholder - can be enhanced with actual workload data)
     const teamCapacity = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
     res.json({
@@ -184,18 +244,39 @@ router.get('/dashboard-stats', async (req, res) => {
 router.get('/:id', validateIdParam(), async (req, res) => {
   try {
     const { id } = req.params;
+    const userRole = req.user.role;
+    const userId = req.user._id.toString();
 
     const project = await Project.findOne({ _id: id })
-      .populate('created_by', 'name email')
-      .populate('team_members.user', 'name email');
+      .populate('created_by', 'full_name email')
+      .populate('team_members.user', 'full_name email');
 
     if (!project) {
       return res.status(404).json({ message: 'Project not found' });
     }
 
+    // Members may only access projects they are assigned to.
+    // Team leads may only access projects that include someone from their team.
+    if (userRole === 'member') {
+      const isMember = project.team_members.some(
+        m => m.user?._id?.toString() === userId
+      );
+      if (!isMember) return res.status(403).json({ message: 'Access denied' });
+    } else if (userRole === 'team_lead') {
+      const Team = (await import('../models/Team.js')).default;
+      const team = await Team.findOne({ lead_id: userId });
+      const teamMemberIds = team
+        ? [...team.members.map(id => id.toString()), userId]
+        : [userId];
+      const hasAccess = project.team_members.some(
+        m => teamMemberIds.includes(m.user?._id?.toString())
+      );
+      if (!hasAccess) return res.status(403).json({ message: 'Access denied' });
+    }
+
     // Get associated tasks
     const tasks = await Task.find({ project_id: id })
-      .populate('assigned_to', 'name email')
+      .populate('assigned_to', 'full_name email')
       .sort({ created_at: -1 });
 
     res.json({ ...project.toObject(), tasks });
@@ -219,8 +300,8 @@ router.post('/', checkRole(['admin', 'hr', 'team_lead']), sanitizeBody(['name', 
     await project.save();
 
     const populatedProject = await Project.findById(project._id)
-      .populate('created_by', 'name email')
-      .populate('team_members.user', 'name email');
+      .populate('created_by', 'full_name email')
+      .populate('team_members.user', 'full_name email');
 
     res.status(201).json(populatedProject);
   } catch (error) {
@@ -229,8 +310,8 @@ router.post('/', checkRole(['admin', 'hr', 'team_lead']), sanitizeBody(['name', 
   }
 });
 
-// Update project
-router.put('/:id', validateIdParam(), sanitizeBody(['name', 'description', 'client_name']), async (req, res) => {
+// Update project - Only HR, admin, and team_lead can update projects
+router.put('/:id', checkRole(['admin', 'hr', 'team_lead']), validateIdParam(), sanitizeBody(['name', 'description', 'client_name']), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -275,8 +356,8 @@ router.put('/:id', validateIdParam(), sanitizeBody(['name', 'description', 'clie
       updateData,
       { new: true, runValidators: true }
     )
-      .populate('created_by', 'name email')
-      .populate('team_members.user', 'name email');
+      .populate('created_by', 'full_name email')
+      .populate('team_members.user', 'full_name email');
 
     if (!project) {
       return res.status(404).json({ message: 'Project not found' });
@@ -289,8 +370,7 @@ router.put('/:id', validateIdParam(), sanitizeBody(['name', 'description', 'clie
     // Provide more detailed error messages
     if (error.name === 'CastError') {
       return res.status(400).json({ 
-        message: `Invalid data type for field: ${error.path}`,
-        details: error.message 
+        message: `Invalid data type for field: ${error.path}`
       });
     }
     
@@ -305,8 +385,8 @@ router.put('/:id', validateIdParam(), sanitizeBody(['name', 'description', 'clie
   }
 });
 
-// Delete project
-router.delete('/:id', validateIdParam(), async (req, res) => {
+// Delete project - Only HR, admin, and team_lead can delete projects
+router.delete('/:id', checkRole(['admin', 'hr', 'team_lead']), validateIdParam(), async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -334,6 +414,12 @@ router.post('/:id/members', checkRole(['admin', 'hr', 'team_lead']), validateIdP
     const { id } = req.params;
     const { userId, role } = req.body;
 
+    // Verify the user being added actually exists to prevent orphan references
+    const userExists = await User.exists({ _id: userId });
+    if (!userExists) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
     const project = await Project.findOneAndUpdate(
       { _id: id },
       { 
@@ -342,8 +428,8 @@ router.post('/:id/members', checkRole(['admin', 'hr', 'team_lead']), validateIdP
       },
       { new: true }
     )
-      .populate('created_by', 'name email')
-      .populate('team_members.user', 'name email');
+      .populate('created_by', 'full_name email')
+      .populate('team_members.user', 'full_name email');
 
     if (!project) {
       return res.status(404).json({ message: 'Project not found' });
@@ -369,8 +455,8 @@ router.delete('/:id/members/:userId', checkRole(['admin', 'hr', 'team_lead']), v
       },
       { new: true }
     )
-      .populate('created_by', 'name email')
-      .populate('team_members.user', 'name email');
+      .populate('created_by', 'full_name email')
+      .populate('team_members.user', 'full_name email');
 
     if (!project) {
       return res.status(404).json({ message: 'Project not found' });
@@ -436,17 +522,14 @@ router.post('/:id/upload-document', validateIdParam(), upload.single('file'), as
     console.error('Error uploading document:', error);
     
     if (error.message.includes('File type')) {
-      return res.status(400).json({ message: error.message });
+      return res.status(400).json({ message: 'Invalid file type. Only images, PDFs, and common Office documents are allowed.' });
     }
     
     if (error.message.includes('File size')) {
       return res.status(400).json({ message: 'File size exceeds 10MB limit' });
     }
     
-    res.status(500).json({ 
-      message: 'Error uploading document',
-      error: error.message 
-    });
+    res.status(500).json({ message: 'Error uploading document' });
   }
 });
 
@@ -490,10 +573,7 @@ router.delete('/:id/documents/:docIndex', validateIdParam(), async (req, res) =>
     });
   } catch (error) {
     console.error('Error deleting document:', error);
-    res.status(500).json({ 
-      message: 'Error deleting document',
-      error: error.message 
-    });
+    res.status(500).json({ message: 'Error deleting document' });
   }
 });
 
@@ -509,8 +589,8 @@ router.get('/:id/schedule', validateIdParam(), async (req, res) => {
     const { id } = req.params;
     const { pixelsPerDay = 8, forceRefresh = 'false' } = req.query;
 
-    const project = await Project.findById(id).lean();
-    if (!project) return res.status(404).json({ message: 'Project not found' });
+    const project = await checkProjectAccess(req, res, id);
+    if (!project) return;
 
     const tasks = await Task.find({ project_id: id })
       .populate('assigned_to', 'name email avatar')
@@ -570,8 +650,8 @@ router.post('/:id/schedule/refresh', validateIdParam(), async (req, res) => {
   const { pixelsPerDay = 8 } = req.body;
 
   try {
-    const project = await Project.findById(id).lean();
-    if (!project) return res.status(404).json({ message: 'Project not found' });
+    const project = await checkProjectAccess(req, res, id);
+    if (!project) return;
 
     const tasks = await Task.find({ project_id: id })
       .populate('assigned_to', 'name email avatar')
@@ -620,6 +700,9 @@ router.patch('/:id/tasks/:taskId/dates', validateIdParam(), async (req, res) => 
   try {
     const { id, taskId } = req.params;
     const { start_date, due_date, scheduling_mode, constraint_type, constraint_date } = req.body;
+
+    const projectAccess = await checkProjectAccess(req, res, id);
+    if (!projectAccess) return;
 
     const allowedFields = {};
     if (start_date      !== undefined) allowedFields.start_date      = start_date ? new Date(start_date) : null;

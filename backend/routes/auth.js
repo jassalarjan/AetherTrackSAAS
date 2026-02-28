@@ -4,7 +4,8 @@ import crypto from 'crypto';
 import { body, validationResult } from 'express-validator';
 import rateLimit from 'express-rate-limit';
 import User from '../models/User.js';
-import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '../utils/jwt.js';
+import { generateAccessToken, generateRefreshToken, verifyRefreshToken, decodeToken } from '../utils/jwt.js';
+import { addToBlacklist } from '../utils/tokenBlacklist.js';
 import { logChange } from '../utils/changeLogService.js';
 import { authenticate } from '../middleware/auth.js';
 import getClientIP from '../utils/getClientIP.js';
@@ -97,6 +98,38 @@ const forgotPasswordLimiter = rateLimit({
   }
 });
 
+/**
+ * Reset Password Rate Limiter
+ * - 5 attempts per 15 minutes per IP
+ * - A 6-digit OTP has only 1 000 000 possibilities; without this limit
+ *   an attacker can brute-force valid OTPs while the token is still live.
+ */
+const resetPasswordLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: { error: 'Too many password reset attempts, please try again later' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  validate: { xForwardedForHeader: false },
+  handler: (req, res) => {
+    console.warn(`[SECURITY] Reset password rate limit exceeded for IP: ${req.ip}`);
+    res.status(429).json({
+      error: 'Too many password reset attempts, please try again later',
+      retryAfter: 15
+    });
+  }
+});
+
+/** Cookie options for httpOnly auth tokens – sent alongside the JSON body
+ *  so existing localStorage-based clients still work while the migration
+ *  to cookie-only auth is being rolled out. */
+const COOKIE_OPTS = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: 'strict',
+  path: '/'
+};
+
 // Validation middleware
 const validateRegistration = [
   body('full_name').trim().notEmpty().withMessage('Full name is required'),
@@ -181,6 +214,10 @@ router.post('/login', loginLimiter, validateLogin, async (req, res) => {
       }
     });
 
+    // Set httpOnly cookies so tokens are inaccessible to JavaScript (XSS mitigation)
+    res.cookie('access_token', accessToken, { ...COOKIE_OPTS, maxAge: 15 * 60 * 1000 });
+    res.cookie('refresh_token', refreshToken, { ...COOKIE_OPTS, path: '/api/auth/refresh', maxAge: 7 * 24 * 60 * 60 * 1000 });
+
     res.json({
       message: 'Login successful',
       user: {
@@ -196,17 +233,18 @@ router.post('/login', loginLimiter, validateLogin, async (req, res) => {
     });
   } catch (error) {
     console.error('Login error:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
 // Refresh token - Protected by rate limiter to prevent token farming
 router.post('/refresh', refreshLimiter, async (req, res) => {
   try {
-    const { refreshToken } = req.body;
+    // Accept refresh token from httpOnly cookie (preferred) or request body (legacy).
+    const refreshToken = req.cookies?.refresh_token || req.body.refreshToken;
 
     if (!refreshToken) {
-      return res.status(400).json({ message: 'Refresh token required' });
+      return res.status(401).json({ message: 'Refresh token required' });
     }
 
     // Verify refresh token
@@ -228,6 +266,10 @@ router.post('/refresh', refreshLimiter, async (req, res) => {
     const newAccessToken = generateAccessToken(user._id, user.role);
     const newRefreshToken = generateRefreshToken(user._id);
 
+    // Refresh cookies too
+    res.cookie('access_token', newAccessToken, { ...COOKIE_OPTS, maxAge: 15 * 60 * 1000 });
+    res.cookie('refresh_token', newRefreshToken, { ...COOKIE_OPTS, path: '/api/auth/refresh', maxAge: 7 * 24 * 60 * 60 * 1000 });
+
     res.json({
       user: {
         id: user._id,
@@ -241,7 +283,7 @@ router.post('/refresh', refreshLimiter, async (req, res) => {
     });
   } catch (error) {
     console.error('Refresh token error:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
@@ -258,11 +300,10 @@ router.post('/verify-email', [
 
     const { email, code } = req.body;
 
-    // Find user
+    // Find user – return generic 200 for non-existent emails to prevent enumeration
     const user = await User.findOne({ email });
-    
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(200).json({ message: 'If that email is registered and unverified, a code has been sent.' });
     }
 
     // Check if already verified
@@ -311,10 +352,7 @@ router.post('/verify-email', [
     });
   } catch (error) {
     console.error('Email verification error:', error);
-    res.status(500).json({ 
-      message: 'Failed to verify email', 
-      error: error.message 
-    });
+    res.status(500).json({ message: 'Failed to verify email' });
   }
 });
 
@@ -330,11 +368,10 @@ router.post('/resend-verification', [
 
     const { email } = req.body;
 
-    // Find user
+    // Find user – return generic 200 to prevent email enumeration
     const user = await User.findOne({ email });
-    
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(200).json({ message: 'If that email is registered and unverified, a verification email has been sent.' });
     }
 
     // Check if already verified
@@ -368,26 +405,38 @@ router.post('/resend-verification', [
     });
   } catch (error) {
     console.error('Resend verification error:', error);
-    res.status(500).json({ 
-      message: 'Failed to resend verification email', 
-      error: error.message 
-    });
+    res.status(500).json({ message: 'Failed to resend verification email' });
   }
 });
 
 // Logout
 router.post('/logout', authenticate, async (req, res) => {
-  // Log logout event
-  const user_ip = getClientIP(req);
-  await logChange({
-    event_type: 'user_logout',
-    user: req.user,
-    user_ip,
-    action: 'User logged out',
-    description: `${req.user.full_name} (${req.user.email}) logged out`
-  });
+  // Blacklist the current access token so it cannot be reused even before it expires
+  const token = req.token; // set by authenticate middleware
+  if (token) {
+    const decoded = decodeToken(token);
+    const expiresAt = decoded?.exp ? decoded.exp * 1000 : Date.now() + 15 * 60 * 1000;
+    addToBlacklist(token, expiresAt);
+  }
 
-  // In a production app, you might want to blacklist the token
+  // Clear httpOnly cookies
+  res.clearCookie('access_token', { ...COOKIE_OPTS });
+  res.clearCookie('refresh_token', { ...COOKIE_OPTS, path: '/api/auth/refresh' });
+
+  // Log logout event
+  try {
+    const user_ip = getClientIP(req);
+    await logChange({
+      event_type: 'user_logout',
+      user: req.user,
+      user_ip,
+      action: 'User logged out',
+      description: `${req.user.full_name} (${req.user.email}) logged out`
+    });
+  } catch (logErr) {
+    console.error('Logout audit log error:', logErr);
+  }
+
   res.json({ message: 'Logged out successfully' });
 });
 
@@ -417,21 +466,13 @@ router.post('/forgot-password', forgotPasswordLimiter, [
     const resetToken = crypto.randomInt(100000, 999999).toString();
     const resetExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
 
-    console.log('🔐 Password reset requested for:', user.email);
-    console.log('   Generated token:', resetToken);
-    console.log('   Token expires:', resetExpiry);
-
     // Save token to user (updates existing token if any)
     user.resetPasswordToken = resetToken;
     user.resetPasswordExpiry = resetExpiry;
     await user.save();
 
-    console.log('✅ Token saved to database');
-
     // Send reset email
     await sendPasswordResetLink(user.full_name, user.email, resetToken);
-
-    console.log('📧 Reset email sent to:', user.email);
 
     // Log password reset request
     const user_ip = getClientIP(req);
@@ -453,7 +494,9 @@ router.post('/forgot-password', forgotPasswordLimiter, [
 });
 
 // Reset Password - Verify token and set new password
-router.post('/reset-password', [
+// Rate-limited: a 6-digit OTP has 1 000 000 possibilities; without this limit
+// an attacker can brute-force the token before it expires.
+router.post('/reset-password', resetPasswordLimiter, [
   body('email').isEmail().withMessage('Valid email is required'),
   body('token').notEmpty().withMessage('Reset token is required'),
   body('newPassword').custom((value) => {
@@ -472,10 +515,6 @@ router.post('/reset-password', [
 
     const { email, token, newPassword } = req.body;
 
-    console.log('🔐 Password reset attempt');
-    console.log('   Email:', email);
-    console.log('   Token received:', token);
-
     // Find user with valid token and email
     const user = await User.findOne({
       email: email.toLowerCase(),
@@ -483,15 +522,7 @@ router.post('/reset-password', [
       resetPasswordExpiry: { $gt: Date.now() }
     });
 
-    console.log('   User found:', user ? `${user.email} (${user._id})` : 'NO USER FOUND');
-    if (user) {
-      console.log('   Stored token:', user.resetPasswordToken);
-      console.log('   Token expires:', user.resetPasswordExpiry);
-      console.log('   Current time:', new Date());
-    }
-
     if (!user) {
-      console.log('❌ Invalid or expired token');
       return res.status(400).json({ 
         message: 'Invalid or expired reset code. Please request a new password reset.' 
       });
@@ -502,8 +533,6 @@ router.post('/reset-password', [
     user.resetPasswordToken = null;
     user.resetPasswordExpiry = null;
     await user.save();
-
-    console.log('✅ Password reset successful for:', user.email);
 
     // Log password reset
     const user_ip = getClientIP(req);

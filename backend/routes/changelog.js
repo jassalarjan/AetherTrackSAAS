@@ -39,7 +39,7 @@ router.get('/', authenticate, checkRole(['admin']), async (req, res) => {
     res.json(result);
   } catch (error) {
     console.error('Error fetching change logs:', error);
-    res.status(500).json({ message: 'Error fetching change logs', error: error.message });
+    res.status(500).json({ message: 'Error fetching change logs' });
   }
 });
 
@@ -57,7 +57,7 @@ router.get('/stats', authenticate, checkRole(['admin']), async (req, res) => {
     res.json(stats);
   } catch (error) {
     console.error('Error fetching change log stats:', error);
-    res.status(500).json({ message: 'Error fetching statistics', error: error.message });
+    res.status(500).json({ message: 'Error fetching statistics' });
   }
 });
 
@@ -120,7 +120,7 @@ router.get('/export', authenticate, checkRole(['admin']), async (req, res) => {
     res.send(csv);
   } catch (error) {
     console.error('Error exporting change logs:', error);
-    res.status(500).json({ message: 'Error exporting change logs', error: error.message });
+    res.status(500).json({ message: 'Error exporting change logs' });
   }
 });
 
@@ -161,7 +161,7 @@ router.get('/event-types', authenticate, checkRole(['admin']), async (req, res) 
     res.json(eventTypes);
   } catch (error) {
     console.error('Error fetching event types:', error);
-    res.status(500).json({ message: 'Error fetching event types', error: error.message });
+    res.status(500).json({ message: 'Error fetching event types' });
   }
 });
 
@@ -186,7 +186,7 @@ router.delete('/clear', authenticate, checkRole(['admin']), async (req, res) => 
     });
   } catch (error) {
     console.error('Error clearing change logs:', error);
-    res.status(500).json({ message: 'Error clearing change logs', error: error.message });
+    res.status(500).json({ message: 'Error clearing change logs' });
   }
 });
 

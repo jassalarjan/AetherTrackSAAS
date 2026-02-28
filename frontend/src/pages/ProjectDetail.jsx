@@ -724,10 +724,10 @@ const ProjectDetail = () => {
                       {project.team_members?.map((member, idx) => (
                         <div key={idx} className="flex items-center gap-3">
                           <div className="size-8 rounded-full bg-gradient-to-br from-blue-400 to-purple-600 flex items-center justify-center text-xs font-bold text-white border border-gray-200">
-                            {getUserInitials(member.user?.name)}
+                            {getUserInitials(member.user?.full_name)}
                           </div>
                           <div className="flex-1">
-                            <p className="text-sm font-semibold dark:text-white">{member.user?.name || 'Unknown'}</p>
+                            <p className="text-sm font-semibold dark:text-white">{member.user?.full_name || 'Unknown'}</p>
                             <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase font-bold tracking-wider">
                               {member.role || 'Member'}
                             </p>
@@ -917,7 +917,7 @@ const ProjectDetail = () => {
                       <div key={idx} className="bg-white dark:bg-gray-900 p-6 rounded-xl border border-gray-200 dark:border-gray-800 hover:shadow-lg transition-shadow">
                         <div className="flex items-start justify-between mb-4">
                           <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-purple-600 flex items-center justify-center text-white font-bold text-lg">
-                            {getUserInitials(member.user?.name || member.user?.email || 'U')}
+                            {getUserInitials(member.user?.full_name || member.user?.email || 'U')}
                           </div>
                           <button 
                             onClick={() => handleRemoveMember(member.user?._id)}
@@ -926,7 +926,7 @@ const ProjectDetail = () => {
                             <X size={18} />
                           </button>
                         </div>
-                        <h4 className="font-bold text-lg mb-1 dark:text-white">{member.user?.name || 'Unknown User'}</h4>
+                        <h4 className="font-bold text-lg mb-1 dark:text-white">{member.user?.full_name || 'Unknown User'}</h4>
                         <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">{member.user?.email || ''}</p>
                         <div className="flex items-center justify-between">
                           <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 rounded-full text-xs font-bold uppercase">

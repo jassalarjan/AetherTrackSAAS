@@ -31,11 +31,20 @@ const TaskCard = ({
   const [showStatusMenu, setShowStatusMenu] = useState(false);
 
   const getPriorityColor = (priority) => {
+    const isDark = theme === 'dark';
     const colors = {
-      low: 'bg-slate-500/10 text-slate-300 border-slate-500/20',
-      medium: 'bg-orange-400/10 text-orange-300 border-orange-400/20',
-      high: 'bg-red-500/10 text-red-300 border-red-500/20',
-      urgent: 'bg-red-600/15 text-red-300 border-red-600/30 shadow-lg shadow-red-900/20'
+      low: isDark
+        ? 'bg-slate-500/10 text-slate-300 border-slate-500/20'
+        : 'bg-slate-100 text-slate-600 border-slate-300',
+      medium: isDark
+        ? 'bg-orange-400/10 text-orange-300 border-orange-400/20'
+        : 'bg-orange-50 text-orange-600 border-orange-200',
+      high: isDark
+        ? 'bg-red-500/10 text-red-300 border-red-500/20'
+        : 'bg-red-50 text-red-600 border-red-200',
+      urgent: isDark
+        ? 'bg-red-600/15 text-red-300 border-red-600/30 shadow-lg shadow-red-900/20'
+        : 'bg-red-100 text-red-700 border-red-300 shadow-sm'
     };
     return colors[priority] || colors.medium;
   };
@@ -51,12 +60,23 @@ const TaskCard = ({
   };
 
   const getStatusColor = (status) => {
+    const isDark = theme === 'dark';
     const colors = {
-      todo: 'bg-slate-500/10 text-slate-300 border-slate-500/20',
-      in_progress: 'bg-blue-500/10 text-blue-300 border-blue-500/20',
-      review: 'bg-yellow-500/10 text-yellow-300 border-yellow-500/20',
-      done: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20',
-      archived: 'bg-gray-500/10 text-gray-400 border-gray-500/20'
+      todo: isDark
+        ? 'bg-slate-500/10 text-slate-300 border-slate-500/20'
+        : 'bg-slate-50 text-slate-600 border-slate-300',
+      in_progress: isDark
+        ? 'bg-blue-500/10 text-blue-300 border-blue-500/20'
+        : 'bg-blue-50 text-blue-600 border-blue-200',
+      review: isDark
+        ? 'bg-yellow-500/10 text-yellow-300 border-yellow-500/20'
+        : 'bg-yellow-50 text-yellow-700 border-yellow-200',
+      done: isDark
+        ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20'
+        : 'bg-emerald-50 text-emerald-700 border-emerald-200',
+      archived: isDark
+        ? 'bg-gray-500/10 text-gray-400 border-gray-500/20'
+        : 'bg-gray-100 text-gray-500 border-gray-200'
     };
     return colors[status] || colors.todo;
   };

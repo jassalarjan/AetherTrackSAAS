@@ -34,10 +34,11 @@ router.get('/policy/active', async (req, res) => {
     const policy = await ShiftPolicy.findOne({ is_active: true })
       .sort({ effective_from: -1 })
       .populate('shift_slots.shift_id')
-      .populate('created_by', 'name email');
+      .populate('created_by', 'full_name email');
     res.json(policy);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('Get active policy error:', err);
+    res.status(500).json({ message: 'Failed to fetch active policy' });
   }
 });
 
@@ -47,10 +48,11 @@ router.get('/policy/all', HR_ADMIN, async (req, res) => {
     const policies = await ShiftPolicy.find()
       .sort({ effective_from: -1 })
       .populate('shift_slots.shift_id')
-      .populate('created_by', 'name email');
+      .populate('created_by', 'full_name email');
     res.json(policies);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('Get all policies error:', err);
+    res.status(500).json({ message: 'Failed to fetch policies' });
   }
 });
 
@@ -79,7 +81,8 @@ router.post('/policy', HR_ADMIN, async (req, res) => {
     await policy.populate(['shift_slots.shift_id', 'created_by']);
     res.status(201).json(policy);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('Create policy error:', err);
+    res.status(500).json({ message: 'Failed to create policy' });
   }
 });
 
@@ -94,7 +97,8 @@ router.put('/policy/:id', HR_ADMIN, async (req, res) => {
     if (!policy) return res.status(404).json({ message: 'Policy not found' });
     res.json(policy);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('Update policy error:', err);
+    res.status(500).json({ message: 'Failed to update policy' });
   }
 });
 
@@ -116,14 +120,15 @@ router.get('/assignments', async (req, res) => {
     }
 
     const assignments = await EmployeeShiftAssignment.find(filter)
-      .populate('user_id', 'name email department')
+      .populate('user_id', 'full_name email department')
       .populate('shift_id')
-      .populate('assigned_by', 'name email')
+      .populate('assigned_by', 'full_name email')
       .sort({ effective_from: -1 });
 
     res.json(assignments);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('Get assignments error:', err);
+    res.status(500).json({ message: 'Failed to fetch assignments' });
   }
 });
 
@@ -131,9 +136,9 @@ router.get('/assignments', async (req, res) => {
 router.get('/assignments/:id', async (req, res) => {
   try {
     const assignment = await EmployeeShiftAssignment.findById(req.params.id)
-      .populate('user_id', 'name email')
+      .populate('user_id', 'full_name email')
       .populate('shift_id')
-      .populate('assigned_by', 'name email');
+      .populate('assigned_by', 'full_name email');
 
     if (!assignment) return res.status(404).json({ message: 'Assignment not found' });
 
@@ -146,7 +151,8 @@ router.get('/assignments/:id', async (req, res) => {
     }
     res.json(assignment);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('Get assignment error:', err);
+    res.status(500).json({ message: 'Failed to fetch assignment' });
   }
 });
 
@@ -181,7 +187,8 @@ router.post('/assignments', HR_ADMIN, async (req, res) => {
     await assignment.populate(['user_id', 'shift_id', 'assigned_by']);
     res.status(201).json(assignment);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('Create assignment error:', err);
+    res.status(500).json({ message: 'Failed to create assignment' });
   }
 });
 
@@ -193,13 +200,14 @@ router.put('/assignments/:id', HR_ADMIN, async (req, res) => {
       req.body,
       { new: true, runValidators: true }
     )
-      .populate('user_id', 'name email')
+      .populate('user_id', 'full_name email')
       .populate('shift_id')
-      .populate('assigned_by', 'name email');
+      .populate('assigned_by', 'full_name email');
     if (!assignment) return res.status(404).json({ message: 'Assignment not found' });
     res.json(assignment);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('Update assignment error:', err);
+    res.status(500).json({ message: 'Failed to update assignment' });
   }
 });
 
@@ -210,7 +218,8 @@ router.delete('/assignments/:id', HR_ADMIN, async (req, res) => {
     if (!assignment) return res.status(404).json({ message: 'Assignment not found' });
     res.json({ message: 'Assignment removed' });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('Delete assignment error:', err);
+    res.status(500).json({ message: 'Failed to remove assignment' });
   }
 });
 
@@ -222,13 +231,14 @@ router.delete('/assignments/:id', HR_ADMIN, async (req, res) => {
 router.get('/rotations', HR_ADMIN, async (req, res) => {
   try {
     const rules = await ShiftRotationRule.find({ is_active: true })
-      .populate('user_ids', 'name email department')
+      .populate('user_ids', 'full_name email department')
       .populate('shift_sequence.shift_id')
-      .populate('created_by', 'name email')
+      .populate('created_by', 'full_name email')
       .sort({ created_at: -1 });
     res.json(rules);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('Get rotations error:', err);
+    res.status(500).json({ message: 'Failed to fetch rotations' });
   }
 });
 
@@ -236,13 +246,14 @@ router.get('/rotations', HR_ADMIN, async (req, res) => {
 router.get('/rotations/:id', HR_ADMIN, async (req, res) => {
   try {
     const rule = await ShiftRotationRule.findById(req.params.id)
-      .populate('user_ids', 'name email')
+      .populate('user_ids', 'full_name email')
       .populate('shift_sequence.shift_id')
-      .populate('created_by', 'name email');
+      .populate('created_by', 'full_name email');
     if (!rule) return res.status(404).json({ message: 'Rotation rule not found' });
     res.json(rule);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('Get rotation error:', err);
+    res.status(500).json({ message: 'Failed to fetch rotation rule' });
   }
 });
 
@@ -270,7 +281,8 @@ router.post('/rotations', HR_ADMIN, async (req, res) => {
     await rule.populate(['user_ids', 'shift_sequence.shift_id', 'created_by']);
     res.status(201).json(rule);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('Create rotation error:', err);
+    res.status(500).json({ message: 'Failed to create rotation rule' });
   }
 });
 
@@ -282,13 +294,14 @@ router.put('/rotations/:id', HR_ADMIN, async (req, res) => {
       { ...req.body, updated_at: new Date() },
       { new: true, runValidators: true }
     )
-      .populate('user_ids', 'name email')
+      .populate('user_ids', 'full_name email')
       .populate('shift_sequence.shift_id')
-      .populate('created_by', 'name email');
+      .populate('created_by', 'full_name email');
     if (!rule) return res.status(404).json({ message: 'Rotation rule not found' });
     res.json(rule);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('Update rotation error:', err);
+    res.status(500).json({ message: 'Failed to update rotation rule' });
   }
 });
 
@@ -303,7 +316,8 @@ router.delete('/rotations/:id', HR_ADMIN, async (req, res) => {
     if (!rule) return res.status(404).json({ message: 'Rotation rule not found' });
     res.json({ message: 'Rotation rule deactivated', rule });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('Delete rotation error:', err);
+    res.status(500).json({ message: 'Failed to deactivate rotation rule' });
   }
 });
 
@@ -318,7 +332,8 @@ router.get('/my-shift', async (req, res) => {
     const result = await getActiveShiftForEmployee(req.user._id, today);
     res.json(result);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('Get my-shift error:', err);
+    res.status(500).json({ message: 'Failed to fetch shift' });
   }
 });
 
@@ -333,11 +348,12 @@ router.get('/', async (req, res) => {
     if (req.query.include_inactive === 'true') delete filter.is_active;
 
     const shifts = await Shift.find(filter)
-      .populate('created_by', 'name email')
+      .populate('created_by', 'full_name email')
       .sort({ shift_type: 1, shift_name: 1 });
     res.json(shifts);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('Get shifts error:', err);
+    res.status(500).json({ message: 'Failed to fetch shifts' });
   }
 });
 
@@ -363,18 +379,20 @@ router.post('/', HR_ADMIN, async (req, res) => {
     await shift.save();
     res.status(201).json(shift);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('Create shift error:', err);
+    res.status(500).json({ message: 'Failed to create shift' });
   }
 });
 
 /** GET /api/hr/shifts/:id */
 router.get('/:id', async (req, res) => {
   try {
-    const shift = await Shift.findById(req.params.id).populate('created_by', 'name email');
+    const shift = await Shift.findById(req.params.id).populate('created_by', 'full_name email');
     if (!shift) return res.status(404).json({ message: 'Shift not found' });
     res.json(shift);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('Get shift error:', err);
+    res.status(500).json({ message: 'Failed to fetch shift' });
   }
 });
 
@@ -385,11 +403,12 @@ router.put('/:id', HR_ADMIN, async (req, res) => {
       req.params.id,
       req.body,
       { new: true, runValidators: true }
-    ).populate('created_by', 'name email');
+    ).populate('created_by', 'full_name email');
     if (!shift) return res.status(404).json({ message: 'Shift not found' });
     res.json(shift);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('Update shift error:', err);
+    res.status(500).json({ message: 'Failed to update shift' });
   }
 });
 
@@ -404,7 +423,8 @@ router.delete('/:id', HR_ADMIN, async (req, res) => {
     if (!shift) return res.status(404).json({ message: 'Shift not found' });
     res.json({ message: 'Shift deactivated', shift });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error('Delete shift error:', err);
+    res.status(500).json({ message: 'Failed to deactivate shift' });
   }
 });
 

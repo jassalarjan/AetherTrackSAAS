@@ -358,9 +358,13 @@ const Settings = () => {
                 {/* Picture Upload Message */}
                 {pictureMessage.text && (
                   <div className={`mt-3 p-3 rounded border ${
-                    pictureMessage.type === 'success' 
-                      ? 'bg-green-500/10 border-green-500/30 text-green-400' 
-                      : 'bg-red-500/10 border-red-500/30 text-red-400'
+                    pictureMessage.type === 'success'
+                      ? theme === 'dark'
+                        ? 'bg-green-500/10 border-green-500/30 text-green-400'
+                        : 'bg-green-50 border-green-200 text-green-700'
+                      : theme === 'dark'
+                        ? 'bg-red-500/10 border-red-500/30 text-red-400'
+                        : 'bg-red-50 border-red-200 text-red-700'
                   }`}>
                     {pictureMessage.text}
                   </div>
@@ -521,9 +525,13 @@ const Settings = () => {
 
                 {passwordMessage.text && (
                   <div className={`p-3 rounded border ${
-                    passwordMessage.type === 'success' 
-                      ? 'bg-green-500/10 border-green-500/30 text-green-400' 
-                      : 'bg-red-500/10 border-red-500/30 text-red-400'
+                    passwordMessage.type === 'success'
+                      ? theme === 'dark'
+                        ? 'bg-green-500/10 border-green-500/30 text-green-400'
+                        : 'bg-green-50 border-green-200 text-green-700'
+                      : theme === 'dark'
+                        ? 'bg-red-500/10 border-red-500/30 text-red-400'
+                        : 'bg-red-50 border-red-200 text-red-700'
                   }`}>
                     {passwordMessage.text}
                   </div>
@@ -638,8 +646,8 @@ const Settings = () => {
                     </span>
                   </div>
                   
-                  <div className="mt-4 p-3 bg-yellow-500/10 border border-yellow-500/30 rounded">
-                    <p className="text-yellow-400 text-xs">
+                  <div className={`mt-4 p-3 rounded border ${theme === 'dark' ? 'bg-yellow-500/10 border-yellow-500/30' : 'bg-yellow-50 border-yellow-200'}`}>
+                    <p className={`text-xs ${theme === 'dark' ? 'text-yellow-400' : 'text-yellow-700'}`}>
                       <strong className="font-bold">Tip:</strong> If notifications aren't working, try:
                       <br />1. Check browser console for errors
                       <br />2. Verify HTTPS connection (required)

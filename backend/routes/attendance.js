@@ -261,11 +261,24 @@ router.put('/:id', authenticate, checkRole(['admin', 'hr']), async (req, res) =>
 // Get attendance summary for a user
 router.get('/summary/:userId?', authenticate, async (req, res) => {
   try {
-    const targetUserId = req.params.userId || req.user._id;
+    const targetUserId = (req.params.userId || req.user._id).toString();
+    const requesterId = req.user._id.toString();
+    const requesterRole = req.user.role;
 
     // Members can only view their own summary
-    if (req.user.role === 'member' && targetUserId !== req.user._id.toString()) {
+    if (requesterRole === 'member' && targetUserId !== requesterId) {
       return res.status(403).json({ message: 'Unauthorized' });
+    }
+
+    // Team leads can only view summaries of members within their own team
+    if (requesterRole === 'team_lead' && targetUserId !== requesterId) {
+      const Team = (await import('../models/Team.js')).default;
+      const team = await Team.findOne({ lead_id: requesterId });
+      if (!team) return res.status(403).json({ message: 'Unauthorized' });
+      const memberIds = team.members.map(id => id.toString());
+      if (!memberIds.includes(targetUserId)) {
+        return res.status(403).json({ message: 'Unauthorized' });
+      }
     }
 
     const { month, year } = req.query;

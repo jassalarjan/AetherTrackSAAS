@@ -19,7 +19,7 @@ router.get('/', authenticate, async (req, res) => {
     res.json({ notifications, unreadCount });
   } catch (error) {
     console.error('Get notifications error:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
@@ -49,7 +49,7 @@ router.patch('/mark-read', authenticate, async (req, res) => {
     res.json({ message: 'Notifications marked as read' });
   } catch (error) {
     console.error('Mark read error:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
