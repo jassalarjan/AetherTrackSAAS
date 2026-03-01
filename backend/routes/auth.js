@@ -215,9 +215,12 @@ router.post('/login', loginLimiter, validateLogin, async (req, res) => {
     });
 
     // Set httpOnly cookies so tokens are inaccessible to JavaScript (XSS mitigation)
+    // Tokens are now ONLY sent via httpOnly cookies - not in response body
     res.cookie('access_token', accessToken, { ...COOKIE_OPTS, maxAge: 15 * 60 * 1000 });
     res.cookie('refresh_token', refreshToken, { ...COOKIE_OPTS, path: '/api/auth/refresh', maxAge: 7 * 24 * 60 * 60 * 1000 });
 
+    // SECURITY: Only return user data via httpOnly cookies
+    // Do NOT return accessToken/refreshToken in JSON body to prevent token leakage
     res.json({
       message: 'Login successful',
       user: {
@@ -227,9 +230,7 @@ router.post('/login', loginLimiter, validateLogin, async (req, res) => {
         role: user.role,
         profile_picture: user.profile_picture || null,
         team_id: user.team_id
-      },
-      accessToken,
-      refreshToken
+      }
     });
   } catch (error) {
     console.error('Login error:', error);
@@ -266,10 +267,12 @@ router.post('/refresh', refreshLimiter, async (req, res) => {
     const newAccessToken = generateAccessToken(user._id, user.role);
     const newRefreshToken = generateRefreshToken(user._id);
 
-    // Refresh cookies too
+    // Refresh cookies - tokens are only sent via httpOnly cookies
     res.cookie('access_token', newAccessToken, { ...COOKIE_OPTS, maxAge: 15 * 60 * 1000 });
     res.cookie('refresh_token', newRefreshToken, { ...COOKIE_OPTS, path: '/api/auth/refresh', maxAge: 7 * 24 * 60 * 60 * 1000 });
 
+    // SECURITY: Only return user data via httpOnly cookies
+    // Do NOT return accessToken/refreshToken in JSON body to prevent token leakage
     res.json({
       user: {
         id: user._id,
@@ -277,9 +280,7 @@ router.post('/refresh', refreshLimiter, async (req, res) => {
         email: user.email,
         role: user.role,
         team_id: user.team_id
-      },
-      accessToken: newAccessToken,
-      refreshToken: newRefreshToken
+      }
     });
   } catch (error) {
     console.error('Refresh token error:', error);

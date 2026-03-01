@@ -7,6 +7,24 @@ import { validateIdParam, sanitizeBody, isValidObjectId } from '../utils/validat
 
 const router = express.Router();
 
+// =============================================================================
+// SECURITY: Generic Error Response Helper
+// =============================================================================
+// In production, we return generic error messages to prevent information leakage
+// Only detailed errors are logged server-side for debugging
+const handleError = (res, error, context = 'operation') => {
+  // Log full error server-side for debugging
+  console.error(`[ERROR] ${context}:`, error);
+  
+  // Return generic message in production
+  if (process.env.NODE_ENV === 'production') {
+    return res.status(500).json({ message: 'An error occurred. Please try again later.' });
+  }
+  
+  // Return detailed errors in development
+  return res.status(500).json({ message: error.message || 'Server error' });
+};
+
 // Get comments for a task
 router.get('/:taskId/comments', authenticate, validateIdParam('taskId'), async (req, res) => {
   try {
@@ -16,8 +34,7 @@ router.get('/:taskId/comments', authenticate, validateIdParam('taskId'), async (
 
     res.json({ comments, count: comments.length });
   } catch (error) {
-    console.error('Get comments error:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    return handleError(res, error, 'Get comments');
   }
 });
 
@@ -86,8 +103,7 @@ router.post('/:taskId/comments', authenticate, validateIdParam('taskId'), saniti
 
     res.status(201).json({ message: 'Comment added', comment: populatedComment });
   } catch (error) {
-    console.error('Add comment error:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    return handleError(res, error, 'Add comment');
   }
 });
 

@@ -15,6 +15,24 @@ import { validateIdParam, sanitizeBody, isValidObjectId } from '../utils/validat
 
 const router = express.Router();
 
+// =============================================================================
+// SECURITY: Generic Error Response Helper
+// =============================================================================
+// In production, we return generic error messages to prevent information leakage
+// Only detailed errors are logged server-side for debugging
+const handleError = (res, error, context = 'operation') => {
+  // Log full error server-side for debugging
+  console.error(`[ERROR] ${context}:`, error);
+  
+  // Return generic message in production
+  if (process.env.NODE_ENV === 'production') {
+    return res.status(500).json({ message: 'An error occurred. Please try again later.' });
+  }
+  
+  // Return detailed errors in development
+  return res.status(500).json({ message: error.message || 'Server error' });
+};
+
 // Configure multer for file uploads (memory storage)
 const upload = multer({ 
   storage: multer.memoryStorage(),
@@ -57,8 +75,7 @@ router.get('/me', authenticate, async (req, res) => {
     
     res.json({ user });
   } catch (error) {
-    console.error('Get user error:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    return handleError(res, error, 'Get current user');
   }
 });
 
@@ -79,8 +96,7 @@ router.patch('/me', authenticate, sanitizeBody(['full_name']), async (req, res) 
 
     res.json({ message: 'Profile updated', user });
   } catch (error) {
-    console.error('Update profile error:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    return handleError(res, error, 'Update profile');
   }
 });
 
@@ -196,8 +212,7 @@ router.post('/me/change-password', authenticate, async (req, res) => {
 
     res.json({ message: 'Password changed successfully' });
   } catch (error) {
-    console.error('Change password error:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    return handleError(res, error, 'Change password');
   }
 });
 
@@ -212,8 +227,7 @@ router.get('/', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
 
     res.json({ users, count: users.length });
   } catch (error) {
-    console.error('Get users error:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    return handleError(res, error, 'Get all users');
   }
 });
 
@@ -244,8 +258,7 @@ router.get('/team-members', authenticate, checkRole(['team_lead']), async (req, 
 
     res.json({ users, count: users.length });
   } catch (error) {
-    console.error('Get team members error:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    return handleError(res, error, 'Get team members');
   }
 });
 
@@ -504,8 +517,7 @@ router.put('/:id', authenticate, checkRole(['admin', 'hr']), validateIdParam(), 
 
     res.json({ message: 'User updated successfully', user });
   } catch (error) {
-    console.error('Update user error:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    return handleError(res, error, 'Update user');
   }
 });
 
@@ -637,7 +649,7 @@ router.post('/bulk-import/json', authenticate, checkRole(['admin', 'hr']), uploa
       const jsonContent = req.file.buffer.toString('utf-8');
       usersData = JSON.parse(jsonContent);
     } catch (error) {
-      return res.status(400).json({ message: 'Invalid JSON file format', error: error.message });
+      return handleError(res, error, 'Parse JSON file');
     }
 
     // Validate that it's an array
@@ -672,7 +684,7 @@ router.post('/bulk-import/excel', authenticate, checkRole(['admin', 'hr']), uplo
       const worksheet = workbook.Sheets[sheetName];
       usersData = xlsx.utils.sheet_to_json(worksheet);
     } catch (error) {
-      return res.status(400).json({ message: 'Invalid Excel file format', error: error.message });
+      return handleError(res, error, 'Parse Excel file');
     }
 
     if (usersData.length === 0) {

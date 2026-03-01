@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from '../api/axios';
 import { useAuth } from '../context/AuthContext';
+import { setAccessToken } from '../api/tokenStore';
 
 /**
  * Community Workspace Registration Page
@@ -129,13 +130,13 @@ const CommunityRegister = () => {
         });
       } else {
         // Old flow - shouldn't happen anymore but keep as fallback
-        const { user, workspace, accessToken, refreshToken } = response.data;
+        // Use secure in-memory token store instead of localStorage
+        const { user, workspace, accessToken } = response.data;
 
-        // Store tokens
-        localStorage.setItem('accessToken', accessToken);
-        localStorage.setItem('refreshToken', refreshToken);
+        // Store access token in secure memory (not localStorage for XSS protection)
+        setAccessToken(accessToken);
         
-        // Store user and workspace data
+        // Store user and workspace data (not sensitive - needed for UI)
         localStorage.setItem('user', JSON.stringify(user));
         localStorage.setItem('workspace', JSON.stringify(workspace));
 

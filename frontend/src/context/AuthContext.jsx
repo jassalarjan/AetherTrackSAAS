@@ -97,7 +97,6 @@ export const AuthProvider = ({ children }) => {
         const timeSinceActivity = Date.now() - parseInt(lastActivity, 10);
         
         if (timeSinceActivity > ACTIVITY_TIMEOUT) {
-          console.log('Session expired due to inactivity');
           logout();
           window.location.href = '/login';
         }
@@ -122,7 +121,6 @@ export const AuthProvider = ({ children }) => {
     });
     
     newSocket.on('connect', () => {
-      console.log('Socket connected with auth token');
       newSocket.emit('join', userId);
     });
 

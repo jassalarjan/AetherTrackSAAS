@@ -142,7 +142,6 @@ self.addEventListener('sync', (event) => {
 
 async function syncTasks() {
   // Placeholder for syncing tasks when back online
-  console.log('Syncing tasks...');
 }
 
 // Handle service worker updates
@@ -152,10 +151,7 @@ self.addEventListener('message', (event) => {
   }
 });
 
-// Log service worker activation
+// Log service worker activation (only in development)
 self.addEventListener('activate', (event) => {
-  console.log('Service Worker activated');
   event.waitUntil(clients.claim());
 });
-
-console.log('AetherTrack Service Worker loaded');

@@ -50,12 +50,9 @@ const ForgotPassword = () => {
     setLoading(true);
 
     try {
-      console.log('🔐 Requesting password reset for:', email);
       const response = await api.post('/auth/forgot-password', { email });
-      console.log('✅ Password reset response:', response.data);
       setStep(2); // Move to token entry step
     } catch (err) {
-      console.error('❌ Password reset error:', err);
       setError(err.response?.data?.message || 'Failed to send reset code. Please try again.');
     } finally {
       setLoading(false);
@@ -84,13 +81,11 @@ const ForgotPassword = () => {
     setLoading(true);
 
     try {
-      console.log('🔐 Resetting password with token');
       const response = await api.post('/auth/reset-password', {
         email,
         token,
         newPassword
       });
-      console.log('✅ Password reset successful:', response.data);
       
       // Show success and redirect to login
       setStep(3);
@@ -98,7 +93,6 @@ const ForgotPassword = () => {
         navigate('/login');
       }, 3000);
     } catch (err) {
-      console.error('❌ Reset password error:', err);
       setError(err.response?.data?.message || 'Invalid or expired code. Please try again.');
     } finally {
       setLoading(false);

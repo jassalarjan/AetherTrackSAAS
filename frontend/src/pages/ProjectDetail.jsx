@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import { projectsApi } from '../api/projectsApi';
 import api from '../api/axios';
+import { getAccessToken } from '../api/tokenStore';
 import * as XLSX from 'xlsx';
 import { 
   Info, CheckSquare, GitBranch, Users as UsersIcon, FileText, 
@@ -142,7 +143,7 @@ const ProjectDetail = () => {
       formData.append('file', documentFile);
       formData.append('name', documentName || documentFile.name);
       
-      const token = localStorage.getItem('token');
+      const token = getAccessToken();
       const response = await fetch(
         `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/projects/${id}/upload-document`,
         {
@@ -179,7 +180,7 @@ const ProjectDetail = () => {
     }
     
     try {
-      const token = localStorage.getItem('token');
+      const token = getAccessToken();
       const response = await fetch(
         `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/projects/${id}/documents/${docIndex}`,
         {

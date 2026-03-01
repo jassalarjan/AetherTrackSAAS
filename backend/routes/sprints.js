@@ -6,6 +6,24 @@ const router = express.Router();
 
 router.use(authenticate);
 
+// =============================================================================
+// SECURITY: Generic Error Response Helper
+// =============================================================================
+// In production, we return generic error messages to prevent information leakage
+// Only detailed errors are logged server-side for debugging
+const handleError = (res, error, context = 'operation') => {
+  // Log full error server-side for debugging
+  console.error(`[ERROR] ${context}:`, error);
+  
+  // Return generic message in production
+  if (process.env.NODE_ENV === 'production') {
+    return res.status(500).json({ message: 'An error occurred. Please try again later.' });
+  }
+  
+  // Return detailed errors in development
+  return res.status(500).json({ message: error.message || 'Server error' });
+};
+
 // Get all sprints for workspace
 router.get('/', async (req, res) => {
   try {
@@ -21,11 +39,7 @@ router.get('/', async (req, res) => {
     
     res.json(sprints);
   } catch (error) {
-    console.error('Error fetching sprints:', error);
-    res.status(500).json({ 
-      message: 'Error fetching sprints', 
-      error: error.message 
-    });
+    return handleError(res, error, 'Fetch sprints');
   }
 });
 
@@ -36,11 +50,7 @@ router.get('/active', async (req, res) => {
 
     res.json(activeSprint);
   } catch (error) {
-    console.error('Error fetching active sprint:', error);
-    res.status(500).json({ 
-      message: 'Error fetching active sprint', 
-      error: error.message 
-    });
+    return handleError(res, error, 'Fetch active sprint');
   }
 });
 
@@ -55,11 +65,7 @@ router.get('/:id', async (req, res) => {
 
     res.json(sprint);
   } catch (error) {
-    console.error('Error fetching sprint:', error);
-    res.status(500).json({ 
-      message: 'Error fetching sprint', 
-      error: error.message 
-    });
+    return handleError(res, error, 'Fetch sprint');
   }
 });
 
@@ -90,11 +96,7 @@ router.post('/', async (req, res) => {
 
     res.status(201).json(sprint);
   } catch (error) {
-    console.error('Error creating sprint:', error);
-    res.status(500).json({ 
-      message: 'Error creating sprint', 
-      error: error.message 
-    });
+    return handleError(res, error, 'Create sprint');
   }
 });
 
@@ -133,11 +135,7 @@ router.put('/:id', async (req, res) => {
 
     res.json(sprint);
   } catch (error) {
-    console.error('Error updating sprint:', error);
-    res.status(500).json({ 
-      message: 'Error updating sprint', 
-      error: error.message 
-    });
+    return handleError(res, error, 'Update sprint');
   }
 });
 
@@ -152,11 +150,7 @@ router.delete('/:id', async (req, res) => {
 
     res.json({ message: 'Sprint deleted successfully' });
   } catch (error) {
-    console.error('Error deleting sprint:', error);
-    res.status(500).json({ 
-      message: 'Error deleting sprint', 
-      error: error.message 
-    });
+    return handleError(res, error, 'Delete sprint');
   }
 });
 
@@ -177,11 +171,7 @@ router.patch('/:id/progress', async (req, res) => {
     await sprint.save();
     res.json(sprint);
   } catch (error) {
-    console.error('Error updating sprint progress:', error);
-    res.status(500).json({ 
-      message: 'Error updating sprint progress', 
-      error: error.message 
-    });
+    return handleError(res, error, 'Update sprint progress');
   }
 });
 

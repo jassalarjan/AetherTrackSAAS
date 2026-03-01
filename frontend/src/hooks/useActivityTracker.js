@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { getAccessToken } from '../api/tokenStore';
 
 const ACTIVITY_TIMEOUT = 30 * 60 * 1000; // 30 minutes
 
@@ -17,17 +18,16 @@ export const useActivityTracker = () => {
     // Check for inactivity periodically
     const checkInactivity = setInterval(() => {
       const lastActivity = localStorage.getItem('lastActivityTime');
-      const token = localStorage.getItem('accessToken');
+      const token = getAccessToken();
       
       if (lastActivity && token) {
         const timeSinceActivity = Date.now() - parseInt(lastActivity, 10);
         
         if (timeSinceActivity > ACTIVITY_TIMEOUT) {
-          console.log('Session expired due to inactivity');
+          // Clear user data from localStorage
           localStorage.removeItem('user');
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('refreshToken');
           localStorage.removeItem('lastActivityTime');
+          // Dispatch logout event
           window.dispatchEvent(new CustomEvent('auth:logout', { detail: { reason: 'inactivity' } }));
           window.location.href = '/login';
         }

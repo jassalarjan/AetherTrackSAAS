@@ -10,6 +10,24 @@ import brevoService from '../services/brevoEmailService.js';
 
 const router = express.Router();
 
+// =============================================================================
+// SECURITY: Generic Error Response Helper
+// =============================================================================
+// In production, we return generic error messages to prevent information leakage
+// Only detailed errors are logged server-side for debugging
+const handleError = (res, error, context = 'operation') => {
+  // Log full error server-side for debugging
+  console.error(`[ERROR] ${context}:`, error);
+  
+  // Return generic message in production
+  if (process.env.NODE_ENV === 'production') {
+    return res.status(500).json({ message: 'An error occurred. Please try again later.' });
+  }
+  
+  // Return detailed errors in development
+  return res.status(500).json({ message: error.message || 'Server error' });
+};
+
 // Get all email templates
 router.get('/', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
   try {
@@ -270,12 +288,9 @@ router.post('/send', authenticate, checkRole(['admin', 'hr']), async (req, res) 
     }
   } catch (error) {
     console.error('❌ Send email error:', error);
-    console.error('Error stack:', error.stack);
-    res.status(500).json({ 
-      message: 'Failed to send emails', 
-      error: error.message,
-      details: error.stack 
-    });
+    // SECURITY: Do NOT expose error details in production response
+    // Return generic message to prevent information leakage
+    return handleError(res, error, 'Send emails');
   }
 });
 
