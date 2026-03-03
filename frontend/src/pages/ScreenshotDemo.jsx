@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Camera, Download, Eye, EyeOff, Info } from 'lucide-react';
 import { getMockDataBundle } from '../utils/mockDataGenerator';
 

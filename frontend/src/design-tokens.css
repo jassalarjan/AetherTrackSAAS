@@ -1,0 +1,1504 @@
+/**
+ * AetherTrack 2030 - Design Tokens: Warm Paper System
+ * Based on ui_inspire.html design
+ * 
+ * This file provides the warm paper visual design while maintaining
+ * compatibility with the existing React component structure.
+ * 
+ * NOTE: The sidebar styles are intentionally NOT overridden here to preserve
+ * the existing sidebar functionality. Sidebar continues to use its 
+ * current Tailwind-based styling.
+ */
+
+/* ==========================================================================
+   1. WARM PAPER COLOR SYSTEM - Light Mode
+   ========================================================================== */
+:root {
+  /* Warm Light Surfaces */
+  --wp-bg-canvas:    #F7F3EE;
+  --wp-bg-base:      #F2EDE5;
+  --wp-bg-surface:   #EDE7DC;
+  --wp-bg-raised:    #FFFFFF;
+  --wp-bg-sunken:    #EAE3D8;
+
+  /* Brand — Terracotta / Saffron */
+  --wp-brand:         #C4713A;
+  --wp-brand-light:   #D4905A;
+  --wp-brand-dim:     rgba(196, 113, 58, 0.12);
+  --wp-brand-glow:    rgba(196, 113, 58, 0.06);
+
+  /* Semantic Colors */
+  --wp-success:     #5A8A5A;
+  --wp-success-dim: rgba(90, 138, 90, 0.12);
+  --wp-warning:     #C49A3A;
+  --wp-warning-dim: rgba(196, 154, 58, 0.12);
+  --wp-danger:      #B05050;
+  --wp-danger-dim:  rgba(176, 80, 80, 0.12);
+  --wp-ai-color:    #7A6AAA;
+  --wp-ai-dim:      rgba(122, 106, 170, 0.10);
+
+  /* Text Colors */
+  --wp-text-primary:   #2A1E16;
+  --wp-text-secondary: #6A5A4A;
+  --wp-text-muted:     #9A8A7A;
+  --wp-text-faint:     #B8AA9A;
+
+  /* Border Colors */
+  --wp-border-hair:   rgba(42, 30, 22, 0.06);
+  --wp-border-soft:   rgba(42, 30, 22, 0.09);
+  --wp-border-mid:    rgba(42, 30, 22, 0.14);
+  --wp-border-strong: rgba(42, 30, 22, 0.22);
+
+  /* Shadows — warm-tinted */
+  --wp-shadow-xs:  0 1px 2px rgba(42,22,8,0.06);
+  --wp-shadow-sm:  0 2px 6px rgba(42,22,8,0.07), 0 1px 2px rgba(42,22,8,0.05);
+  --wp-shadow-md:  0 4px 16px rgba(42,22,8,0.09), 0 2px 4px rgba(42,22,8,0.06);
+  --wp-shadow-lg:  0 8px 32px rgba(42,22,8,0.12), 0 3px 8px rgba(42,22,8,0.07);
+  --wp-shadow-xl:  0 20px 60px rgba(42,22,8,0.18), 0 8px 20px rgba(42,22,8,0.10);
+
+  /* Spacing */
+  --wp-s1: 4px; --wp-s2: 8px; --wp-s3: 12px; --wp-s4: 16px;
+  --wp-s5: 20px; --wp-s6: 24px; --wp-s8: 32px; --wp-s10: 40px;
+  --wp-s12: 48px; --wp-s16: 64px;
+
+  /* Radii */
+  --wp-r-xs: 3px; --wp-r-sm: 6px; --wp-r-md: 10px;
+  --wp-r-lg: 14px; --wp-r-xl: 20px; --wp-r-full: 9999px;
+
+  /* Motion */
+  --wp-ease: cubic-bezier(0.2, 0, 0, 1);
+  --wp-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --wp-fast: 100ms; --wp-base: 200ms; --wp-slow: 320ms;
+
+  /* Focus Ring */
+  --wp-focus-ring: 0 0 0 2px var(--wp-bg-canvas), 0 0 0 4px var(--wp-brand);
+
+  /* Layout */
+  --wp-sidebar: 248px;
+  --wp-header: 58px;
+
+  /* ==========================================================================
+     UNPREFIXED ALIASES - For easier use in components
+     ========================================================================== */
+  
+  /* Surfaces */
+  --bg-canvas: var(--wp-bg-canvas);
+  --bg-base: var(--wp-bg-base);
+  --bg-surface: var(--wp-bg-surface);
+  --bg-raised: var(--wp-bg-raised);
+  --bg-sunken: var(--wp-bg-sunken);
+
+  /* Brand */
+  --brand: var(--wp-brand);
+  --brand-light: var(--wp-brand-light);
+  --brand-dim: var(--wp-brand-dim);
+  --brand-glow: var(--wp-brand-glow);
+
+  /* Semantic */
+  --success: var(--wp-success);
+  --success-dim: var(--wp-success-dim);
+  --warning: var(--wp-warning);
+  --warning-dim: var(--wp-warning-dim);
+  --danger: var(--wp-danger);
+  --danger-dim: var(--wp-danger-dim);
+  --ai-color: var(--wp-ai-color);
+  --ai-dim: var(--wp-ai-dim);
+
+  /* Text */
+  --text-primary: var(--wp-text-primary);
+  --text-secondary: var(--wp-text-secondary);
+  --text-muted: var(--wp-text-muted);
+  --text-faint: var(--wp-text-faint);
+
+  /* Borders */
+  --border-hair: var(--wp-border-hair);
+  --border-soft: var(--wp-border-soft);
+  --border-mid: var(--wp-border-mid);
+  --border-strong: var(--wp-border-strong);
+
+  /* Shadows */
+  --shadow-xs: var(--wp-shadow-xs);
+  --shadow-sm: var(--wp-shadow-sm);
+  --shadow-md: var(--wp-shadow-md);
+  --shadow-lg: var(--wp-shadow-lg);
+  --shadow-xl: var(--wp-shadow-xl);
+
+  /* Spacing */
+  --s1: var(--wp-s1); --s2: var(--wp-s2); --s3: var(--wp-s3); --s4: var(--wp-s4);
+  --s5: var(--wp-s5); --s6: var(--wp-s6); --s8: var(--wp-s8); --s10: var(--wp-s10);
+  --s12: var(--wp-s12); --s16: var(--wp-s16);
+
+  /* Radii */
+  --r-xs: var(--wp-r-xs); --r-sm: var(--wp-r-sm); --r-md: var(--wp-r-md);
+  --r-lg: var(--wp-r-lg); --r-xl: var(--wp-r-xl); --r-full: var(--wp-r-full);
+
+  /* Motion */
+  --ease: var(--wp-ease);
+  --spring: var(--wp-spring);
+  --fast: var(--wp-fast);
+  --base: var(--wp-base);
+  --slow: var(--wp-slow);
+
+  /* Focus Ring */
+  --focus-ring: var(--wp-focus-ring);
+
+  /* Fonts */
+  --font-heading: var(--wp-font-heading);
+  --font-body: var(--wp-font-body);
+  --font-mono: var(--wp-font-mono);
+}
+
+/* ==========================================================================
+   2. WARM PAPER COLOR SYSTEM - Dark Mode
+   ========================================================================== */
+[data-theme="dark"] {
+  --wp-bg-canvas:  #151008;
+  --wp-bg-base:    #1A130A;
+  --wp-bg-surface: #211910;
+  --wp-bg-raised:  #2A1E14;
+  --wp-bg-sunken:  #120E06;
+
+  --wp-brand:       #D4905A;
+  --wp-brand-light: #E0A870;
+  --wp-brand-dim:   rgba(212, 144, 90, 0.14);
+  --wp-brand-glow:  rgba(212, 144, 90, 0.07);
+
+  --wp-success:     #6AA06A;
+  --wp-success-dim: rgba(106, 160, 106, 0.14);
+  --wp-warning:     #D4AA4A;
+  --wp-warning-dim: rgba(212, 170, 74, 0.14);
+  --wp-danger:      #C06060;
+  --wp-danger-dim:  rgba(192, 96, 96, 0.14);
+  --wp-ai-color:    #9A8ACC;
+  --wp-ai-dim:      rgba(154, 138, 204, 0.12);
+
+  --wp-text-primary:   #F0E8DC;
+  --wp-text-secondary: #A89880;
+  --wp-text-muted:     #7A6A58;
+  --wp-text-faint:     #5A4A3A;
+
+  --wp-border-hair:   rgba(240, 232, 220, 0.06);
+  --wp-border-soft:   rgba(240, 232, 220, 0.09);
+  --wp-border-mid:    rgba(240, 232, 220, 0.13);
+  --wp-border-strong: rgba(240, 232, 220, 0.20);
+
+  --wp-shadow-xs: 0 1px 2px rgba(0,0,0,0.3);
+  --wp-shadow-sm: 0 2px 6px rgba(0,0,0,0.35);
+  --wp-shadow-md: 0 4px 16px rgba(0,0,0,0.40);
+  --wp-shadow-lg: 0 8px 32px rgba(0,0,0,0.45);
+  --wp-shadow-xl: 0 20px 60px rgba(0,0,0,0.55);
+
+  --wp-focus-ring: 0 0 0 2px var(--wp-bg-canvas), 0 0 0 4px var(--wp-brand);
+
+  /* ==========================================================================
+     UNPREFIXED ALIASES - Dark Mode
+     ========================================================================== */
+  
+  /* Surfaces */
+  --bg-canvas: var(--wp-bg-canvas);
+  --bg-base: var(--wp-bg-base);
+  --bg-surface: var(--wp-bg-surface);
+  --bg-raised: var(--wp-bg-raised);
+  --bg-sunken: var(--wp-bg-sunken);
+
+  /* Brand */
+  --brand: var(--wp-brand);
+  --brand-light: var(--wp-brand-light);
+  --brand-dim: var(--wp-brand-dim);
+  --brand-glow: var(--wp-brand-glow);
+
+  /* Semantic */
+  --success: var(--wp-success);
+  --success-dim: var(--wp-success-dim);
+  --warning: var(--wp-warning);
+  --warning-dim: var(--wp-warning-dim);
+  --danger: var(--wp-danger);
+  --danger-dim: var(--wp-danger-dim);
+  --ai-color: var(--wp-ai-color);
+  --ai-dim: var(--wp-ai-dim);
+
+  /* Text */
+  --text-primary: var(--wp-text-primary);
+  --text-secondary: var(--wp-text-secondary);
+  --text-muted: var(--wp-text-muted);
+  --text-faint: var(--wp-text-faint);
+
+  /* Borders */
+  --border-hair: var(--wp-border-hair);
+  --border-soft: var(--wp-border-soft);
+  --border-mid: var(--wp-border-mid);
+  --border-strong: var(--wp-border-strong);
+
+  /* Shadows */
+  --shadow-xs: var(--wp-shadow-xs);
+  --shadow-sm: var(--wp-shadow-sm);
+  --shadow-md: var(--wp-shadow-md);
+  --shadow-lg: var(--wp-shadow-lg);
+  --shadow-xl: var(--wp-shadow-xl);
+
+  /* Focus Ring */
+  --focus-ring: var(--wp-focus-ring);
+}
+
+/* ==========================================================================
+   3. TYPOGRAPHY - Warm Paper System
+   Using Fraunces for headings, Instrument Sans for body
+   ========================================================================== */
+:root {
+  /* Font Families */
+  --wp-font-heading: 'Fraunces', Georgia, serif;
+  --wp-font-body: 'Instrument Sans', system-ui, -apple-system, sans-serif;
+  --wp-font-mono: 'Fira Code', 'JetBrains Mono', monospace;
+
+  /* Font Sizes */
+  --wp-text-xs: 0.75rem;
+  --wp-text-sm: 0.8125rem;
+  --wp-text-base: 0.9375rem;
+  --wp-text-lg: 1.125rem;
+  --wp-text-xl: 1.375rem;
+  --wp-text-2xl: 1.625rem;
+  --wp-text-3xl: 2rem;
+
+  /* Font Weights */
+  --wp-font-normal: 400;
+  --wp-font-medium: 500;
+  --wp-font-semibold: 600;
+  --wp-font-bold: 700;
+
+  /* Line Heights */
+  --wp-leading-tight: 1.25;
+  --wp-leading-normal: 1.5;
+  --wp-leading-relaxed: 1.625;
+
+  /* Letter Spacing */
+  --wp-tracking-tight: -0.025em;
+  --wp-tracking-normal: 0;
+  --wp-tracking-wide: 0.025em;
+}
+
+/* ==========================================================================
+   4. APPLY WARM PAPER DESIGN TO MAIN CONTENT
+   These classes override the existing tokens only for main content areas
+   ========================================================================== */
+
+/* Main content area background - the key visual change */
+.main-content,
+.main-content-area,
+.page-content,
+.content-area {
+  background-color: var(--wp-bg-canvas);
+  color: var(--wp-text-primary);
+}
+
+/* Header styling */
+.app-header,
+.top-header,
+.nav-header {
+  background-color: var(--wp-bg-canvas);
+  border-bottom: 1px solid var(--wp-border-soft);
+}
+
+/* Page container */
+.page-container,
+.page-wrapper,
+.content-wrapper {
+  background-color: var(--wp-bg-canvas);
+  padding: var(--wp-s8);
+  max-width: 1380px;
+  margin: 0 auto;
+}
+
+/* Page title styling */
+.page-title,
+.page-heading,
+.content-title {
+  font-family: var(--wp-font-heading);
+  font-size: clamp(1.6rem, 2.2vw, 2.1rem);
+  font-weight: var(--wp-font-medium);
+  color: var(--wp-text-primary);
+  letter-spacing: -0.025em;
+  line-height: 1.1;
+}
+
+.page-title em {
+  font-style: italic;
+  color: var(--wp-brand);
+}
+
+.page-subtitle {
+  font-size: 13px;
+  color: var(--wp-text-secondary);
+  margin-top: var(--wp-s1);
+}
+
+/* ==========================================================================
+   5. CARD & PANEL STYLES - Warm Paper System
+   ========================================================================== */
+
+.wp-card,
+.wp-panel,
+.card-elevated,
+.panel-elevated {
+  background: var(--wp-bg-raised);
+  border: 1px solid var(--wp-border-soft);
+  border-radius: var(--wp-r-xl);
+  box-shadow: var(--wp-shadow-sm);
+}
+
+.wp-card:hover,
+.wp-panel:hover {
+  box-shadow: var(--wp-shadow-md);
+  border-color: var(--wp-border-mid);
+}
+
+/* Card header */
+.card-header,
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--wp-s4) var(--wp-s6);
+  border-bottom: 1px solid var(--wp-border-hair);
+}
+
+.card-title,
+.panel-title {
+  font-family: var(--wp-font-heading);
+  font-size: 15px;
+  font-weight: var(--wp-font-medium);
+  color: var(--wp-text-primary);
+  letter-spacing: -0.01em;
+}
+
+.card-subtitle,
+.panel-subtitle {
+  font-size: 11.5px;
+  color: var(--wp-text-muted);
+  margin-top: 1px;
+}
+
+/* ==========================================================================
+   6. BUTTON STYLES - Warm Paper System
+   ========================================================================== */
+
+.wp-btn {
+  position: relative;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--wp-s2);
+  height: 34px;
+  padding: 0 var(--wp-s4);
+  border-radius: var(--wp-r-md);
+  font-family: var(--wp-font-body);
+  font-size: 13px;
+  font-weight: var(--wp-font-medium);
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all var(--wp-fast) var(--wp-ease);
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.wp-btn:focus-visible {
+  box-shadow: var(--wp-focus-ring);
+}
+
+.wp-btn-sm {
+  height: 28px;
+  padding: 0 var(--wp-s3);
+  font-size: 12px;
+  border-radius: var(--wp-r-sm);
+}
+
+.wp-btn-lg {
+  height: 42px;
+  padding: 0 var(--wp-s6);
+  font-size: 14px;
+}
+
+/* Primary button */
+.wp-btn-primary {
+  background: var(--wp-brand);
+  color: white;
+  border-color: var(--wp-brand);
+}
+
+.wp-btn-primary:hover {
+  background: var(--wp-brand-light);
+  border-color: var(--wp-brand-light);
+  box-shadow: 0 2px 8px rgba(196,113,58,0.30);
+}
+
+/* Secondary button */
+.wp-btn-secondary {
+  background: var(--wp-bg-raised);
+  color: var(--wp-text-primary);
+  border-color: var(--wp-border-mid);
+}
+
+.wp-btn-secondary:hover {
+  background: var(--wp-bg-surface);
+  border-color: var(--wp-border-strong);
+}
+
+/* Ghost button */
+.wp-btn-ghost {
+  background: transparent;
+  color: var(--wp-text-secondary);
+  border-color: transparent;
+}
+
+.wp-btn-ghost:hover {
+  background: var(--wp-bg-surface);
+  color: var(--wp-text-primary);
+}
+
+/* Danger button */
+.wp-btn-danger {
+  background: var(--wp-danger-dim);
+  color: var(--wp-danger);
+  border-color: rgba(176,80,80,0.2);
+}
+
+.wp-btn-danger:hover {
+  background: var(--wp-danger);
+  color: white;
+}
+
+/* ==========================================================================
+   7. INPUT STYLES - Warm Paper System
+   ========================================================================== */
+
+.wp-input {
+  display: flex;
+  align-items: center;
+  gap: var(--wp-s2);
+  height: 34px;
+  padding: 0 var(--wp-s3);
+  background: var(--wp-bg-surface);
+  border: 1px solid var(--wp-border-soft);
+  border-radius: var(--wp-r-md);
+  cursor: pointer;
+  min-width: 220px;
+  transition: all var(--wp-fast);
+  font-family: var(--wp-font-body);
+}
+
+.wp-input:hover {
+  border-color: var(--wp-border-mid);
+  background: var(--wp-bg-sunken);
+}
+
+.wp-input-icon {
+  color: var(--wp-text-muted);
+  font-size: 13px;
+}
+
+.wp-input-label {
+  flex: 1;
+  font-size: 12.5px;
+  color: var(--wp-text-muted);
+}
+
+/* Form inputs */
+.wp-form-input {
+  width: 100%;
+  padding: var(--wp-s2) var(--wp-s3);
+  background: var(--wp-bg-raised);
+  border: 1px solid var(--wp-border-soft);
+  border-radius: var(--wp-r-md);
+  font-family: var(--wp-font-body);
+  font-size: 13px;
+  color: var(--wp-text-primary);
+  transition: all var(--wp-fast);
+}
+
+.wp-form-input:focus {
+  outline: none;
+  border-color: var(--wp-brand);
+  box-shadow: var(--wp-focus-ring);
+}
+
+.wp-form-input::placeholder {
+  color: var(--wp-text-muted);
+}
+
+/* ==========================================================================
+   8. TABS - Warm Paper System
+   ========================================================================== */
+
+.wp-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--wp-border-soft);
+  margin-bottom: var(--wp-s8);
+  gap: 0;
+}
+
+.wp-tab {
+  padding: var(--wp-s3) var(--wp-s5);
+  font-size: 13px;
+  font-weight: var(--wp-font-normal);
+  color: var(--wp-text-muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: all var(--wp-fast);
+  white-space: nowrap;
+  background: none;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+  font-family: var(--wp-font-body);
+}
+
+.wp-tab:hover {
+  color: var(--wp-text-primary);
+}
+
+.wp-tab.active {
+  color: var(--wp-brand);
+  border-bottom-color: var(--wp-brand);
+  font-weight: var(--wp-font-medium);
+}
+
+.wp-tab-count {
+  margin-left: 5px;
+  padding: 1px 5px;
+  background: var(--wp-brand-dim);
+  color: var(--wp-brand);
+  border-radius: var(--wp-r-full);
+  font-size: 10px;
+  font-weight: var(--wp-font-bold);
+}
+
+/* ==========================================================================
+   9. KPI CARDS - Warm Paper System
+   ========================================================================== */
+
+.wp-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--wp-s4);
+  margin-bottom: var(--wp-s8);
+}
+
+@media (max-width: 1100px) {
+  .wp-kpi-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.wp-kpi {
+  background: var(--wp-bg-raised);
+  border: 1px solid var(--wp-border-soft);
+  border-radius: var(--wp-r-xl);
+  padding: var(--wp-s6);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: all var(--wp-base) var(--wp-ease);
+}
+
+.wp-kpi::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--kpi-color, var(--wp-brand));
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform var(--wp-base) var(--wp-ease);
+  border-radius: 0 0 var(--wp-r-xl) var(--wp-r-xl);
+}
+
+.wp-kpi:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--wp-shadow-md);
+  border-color: var(--wp-border-mid);
+}
+
+.wp-kpi:hover::after {
+  transform: scaleX(1);
+}
+
+.wp-kpi-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--wp-s4);
+}
+
+.wp-kpi-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: var(--wp-r-md);
+  display: grid;
+  place-items: center;
+  font-size: 17px;
+  background: var(--kpi-bg, var(--wp-brand-dim));
+}
+
+.wp-kpi-delta {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 12px;
+  font-weight: var(--wp-font-semibold);
+  padding: 3px 8px;
+  border-radius: var(--wp-r-full);
+}
+
+.wp-kpi-delta.up {
+  background: var(--wp-success-dim);
+  color: var(--wp-success);
+}
+
+.wp-kpi-delta.dn {
+  background: var(--wp-danger-dim);
+  color: var(--wp-danger);
+}
+
+.wp-kpi-delta.nt {
+  background: var(--wp-bg-surface);
+  color: var(--wp-text-muted);
+}
+
+.wp-kpi-value {
+  font-family: var(--wp-font-heading);
+  font-size: clamp(2rem, 2.8vw, 2.6rem);
+  font-weight: var(--wp-font-medium);
+  letter-spacing: -0.04em;
+  color: var(--wp-text-primary);
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.wp-kpi-value sup {
+  font-size: 0.45em;
+  vertical-align: super;
+  color: var(--wp-text-secondary);
+  font-weight: var(--wp-font-normal);
+}
+
+.wp-kpi-label {
+  font-size: 13px;
+  color: var(--wp-text-secondary);
+  margin-bottom: var(--wp-s4);
+}
+
+/* ==========================================================================
+   10. AI INSIGHT - Warm Paper System
+   ========================================================================== */
+
+.wp-ai-insight {
+  display: flex;
+  gap: var(--wp-s4);
+  align-items: flex-start;
+  background: var(--wp-ai-dim);
+  border: 1px solid rgba(122,106,170,0.18);
+  border-radius: var(--wp-r-lg);
+  padding: var(--wp-s5);
+  margin-bottom: var(--wp-s8);
+}
+
+.wp-ai-spark {
+  font-size: 20px;
+  line-height: 1.3;
+  flex-shrink: 0;
+}
+
+.wp-ai-body {
+  flex: 1;
+}
+
+.wp-ai-label {
+  font-size: 11px;
+  font-weight: var(--wp-font-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.10em;
+  color: var(--wp-ai-color);
+  margin-bottom: 3px;
+}
+
+.wp-ai-text {
+  font-size: 13.5px;
+  color: var(--wp-text-secondary);
+  line-height: 1.55;
+}
+
+.wp-ai-text strong {
+  color: var(--wp-text-primary);
+  font-weight: var(--wp-font-medium);
+}
+
+.wp-ai-btns {
+  display: flex;
+  gap: var(--wp-s2);
+  margin-top: var(--wp-s3);
+}
+
+.wp-ai-dismiss {
+  background: none;
+  border: none;
+  color: var(--wp-text-faint);
+  font-size: 18px;
+  cursor: pointer;
+  flex-shrink: 0;
+  padding: 0;
+  line-height: 1;
+  transition: color var(--wp-fast);
+  margin-top: 2px;
+}
+
+.wp-ai-dismiss:hover {
+  color: var(--wp-text-secondary);
+}
+
+/* ==========================================================================
+   11. TASK CARDS - Warm Paper System
+   ========================================================================== */
+
+.wp-task-list {
+  padding: var(--wp-s2);
+}
+
+.wp-task-card {
+  display: grid;
+  grid-template-columns: 3px 1fr auto;
+  gap: var(--wp-s3);
+  align-items: center;
+  padding: var(--wp-s3);
+  border-radius: var(--wp-r-md);
+  border: 1px solid transparent;
+  margin-bottom: var(--wp-s1);
+  cursor: pointer;
+  position: relative;
+  transition: all var(--wp-fast) var(--wp-ease);
+}
+
+.wp-task-card:hover {
+  background: var(--wp-bg-surface);
+  border-color: var(--wp-border-soft);
+}
+
+.wp-task-card:hover .wp-task-qa {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.wp-task-pip {
+  align-self: stretch;
+  border-radius: var(--wp-r-full);
+  background: var(--pip, var(--wp-brand));
+  min-height: 40px;
+}
+
+.wp-task-body {
+  min-width: 0;
+}
+
+.wp-task-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--wp-s2);
+  margin-bottom: 3px;
+}
+
+.wp-task-project {
+  font-size: 10.5px;
+  font-weight: var(--wp-font-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--wp-text-muted);
+}
+
+.wp-task-title {
+  font-size: 13.5px;
+  color: var(--wp-text-primary);
+  font-weight: var(--wp-font-normal);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: var(--wp-s2);
+}
+
+.wp-task-footer {
+  display: flex;
+  align-items: center;
+  gap: var(--wp-s2);
+}
+
+/* Avatar stack */
+.wp-avatar-stack {
+  display: flex;
+}
+
+.wp-avatar-mini {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1.5px solid var(--wp-bg-raised);
+  margin-right: -5px;
+  display: grid;
+  place-items: center;
+  font-size: 8px;
+  font-weight: var(--wp-font-bold);
+  color: white;
+}
+
+/* Due chip */
+.wp-due-chip {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 7px;
+  border-radius: var(--wp-r-full);
+  font-size: 11px;
+  font-weight: var(--wp-font-medium);
+}
+
+.wp-due-chip.green {
+  background: var(--wp-success-dim);
+  color: var(--wp-success);
+}
+
+.wp-due-chip.yellow {
+  background: var(--wp-warning-dim);
+  color: var(--wp-warning);
+}
+
+.wp-due-chip.red {
+  background: var(--wp-danger-dim);
+  color: var(--wp-danger);
+}
+
+/* Progress ring */
+.wp-progress-ring {
+  position: relative;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.wp-progress-ring svg {
+  transform: rotate(-90deg);
+}
+
+.wp-progress-track {
+  fill: none;
+  stroke: var(--wp-border-mid);
+  stroke-width: 2.5;
+}
+
+.wp-progress-fill {
+  fill: none;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  transition: stroke-dashoffset var(--wp-slow);
+}
+
+.wp-progress-pct {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 7px;
+  font-weight: var(--wp-font-bold);
+  font-family: var(--wp-font-mono);
+  color: var(--wp-text-muted);
+}
+
+/* Quick actions */
+.wp-task-qa {
+  position: absolute;
+  right: var(--wp-s2);
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+  pointer-events: none;
+  background: var(--wp-bg-raised);
+  border: 1px solid var(--wp-border-mid);
+  border-radius: var(--wp-r-sm);
+  padding: 3px;
+  box-shadow: var(--wp-shadow-sm);
+  transition: opacity var(--wp-fast);
+}
+
+.wp-qa-btn {
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  background: none;
+  border: none;
+  color: var(--wp-text-muted);
+  cursor: pointer;
+  font-size: 11px;
+  border-radius: 3px;
+  transition: all var(--wp-fast);
+}
+
+.wp-qa-btn:hover {
+  background: var(--wp-bg-surface);
+  color: var(--wp-text-primary);
+}
+
+/* Tag pill */
+.wp-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 7px;
+  border-radius: var(--wp-r-full);
+  font-size: 11px;
+  font-weight: var(--wp-font-medium);
+}
+
+.wp-tag-red {
+  background: var(--wp-danger-dim);
+  color: var(--wp-danger);
+}
+
+.wp-tag-yellow {
+  background: var(--wp-warning-dim);
+  color: var(--wp-warning);
+}
+
+.wp-tag-green {
+  background: var(--wp-success-dim);
+  color: var(--wp-success);
+}
+
+.wp-tag-brand {
+  background: var(--wp-brand-dim);
+  color: var(--wp-brand);
+}
+
+/* ==========================================================================
+   12. KANBAN - Warm Paper System
+   ========================================================================== */
+
+.wp-kanban {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--wp-s4);
+  padding: var(--wp-s4);
+}
+
+.wp-kanban-col {
+  
+}
+
+.wp-kanban-col-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--wp-s3);
+}
+
+.wp-kanban-title {
+  display: flex;
+  align-items: center;
+  gap: var(--wp-s2);
+  font-size: 11.5px;
+  font-weight: var(--wp-font-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--wp-text-muted);
+}
+
+.wp-kanban-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+.wp-kanban-count {
+  font-size: 11px;
+  color: var(--wp-text-faint);
+  background: var(--wp-bg-surface);
+  padding: 1px 6px;
+  border-radius: var(--wp-r-full);
+}
+
+/* WIP bar */
+.wp-wip-bar {
+  height: 2px;
+  background: var(--wp-border-hair);
+  border-radius: var(--wp-r-full);
+  margin-bottom: var(--wp-s3);
+  overflow: hidden;
+}
+
+/* ==========================================================================
+   13. CONTENT GRID - Warm Paper System
+   ========================================================================== */
+
+.wp-content-grid {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: var(--wp-s6);
+}
+
+@media (max-width: 1100px) {
+  .wp-content-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ==========================================================================
+   13b. DASHBOARD LAYOUT - Exact styles from ui_inspire.html
+   ========================================================================== */
+
+/* Main Content Area */
+.main { grid-area: main; overflow-y: auto; background: var(--wp-bg-canvas); transition: background var(--wp-base); }
+.page { max-width: 1380px; padding: var(--wp-s8) var(--wp-s8); margin: 0 auto; }
+
+/* Content Grid */
+.content-grid { display: grid; grid-template-columns: 1fr 340px; gap: var(--wp-s6); }
+@media(max-width:1100px){ .content-grid{grid-template-columns:1fr} }
+
+/* Panels / Cards */
+.panel {
+  background: var(--wp-bg-raised);
+  border: 1px solid var(--wp-border-soft);
+  border-radius: var(--wp-r-xl);
+  overflow: hidden;
+  margin-bottom: var(--wp-s6);
+}
+.panel-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: var(--wp-s4) var(--wp-s6);
+  border-bottom: 1px solid var(--wp-border-hair);
+}
+.panel-title { font-family: var(--wp-font-heading); font-size: 15px; font-weight: 500; color: var(--wp-text-primary); letter-spacing: -0.01em; }
+.panel-sub { font-size: 11.5px; color: var(--wp-text-muted); margin-top: 1px; }
+.panel-actions { display: flex; gap: var(--wp-s2); }
+
+/* Task List */
+.task-list { padding: var(--wp-s2); }
+.task-card {
+  display: grid; grid-template-columns: 3px 1fr auto;
+  gap: var(--wp-s3); align-items: center;
+  padding: var(--wp-s3);
+  border-radius: var(--wp-r-md);
+  border: 1px solid transparent;
+  margin-bottom: var(--wp-s1);
+  cursor: pointer;
+  position: relative;
+  transition: all var(--wp-fast) var(--wp-ease);
+}
+.task-card:hover { background: var(--wp-bg-surface); border-color: var(--wp-border-soft); }
+.task-card:hover .task-qa { opacity: 1; pointer-events: all; }
+
+.task-pip { align-self: stretch; border-radius: var(--wp-r-full); background: var(--pip, var(--wp-brand)); min-height: 40px; }
+
+.tc-body { min-width: 0; }
+.tc-meta { display: flex; align-items: center; gap: var(--wp-s2); margin-bottom: 3px; }
+.tc-proj { font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: var(--wp-text-muted); }
+.tc-title { font-size: 13.5px; color: var(--wp-text-primary); font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: var(--wp-s2); }
+.tc-foot { display: flex; align-items: center; gap: var(--wp-s2); }
+
+/* Avatar Stack */
+.av-stack { display: flex; }
+.av-mini { width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid var(--wp-bg-raised); margin-right: -5px; display: grid; place-items: center; font-size: 8px; font-weight: 700; color: white; }
+
+/* Due Chip */
+.due { display: flex; align-items: center; gap: 3px; padding: 2px 7px; border-radius: var(--wp-r-full); font-size: 11px; font-weight: 500; }
+.due.g { background: var(--wp-success-dim); color: var(--wp-success); }
+.due.y { background: var(--wp-warning-dim); color: var(--wp-warning); }
+.due.r { background: var(--wp-danger-dim); color: var(--wp-danger); }
+
+/* Progress Ring */
+.ring { position: relative; width: 24px; height: 24px; flex-shrink: 0; }
+.ring svg { transform: rotate(-90deg); }
+.ring-track { fill: none; stroke: var(--wp-border-mid); stroke-width: 2.5; }
+.ring-fill { fill: none; stroke-width: 2.5; stroke-linecap: round; transition: stroke-dashoffset var(--wp-slow); }
+.ring-pct { position: absolute; inset: 0; display: grid; place-items: center; font-size: 7px; font-weight: 700; font-family: var(--wp-font-mono); color: var(--wp-text-muted); }
+
+/* Quick Actions */
+.task-qa {
+  position: absolute; right: var(--wp-s2); top: 50%; transform: translateY(-50%);
+  display: flex; gap: 2px; opacity: 0; pointer-events: none;
+  background: var(--wp-bg-raised);
+  border: 1px solid var(--wp-border-mid);
+  border-radius: var(--wp-r-sm); padding: 3px;
+  box-shadow: var(--wp-shadow-sm);
+  transition: opacity var(--wp-fast);
+}
+.qa-btn { width: 22px; height: 22px; display: grid; place-items: center; background: none; border: none; color: var(--wp-text-muted); cursor: pointer; font-size: 11px; border-radius: 3px; transition: all var(--wp-fast); }
+.qa-btn:hover { background: var(--wp-bg-surface); color: var(--wp-text-primary); }
+
+/* Tag Pill */
+.tag { display: inline-flex; align-items: center; gap: 3px; padding: 2px 7px; border-radius: var(--wp-r-full); font-size: 11px; font-weight: 500; }
+.tag-r { background: var(--wp-danger-dim); color: var(--wp-danger); }
+.tag-y { background: var(--wp-warning-dim); color: var(--wp-warning); }
+.tag-g { background: var(--wp-success-dim); color: var(--wp-success); }
+.tag-b { background: var(--wp-brand-dim); color: var(--wp-brand); }
+
+/* Page Stagger Animation */
+@media(prefers-reduced-motion:no-preference){
+  .kpi { animation: fadeUp .45s var(--wp-ease) backwards; }
+  .kpi:nth-child(1){animation-delay:0ms}
+  .kpi:nth-child(2){animation-delay:65ms}
+  .kpi:nth-child(3){animation-delay:130ms}
+  .kpi:nth-child(4){animation-delay:195ms}
+  .task-card { animation: fadeUp .3s var(--wp-ease) backwards; }
+  .task-card:nth-child(1){animation-delay:0ms}
+  .task-card:nth-child(2){animation-delay:35ms}
+  .task-card:nth-child(3){animation-delay:70ms}
+  .task-card:nth-child(4){animation-delay:105ms}
+  .task-card:nth-child(5){animation-delay:140ms}
+  @keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:none} }
+}
+
+/* Page Header */
+.page-head { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: var(--wp-s8); gap: var(--wp-s4); }
+.page-title { font-family: var(--wp-font-heading); font-size: clamp(1.6rem, 2.2vw, 2.1rem); font-weight: 500; color: var(--wp-text-primary); letter-spacing: -0.025em; line-height: 1.1; }
+.page-title em { font-style: italic; color: var(--wp-brand); }
+.page-subtitle { font-size: 13px; color: var(--wp-text-secondary); margin-top: var(--wp-s1); }
+.page-actions { display: flex; gap: var(--wp-s2); flex-shrink: 0; }
+
+/* KPI Row */
+.kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--wp-s4); margin-bottom: var(--wp-s8); }
+@media(max-width:1100px){ .kpi-row{grid-template-columns:repeat(2,1fr)} }
+
+.kpi {
+  background: var(--wp-bg-raised);
+  border: 1px solid var(--wp-border-soft);
+  border-radius: var(--wp-r-xl);
+  padding: var(--wp-s6);
+  cursor: pointer; position: relative; overflow: hidden;
+  transition: all var(--wp-base) var(--wp-ease);
+}
+.kpi::after {
+  content: '';
+  position: absolute; bottom: 0; left: 0; right: 0; height: 2px;
+  background: var(--kpi-color, var(--wp-brand));
+  transform: scaleX(0); transform-origin: left;
+  transition: transform var(--wp-base) var(--wp-ease);
+  border-radius: 0 0 var(--wp-r-xl) var(--wp-r-xl);
+}
+.kpi:hover { transform: translateY(-2px); box-shadow: var(--wp-shadow-md); border-color: var(--wp-border-mid); }
+.kpi:hover::after { transform: scaleX(1); }
+
+.kpi-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--wp-s4); }
+.kpi-icon {
+  width: 38px; height: 38px; border-radius: var(--wp-r-md);
+  display: grid; place-items: center; font-size: 17px;
+  background: var(--kpi-bg, var(--wp-brand-dim));
+}
+.kpi-delta { display: flex; align-items: center; gap: 3px; font-size: 12px; font-weight: 600; padding: 3px 8px; border-radius: var(--wp-r-full); }
+.kpi-delta.up { background: var(--wp-success-dim); color: var(--wp-success); }
+.kpi-delta.dn { background: var(--wp-danger-dim); color: var(--wp-danger); }
+.kpi-delta.nt { background: var(--wp-bg-surface); color: var(--wp-text-muted); }
+
+.kpi-val { font-family: var(--wp-font-heading); font-size: clamp(2rem, 2.8vw, 2.6rem); font-weight: 500; letter-spacing: -0.04em; color: var(--wp-text-primary); line-height: 1; margin-bottom: 4px; }
+.kpi-val sup { font-size: 0.45em; vertical-align: super; color: var(--wp-text-secondary); font-weight: 400; }
+.kpi-label { font-size: 13px; color: var(--wp-text-secondary); margin-bottom: var(--wp-s4); }
+
+/* Sparkline */
+.spark { width: 100%; height: 30px; }
+.spark-area { fill: var(--kpi-color, var(--wp-brand)); opacity: 0.07; }
+.spark-line { fill: none; stroke: var(--kpi-color, var(--wp-brand)); stroke-width: 1.5; vector-effect: non-scaling-stroke; }
+
+/* AI Insight */
+.ai-insight {
+  display: flex; gap: var(--wp-s4); align-items: flex-start;
+  background: var(--wp-ai-dim);
+  border: 1px solid rgba(122,106,170,0.18);
+  border-radius: var(--wp-r-lg);
+  padding: var(--wp-s5);
+  margin-bottom: var(--wp-s8);
+}
+.ai-spark { font-size: 20px; line-height: 1.3; flex-shrink: 0; }
+.ai-body { flex: 1; }
+.ai-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.10em; color: var(--wp-ai-color); margin-bottom: 3px; }
+.ai-text { font-size: 13.5px; color: var(--wp-text-secondary); line-height: 1.55; }
+.ai-text strong { color: var(--wp-text-primary); font-weight: 500; }
+.ai-btns { display: flex; gap: var(--wp-s2); margin-top: var(--wp-s3); }
+.ai-dismiss { background: none; border: none; color: var(--wp-text-faint); font-size: 18px; cursor: pointer; flex-shrink: 0; padding: 0; line-height: 1; transition: color var(--wp-fast); margin-top: 2px; }
+.ai-dismiss:hover { color: var(--wp-text-secondary); }
+
+.content-grid {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: var(--wp-s6);
+}
+
+@media (max-width: 1100px) {
+  .content-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Task Card */
+.task-card {
+  display: grid;
+  grid-template-columns: 4px 1fr auto auto;
+  gap: var(--wp-s3);
+  align-items: center;
+  padding: var(--wp-s4);
+  background: var(--wp-bg-surface);
+  border-radius: var(--wp-r-md);
+  border: 1px solid var(--wp-border-subtle);
+  margin-bottom: var(--wp-s3);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.task-card:hover {
+  background: var(--wp-bg-raised);
+  border-color: var(--wp-border-strong);
+  transform: translateY(-1px);
+  box-shadow: var(--wp-shadow-md);
+}
+
+.task-card:hover .task-qa {
+  opacity: 1;
+}
+
+.task-pip {
+  width: 4px;
+  height: 100%;
+  min-height: 40px;
+  border-radius: 2px;
+  background: var(--pip, var(--wp-brand));
+}
+
+.tc-body {
+  min-width: 0;
+}
+
+.tc-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--wp-s2);
+  margin-bottom: var(--wp-s1);
+}
+
+.tc-proj {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--wp-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.tc-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--wp-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: var(--wp-s2);
+}
+
+.tc-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.av-stack {
+  display: flex;
+  margin-left: -6px;
+}
+
+.av-mini {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 700;
+  color: white;
+  border: 2px solid var(--wp-bg-surface);
+  margin-left: -6px;
+}
+
+.due {
+  font-size: 11px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.due.r { color: var(--wp-danger); }
+.due.y { color: var(--wp-warning); }
+.due.g { color: var(--wp-success); }
+
+/* Ring Progress */
+.ring {
+  position: relative;
+  width: 40px;
+  height: 40px;
+}
+
+.ring svg {
+  transform: rotate(-90deg);
+}
+
+.ring-track {
+  fill: none;
+  stroke: var(--wp-border-subtle);
+  stroke-width: 3;
+}
+
+.ring-fill {
+  fill: none;
+  stroke-width: 3;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.3s ease;
+}
+
+.ring-pct {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--wp-text-secondary);
+}
+
+/* Task QA Buttons */
+.task-qa {
+  display: flex;
+  gap: var(--wp-s1);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.qa-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--wp-r-sm);
+  background: var(--wp-bg-sunken);
+  border: 1px solid var(--wp-border-subtle);
+  color: var(--wp-text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  transition: all 0.2s ease;
+}
+
+.qa-btn:hover {
+  background: var(--wp-brand);
+  color: white;
+  border-color: var(--wp-brand);
+}
+
+/* Tab Row */
+.tab-row { display: flex; border-bottom: 1px solid var(--wp-border-soft); margin-bottom: var(--wp-s8); gap: 0; }
+.tab { padding: var(--wp-s3) var(--wp-s5); font-size: 13px; font-weight: 400; color: var(--wp-text-muted); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all var(--wp-fast); white-space: nowrap; }
+.tab:hover { color: var(--wp-text-primary); }
+.tab.on { color: var(--wp-brand); border-bottom-color: var(--wp-brand); font-weight: 500; }
+.tab-count { margin-left: 5px; padding: 1px 5px; background: var(--wp-brand-dim); color: var(--wp-brand); border-radius: var(--wp-r-full); font-size: 10px; font-weight: 700; }
+
+/* Task List */
+.task-list {
+  padding: var(--wp-s4);
+}
+
+/* ==========================================================================
+   14. UTILITY CLASSES - Warm Paper System
+   ========================================================================== */
+
+/* Background utilities */
+.wp-bg-canvas { background-color: var(--wp-bg-canvas); }
+.wp-bg-base { background-color: var(--wp-bg-base); }
+.wp-bg-surface { background-color: var(--wp-bg-surface); }
+.wp-bg-raised { background-color: var(--wp-bg-raised); }
+.wp-bg-sunken { background-color: var(--wp-bg-sunken); }
+
+/* Text utilities */
+.wp-text-primary { color: var(--wp-text-primary); }
+.wp-text-secondary { color: var(--wp-text-secondary); }
+.wp-text-muted { color: var(--wp-text-muted); }
+.wp-text-faint { color: var(--wp-text-faint); }
+.wp-text-brand { color: var(--wp-brand); }
+
+/* Border utilities */
+.wp-border-hair { border-color: var(--wp-border-hair); }
+.wp-border-soft { border-color: var(--wp-border-soft); }
+.wp-border-mid { border-color: var(--wp-border-mid); }
+.wp-border-strong { border-color: var(--wp-border-strong); }
+
+/* Radius utilities */
+.wp-rounded-xs { border-radius: var(--wp-r-xs); }
+.wp-rounded-sm { border-radius: var(--wp-r-sm); }
+.wp-rounded-md { border-radius: var(--wp-r-md); }
+.wp-rounded-lg { border-radius: var(--wp-r-lg); }
+.wp-rounded-xl { border-radius: var(--wp-r-xl); }
+.wp-rounded-full { border-radius: var(--wp-r-full); }
+
+/* Shadow utilities */
+.wp-shadow-xs { box-shadow: var(--wp-shadow-xs); }
+.wp-shadow-sm { box-shadow: var(--wp-shadow-sm); }
+.wp-shadow-md { box-shadow: var(--wp-shadow-md); }
+.wp-shadow-lg { box-shadow: var(--wp-shadow-lg); }
+.wp-shadow-xl { box-shadow: var(--wp-shadow-xl); }
+
+/* Typography utilities */
+.wp-font-heading { font-family: var(--wp-font-heading); }
+.wp-font-body { font-family: var(--wp-font-body); }
+.wp-font-mono { font-family: var(--wp-font-mono); }
+
+/* ==========================================================================
+   15. SHIMMER ANIMATION
+   ========================================================================== */
+@media (prefers-reduced-motion: no-preference) {
+  .wp-shimmer::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.25) 50%, transparent 100%);
+    background-size: 200% 100%;
+    animation: wp-shimmer-animation 1.1s infinite;
+  }
+
+  @keyframes wp-shimmer-animation {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+}
+
+/* ==========================================================================
+   16. HOVER EFFECTS
+   ========================================================================== */
+
+.wp-hover-lift {
+  transition: all var(--wp-base) var(--wp-ease);
+}
+
+.wp-hover-lift:hover {
+  transform: translateY(-2px);
+}
+
+/* ==========================================================================
+   17. PREFERS-REDUCED-MOTION
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --wp-fast: 0ms;
+    --wp-base: 0ms;
+    --wp-slow: 0ms;
+  }
+
+  .wp-shimmer::after {
+    animation: none;
+  }
+}

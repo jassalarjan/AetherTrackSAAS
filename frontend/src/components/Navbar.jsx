@@ -1,4 +1,4 @@
-import { useAuth } from '../context/AuthContext';
+﻿import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Bell, LogOut, LayoutDashboard, CheckSquare, Users, UserCog, Kanban, Menu, X, ChevronLeft, ChevronRight, BarChart3, Settings, Calendar as CalendarIcon, Activity, Building2 } from 'lucide-react';

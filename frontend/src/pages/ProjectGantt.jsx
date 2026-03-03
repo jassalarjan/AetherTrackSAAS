@@ -1,7 +1,7 @@
-import { useState, useEffect, useMemo } from 'react';
+﻿import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
-import Sidebar from '../components/Sidebar';
+import ResponsivePageLayout from '../components/layouts/ResponsivePageLayout';
 import { projectsApi } from '../api/projectsApi';
 import api from '../api/axios';
 import * as XLSX from 'xlsx';
@@ -372,18 +372,14 @@ const ProjectGantt = () => {
 
   if (loading) {
     return (
-      <div className="flex h-screen overflow-hidden bg-[#f6f6f8] dark:bg-[#101622]">
-        <Sidebar />
-        <div className="flex-1 flex items-center justify-center">
-          <div className={`animate-spin rounded-full h-12 w-12 border-b-2 ${currentColorScheme.primaryText.replace('text-', 'border-')}`}></div>
-        </div>
+      <div className="h-screen flex items-center justify-center" style={{ background: 'var(--bg-canvas)' }}>
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-transparent" style={{ borderBottomColor: 'var(--brand)' }} />
       </div>
     );
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#f6f6f8] dark:bg-[#101622]">
-      <Sidebar />
+    <ResponsivePageLayout title={project?.name || 'Gantt Chart'} icon={Calendar} noPadding>
       <main className="flex-1 flex flex-col overflow-hidden">
         {/* Top Navigation Bar */}
         <header className="h-16 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1a2234] flex items-center justify-between px-8 shrink-0">
@@ -1182,7 +1178,7 @@ const ProjectGantt = () => {
       
       {/* Debug Overlay (only visible with ?debug=gantt or localStorage.gantt_debug=true) */}
       <DebugOverlay normalizedData={ganttData} />
-    </div>
+    </ResponsivePageLayout>
   );
 };
 

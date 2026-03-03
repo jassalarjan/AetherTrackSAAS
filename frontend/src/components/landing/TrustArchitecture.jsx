@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+﻿import React, { useEffect, useRef, useState } from 'react';
 import { Shield, Users, Zap, BarChart3, Lock, GitBranch } from 'lucide-react';
 
 /**

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * ResponsiveGrid - A mobile-first grid layout component
  * 
  * Breakpoints:

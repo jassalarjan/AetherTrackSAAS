@@ -1,4 +1,4 @@
-/**
+﻿/**
  * useMeetings — central data hook for the Meeting Management system.
  *
  * Responsibilities:

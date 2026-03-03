@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Gantt Normalization Pipeline  (v2 — scheduling-engine integration)
  *
  * DUAL-MODE OPERATION:

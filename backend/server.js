@@ -25,6 +25,7 @@ import projectRoutes from './routes/projects.js';
 import sprintRoutes from './routes/sprints.js';
 // HR Module routes
 import attendanceRoutes from './routes/attendance.js';
+import verificationRoutes from './routes/verification.js';
 import leavesRoutes from './routes/leaves.js';
 import leaveTypesRoutes from './routes/leaveTypes.js';
 import holidaysRoutes from './routes/holidays.js';
@@ -446,6 +447,7 @@ app.use('/api/notifications', authenticate, notificationRoutes);
 app.use('/api/changelog', authenticate, changelogRoutes);
 // HR Module routes with authentication
 app.use('/api/hr/attendance', authenticate, attendanceRoutes);
+app.use('/api/geofences', authenticate, verificationRoutes);
 app.use('/api/hr/leaves', authenticate, leavesRoutes);
 app.use('/api/hr/leave-types', authenticate, leaveTypesRoutes);
 app.use('/api/hr/holidays', authenticate, holidaysRoutes);

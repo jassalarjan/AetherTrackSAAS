@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Sidebar from '../components/Sidebar';
+import ResponsivePageLayout from '../components/layouts/ResponsivePageLayout';
 import api from '../api/axios';
 import { 
   Search, Filter, Share2, Plus, ChevronLeft, ChevronRight,
@@ -214,19 +214,14 @@ const ResourceWorkload = () => {
 
   if (loading) {
     return (
-      <div className="flex h-screen overflow-hidden bg-[#f6f6f8] dark:bg-[#101622]">
-        <Sidebar />
-        <div className="flex-1 flex items-center justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#135bec]"></div>
-        </div>
+      <div className="h-screen flex items-center justify-center" style={{ background: 'var(--bg-canvas)' }}>
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-transparent" style={{ borderBottomColor: 'var(--brand)' }} />
       </div>
     );
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#f6f6f8] dark:bg-[#101622]">
-      <Sidebar />
-      <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
+    <ResponsivePageLayout title="Resource & Workload" icon={User} noPadding>
         {/* Header */}
         <header className="h-16 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1a2234] flex items-center justify-between px-6 z-20">
           <div className="flex items-center gap-6">
@@ -631,7 +626,6 @@ const ResourceWorkload = () => {
             </>
           )}
         </div>
-      </main>
 
       {/* Add Resource Modal */}
       {showAddModal && (
@@ -788,7 +782,7 @@ const ResourceWorkload = () => {
           </div>
         </div>
       )}
-    </div>
+    </ResponsivePageLayout>
   );
 };
 

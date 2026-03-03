@@ -14,8 +14,93 @@
   animation: slide-up 0.4s ease-out;
 }
 
+/* ==========================================================================
+   BUTTON SHIMMER - Left-to-right loading animation
+   Used for button loading states (warm paper spec)
+   ========================================================================== */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 1.5s infinite;
+}
+
+/* ==========================================================================
+   FADE UP - Stagger animation for cards on mount
+   Warm paper spec: 65ms delay between cards
+   ========================================================================== */
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.animate-fadeUp {
+  animation: fadeUp var(--base, 200ms) var(--ease, cubic-bezier(0.2, 0, 0, 1)) forwards;
+}
+
+/* Stagger delays */
+.stagger-1 { animation-delay: 0ms; }
+.stagger-2 { animation-delay: 35ms; }
+.stagger-3 { animation-delay: 70ms; }
+.stagger-4 { animation-delay: 105ms; }
+.stagger-5 { animation-delay: 140ms; }
+
+/* KPI Card specific stagger delays (65ms per spec) */
+.kpi-stagger-1 { animation-delay: 0ms; }
+.kpi-stagger-2 { animation-delay: 65ms; }
+.kpi-stagger-3 { animation-delay: 130ms; }
+.kpi-stagger-4 { animation-delay: 195ms; }
+
+/* ==========================================================================
+   PULSE - For presence indicators
+   ========================================================================== */
+@keyframes pulse-ring {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.8);
+    opacity: 0;
+  }
+}
+
+.animate-pulse-ring {
+  animation: pulse-ring 1.5s ease-out infinite;
+}
+
+/* ==========================================================================
+   REDUCED MOTION - Respect user preference
+   ========================================================================== */
 @media (prefers-reduced-motion: reduce) {
-  .animate-slide-up {
+  .animate-slide-up,
+  .animate-shimmer,
+  .animate-fadeUp,
+  .animate-pulse-ring {
     animation: none;
+  }
+  
+  .stagger-1,
+  .stagger-2,
+  .stagger-3,
+  .stagger-4,
+  .stagger-5,
+  .kpi-stagger-1,
+  .kpi-stagger-2,
+  .kpi-stagger-3,
+  .kpi-stagger-4 {
+    animation-delay: 0ms;
   }
 }

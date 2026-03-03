@@ -110,7 +110,7 @@ export default defineConfig(({ mode }) => {
           ]
         },
         devOptions: {
-          enabled: true,
+          enabled: false, // Disable PWA in dev mode to avoid 426 errors
           type: 'module'
         }
       })
@@ -121,11 +121,16 @@ export default defineConfig(({ mode }) => {
       hmr: isDevelopment ? {
         protocol: 'ws',
         host: 'localhost',
-        port: 3000,
+        port: 3001, // Use a separate port for HMR to avoid conflicts
       } : false,
       proxy: isDevelopment ? {
         '/api': {
-          target: process.env.VITE_API_URL  || 'https://aethertracksaas.onrender.com',
+          target: process.env.VITE_API_URL || 'https://aethertracksaas.onrender.com',
+          changeOrigin: true,
+          secure: false,
+        },
+        '/auth': {
+          target: process.env.VITE_API_URL || 'https://aethertracksaas.onrender.com',
           changeOrigin: true,
           secure: false,
         }

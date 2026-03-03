@@ -1,9 +1,8 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import { useSidebar } from '../context/SidebarContext';
 import { useConfirmModal } from '../hooks/useConfirmModal';
-import Sidebar from '../components/Sidebar';
+import ResponsivePageLayout from '../components/layouts/ResponsivePageLayout';
 import ConfirmModal from '../components/modals/ConfirmModal';
 import api from '../api/axios';
 import useRealtimeSync from '../hooks/useRealtimeSync';
@@ -12,7 +11,6 @@ import { Plus, X, Users, UserPlus, UserMinus, Trash2, Pin, GripVertical, Search,
 const Teams = () => {
   const { user } = useAuth();
   const { theme } = useTheme();
-  const { toggleMobileSidebar } = useSidebar();
   const confirmModal = useConfirmModal();
   const [teams, setTeams] = useState([]);
   const [users, setUsers] = useState([]);
@@ -282,17 +280,10 @@ const Teams = () => {
 
   if (loading) {
     return (
-      <div className={`min-h-screen ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'}`}>
-        <div className="flex">
-          <Sidebar />
-          <div className="flex-1 flex items-center justify-center">
-            <div className="flex flex-col items-center gap-6">
-              <div className="loading-bar-container">
-                <div className="loading-bar bg-[#136dec]"></div>
-              </div>
-              <p className={`${theme === 'dark' ? 'text-white' : 'text-gray-900'} font-medium`}>Loading teams...</p>
-            </div>
-          </div>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg-canvas)' }}>
+        <div className="flex flex-col items-center gap-6">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-transparent" style={{ borderBottomColor: 'var(--brand)' }}></div>
+          <p className="font-medium" style={{ color: 'var(--text-secondary)' }}>Loading teams...</p>
         </div>
       </div>
     );
@@ -300,35 +291,17 @@ const Teams = () => {
 
   if (!['admin', 'hr', 'team_lead', 'community_admin'].includes(user?.role)) {
     return (
-      <div className={`min-h-screen ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'}`}>
-        <div className="flex">
-          <Sidebar />
-          <div className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div className="text-center">
-              <p className={`text-xl ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`}>You don't have permission to access this page.</p>
-            </div>
-          </div>
-        </div>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg-canvas)' }}>
+        <p className="text-xl" style={{ color: 'var(--text-secondary)' }}>You don't have permission to access this page.</p>
       </div>
     );
   }
 
   return (
-    <div className={`min-h-screen ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'}`} data-testid="teams-page">
-      <div className="flex">
-        <Sidebar />
-        <div className="flex-1 p-4 sm:p-6 lg:p-8">
-        <div className="flex justify-between items-center mb-8">
-          <div className="flex items-center gap-4">
-            {/* Mobile Menu Button */}
-            <button
-              onClick={toggleMobileSidebar}
-              className={`lg:hidden ${theme === 'dark' ? 'text-[#9da8b9] hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}
-              aria-label="Toggle menu"
-            >
-              <Menu size={24} />
-            </button>
-            <div>
+    <ResponsivePageLayout title={user?.role === 'team_lead' ? 'My Team' : 'Teams'} icon={Users}>
+        <div className="p-4 sm:p-6 lg:p-8">
+          <div className="flex justify-between items-center mb-8">
+          <div>
               <h1 className={`text-3xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                 {user?.role === 'team_lead' ? 'My Team' : 'Teams'}
               </h1>
@@ -359,7 +332,6 @@ const Teams = () => {
               </button>
             </div>
           )}
-        </div>
 
         {teams.length === 0 ? (
           <div className={`rounded-[0.125rem] shadow-md p-12 text-center border ${
@@ -495,7 +467,6 @@ const Teams = () => {
         </div>
         )}
         </div>
-      </div>
 
       {/* Create Team Modal */}
       {showCreateModal && (
@@ -832,7 +803,7 @@ const Teams = () => {
         variant={confirmModal.variant}
         isLoading={confirmModal.isLoading}
       />
-    </div>
+    </ResponsivePageLayout>
   );
 };
 

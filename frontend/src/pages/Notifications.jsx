@@ -1,15 +1,11 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { useTheme } from '../context/ThemeContext';
-import { useSidebar } from '../context/SidebarContext';
-import Sidebar from '../components/Sidebar';
+import ResponsivePageLayout from '../components/layouts/ResponsivePageLayout';
 import api from '../api/axios';
-import { Bell, Check, CheckCheck, Trash2, Filter, Calendar, User, AlertCircle, Menu } from 'lucide-react';
+import { Bell, Check, CheckCheck, Trash2, Filter, Calendar, User, AlertCircle } from 'lucide-react';
 
 const Notifications = () => {
   const { user } = useAuth();
-  const { theme } = useTheme();
-  const { toggleMobileSidebar } = useSidebar();
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all'); // all, unread, read
@@ -131,121 +127,97 @@ const Notifications = () => {
 
   if (loading) {
     return (
-      <div className={`flex h-screen w-full ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'}`}>
-        <Sidebar />
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#136dec] mx-auto mb-4"></div>
-            <p className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} font-medium`}>Loading notifications...</p>
-          </div>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg-canvas)' }}>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4" style={{ borderColor: 'var(--brand)' }}></div>
+          <p className="font-medium" style={{ color: 'var(--text-secondary)' }}>Loading notifications…</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className={`flex h-screen w-full ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'}`}>
-      <Sidebar />
+    <ResponsivePageLayout
+      title="Notifications"
+      icon={Bell}
+      subtitle={unreadCount > 0 ? `${unreadCount} unread notification${unreadCount !== 1 ? 's' : ''}` : 'All caught up!'}
+      actions={unreadCount > 0 ? (
+        <button
+          onClick={markAllAsRead}
+          className="flex items-center gap-2 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+          style={{ background: 'var(--brand)' }}
+          onMouseOver={(e) => { e.currentTarget.style.background = 'var(--brand-light)'; }}
+          onMouseOut={(e) => { e.currentTarget.style.background = 'var(--brand)'; }}
+        >
+          <CheckCheck size={16} />
+          Mark All Read
+        </button>
+      ) : null}
+      noPadding
+    >
+      {/* Filter Tabs — sticky within scroll container */}
+      <div
+        className="sticky top-0 z-10 flex items-center gap-1 px-6 py-3 border-b"
+        style={{ background: 'var(--bg-canvas)', borderColor: 'var(--border-soft)' }}
+      >
+        {['all', 'unread', 'read'].map((f) => {
+          const labels = { all: `All (${notifications.length})`, unread: `Unread (${unreadCount})`, read: `Read (${notifications.length - unreadCount})` };
+          const active = filter === f;
+          return (
+            <button
+              key={f}
+              onClick={() => setFilter(f)}
+              className="px-4 py-1.5 text-sm font-medium rounded-lg transition-colors focus-visible:outline-none"
+              style={{
+                background: active ? 'var(--brand-dim)' : 'transparent',
+                color: active ? 'var(--brand)' : 'var(--text-secondary)',
+                fontFamily: 'var(--font-body)',
+              }}
+              onMouseOver={(e) => { if (!active) e.currentTarget.style.background = 'var(--bg-surface)'; }}
+              onMouseOut={(e) => { if (!active) e.currentTarget.style.background = 'transparent'; }}
+            >
+              {labels[f]}
+            </button>
+          );
+        })}
+      </div>
 
-      <main className={`flex-1 flex flex-col h-full w-full min-w-0 ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'} overflow-hidden`}>
-        {/* Header */}
-        <header className={`border-b ${theme === 'dark' ? 'border-[#282f39] bg-[#111418]' : 'border-gray-200 bg-white'} shrink-0`}>
-          <div className="flex items-center justify-between px-6 py-4">
-            <div className="flex items-center gap-4">
-              {/* Mobile Menu Button */}
-              <button
-                onClick={toggleMobileSidebar}
-                className={`lg:hidden ${theme === 'dark' ? 'text-[#9da8b9] hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}
-                aria-label="Toggle menu"
-              >
-                <Menu size={24} />
-              </button>
-              <div>
-                <h2 className={`${theme === 'dark' ? 'text-white' : 'text-gray-900'} text-xl font-bold leading-tight`}>Notifications</h2>
-                <p className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} text-xs mt-1`}>
-                  {unreadCount > 0 ? `${unreadCount} unread notification${unreadCount !== 1 ? 's' : ''}` : 'All caught up!'}
-                </p>
-              </div>
-            </div>
-            {unreadCount > 0 && (
-              <button
-                onClick={markAllAsRead}
-                className="flex items-center gap-2 bg-[#136dec] hover:bg-[#1258c4] text-white text-sm font-medium px-4 py-2 rounded transition-colors"
-              >
-                <CheckCheck size={16} />
-                Mark All Read
-              </button>
-            )}
+      {/* Notifications List */}
+      <div className="p-6">
+        {filteredNotifications.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-24">
+            <Bell className="w-16 h-16 mb-4" style={{ color: 'var(--border-mid)' }} />
+            <h3 className="text-lg font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>
+              {filter === 'unread' ? 'No unread notifications' : filter === 'read' ? 'No read notifications' : 'No notifications yet'}
+            </h3>
+            <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+              {filter === 'all' ? "You'll see notifications here when something happens" : 'Try changing the filter'}
+            </p>
           </div>
-
-          {/* Filter Tabs */}
-          <div className="flex items-center gap-1 px-6 pb-3">
-            <button
-              onClick={() => setFilter('all')}
-              className={`px-4 py-2 text-sm font-medium rounded transition-colors ${
-                filter === 'all'
-                  ? 'bg-[#136dec] text-white'
-                  : `${theme === 'dark' ? 'text-[#9da8b9] hover:text-white hover:bg-[#1c2027]' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'}`
-              }`}
-            >
-              All ({notifications.length})
-            </button>
-            <button
-              onClick={() => setFilter('unread')}
-              className={`px-4 py-2 text-sm font-medium rounded transition-colors ${
-                filter === 'unread'
-                  ? 'bg-[#136dec] text-white'
-                  : `${theme === 'dark' ? 'text-[#9da8b9] hover:text-white hover:bg-[#1c2027]' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'}`
-              }`}
-            >
-              Unread ({unreadCount})
-            </button>
-            <button
-              onClick={() => setFilter('read')}
-              className={`px-4 py-2 text-sm font-medium rounded transition-colors ${
-                filter === 'read'
-                  ? 'bg-[#136dec] text-white'
-                  : `${theme === 'dark' ? 'text-[#9da8b9] hover:text-white hover:bg-[#1c2027]' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'}`
-              }`}
-            >
-              Read ({notifications.length - unreadCount})
-            </button>
-          </div>
-        </header>
-
-        {/* Notifications List */}
-        <div className="flex-1 overflow-y-auto p-6">
-          {filteredNotifications.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full">
-              <Bell className={`w-16 h-16 ${theme === 'dark' ? 'text-[#282f39]' : 'text-gray-300'} mb-4`} />
-              <h3 className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2`}>
-                {filter === 'unread' ? 'No unread notifications' : filter === 'read' ? 'No read notifications' : 'No notifications yet'}
-              </h3>
-              <p className={`text-sm ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`}>
-                {filter === 'all' ? "You'll see notifications here when something happens" : 'Try changing the filter'}
-              </p>
-            </div>
           ) : (
             <div className="max-w-4xl mx-auto space-y-2">
               {filteredNotifications.map((notification) => (
                 <div
                   key={notification._id}
-                  className={`${theme === 'dark' ? 'bg-[#1c2027] border-[#282f39]' : 'bg-white border-gray-200'} border rounded-lg p-4 transition-all ${
-                    !notification.read_at ? 'border-l-4 border-l-[#136dec]' : ''
-                  } hover:shadow-md`}
+                  className="border rounded-lg p-4 transition-all hover:shadow-md"
+                  style={{
+                    background: 'var(--bg-raised)',
+                    borderColor: notification.read_at ? 'var(--border-soft)' : 'var(--brand)',
+                    borderLeftWidth: notification.read_at ? undefined : '3px',
+                  }}
                 >
                   <div className="flex items-start gap-4">
                     {/* Icon */}
-                    <div className={`flex-shrink-0 p-2 rounded-full ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-gray-100'}`}>
+                    <div className="flex-shrink-0 p-2 rounded-full" style={{ background: 'var(--bg-surface)' }}>
                       {getNotificationIcon(notification.type)}
                     </div>
 
                     {/* Content */}
                     <div className="flex-1 min-w-0">
-                      <p className={`text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'} font-medium mb-1`}>
+                      <p className="text-sm font-medium mb-1" style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-body)' }}>
                         {getNotificationMessage(notification)}
                       </p>
-                      <p className={`text-xs ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`}>
+                      <p className="text-xs" style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-body)' }}>
                         {formatDate(notification.created_at)}
                       </p>
                     </div>
@@ -255,28 +227,35 @@ const Notifications = () => {
                       {!notification.read_at && (
                         <button
                           onClick={() => markAsRead([notification._id])}
-                          className={`p-2 rounded transition-colors ${theme === 'dark' ? 'hover:bg-[#282f39]' : 'hover:bg-gray-100'}`}
+                          className="p-2 rounded transition-colors focus-visible:outline-none"
+                          style={{ color: 'var(--text-muted)' }}
+                          onMouseOver={(e) => { e.currentTarget.style.background = 'var(--bg-surface)'; }}
+                          onMouseOut={(e) => { e.currentTarget.style.background = ''; }}
                           title="Mark as read"
                         >
-                          <Check className={`w-4 h-4 ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`} />
+                          <Check className="w-4 h-4" />
                         </button>
                       )}
                       <button
                         onClick={() => deleteNotification(notification._id)}
-                        className={`p-2 rounded transition-colors ${theme === 'dark' ? 'hover:bg-[#282f39]' : 'hover:bg-gray-100'}`}
+                        className="p-2 rounded transition-colors focus-visible:outline-none"
+                        style={{ color: 'var(--text-muted)' }}
+                        onMouseOver={(e) => { e.currentTarget.style.background = 'var(--bg-surface)'; }}
+                        onMouseOut={(e) => { e.currentTarget.style.background = ''; }}
                         title="Delete"
                       >
-                        <Trash2 className={`w-4 h-4 ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`} />
+                        <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
                   </div>
 
                   {/* Task Link if available */}
                   {notification.task_id && (
-                    <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                    <div className="mt-3 pt-3 border-t" style={{ borderColor: 'var(--border-hair)' }}>
                       <a
                         href={`/tasks`}
-                        className="text-xs text-[#136dec] hover:text-blue-400 font-medium"
+                        className="text-xs font-medium hover:underline"
+                        style={{ color: 'var(--brand)' }}
                       >
                         View Task →
                       </a>
@@ -286,9 +265,8 @@ const Notifications = () => {
               ))}
             </div>
           )}
-        </div>
-      </main>
-    </div>
+      </div>
+    </ResponsivePageLayout>
   );
 };
 

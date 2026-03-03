@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Sidebar from '../components/Sidebar';
+import ResponsivePageLayout from '../components/layouts/ResponsivePageLayout';
 import api from '../api/axios';
 import { projectsApi } from '../api/projectsApi';
 import { 
@@ -151,20 +151,15 @@ const MyProjects = () => {
 
   if (loading) {
     return (
-      <div className="flex h-screen overflow-hidden bg-[#f6f6f8] dark:bg-[#101622]">
-        <Sidebar />
-        <div className="flex-1 flex items-center justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#135bec]"></div>
-        </div>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg-canvas)' }}>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-transparent" style={{ borderBottomColor: 'var(--brand)' }}></div>
       </div>
     );
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#f6f6f8] dark:bg-[#101622]">
-      <Sidebar />
-      <main className="flex-1 flex flex-col overflow-hidden">
-        <div className="flex-1 overflow-y-auto p-8 space-y-8">
+    <ResponsivePageLayout title="My Projects" icon={Briefcase}>
+        <div className="p-8 space-y-8">
           {/* Header */}
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div>
@@ -428,7 +423,6 @@ const MyProjects = () => {
             </div>
           )}
         </div>
-      </main>
 
       {/* Create Project Modal */}
       {showCreateModal && (
@@ -571,7 +565,7 @@ const MyProjects = () => {
           </div>
         </div>
       )}
-    </div>
+    </ResponsivePageLayout>
   );
 };
 

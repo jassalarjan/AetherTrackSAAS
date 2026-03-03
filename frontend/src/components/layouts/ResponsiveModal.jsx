@@ -1,4 +1,4 @@
-import { X } from 'lucide-react';
+﻿import { X } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 import { useEffect } from 'react';
 
@@ -66,53 +66,34 @@ const ResponsiveModal = ({
 
       {/* Modal Container */}
       <div
-        className={`
-          relative w-full ${sizeClasses[size] || sizeClasses.default}
-          ${theme === 'dark' ? 'bg-gradient-to-b from-[#1c2027] to-[#181c23]' : 'bg-gradient-to-b from-white to-gray-50'}
-          rounded-t-3xl sm:rounded-xl
-          shadow-2xl
-          flex flex-col
-          max-h-[92vh] sm:max-h-[90vh]
-          animate-slideUp sm:animate-scaleIn
-          border-t-4 border-[#136dec]
-        `}
+        className={`relative w-full ${sizeClasses[size] || sizeClasses.default} rounded-t-3xl sm:rounded-xl shadow-2xl flex flex-col max-h-[92vh] sm:max-h-[90vh] animate-slideUp sm:animate-scaleIn border-t-4`}
+        style={{ background: 'var(--bg-raised)', borderTopColor: 'var(--brand)', boxShadow: 'var(--shadow-xl)' }}
       >
         {/* Drag Handle - Mobile only */}
         <div className="sm:hidden flex justify-center pt-3 pb-2">
-          <div className="w-12 h-1.5 bg-[#4b5563] rounded-full"></div>
+          <div className="w-12 h-1.5 rounded-full" style={{ background: 'var(--border-mid)' }}></div>
         </div>
 
         {/* Header - Sticky on mobile */}
         <div
-          className={`
-            flex-none flex items-center justify-between
-            ${noPadding ? '' : 'px-4 py-3 sm:p-6'}
-            border-b ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'}
-            sticky top-0 ${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'}
-            z-10 rounded-t-3xl sm:rounded-t-xl
-          `}
+          className={`flex-none flex items-center justify-between ${noPadding ? '' : 'px-4 py-3 sm:p-6'} border-b sticky top-0 z-10 rounded-t-3xl sm:rounded-t-xl`}
+            style={{ borderColor: 'var(--border-soft)', background: 'var(--bg-raised)' }}
         >
           <h2
-            className={`
-              font-bold
-              ${theme === 'dark' ? 'text-white' : 'text-gray-900'}
-              text-base sm:text-xl lg:text-2xl
-              pr-4 truncate
-            `}
+            className="font-bold text-base sm:text-xl lg:text-2xl pr-4 truncate"
+            style={{ fontFamily: 'var(--font-heading)', color: 'var(--text-primary)', letterSpacing: '-0.025em' }}
           >
             {title}
           </h2>
           <button
             onClick={onClose}
-            className={`
-              flex-none p-2 rounded-lg
-              ${theme === 'dark'
-                ? 'hover:bg-[#282f39] text-[#9da8b9] hover:text-white'
-                : 'hover:bg-gray-100 text-gray-600 hover:text-gray-900'
-              }
-              transition-colors
-            `}
+            className="flex-none p-2 rounded-lg transition-colors focus-visible:outline-none"
+            style={{ color: 'var(--text-secondary)' }}
             aria-label="Close modal"
+            onMouseOver={(e) => { e.currentTarget.style.background = 'var(--border-hair)'; e.currentTarget.style.color = 'var(--text-primary)'; }}
+            onMouseOut={(e)  => { e.currentTarget.style.background = ''; e.currentTarget.style.color = 'var(--text-secondary)'; }}
+            onFocus={(e)     => { e.currentTarget.style.boxShadow = 'var(--focus-ring)'; }}
+            onBlur={(e)      => { e.currentTarget.style.boxShadow = ''; }}
           >
             <X size={20} />
           </button>
@@ -131,13 +112,8 @@ const ResponsiveModal = ({
         {/* Footer - Sticky on mobile if provided */}
         {footer && (
           <div
-            className={`
-              flex-none
-              ${noPadding ? '' : 'p-4 sm:p-6'}
-              border-t ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'}
-              sticky bottom-0 ${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'}
-              sm:rounded-b-xl
-            `}
+            className={`flex-none ${noPadding ? '' : 'p-4 sm:p-6'} border-t sticky bottom-0 sm:rounded-b-xl`}
+            style={{ borderColor: 'var(--border-soft)', background: 'var(--bg-raised)' }}
           >
             {footer}
           </div>

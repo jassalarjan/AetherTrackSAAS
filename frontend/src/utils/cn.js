@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Utility function to merge class names
  * @param  {...any} classes - Class names to merge
  * @returns {string} - Merged class names

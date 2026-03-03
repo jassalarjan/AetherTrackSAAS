@@ -1,15 +1,13 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { projectsApi } from '../api/projectsApi';
 import { useNavigate } from 'react-router-dom';
-import Sidebar from '../components/Sidebar';
-import { useSidebar } from '../context/SidebarContext';
+import ResponsivePageLayout from '../components/layouts/ResponsivePageLayout';
 import { Filter, Share2, FolderOpen, DollarSign, Users as UsersIcon, AlertTriangle, PieChart, TrendingUp, ArrowRight, MoreHorizontal, Mail, Plus, X, Edit, Trash2, Download, FileSpreadsheet, Search, UserPlus } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import api from '../api/axios';
 
 const ProjectDashboard = () => {
   const navigate = useNavigate();
-  const { toggleMobileSidebar } = useSidebar();
   const [projects, setProjects] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -291,21 +289,15 @@ const ProjectDashboard = () => {
 
   if (loading && !stats) {
     return (
-      <div className="flex h-screen overflow-hidden bg-[#f6f6f8] dark:bg-[#101622]">
-        <Sidebar />
-        <div className="flex-1 flex items-center justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#135bec]"></div>
-        </div>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg-canvas)' }}>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-transparent" style={{ borderBottomColor: 'var(--brand)' }}></div>
       </div>
     );
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#f6f6f8] dark:bg-[#101622]">
-      <Sidebar />
-      <main className="flex-1 flex flex-col overflow-hidden">
-        {/* Dashboard Body */}
-        <div className="flex-1 overflow-y-auto p-8 space-y-8 scroll-smooth">
+    <ResponsivePageLayout title="Projects" icon={FolderOpen}>
+      <div className="p-8 space-y-8 scroll-smooth">
       {/* Welcome Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
@@ -730,8 +722,7 @@ const ProjectDashboard = () => {
           </div>
         </div>
       </div>
-    </div>
-      </main>
+      </div>
 
       {/* Create/Edit Project Modal */}
       {showModal && (
@@ -986,7 +977,7 @@ const ProjectDashboard = () => {
           </div>
         </div>
       )}
-    </div>
+    </ResponsivePageLayout>
   );
 };
 

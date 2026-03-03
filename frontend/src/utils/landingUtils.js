@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Landing Page Utilities
  * 
  * Reusable hooks and helpers for the landing page

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Gantt Timeline Debug Utilities
  * 
  * Lightweight diagnostic tools for troubleshooting timeline rendering issues.

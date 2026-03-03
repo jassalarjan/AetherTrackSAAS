@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+﻿import { useEffect } from 'react';
 import { getAccessToken } from '../api/tokenStore';
 
 const ACTIVITY_TIMEOUT = 30 * 60 * 1000; // 30 minutes

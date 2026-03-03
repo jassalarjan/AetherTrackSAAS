@@ -1,18 +1,16 @@
-import { useState, useEffect, useMemo } from 'react';
+﻿import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import { useSidebar } from '../context/SidebarContext';
 import { useConfirmModal } from '../hooks/useConfirmModal';
 import api from '../api/axios';
-import Sidebar from '../components/Sidebar';
+import ResponsivePageLayout from '../components/layouts/ResponsivePageLayout';
 import ConfirmModal from '../components/modals/ConfirmModal';
 import useRealtimeSync from '../hooks/useRealtimeSync';
-import { Upload, Download, FileJson, FileSpreadsheet, X, Search, Filter, Users as UsersIcon, User, Shield, Trash2, Edit2, Key, Plus, Menu } from 'lucide-react';
+import { Upload, Download, FileJson, FileSpreadsheet, X, Search, Filter, Users as UsersIcon, User, Shield, Trash2, Edit2, Key, Plus } from 'lucide-react';
 
 export default function UserManagement() {
   const { user } = useAuth();
   const { theme, currentTheme } = useTheme();
-  const { toggleMobileSidebar } = useSidebar();
   const confirmModal = useConfirmModal();
   const [users, setUsers] = useState([]);
   const [teams, setTeams] = useState([]);
@@ -356,55 +354,33 @@ export default function UserManagement() {
 
   if (!hasPermission) {
     return (
-      <div className={`flex h-screen w-full ${currentTheme.background}`}>
-        <Sidebar />
-        <main className={`flex-1 flex items-center justify-center ${currentTheme.background}`}>
-          <div className={`${currentTheme.surface} p-8 rounded border ${currentTheme.border}`}>
-            <h2 className="text-2xl font-bold text-red-500 mb-4">Access Denied</h2>
-            <p className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`}>You don't have permission to access user management.</p>
-            <p className="text-[#6b7280] mt-2">Only Admin and HR can manage users.</p>
-          </div>
-        </main>
+      <div className="h-screen flex items-center justify-center" style={{ background: 'var(--bg-canvas)' }}>
+        <div className="p-8 rounded" style={{ background: 'var(--bg-raised)', border: '1px solid var(--danger)' }}>
+          <h2 className="text-2xl font-bold text-red-500 mb-4">Access Denied</h2>
+          <p style={{ color: 'var(--text-secondary)' }}>You don't have permission to access user management.</p>
+          <p className="text-[#6b7280] mt-2">Only Admin and HR can manage users.</p>
+        </div>
       </div>
     );
   }
 
   if (loading) {
     return (
-      <div className={`${currentTheme.background} ${currentTheme.text} h-screen flex items-center justify-center`}>
-        <div className="flex flex-col items-center gap-6">
-          <div className="flex gap-3">
-            {[0, 1, 2, 3].map((i) => (
-              <div key={i} className="w-4 h-12 bg-[#136dec] rounded-full animate-pulse" style={{ animationDelay: `${i * 0.15}s` }}></div>
-            ))}
-          </div>
-          <p className={`${theme === 'dark' ? 'text-white' : 'text-gray-900'} font-medium`}>Loading users...</p>
-        </div>
+      <div className="h-screen flex items-center justify-center" style={{ background: 'var(--bg-canvas)' }}>
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-transparent" style={{ borderBottomColor: 'var(--brand)' }} />
       </div>
     );
   }
 
   return (
-    <div className={`flex h-screen w-full ${currentTheme.background}`}>
-      <Sidebar />
-
+    <ResponsivePageLayout title="Manage People" icon={UsersIcon} noPadding>
       <main className={`flex-1 flex flex-col h-full w-full min-w-0 ${currentTheme.background} overflow-hidden`}>
         {/* Header */}
         <header className={`border-b ${currentTheme.border} ${currentTheme.background} shrink-0`}>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between px-3 sm:px-4 md:px-6 py-3 sm:py-4 gap-2 sm:gap-3">
-            <div className="flex items-center gap-2 sm:gap-3">
-              {/* Mobile/Tablet Menu Button */}
-              <button
-                onClick={toggleMobileSidebar}
-                className={`lg:hidden ${theme === 'dark' ? 'text-[#9da8b9] hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}
-                aria-label="Toggle menu"
-              >
-                <Menu size={20} className="sm:w-6 sm:h-6" />
-              </button>
-              <div>
-                <h2 className={`${theme === 'dark' ? 'text-white' : 'text-gray-900'} text-base sm:text-lg md:text-xl font-bold leading-tight`}>User & Team Management</h2>
-                <p className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} text-[10px] sm:text-xs mt-0.5 sm:mt-1`}>{users.length} users • {teams.length} teams</p>
-              </div>
+            <div>
+              <h2 className={`${theme === 'dark' ? 'text-white' : 'text-gray-900'} text-base sm:text-lg md:text-xl font-bold leading-tight`}>User & Team Management</h2>
+              <p className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} text-[10px] sm:text-xs mt-0.5 sm:mt-1`}>{users.length} users • {teams.length} teams</p>
             </div>
             <div className="flex gap-1.5 sm:gap-2">
               <button
@@ -1195,6 +1171,6 @@ export default function UserManagement() {
           </div>
         </div>
       )}
-    </div>
+    </ResponsivePageLayout>
   );
 }

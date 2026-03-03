@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { ZapIcon, CalendarIcon } from 'lucide-react';
 
 const SprintLabel = ({ sprint, size = 'md', showIcon = true, showDates = false }) => {

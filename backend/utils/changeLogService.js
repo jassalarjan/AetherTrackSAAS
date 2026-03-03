@@ -13,7 +13,7 @@ export const logChange = async (params) => {
       // Direct event_type pattern (used in auth.js, users.js, etc.)
       logData = {
         event_type: params.event_type,
-        user_id: params.user?._id,
+        user_id: params.user?._id || params.user_id,
         user_email: params.user?.email,
         user_name: params.user?.full_name,
         user_role: params.user?.role,

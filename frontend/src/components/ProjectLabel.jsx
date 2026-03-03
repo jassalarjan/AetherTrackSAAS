@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { FolderIcon } from 'lucide-react';
 
 const ProjectLabel = ({ project, size = 'md', showIcon = true }) => {

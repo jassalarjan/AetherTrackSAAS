@@ -1,11 +1,10 @@
-import { useState, useEffect, useCallback } from 'react';
+﻿import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import { useSidebar } from '../context/SidebarContext';
-import Sidebar from '../components/Sidebar';
+import ResponsivePageLayout from '../components/layouts/ResponsivePageLayout';
 import api from '../api/axios';
 import useRealtimeSync from '../hooks/useRealtimeSync';
-import { Filter, Calendar, AlertTriangle, TrendingUp, BarChart3, Target, User, Users, Clock, Download, FileSpreadsheet, FileText, X, ChevronDown, Menu } from 'lucide-react';
+import { Filter, Calendar, AlertTriangle, TrendingUp, BarChart3, Target, User, Users, Clock, Download, FileSpreadsheet, FileText, X, ChevronDown } from 'lucide-react';
 import { PieChart as RechartsPieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, LineChart, Line, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Legend } from 'recharts';
 import { generateExcelReport } from '../utils/reportGenerator';
 import { generateComprehensivePDFReport } from '../utils/comprehensiveReportGenerator';
@@ -13,7 +12,6 @@ import { generateComprehensivePDFReport } from '../utils/comprehensiveReportGene
 const Analytics = () => {
   const { user } = useAuth();
   const { theme } = useTheme();
-  const { toggleMobileSidebar } = useSidebar();
   const [tasks, setTasks] = useState([]);
   const [projects, setProjects] = useState([]);
   const [filteredTasks, setFilteredTasks] = useState([]);
@@ -555,40 +553,18 @@ const Analytics = () => {
 
   if (loading) {
     return (
-      <div className={`${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'} ${theme === 'dark' ? 'text-white' : 'text-gray-900'} font-['Inter'] h-screen flex items-center justify-center`}>
-        <div className="flex flex-col items-center gap-6">
-          <div className="flex gap-3">
-            {[0, 1, 2, 3].map((i) => (
-              <div
-                key={i}
-                className="w-4 h-12 bg-[#136dec] rounded-full animate-pulse"
-                style={{ animationDelay: `${i * 0.15}s` }}
-              ></div>
-            ))}
-          </div>
-          <p className={`${theme === 'dark' ? 'text-white' : 'text-gray-900'} font-medium`}>Loading analytics...</p>
-        </div>
+      <div className="h-screen flex items-center justify-center" style={{ background: 'var(--bg-canvas)' }}>
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-transparent" style={{ borderBottomColor: 'var(--brand)' }} />
       </div>
     );
   }
 
   return (
-    <div className={`flex h-screen w-full ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'}`}>
-      <Sidebar />
-
-      <main className={`flex-1 flex flex-col h-full w-full min-w-0 ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'} overflow-hidden`}>
+    <ResponsivePageLayout title="Analytics & Reports" icon={BarChart3} noPadding>
         {/* Header Section */}
         <header className={`border-b ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'} shrink-0`}>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between px-3 sm:px-6 py-3 sm:py-4 gap-3 sm:gap-0">
             <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
-              {/* Mobile Menu Button */}
-              <button
-                onClick={toggleMobileSidebar}
-                className={`lg:hidden flex-shrink-0 ${theme === 'dark' ? 'text-[#9da8b9] hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}
-                aria-label="Toggle menu"
-              >
-                <Menu size={24} />
-              </button>
               <div className="min-w-0">
                 <h2 className={`${theme === 'dark' ? 'text-white' : 'text-gray-900'} text-base sm:text-lg md:text-xl font-bold leading-tight truncate`}>Analytics & Reports</h2>
                 <p className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} text-[10px] sm:text-xs mt-0.5 sm:mt-1 line-clamp-2`}>
@@ -1232,8 +1208,7 @@ const Analytics = () => {
             </div>
           </div>
         </div>
-      </main>
-    </div>
+    </ResponsivePageLayout>
   );
 };
 

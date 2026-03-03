@@ -1,12 +1,10 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+﻿import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 import { projectsApi } from '../api/projectsApi';
 import useRealtimeSync from '../hooks/useRealtimeSync';
 import { useTheme } from '../context/ThemeContext';
-import { useSidebar } from '../context/SidebarContext';
-import Sidebar from '../components/Sidebar';
 import { Plus, X, Edit2, Trash2, MessageSquare, Search, ChevronDown, MoreHorizontal, CheckSquare, BarChart3, Bell, HelpCircle, Download, Grid3x3, Filter, Menu } from 'lucide-react';
 import { ResponsivePageLayout, ResponsiveModal, ResponsiveCard, ResponsiveGrid } from '../components/layouts';
 import TaskCard from '../components/TaskCard';
@@ -20,7 +18,6 @@ const Tasks = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const { theme } = useTheme();
-  const { toggleMobileSidebar } = useSidebar();
   const [tasks, setTasks] = useState([]);
   const [filteredTasks, setFilteredTasks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -503,12 +500,10 @@ const Tasks = () => {
 
   if (loading) {
     return (
-      <div className={`h-screen flex items-center justify-center ${theme === 'dark' ? 'bg-[#111418] text-white' : 'bg-gray-50 text-gray-900'} font-['Inter']`}>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg-canvas)' }}>
         <div className="flex flex-col items-center gap-6">
-          <div className="relative">
-            <div className={`animate-spin rounded-full h-16 w-16 border-4 ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} border-t-[#136dec]`}></div>
-          </div>
-          <p className={`${theme === 'dark' ? 'text-white' : 'text-gray-900'} font-medium`}>Loading tasks...</p>
+          <div className="animate-spin rounded-full h-16 w-16 border-4 border-transparent" style={{ borderTopColor: 'var(--brand)' }}></div>
+          <p className="font-medium" style={{ color: 'var(--text-secondary)' }}>Loading tasks...</p>
         </div>
       </div>
     );

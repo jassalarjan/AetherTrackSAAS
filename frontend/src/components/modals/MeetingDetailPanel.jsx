@@ -1,4 +1,4 @@
-/**
+﻿/**
  * MeetingDetailPanel
  *
  * Read-only detail view for a meeting — displayed as a slide-over for all roles.

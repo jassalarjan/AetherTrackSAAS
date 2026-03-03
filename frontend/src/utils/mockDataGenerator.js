@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Mock Data Generator for Screenshots
  * Generates realistic, visually appealing data for screenshot capture
  */

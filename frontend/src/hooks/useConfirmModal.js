@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+﻿import { useState, useCallback, useRef } from 'react';
 
 export const useConfirmModal = () => {
   const [isOpen, setIsOpen] = useState(false);

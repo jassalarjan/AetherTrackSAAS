@@ -1,4 +1,4 @@
-/**
+﻿/**
  * In-memory access-token store.
  *
  * Keeping the access token here (instead of localStorage) means it cannot

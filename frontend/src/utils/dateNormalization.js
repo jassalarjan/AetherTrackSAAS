@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Date Normalization Utilities for Gantt Timeline
  * 
  * CRITICAL RULES:

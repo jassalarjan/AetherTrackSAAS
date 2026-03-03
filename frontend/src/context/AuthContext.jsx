@@ -1,4 +1,4 @@
-import { createContext, useState, useContext, useEffect, useRef } from 'react';
+﻿import { createContext, useState, useContext, useEffect, useRef } from 'react';
 import api from '../api/axios';
 import { setAccessToken, getAccessToken, clearAccessToken } from '../api/tokenStore';
 import { io } from 'socket.io-client';
@@ -114,6 +114,8 @@ export const AuthProvider = ({ children }) => {
   const initializeSocket = (userId) => {
     const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
     const accessToken = getAccessToken();
+
+    if (!accessToken) return;
     
     const newSocket = io(SOCKET_URL, {
       auth: { token: accessToken },

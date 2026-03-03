@@ -1,51 +1,76 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="shortcut icon" href="/logo.ico" type="image/x-icon">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
-    <title>AetherTrack - Team Management System</title>
-    
-    <!-- PWA Meta Tags -->
-    <meta name="description" content="A comprehensive, role-based task management system for teams. Manage tasks, collaborate, and boost productivity." />
-    <meta name="theme-color" content="#667eea" />
-    <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="AetherTrack" />
-    <meta name="format-detection" content="telephone=no" />
-    
-    <!-- iOS Splash Screens -->
-    <link rel="apple-touch-icon" href="/icons/apple-touch-icon-180x180.png" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon-180x180.png" />
-    
-    <!-- Manifest -->
-    <link rel="manifest" href="/manifest.json" />
-    
-    <!-- Microsoft -->
-    <meta name="msapplication-TileColor" content="#667eea" />
-    <meta name="msapplication-TileImage" content="/icons/pwa-192x192.png" />
-    <meta name="msapplication-config" content="/browserconfig.xml" />
-    
-    <!-- Open Graph / Social Media -->
-    <meta property="og:type" content="website" />
-    <meta property="og:title" content="AetherTrack - Task Management System" />
-    <meta property="og:description" content="A comprehensive, role-based task management system for teams" />
-    <meta property="og:image" content="/icons/pwa-512x512.png" />
-    <meta property="og:site_name" content="AetherTrack" />
-    
-    <!-- Twitter -->
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="AetherTrack - Task Management System" />
-    <meta name="twitter:description" content="A comprehensive, role-based task management system for teams" />
-    <meta name="twitter:image" content="/icons/pwa-512x512.png" />
-    
-    <!-- Preconnect for Performance -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="shortcut icon" href="/logo.ico" type="image/x-icon">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
+  <title>AetherTrack - Team Management System</title>
+
+  <!-- PWA Meta Tags -->
+  <meta name="description"
+    content="A comprehensive, role-based task management system for teams. Manage tasks, collaborate, and boost productivity." />
+  <meta name="theme-color" content="#667eea" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="AetherTrack" />
+  <meta name="format-detection" content="telephone=no" />
+
+  <!-- iOS Splash Screens -->
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon-180x180.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon-180x180.png" />
+
+  <!-- Manifest -->
+  <link rel="manifest" href="/manifest.json" />
+
+  <!-- Microsoft -->
+  <meta name="msapplication-TileColor" content="#667eea" />
+  <meta name="msapplication-TileImage" content="/icons/pwa-192x192.png" />
+  <meta name="msapplication-config" content="/browserconfig.xml" />
+
+  <!-- Open Graph / Social Media -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="AetherTrack - Task Management System" />
+  <meta property="og:description" content="A comprehensive, role-based task management system for teams" />
+  <meta property="og:image" content="/icons/pwa-512x512.png" />
+  <meta property="og:site_name" content="AetherTrack" />
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="AetherTrack - Task Management System" />
+  <meta name="twitter:description" content="A comprehensive, role-based task management system for teams" />
+  <meta name="twitter:image" content="/icons/pwa-512x512.png" />
+
+  <!-- Preconnect for Performance -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+
+  <!-- Google Fonts: Fraunces (headings), Instrument Sans (body), Fira Code (monospace) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,100..900;1,9..144,100..900&family=Instrument+Sans:ital,wght@0,400..700;1,400..700&display=swap"
+    rel="stylesheet">
+</head>
+
+<body>
+  <!-- Theme init — must run before first paint to prevent flash -->
+  <script>
+    (function () {
+      try {
+        var stored = localStorage.getItem('aethertrack-theme');
+        var isDark = stored === 'dark' ||
+          (!stored && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+      } catch (e) { }
+    })();
+  </script>
+  <!-- Skip navigation -->
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+  <div id="root"></div>
+  <script type="module" src="/src/main.jsx"></script>
+</body>
+
 </html>

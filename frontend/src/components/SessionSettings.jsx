@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { Clock, Info } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 

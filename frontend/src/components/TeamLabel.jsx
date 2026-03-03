@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { UsersIcon } from 'lucide-react';
 
 const TeamLabel = ({ team, size = 'md', showIcon = true }) => {

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Frontend Calendar Engine
  *
  * Browser-side mirror of backend/utils/calendarEngine.js

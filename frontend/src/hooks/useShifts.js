@@ -1,4 +1,4 @@
-/**
+﻿/**
  * useShifts.js
  *
  * React hook that provides easy access to the entire shifts API:

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Notification Service for PWA
  * Handles desktop and mobile push notifications
  */

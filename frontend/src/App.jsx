@@ -1,16 +1,15 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+﻿import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { SidebarProvider } from './context/SidebarContext';
+import { ToastProvider } from './components/Toast';
 import { ProtectedRoute } from './routes/ProtectedRoute';
 import useNotifications from './hooks/useNotifications';
 import Login from './pages/Login';
-import Register from './pages/RegisterDisabled';
 import CommunityRegister from './pages/CommunityRegister';
 import VerifyEmail from './pages/VerifyEmail';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
-import Dashboard from './pages/Dashboard';
 import Tasks from './pages/Tasks';
 import Kanban from './pages/Kanban';
 import Teams from './pages/Teams';
@@ -23,9 +22,13 @@ import ChangeLog from './pages/ChangeLog';
 import Notifications from './pages/Notifications';
 import ScreenshotDemo from './pages/ScreenshotDemo';
 import AttendancePage from './pages/AttendancePage';
+import SelfAttendance from './pages/SelfAttendance';
 import HRCalendar from './pages/HRCalendar';
 import LeavesPage from './pages/LeavesPage';
 import HRDashboard from './pages/HRDashboard';
+import VerificationSettings from './pages/VerificationSettings';
+import GeofenceManagement from './pages/GeofenceManagement';
+import AuditLog from './pages/AuditLog';
 import EmailCenter from './pages/EmailCenter';
 import ProjectDashboard from './pages/ProjectDashboard';
 import MyProjects from './pages/MyProjects';
@@ -34,7 +37,9 @@ import ProjectGantt from './pages/ProjectGantt';
 import SprintManagement from './pages/SprintManagement';
 import ResourceWorkload from './pages/ResourceWorkload';
 import ReallocationDashboard from './pages/ReallocationDashboard';
+import FeatureMatrix from './pages/FeatureMatrix';
 import NotFound from './pages/NotFound';
+import Workspace from './pages/Workspace';
 
 function AppContent() {
   // Initialize notifications
@@ -54,10 +59,11 @@ function AppContent() {
         path="/dashboard"
         element={
           <ProtectedRoute>
-            <Dashboard />
+            <Workspace />
           </ProtectedRoute>
         }
       />
+
 
       <Route
         path="/tasks"
@@ -223,6 +229,42 @@ function AppContent() {
       />
 
       <Route
+        path="/verification-settings"
+        element={
+          <ProtectedRoute allowedRoles={['admin', 'hr']}>
+            <VerificationSettings />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/geofence-management"
+        element={
+          <ProtectedRoute allowedRoles={['admin', 'hr']}>
+            <GeofenceManagement />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/audit-log"
+        element={
+          <ProtectedRoute allowedRoles={['admin', 'hr']}>
+            <AuditLog />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/self-attendance"
+        element={
+          <ProtectedRoute>
+            <SelfAttendance />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
         path="/calendar"
         element={
           <ProtectedRoute>
@@ -264,6 +306,15 @@ function AppContent() {
       {/* Screenshot Demo - Public route for capturing marketing screenshots */}
       <Route path="/screenshot-demo" element={<ScreenshotDemo />} />
 
+      <Route
+        path="/feature-matrix"
+        element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <FeatureMatrix />
+          </ProtectedRoute>
+        }
+      />
+
       {/* Catch-all: show 404 page with sidebar for logged-in users */}
       <Route path="*" element={<NotFound />} />
     </Routes>
@@ -273,13 +324,22 @@ function AppContent() {
 function App() {
   return (
     <ThemeProvider>
-      <AuthProvider>
-        <SidebarProvider>
-          <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-            <AppContent />
-          </BrowserRouter>
-        </SidebarProvider>
-      </AuthProvider>
+      <ToastProvider>
+        <AuthProvider>
+          <SidebarProvider>
+            <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+              {/* Skip link - first focusable element per WCAG 2.2 */}
+              <a 
+                href="#main-content" 
+                className="skip-link"
+              >
+                Skip to main content
+              </a>
+              <AppContent />
+            </BrowserRouter>
+          </SidebarProvider>
+        </AuthProvider>
+      </ToastProvider>
     </ThemeProvider>
   );
 }

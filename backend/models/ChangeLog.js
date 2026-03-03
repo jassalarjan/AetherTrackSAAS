@@ -61,7 +61,12 @@ const changeLogSchema = new mongoose.Schema({
   },
   target_type: {
     type: String,
-    enum: ['task', 'user', 'team', 'report', 'comment', 'system', 'notification', 'automation', 'email'],
+    enum: [
+      'task', 'user', 'team', 'report', 'comment', 'system',
+      'notification', 'automation', 'email',
+      'attendance', 'exception', 'leave_request', 'leave_type',
+      'holiday', 'email_template', 'policy'
+    ],
     required: false
   },
   target_id: {

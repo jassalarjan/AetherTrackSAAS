@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 
 // Avatar component that shows user's profile picture or fallback to initials
 // Accepts `size` prop (string with Tailwind classes), `className` for extra styling,

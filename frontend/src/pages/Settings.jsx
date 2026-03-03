@@ -1,22 +1,20 @@
-import { useState, useRef } from 'react';
+﻿import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import { useSidebar } from '../context/SidebarContext';
 import { useConfirmModal } from '../hooks/useConfirmModal';
-import Sidebar from '../components/Sidebar';
+import ResponsivePageLayout from '../components/layouts/ResponsivePageLayout';
 import ThemeToggle from '../components/ThemeToggle';
 import NotificationSettings from '../components/NotificationSettings';
 
 import ConfirmModal from '../components/modals/ConfirmModal';
 import api from '../api/axios';
-import { User, Settings as SettingsIcon, Palette, Monitor, Lock, Eye, EyeOff, Bell, AlertCircle, Camera, Trash2, Upload, AlertTriangle, Menu } from 'lucide-react';
+import { User, Settings as SettingsIcon, Palette, Monitor, Lock, Eye, EyeOff, Bell, AlertCircle, Camera, Trash2, Upload, AlertTriangle } from 'lucide-react';
 
 const Settings = () => {
   const navigate = useNavigate();
   const { user, updateUser, logout } = useAuth();
-  const { theme, currentColorScheme } = useTheme();
-  const { toggleMobileSidebar } = useSidebar();
+  const { theme, colorScheme, colorSchemes, currentColorScheme, currentTheme } = useTheme();
   const confirmModal = useConfirmModal();
   const fileInputRef = useRef(null);
   const [showOldPassword, setShowOldPassword] = useState(false);
@@ -256,26 +254,13 @@ const Settings = () => {
   };
 
   return (
-    <div className="flex h-screen w-full bg-gray-50 dark:bg-[#111418]">
-      <Sidebar />
-
-      <main className="flex-1 flex flex-col h-full w-full min-w-0 bg-gray-50 dark:bg-[#111418] overflow-hidden">
+    <ResponsivePageLayout title="Settings" icon={SettingsIcon} noPadding>
         {/* Header */}
         <header className="border-b border-gray-200 dark:border-[#282f39] bg-white dark:bg-[#111418] shrink-0">
           <div className="flex items-center justify-between px-6 py-4">
-            <div className="flex items-center gap-4">
-              {/* Mobile Menu Button */}
-              <button
-                onClick={toggleMobileSidebar}
-                className="lg:hidden text-gray-600 dark:text-[#9da8b9] hover:text-gray-900 dark:hover:text-white transition-colors"
-                aria-label="Toggle menu"
-              >
-                <Menu size={24} />
-              </button>
-              <div>
-                <h2 className="text-gray-900 dark:text-white text-xl font-bold leading-tight">Settings</h2>
-                <p className="text-gray-600 dark:text-[#9da8b9] text-xs mt-1">Customize your AetherTrack experience</p>
-              </div>
+            <div>
+              <h2 className="text-gray-900 dark:text-white text-xl font-bold leading-tight">Settings</h2>
+              <p className="text-gray-600 dark:text-[#9da8b9] text-xs mt-1">Customize your AetherTrack experience</p>
             </div>
           </div>
         </header>
@@ -719,11 +704,10 @@ const Settings = () => {
             )}
           </div>
         </div>
-      </main>
 
       {/* Confirm Modal */}
       <ConfirmModal {...confirmModal} />
-    </div>
+    </ResponsivePageLayout>
   );
 };
 

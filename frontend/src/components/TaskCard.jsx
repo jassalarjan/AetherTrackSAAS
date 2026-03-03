@@ -1,286 +1,372 @@
-import { useTheme } from '../context/ThemeContext';
-import { Edit2, Trash2, Calendar, User, Clock, ChevronDown } from 'lucide-react';
-import { useState } from 'react';
-import ProjectLabel from './ProjectLabel';
-import TeamLabel from './TeamLabel';
-import SprintLabel from './SprintLabel';
-import ProgressBar from './ProgressBar';
-import LatestCommentPreview from './LatestCommentPreview';
-
-/**
- * TaskCard - Advanced mobile-first card view for tasks
+﻿/**
+ * AetherTrack 2030 TaskCard Component
+ * Reference: System_UI_Shift.md Section 4.1 - TaskCard
  * 
  * Features:
- * - Smooth animations and transitions
- * - Touch-friendly interactions (≥44px targets)
- * - Advanced visual design with gradients and shadows
- * - Interactive status dropdown
- * - Polished hover effects
+ * - Priority pip: 3px left border, color-coded
+ * - Progress ring replaces static status badge
+ * - Due chip: green → yellow → red as deadline nears
+ * - Hover: elevation lift + quick-action icons fade in
+ * - Avatar stack
+ * - Project label
  */
-const TaskCard = ({
+
+import React, { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { cn } from '../utils/cn';
+
+/**
+ * Priority colors
+ */
+const PRIORITY_COLORS = {
+  low: 'var(--success)',
+  medium: 'var(--warning)', 
+  high: 'var(--brand)',
+  urgent: 'var(--danger)',
+};
+
+/**
+ * Status colors for progress ring
+ */
+const STATUS_COLORS = {
+  todo: 'var(--text-muted)',
+  in_progress: 'var(--brand)',
+  review: 'var(--ai-color)',
+  done: 'var(--success)',
+};
+
+/**
+ * Due date color logic
+ */
+const getDueChipStyle = (dueDate) => {
+  if (!dueDate) return { bg: 'var(--bg-base)', text: 'var(--text-muted)' };
+  
+  const now = new Date();
+  const due = new Date(dueDate);
+  const diffDays = Math.ceil((due - now) / (1000 * 60 * 60 * 24));
+  
+  if (diffDays < 0) {
+    return { bg: 'var(--danger-dim)', text: 'var(--danger)' };
+  } else if (diffDays <= 1) {
+    return { bg: 'var(--warning-dim)', text: 'var(--warning)' };
+  } else if (diffDays <= 3) {
+    return { bg: 'var(--warning-dim)', text: 'var(--warning)' };
+  }
+  return { bg: 'var(--success-dim)', text: 'var(--success)' };
+};
+
+/**
+ * Progress Ring Component
+ */
+const ProgressRing = ({ progress = 0, size = 24, strokeWidth = 3, status = 'todo' }) => {
+  const radius = (size - strokeWidth) / 2;
+  const circumference = radius * 2 * Math.PI;
+  const offset = circumference - (progress / 100) * circumference;
+  
+  const color = STATUS_COLORS[status] || STATUS_COLORS.todo;
+  
+  return (
+    <div className="relative inline-flex items-center justify-center">
+      <svg 
+        width={size} 
+        height={size} 
+        className="transform -rotate-90"
+      >
+        {/* Background ring */}
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke="var(--bg-base)"
+          strokeWidth={strokeWidth}
+        />
+        {/* Progress ring */}
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          stroke={color}
+          strokeWidth={strokeWidth}
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+          strokeLinecap="round"
+          className="transition-all duration-300 ease-out"
+        />
+      </svg>
+      <span 
+        className="absolute text-[8px] font-medium"
+        style={{ color }}
+      >
+        {Math.round(progress)}%
+      </span>
+    </div>
+  );
+};
+
+/**
+ * Avatar Stack Component
+ */
+const AvatarStack = ({ users = [], max = 3, size = 24 }) => {
+  const visible = users.slice(0, max);
+  const remaining = users.length - max;
+  
+  return (
+    <div className="flex -space-x-2">
+      {visible.map((user, index) => (
+        <div
+          key={user.id || index}
+          className="relative rounded-full border-2 border-[var(--bg-canvas)] overflow-hidden"
+          style={{ width: size, height: size }}
+          title={user.name}
+        >
+          {user.avatar ? (
+            <img 
+              src={user.avatar} 
+              alt={user.name}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div 
+              className="w-full h-full flex items-center justify-center text-[10px] font-medium text-white"
+              style={{ backgroundColor: user.color || 'var(--brand)' }}
+            >
+              {user.name?.charAt(0)?.toUpperCase() || '?'}
+            </div>
+          )}
+        </div>
+      ))}
+      {remaining > 0 && (
+        <div 
+          className="rounded-full border-2 border-[var(--bg-canvas)] bg-[var(--bg-surface)] flex items-center justify-center text-[10px] font-medium"
+          style={{ width: size, height: size }}
+        >
+          +{remaining}
+        </div>
+      )}
+    </div>
+  );
+};
+
+/**
+ * Due Chip Component
+ */
+const DueChip = ({ dueDate, className = '' }) => {
+  const { bg, text } = getDueChipStyle(dueDate);
+  
+  const formatDate = (date) => {
+    if (!date) return '';
+    const d = new Date(date);
+    const now = new Date();
+    const diffDays = Math.ceil((d - now) / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) return 'Today';
+    if (diffDays === 1) return 'Tomorrow';
+    if (diffDays === -1) return 'Yesterday';
+    if (diffDays < -1) return `${Math.abs(diffDays)}d overdue`;
+    
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  };
+  
+  return (
+    <span 
+      className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${className}`}
+      style={{ backgroundColor: bg, color: text }}
+    >
+      <svg className="w-3 h-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+      </svg>
+      {formatDate(dueDate)}
+    </span>
+  );
+};
+
+/**
+ * Quick Actions Component
+ */
+const QuickActions = ({ onEdit, onDelete, onMove, className = '' }) => {
+  return (
+    <div className={`flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity ${className}`}>
+      {onEdit && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onEdit(); }}
+          className="p-1.5 rounded-md hover:bg-[var(--bg-base)] transition-colors"
+          aria-label="Edit task"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+          </svg>
+        </button>
+      )}
+      {onMove && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onMove(); }}
+          className="p-1.5 rounded-md hover:bg-[var(--bg-base)] transition-colors"
+          aria-label="Move task"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
+          </svg>
+        </button>
+      )}
+      {onDelete && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onDelete(); }}
+          className="p-1.5 rounded-md hover:bg-[var(--danger-dim)] text-[var(--danger)] transition-colors"
+          aria-label="Delete task"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+        </button>
+      )}
+    </div>
+  );
+};
+
+/**
+ * Main TaskCard Component
+ */
+export const TaskCard = ({
   task,
-  onView,
+  onClick,
   onEdit,
   onDelete,
-  onStatusChange,
-  canEdit = false,
-  canDelete = false,
-  getUserInitials
+  onMove,
+  draggable = false,
+  isDragging = false,
+  className = '',
 }) => {
-  const { theme } = useTheme();
-  const [showStatusMenu, setShowStatusMenu] = useState(false);
-
-  const getPriorityColor = (priority) => {
-    const isDark = theme === 'dark';
-    const colors = {
-      low: isDark
-        ? 'bg-slate-500/10 text-slate-300 border-slate-500/20'
-        : 'bg-slate-100 text-slate-600 border-slate-300',
-      medium: isDark
-        ? 'bg-orange-400/10 text-orange-300 border-orange-400/20'
-        : 'bg-orange-50 text-orange-600 border-orange-200',
-      high: isDark
-        ? 'bg-red-500/10 text-red-300 border-red-500/20'
-        : 'bg-red-50 text-red-600 border-red-200',
-      urgent: isDark
-        ? 'bg-red-600/15 text-red-300 border-red-600/30 shadow-lg shadow-red-900/20'
-        : 'bg-red-100 text-red-700 border-red-300 shadow-sm'
-    };
-    return colors[priority] || colors.medium;
+  const navigate = useNavigate();
+  const [isHovered, setIsHovered] = useState(false);
+  
+  const {
+    id,
+    title,
+    description,
+    priority = 'medium',
+    status = 'todo',
+    progress = 0,
+    dueDate,
+    assignees = [],
+    project,
+    tags = [],
+  } = task;
+  
+  const priorityColor = PRIORITY_COLORS[priority] || PRIORITY_COLORS.medium;
+  
+  const handleClick = () => {
+    if (onClick) {
+      onClick(task);
+    } else {
+      navigate(`/tasks/${id}`);
+    }
   };
-
-  const getPriorityDot = (priority) => {
-    const dots = {
-      low: 'bg-slate-400',
-      medium: 'bg-orange-400',
-      high: 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]',
-      urgent: 'bg-red-600 shadow-[0_0_12px_rgba(220,38,38,0.7)] animate-pulse'
-    };
-    return dots[priority] || dots.medium;
-  };
-
-  const getStatusColor = (status) => {
-    const isDark = theme === 'dark';
-    const colors = {
-      todo: isDark
-        ? 'bg-slate-500/10 text-slate-300 border-slate-500/20'
-        : 'bg-slate-50 text-slate-600 border-slate-300',
-      in_progress: isDark
-        ? 'bg-blue-500/10 text-blue-300 border-blue-500/20'
-        : 'bg-blue-50 text-blue-600 border-blue-200',
-      review: isDark
-        ? 'bg-yellow-500/10 text-yellow-300 border-yellow-500/20'
-        : 'bg-yellow-50 text-yellow-700 border-yellow-200',
-      done: isDark
-        ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/20'
-        : 'bg-emerald-50 text-emerald-700 border-emerald-200',
-      archived: isDark
-        ? 'bg-gray-500/10 text-gray-400 border-gray-500/20'
-        : 'bg-gray-100 text-gray-500 border-gray-200'
-    };
-    return colors[status] || colors.todo;
-  };
-
-  const getStatusLabel = (status) => {
-    const labels = {
-      todo: 'To Do',
-      in_progress: 'In Progress',
-      review: 'Review',
-      done: 'Done',
-      archived: 'Archived'
-    };
-    return labels[status] || 'Unknown';
-  };
-
-  const getPriorityLabel = (priority) => {
-    const labels = {
-      low: 'Low',
-      medium: 'Medium',
-      high: 'High',
-      urgent: 'Urgent'
-    };
-    return labels[priority] || 'Medium';
-  };
-
-  const isOverdue = task.due_date && new Date(task.due_date) < new Date();
-  const daysUntilDue = task.due_date
-    ? Math.ceil((new Date(task.due_date) - new Date()) / (1000 * 60 * 60 * 24))
-    : null;
-
-  const handleStatusChange = (newStatus) => {
-    onStatusChange(newStatus);
-    setShowStatusMenu(false);
-  };
-
+  
   return (
     <div
-      className={`relative ${theme === 'dark'
-          ? 'bg-gradient-to-br from-[#1c2027] to-[#181c23] border-[#282f39] hover:border-[#3a4454]'
-          : 'bg-gradient-to-br from-white to-gray-50 border-gray-200 hover:border-gray-300'
-        } border rounded-xl overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-blue-900/10 hover:-translate-y-1 group`}
+      className={cn(
+        'task-card group relative bg-[var(--bg-canvas)] rounded-lg',
+        'border border-[var(--border-hair)]',
+        'shadow-[var(--shadow-sm)]',
+        'hover:shadow-[var(--shadow-md)] hover:border-[var(--border-soft)]',
+        'transition-all duration-[var(--base)]',
+        'cursor-pointer',
+        isDragging && 'opacity-50 scale-[0.98]',
+        className
+      )}
+      style={{
+        '--tw-shadow-color': 'var(--shadow-color)',
+      }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      onClick={handleClick}
+      draggable={draggable}
+      role="article"
+      aria-label={`Task: ${title}`}
     >
-      {/* Priority Accent Bar */}
-      <div className={`absolute top-0 left-0 right-0 h-1 ${task.priority === 'urgent' ? 'bg-gradient-to-r from-red-600 via-red-500 to-red-600' :
-          task.priority === 'high' ? 'bg-gradient-to-r from-red-500 via-orange-500 to-red-500' :
-            task.priority === 'medium' ? 'bg-gradient-to-r from-orange-400 via-yellow-400 to-orange-400' :
-              'bg-gradient-to-r from-slate-400 via-slate-500 to-slate-400'
-        }`}></div>
-
-      <div className="p-5" onClick={onView}>
-        {/* Header */}
-        <div className="flex items-start justify-between mb-4 cursor-pointer">
-          <div className="flex-1 min-w-0 pr-3">
-            <h3 className={`text-lg font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2 line-clamp-2 group-hover:text-[#136dec] transition-colors duration-200`}>
-              {task.title}
-            </h3>
-            {task.description && (
-              <p className={`text-sm ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} line-clamp-2 leading-relaxed`}>
-                {task.description}
-              </p>
-            )}
-          </div>
-
-          {/* Priority Badge */}
-          <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border ${getPriorityColor(task.priority)} backdrop-blur-sm transition-all duration-200 hover:scale-105`}>
-            <div className={`size-2 rounded-full ${getPriorityDot(task.priority)}`}></div>
-            <span className="text-xs font-semibold whitespace-nowrap">{getPriorityLabel(task.priority)}</span>
-          </div>
-        </div>
-
-        {/* Project, Team, Sprint Labels */}
-        {(task.project_id || task.team_id || task.sprint_id) && (
-          <div className="flex flex-wrap gap-2 mb-4">
-            {task.project_id && <ProjectLabel project={task.project_id} size="sm" />}
-            {task.team_id && <TeamLabel team={task.team_id} size="sm" />}
-            {task.sprint_id && <SprintLabel sprint={task.sprint_id} size="sm" />}
-          </div>
-        )}
-
-        {/* Progress Bar */}
-        {task.progress > 0 && (
-          <div className="mb-4">
-            <ProgressBar progress={task.progress} size="md" showPercentage={true} animated={true} />
-          </div>
-        )}
-
-        {/* Metadata Grid */}
-        <div className="grid grid-cols-2 gap-3 mb-4">
-          {/* Status Dropdown */}
-          <div className="relative" onClick={(e) => e.stopPropagation()}>
-            <button
-              onClick={() => setShowStatusMenu(!showStatusMenu)}
-              className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg border ${getStatusColor(task.status)} transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]`}
-            >
-              <span className="text-xs font-semibold">{getStatusLabel(task.status)}</span>
-              <ChevronDown size={14} className={`transition-transform duration-200 ${showStatusMenu ? 'rotate-180' : ''}`} />
-            </button>
-
-            {showStatusMenu && (
-              <div className={`absolute top-full left-0 right-0 mt-2 ${theme === 'dark' ? 'bg-[#1c2027] border-[#282f39]' : 'bg-white border-gray-200'} border rounded-lg shadow-2xl overflow-hidden z-10 animate-slideUp`}>
-                {['todo', 'in_progress', 'review', 'done', 'archived'].map((status) => (
-                  <button
-                    key={status}
-                    onClick={() => handleStatusChange(status)}
-                    className={`w-full px-3 py-2.5 text-left text-sm transition-colors ${task.status === status
-                        ? 'bg-[#136dec] text-white font-semibold'
-                        : `${theme === 'dark' ? 'text-[#9da8b9] hover:bg-[#282f39] hover:text-white' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}`
-                      }`}
-                  >
-                    {getStatusLabel(status)}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Due Date */}
-          {task.due_date && (
-            <div className={`flex items-center gap-2 px-3 py-2 rounded-lg border ${isOverdue
-                ? 'bg-red-500/10 text-red-300 border-red-500/30 animate-pulse'
-                : daysUntilDue <= 3
-                  ? 'bg-yellow-500/10 text-yellow-300 border-yellow-500/30'
-                  : `${theme === 'dark' ? 'bg-[#282f39] text-[#9da8b9] border-[#3a4454]' : 'bg-gray-100 text-gray-600 border-gray-200'}`
-              } transition-all duration-200`}>
-              <Calendar size={14} className="flex-shrink-0" />
-              <div className="flex flex-col min-w-0">
-                <span className="text-xs font-semibold truncate">
-                  {new Date(task.due_date).toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                  })}
-                </span>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Assignee Section */}
-        {task.assigned_to && task.assigned_to.length > 0 && (
-          <div className={`flex items-center gap-3 px-3 py-2.5 rounded-lg mb-4 border transition-all duration-200 ${theme === 'dark' ? 'bg-[#282f39]/30 border-[#282f39] hover:bg-[#282f39]/50' : 'bg-gray-50 border-gray-200 hover:bg-gray-100'}`}>
-            <User size={16} className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-400'} flex-shrink-0`} />
-            <div className="flex items-center gap-2 flex-1 min-w-0">
-              <div className={`size-8 rounded-full bg-gradient-to-br from-purple-500 via-blue-500 to-indigo-600 flex items-center justify-center text-xs text-white font-bold shadow-lg ring-2 ${theme === 'dark' ? 'ring-[#282f39]' : 'ring-white'}`}>
-                {getUserInitials(task.assigned_to[0].full_name)}
-              </div>
-              <div className="flex flex-col min-w-0 flex-1">
-                <span className={`text-sm font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} truncate`}>
-                  {task.assigned_to[0].full_name}
-                </span>
-                {task.assigned_to.length > 1 && (
-                  <span className={`text-xs ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-500'}`}>
-                    +{task.assigned_to.length - 1} more
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Latest Comment */}
-        {task.latest_comment && (
-          <div className="mb-4">
-            <LatestCommentPreview comment={task.latest_comment} size="md" maxLength={80} />
-          </div>
-        )}
-
-        {/* Overdue Warning */}
-        {isOverdue && (
-          <div className="flex items-center gap-2 px-3 py-2 bg-red-500/10 border border-red-500/30 rounded-lg mb-4 animate-pulse">
-            <Clock size={14} className="text-red-400" />
-            <span className="text-xs font-semibold text-red-400">
-              Overdue by {Math.abs(daysUntilDue)} day{Math.abs(daysUntilDue) !== 1 ? 's' : ''}
+      {/* Priority pip - 3px left border */}
+      <div 
+        className="absolute left-0 top-3 bottom-3 w-[3px] rounded-full"
+        style={{ backgroundColor: priorityColor }}
+        aria-hidden="true"
+      />
+      
+      <div className="p-3 pl-5">
+        {/* Header row: Project label + Priority */}
+        <div className="flex items-center justify-between mb-2">
+          {project && (
+            <span className="text-xs font-medium text-[var(--text-muted)] px-2 py-0.5 rounded bg-[var(--bg-base)]">
+              {project.name || project}
             </span>
+          )}
+          <span className="text-xs font-medium capitalize px-2 py-0.5 rounded" style={{ color: priorityColor, backgroundColor: `${priorityColor}15` }}>
+            {priority}
+          </span>
+        </div>
+        
+        {/* Title - 2 lines max, truncate */}
+        <h3 className="text-sm font-medium text-[var(--text-primary)] line-clamp-2 mb-2">
+          {title}
+        </h3>
+        
+        {/* Description preview if exists */}
+        {description && (
+          <p className="text-xs text-[var(--text-muted)] line-clamp-1 mb-3">
+            {description}
+          </p>
+        )}
+        
+        {/* Tags */}
+        {tags.length > 0 && (
+          <div className="flex flex-wrap gap-1 mb-3">
+            {tags.slice(0, 3).map((tag, index) => (
+              <span 
+                key={index}
+                className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--bg-surface)] text-[var(--text-muted)]"
+              >
+                {tag}
+              </span>
+            ))}
+            {tags.length > 3 && (
+              <span className="text-[10px] text-[var(--text-muted)]">
+                +{tags.length - 3}
+              </span>
+            )}
           </div>
         )}
-
-        {/* Actions */}
-        <div className={`flex items-center gap-2 pt-4 border-t ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'}`} onClick={(e) => e.stopPropagation()}>
-          {canEdit && (
-            <button
-              onClick={onEdit}
-              className="flex-1 min-h-[44px] flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-[#136dec] to-blue-600 hover:from-blue-600 hover:to-[#136dec] text-white text-sm font-semibold rounded-lg transition-all duration-200 hover:shadow-lg hover:shadow-blue-900/30 hover:scale-[1.02] active:scale-[0.98]"
-            >
-              <Edit2 size={16} />
-              <span>Edit</span>
-            </button>
-          )}
-          {canDelete && (
-            <button
-              onClick={onDelete}
-              className={`min-h-[44px] min-w-[44px] flex items-center justify-center px-3 py-2.5 ${theme === 'dark' ? 'bg-[#282f39] hover:bg-red-600 text-[#9da8b9] hover:text-white' : 'bg-gray-100 hover:bg-red-500 text-gray-600 hover:text-white'} rounded-lg transition-all duration-200 hover:shadow-lg hover:shadow-red-900/30 hover:scale-[1.02] active:scale-[0.98]`}
-            >
-              <Trash2 size={16} />
-            </button>
-          )}
-          {!canEdit && !canDelete && (
-            <button
-              onClick={onView}
-              className={`flex-1 min-h-[44px] flex items-center justify-center gap-2 px-4 py-2.5 ${theme === 'dark' ? 'bg-[#282f39] hover:bg-[#3a4454] text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-900'} text-sm font-semibold rounded-lg transition-all duration-200 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]`}
-            >
-              <span>View Details</span>
-            </button>
-          )}
+        
+        {/* Footer row: Avatar stack + Due chip + Progress ring */}
+        <div className="flex items-center justify-between mt-auto">
+          <div className="flex-1">
+            {assignees.length > 0 ? (
+              <AvatarStack users={assignees} max={3} size={24} />
+            ) : (
+              <span className="text-xs text-[var(--text-muted)]">Unassigned</span>
+            )}
+          </div>
+          
+          <div className="flex items-center gap-2">
+            {dueDate && (
+              <DueChip dueDate={dueDate} />
+            )}
+            <ProgressRing 
+              progress={progress} 
+              size={28} 
+              strokeWidth={3}
+              status={status}
+            />
+          </div>
         </div>
+        
+        {/* Quick actions - fade in on hover */}
+        <QuickActions 
+          onEdit={onEdit}
+          onDelete={onDelete}
+          onMove={onMove}
+          className="absolute top-2 right-2"
+        />
       </div>
     </div>
   );

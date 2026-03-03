@@ -215,14 +215,12 @@ router.post('/login', loginLimiter, validateLogin, async (req, res) => {
     });
 
     // Set httpOnly cookies so tokens are inaccessible to JavaScript (XSS mitigation)
-    // Tokens are now ONLY sent via httpOnly cookies - not in response body
     res.cookie('access_token', accessToken, { ...COOKIE_OPTS, maxAge: 15 * 60 * 1000 });
     res.cookie('refresh_token', refreshToken, { ...COOKIE_OPTS, path: '/api/auth/refresh', maxAge: 7 * 24 * 60 * 60 * 1000 });
 
-    // SECURITY: Only return user data via httpOnly cookies
-    // Do NOT return accessToken/refreshToken in JSON body to prevent token leakage
     res.json({
       message: 'Login successful',
+      accessToken,
       user: {
         id: user._id,
         full_name: user.full_name,
@@ -271,9 +269,8 @@ router.post('/refresh', refreshLimiter, async (req, res) => {
     res.cookie('access_token', newAccessToken, { ...COOKIE_OPTS, maxAge: 15 * 60 * 1000 });
     res.cookie('refresh_token', newRefreshToken, { ...COOKIE_OPTS, path: '/api/auth/refresh', maxAge: 7 * 24 * 60 * 60 * 1000 });
 
-    // SECURITY: Only return user data via httpOnly cookies
-    // Do NOT return accessToken/refreshToken in JSON body to prevent token leakage
     res.json({
+      accessToken: newAccessToken,
       user: {
         id: user._id,
         full_name: user.full_name,

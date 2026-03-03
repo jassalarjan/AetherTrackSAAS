@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+﻿import { useEffect } from 'react';
 import { X, AlertTriangle, Trash2, LogOut, Info } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 
@@ -74,20 +74,21 @@ const ConfirmModal = ({
       onClick={!isLoading ? onClose : undefined}
     >
       <div
-        className={`relative w-full max-w-md rounded-lg shadow-xl animate-scale-in ${
-          isDark ? 'bg-[#1c2027]' : 'bg-white'
-        }`}
+        className="relative w-full max-w-md rounded-xl shadow-xl animate-scale-in overflow-hidden"
+        style={{ background: 'var(--bg-raised)', border: '1px solid var(--border-soft)', boxShadow: 'var(--shadow-xl)' }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close button */}
         <button
           onClick={onClose}
           disabled={isLoading}
-          className={`absolute top-4 right-4 p-1 rounded transition-colors ${
-            isDark
-              ? 'text-[#9da8b9] hover:text-white hover:bg-[#282f39]'
-              : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
-          } disabled:opacity-50 disabled:cursor-not-allowed`}
+          className="absolute top-4 right-4 p-1 rounded transition-colors focus-visible:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+          style={{ color: 'var(--text-muted)' }}
+          aria-label="Close"
+          onMouseOver={(e) => { e.currentTarget.style.background = 'var(--border-hair)'; e.currentTarget.style.color = 'var(--text-primary)'; }}
+          onMouseOut={(e)  => { e.currentTarget.style.background = ''; e.currentTarget.style.color = 'var(--text-muted)'; }}
+          onFocus={(e)     => { e.currentTarget.style.boxShadow = 'var(--focus-ring)'; }}
+          onBlur={(e)      => { e.currentTarget.style.boxShadow = ''; }}
         >
           <X size={20} />
         </button>
@@ -99,17 +100,13 @@ const ConfirmModal = ({
             <div className={`p-3 rounded-full ${currentVariant.iconBg}`}>
               <Icon size={24} className={currentVariant.iconColor} />
             </div>
-            <h2 className={`text-xl font-semibold ${
-              isDark ? 'text-white' : 'text-gray-900'
-            }`}>
+            <h2 className="text-xl font-semibold" style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-heading)' }}>
               {title}
             </h2>
           </div>
 
           {/* Message */}
-          <p className={`text-sm leading-relaxed mb-6 ${
-            isDark ? 'text-[#9da8b9]' : 'text-gray-600'
-          }`}>
+          <p className="text-sm leading-relaxed mb-6" style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-body)' }}>
             {message}
           </p>
 
@@ -118,11 +115,12 @@ const ConfirmModal = ({
             <button
               onClick={onClose}
               disabled={isLoading}
-              className={`px-4 py-2 rounded font-medium text-sm transition-colors ${
-                isDark
-                  ? 'bg-[#282f39] text-white hover:bg-[#333a47]'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              } disabled:opacity-50 disabled:cursor-not-allowed`}
+              className="px-4 py-2 rounded-lg font-medium text-sm transition-colors focus-visible:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ background: 'var(--border-soft)', color: 'var(--text-primary)' }}
+              onMouseOver={(e) => { e.currentTarget.style.background = 'var(--border-mid)'; }}
+              onMouseOut={(e)  => { e.currentTarget.style.background = 'var(--border-soft)'; }}
+              onFocus={(e)     => { e.currentTarget.style.boxShadow = 'var(--focus-ring)'; }}
+              onBlur={(e)      => { e.currentTarget.style.boxShadow = ''; }}
             >
               {cancelText}
             </button>

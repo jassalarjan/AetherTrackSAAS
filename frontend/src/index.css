@@ -1,9 +1,57 @@
+/**
+ * AetherTrack 2030 - Main CSS
+ * Reference: System_UI_Shift.md
+ * 
+ * Phase 0: Foundation (P0)
+ * - Design System Tokens (tokens.css)
+ * - Theme switching (data-theme attribute)
+ * - Focus ring token
+ * - Skip links
+ * - Motion system (prefers-reduced-motion)
+ */
+
+/* Import tokens first - all design system tokens */
+@import './tokens.css';
+
+/* Import warm paper design tokens */
+@import './design-tokens.css';
+
+/* Tailwind imports */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ==========================================================================
+   1. BASE STYLES - Design System Foundation
+   Reference: Section 1 - Typography
+   ========================================================================== */
 :root {
-  --color-primary: #2563eb; /* Default blue */
+  --color-primary: var(--color-brand-primary);
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+  font-weight: var(--font-weight-normal);
+  
+  /* Default to light mode if no preference */
+  color-scheme: light;
+  background-color: var(--bg-canvas);
+  color: var(--text-primary);
+}
+
+/* Apply dark mode based on data-theme attribute */
+[data-theme="dark"] {
+  color-scheme: dark;
+  background-color: var(--bg-canvas);
+  color: var(--text-primary);
+}
+
+/* System auto - follow OS preference when no data-theme set */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    background-color: var(--bg-canvas);
+    color: var(--text-primary);
+  }
 }
 
 * {
@@ -17,12 +65,183 @@ html {
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  font-family: var(--font-body), 'Instrument Sans', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-color: var(--bg-canvas);
+  color: var(--text-primary);
+  min-height: 100vh;
 }
+
+.font-heading,
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading), 'Fraunces', Georgia, serif;
+  letter-spacing: -0.025em;
+}
+
+.font-mono, code, kbd, pre {
+  font-family: var(--font-mono), 'Fira Code', monospace;
+}
+
+/* ==========================================================================
+   2. FOCUS RING - Accessibility (P0)
+   Reference: Section 8 - Accessibility Roadmap
+   Fix: Inconsistent focus rings → --focus-ring token via :focus-visible universally
+   ========================================================================== */
+:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* Remove default focus for mouse users */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Ensure buttons have visible focus */
+button:focus-visible,
+[role="button"]:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* Skip link - first focusable element */
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: var(--s4);
+  z-index: var(--z-toast);
+  padding: var(--s3) var(--s4);
+  background: var(--brand);
+  color: #fff;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: var(--r-md);
+  text-decoration: none;
+  transition: top var(--fast) var(--ease);
+}
+
+.skip-link:focus {
+  top: var(--s4);
+  box-shadow: var(--focus-ring);
+}
+
+/* ==========================================================================
+   3. THEME SWITCHING (P0)
+   Reference: Section 10 - Theme System Enhancements
+   Fix: System auto, Server-side theme persistence, Theme switch 200ms cross-fade
+   ========================================================================== */
+:root,
+[data-theme] {
+  transition: 
+    background-color var(--duration-slow) var(--ease-standard),
+    color var(--duration-slow) var(--ease-standard),
+    border-color var(--duration-slow) var(--ease-standard),
+    box-shadow var(--duration-slow) var(--ease-standard);
+}
+
+/* Prevent flash of wrong theme - apply before paint */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]):not([data-theme]) {
+    background-color: var(--color-surface-base);
+    color: var(--color-text-primary);
+  }
+}
+
+/* Theme colors applied via data-theme attribute - handled in tokens.css */
+
+/* ==========================================================================
+   4. PREFERS-REDUCED-MOTION (P0)
+   Reference: Section 1.7 - All animations wrapped in prefers-reduced-motion
+   Reference: Section 8 - No reduced-motion support gap fix
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Reduced motion utility class */
+.reduced-motion * {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}
+
+/* ==========================================================================
+   5. CUSTOM SCROLLBAR STYLING
+   Reference: Section 1 - Design System
+   ========================================================================== */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-mid) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: var(--r-full);
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--border-mid);
+  border-radius: var(--r-full);
+  transition: background var(--fast) var(--ease);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--border-strong);
+}
+
+/* Dark mode scrollbar — tokens already swap in dark mode */
+
+/* Hide scrollbar for notification dropdown until hover */
+.notification-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.notification-scroll::-webkit-scrollbar-thumb {
+  background: oklch(65% 0.012 250 / 30%);
+}
+
+.notification-scroll:hover::-webkit-scrollbar-thumb {
+  background: oklch(65% 0.012 250 / 60%);
+}
+
+/* ==========================================================================
+   6. TOUCH TARGETS (Mobile-First)
+   Reference: Section 1 - Size Tokens
+   Minimum touch target: 44px
+   ========================================================================== */
+@media (max-width: 640px) {
+  button,
+  a,
+  [role="button"],
+  input[type="checkbox"],
+  input[type="radio"] {
+    min-height: var(--size-touch-target);
+    min-width: var(--size-touch-target);
+  }
+}
+
+/* ==========================================================================
+   7. LANDING PAGE & LEGACY STYLES
+   ========================================================================== */
 
 /* Landing Page: Noise Texture */
 .bg-noise {
@@ -46,311 +265,123 @@ body {
   animation-delay: 400ms;
 }
 
-/* Landing Page: Smooth Transitions */
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-}
-
-/* Custom Scrollbar Styling */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
-}
-
-*::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-*::-webkit-scrollbar-track {
-  background: transparent;
-  border-radius: 10px;
-}
-
-*::-webkit-scrollbar-thumb {
-  background: rgba(156, 163, 175, 0.5);
-  border-radius: 10px;
-  transition: background 0.2s ease;
-}
-
-*::-webkit-scrollbar-thumb:hover {
-  background: rgba(107, 114, 128, 0.7);
-}
-
-/* Dark mode scrollbar */
-.dark *::-webkit-scrollbar-thumb {
-  background: rgba(75, 85, 99, 0.6);
-}
-
-.dark *::-webkit-scrollbar-thumb:hover {
-  background: rgba(107, 114, 128, 0.8);
-}
-
-/* Hide scrollbar for notification dropdown until hover */
-.notification-scroll::-webkit-scrollbar {
-  width: 6px;
-}
-
-.notification-scroll::-webkit-scrollbar-thumb {
-  background: rgba(156, 163, 175, 0.3);
-}
-
-.notification-scroll:hover::-webkit-scrollbar-thumb {
-  background: rgba(156, 163, 175, 0.6);
-}
-
-/* Smooth scroll behavior */
-.smooth-scroll {
-  scroll-behavior: smooth;
-}
-
-.smooth-scroll::-webkit-scrollbar {
-  width: 6px;
-}
-
-.smooth-scroll::-webkit-scrollbar-track {
-  background: transparent;
-  margin: 8px 0;
-}
-
-.smooth-scroll::-webkit-scrollbar-thumb {
-  background: rgba(156, 163, 175, 0.3);
-  border-radius: 10px;
-}
-
-.smooth-scroll:hover::-webkit-scrollbar-thumb {
-  background: rgba(156, 163, 175, 0.6);
-}
-
-/* Dark mode smooth scroll */
-.dark .smooth-scroll::-webkit-scrollbar-thumb {
-  background: rgba(75, 85, 99, 0.4);
-}
-
-.dark .smooth-scroll:hover::-webkit-scrollbar-thumb {
-  background: rgba(107, 114, 128, 0.7);
-}
-
-/* Enhanced borders for better visibility */
-/* Light mode - more vivid borders */
-body:not(.dark) .bg-white,
-body:not(.dark) [class*="bg-white"] {
-  border-color: rgb(209, 213, 219) !important; /* gray-300 */
-}
-
-body:not(.dark) .shadow-md {
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.04), 0 0 0 1px rgba(0, 0, 0, 0.05);
-}
-
-/* Dark mode - subtle borders that blend naturally */
-.dark .bg-gray-800,
-.dark [class*="bg-gray-800"] {
-  border-color: rgb(55, 65, 81) !important; /* gray-700 - subtle and non-intrusive */
-}
-
-.dark .bg-gray-700,
-.dark [class*="bg-gray-700"] {
-  border-color: rgb(75, 85, 99) !important; /* gray-600 - slightly lighter for secondary surfaces */
-}
-
-.dark .shadow-md,
-.dark .shadow-lg {
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
-}
-
-/* Soften borders in dark mode */
-.dark .border-gray-300,
-.dark .border-gray-400,
-.dark .border-gray-500 {
-  border-color: rgb(75, 85, 99) !important; /* gray-600 instead of lighter grays */
-}
-
-/* Fix: light border colors not overridden in dark mode */
-/* bg-white elements keep bg-white class in dark mode even with dark:bg-* override */
-/* Tailwind's default border color (#e5e7eb / gray-200) shows as white-ish in dark mode */
-@layer base {
-  .dark .border-gray-200,
-  .dark .border-gray-100 {
-    border-color: rgb(55, 65, 81); /* gray-700 — subtle, non-intrusive dark border */
-  }
-
-  /* bg-white elements in dark mode: override Tailwind's default border so they don't show white lines */
-  .dark .bg-white {
-    border-color: rgb(55, 65, 81); /* gray-700 */
-  }
-}
-
-/* Custom Loading Animations */
-@keyframes spin-fast {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes pulse-scale {
-  0%, 100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-  50% {
-    transform: scale(1.1);
-    opacity: 0.7;
-  }
-}
-
-@keyframes bounce-dots {
-  0%, 80%, 100% {
-    transform: scale(0);
-  }
-  40% {
-    transform: scale(1);
-  }
-}
-
-@keyframes slide-fade {
-  0% {
-    transform: translateX(-100%);
-    opacity: 0;
-  }
-  50% {
-    transform: translateX(0);
-    opacity: 1;
-  }
-  100% {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-}
-
-@keyframes fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes scale-in {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-.animate-spin-fast {
-  animation: spin-fast 0.6s linear infinite;
-}
-
-.animate-pulse-scale {
-  animation: pulse-scale 1s ease-in-out infinite;
-}
-
-.animate-fade-in {
-  animation: fade-in 0.5s ease-out forwards;
-}
-
-.animate-scale-in {
-  animation: scale-in 0.2s ease-out forwards;
-}
-
-.loading-dots {
-  display: flex;
-  gap: 8px;
-}
-
-.loading-dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  animation: bounce-dots 1.4s infinite ease-in-out both;
-}
-
-.loading-dot:nth-child(1) {
-  animation-delay: -0.32s;
-}
-
-.loading-dot:nth-child(2) {
-  animation-delay: -0.16s;
-}
-
-.loading-bar-container {
-  width: 200px;
-  height: 4px;
-  background: rgba(0, 0, 0, 0.1);
-  border-radius: 2px;
-  overflow: hidden;
-}
-
-.loading-bar {
-  height: 100%;
-  width: 50%;
-  animation: slide-fade 1.2s ease-in-out infinite;
-  border-radius: 2px;
-}
-
+/* ==========================================================================
+   8. LEGACY COMPONENT STYLES (Backwards Compatibility)
+   These map to new token system
+   ========================================================================== */
 @layer components {
   .btn {
-    @apply px-4 py-2 rounded-lg font-medium transition-all duration-200;
+    @apply px-4 py-2 rounded-md font-medium transition-all duration-200;
+    min-height: var(--size-touch-target);
   }
   
   .btn-primary {
-    background-color: var(--color-primary);
-    color: white;
-    transition: opacity 0.2s;
+    background-color: var(--color-brand-primary);
+    color: var(--color-text-inverse);
+    transition: opacity var(--duration-fast) var(--ease-standard);
   }
   
   .btn-primary:hover {
-    opacity: 0.9;
+    background-color: var(--color-brand-primary-hover);
+    transform: scale(1.01);
+  }
+  
+  .btn-primary:active {
+    transform: scale(0.99);
   }
   
   .btn-secondary {
-    @apply bg-gray-200 text-gray-800 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600;
+    background-color: var(--color-surface-muted);
+    color: var(--color-text-primary);
   }
   
+  .btn-secondary:hover {
+    background-color: var(--color-surface-elevated);
+  }
+  
+  .btn-ghost {
+    background-color: transparent;
+    color: var(--color-text-secondary);
+  }
+  
+  .btn-ghost:hover {
+    background-color: var(--color-surface-subtle);
+    color: var(--color-text-primary);
+  }
+  
+  .btn-danger {
+    background-color: var(--color-error);
+    color: var(--color-text-inverse);
+  }
+  
+  .btn-danger:hover {
+    background-color: oklch(52% 0.20 25);
+  }
+  
+  /* Input styles */
   .input {
-    @apply w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white;
+    @apply w-full px-4 py-2 border rounded-md;
+    border-color: var(--color-border-default);
+    background-color: var(--color-surface-base);
+    color: var(--color-text-primary);
+    min-height: var(--size-touch-target);
   }
   
+  .input:focus {
+    border-color: var(--color-brand-primary);
+    box-shadow: var(--focus-ring);
+  }
+  
+  .input::placeholder {
+    color: var(--color-text-placeholder);
+  }
+  
+  /* Card styles */
   .card {
-    @apply bg-white rounded-lg shadow-md p-6 dark:bg-gray-800;
+    background-color: var(--color-surface-elevated);
+    border-radius: var(--radius-card);
+    border: 1px solid var(--color-border-subtle);
+    box-shadow: var(--shadow-sm);
+    padding: var(--space-6);
+  }
+  
+  /* Glass surface */
+  .glass {
+    background-color: var(--color-surface-glass);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+  
+  /* Elevated surface */
+  .elevated {
+    background-color: var(--color-surface-elevated);
+    box-shadow: var(--shadow-md);
+    border-radius: var(--radius-lg);
   }
 }
 
-/* Mobile Optimizations */
+/* ==========================================================================
+   9. MOBILE OPTIMIZATIONS
+   Reference: Section 1 - Mobile-first design
+   ========================================================================== */
 @media (max-width: 640px) {
-  /* Improved touch targets for mobile */
-  button,
-  a,
-  .btn {
-    min-height: 44px;
-    min-width: 44px;
-  }
-  
   /* Better text sizing on mobile */
   h1 {
-    @apply text-2xl;
+    font-size: var(--text-3xl);
   }
   
   h2 {
-    @apply text-xl;
+    font-size: var(--text-2xl);
+  }
+  
+  h3 {
+    font-size: var(--text-xl);
   }
   
   /* Optimize modals for mobile */
   [role="dialog"] {
-    @apply max-w-full mx-4;
+    max-width: 100%;
+    margin: var(--space-4);
   }
   
   /* Better table handling on mobile */
@@ -358,14 +389,9 @@ body:not(.dark) .shadow-md {
     -webkit-overflow-scrolling: touch;
   }
   
-  /* Card spacing for mobile */
-  .card {
-    @apply p-4;
-  }
-  
   /* Adjust grid gaps for mobile */
   .grid {
-    @apply gap-3;
+    gap: var(--space-3);
   }
 }
 
@@ -383,7 +409,9 @@ body:not(.dark) .shadow-md {
   }
 }
 
-/* PWA Safe Area Insets (for notched phones) */
+/* ==========================================================================
+   10. PWA SAFE AREA INSETS
+   ========================================================================== */
 @supports (padding: env(safe-area-inset-left)) {
   body {
     padding-left: env(safe-area-inset-left);
@@ -392,20 +420,108 @@ body:not(.dark) .shadow-md {
   
   /* Adjust navbar for safe areas */
   nav {
-    padding-left: max(env(safe-area-inset-left), 1rem);
-    padding-right: max(env(safe-area-inset-right), 1rem);
+    padding-left: max(env(safe-area-inset-left), var(--space-4));
+    padding-right: max(env(safe-area-inset-right), var(--space-4));
   }
 }
 
-/* Improve touch scrolling performance */
-* {
-  -webkit-overflow-scrolling: touch;
+/* ==========================================================================
+   11. CALENDAR VIEW CUSTOM STYLES
+   ========================================================================== */
+.rbc-calendar {
+  font-family: inherit;
 }
 
-/* Better focus states for accessibility */
-*:focus-visible {
-  outline: 2px solid #3b82f6;
-  outline-offset: 2px;
+.rbc-header {
+  padding: var(--space-3) var(--space-2);
+  font-weight: var(--font-weight-semibold);
+  border-bottom: 2px solid var(--color-border-default);
+}
+
+.rbc-month-view {
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.rbc-day-bg {
+  border-left: 1px solid var(--color-border-default);
+}
+
+.rbc-today {
+  background-color: oklch(90% 0.02 250 / 50%) !important;
+}
+
+[data-theme="dark"] .rbc-today {
+  background-color: oklch(25% 0.02 260 / 50%) !important;
+}
+
+.rbc-off-range-bg {
+  background: var(--color-surface-subtle);
+}
+
+[data-theme="dark"] .rbc-off-range-bg {
+  background: var(--color-surface-muted);
+}
+
+.rbc-event {
+  padding: 2px 5px;
+  cursor: pointer;
+  font-size: var(--text-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+.rbc-event:hover {
+  opacity: 1 !important;
+}
+
+.rbc-toolbar button {
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-default);
+  background: var(--color-surface-base);
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-standard);
+  min-height: var(--size-touch-target);
+}
+
+.rbc-toolbar button:hover {
+  background-color: var(--color-surface-subtle);
+}
+
+.rbc-toolbar button:focus-visible {
+  box-shadow: var(--focus-ring);
+}
+
+.rbc-toolbar button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ==========================================================================
+   12. UTILITY CLASSES
+   ========================================================================== */
+
+/* Text truncation */
+.truncate-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.truncate-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Smooth scroll */
+.smooth-scroll {
+  scroll-behavior: smooth;
 }
 
 /* Disable text selection on UI elements */
@@ -426,570 +542,328 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Improve touch scrolling performance */
+* {
+  -webkit-overflow-scrolling: touch;
+}
+
 /* PWA Splash Screen Prevention for Black Flash */
 @media (prefers-color-scheme: dark) {
   body {
-    background-color: #111827;
+    background-color: #151008;
   }
 }
 
 @media (prefers-color-scheme: light) {
   body {
-    background-color: #ffffff;
+    background-color: #F7F3EE;
   }
 }
 
-/* Calendar View Custom Styles */
-.rbc-calendar {
-  font-family: inherit;
+/* ==========================================================================
+   13. DASHBOARD COMPONENTS - Warm Paper Design System
+   Reference: ui_inspire.html
+   ========================================================================== */
+
+/* KPI Cards */
+.kpi-card {
+  position: relative;
+  background: var(--bg-raised);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--r-md);
+  padding: var(--s5);
+  transition: transform var(--base), box-shadow var(--base);
+  overflow: hidden;
+  cursor: pointer;
+  --kpi-accent: var(--brand);
 }
 
-.rbc-header {
-  padding: 12px 10px;
+.kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.kpi-label {
+  text-transform: uppercase;
+  font-size: 10.5px;
   font-weight: 600;
-  border-bottom: 2px solid #e5e7eb;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin-bottom: var(--s2);
 }
 
-.rbc-month-view {
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
+.kpi-val {
+  font-size: 34px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--text-primary);
+  margin-bottom: var(--s2);
+  font-family: var(--font-heading);
+  letter-spacing: -0.02em;
+}
+
+.kpi-unit {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-left: 4px;
+}
+
+.kpi-delta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: var(--s3);
+}
+
+.kpi-delta-label {
+  margin-left: 2px;
+  font-weight: 500;
+  opacity: 0.8;
+}
+
+.kpi-sparkline {
+  height: 30px;
+  width: 100%;
+  margin-bottom: var(--s2);
+  opacity: 0.9;
+}
+
+.kpi-accent-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--kpi-accent);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.4s var(--ease);
+}
+
+.kpi-card:hover .kpi-accent-bar {
+  transform: scaleX(1);
+}
+
+/* AI Insight Banner */
+.ai-insight {
+  position: relative;
+  display: flex;
+  gap: var(--s4);
+  padding: var(--s5);
+  background: linear-gradient(135deg, rgba(138, 88, 188, 0.08), rgba(138, 88, 188, 0.04));
+  border: 1px solid rgba(138, 88, 188, 0.18);
+  border-radius: var(--r-md);
+  margin-bottom: var(--s6);
+  --ai-color: #8A58BC;
+}
+
+.ai-insight-icon {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--ai-color);
+  color: white;
+  border-radius: var(--r-sm);
+}
+
+.ai-insight-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.ai-insight-label {
+  text-transform: uppercase;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--ai-color);
+  margin-bottom: 6px;
+}
+
+.ai-insight-text {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-primary);
+  margin-bottom: var(--s3);
+}
+
+.ai-btns {
+  display: flex;
+  gap: var(--s2);
+  flex-wrap: wrap;
+}
+
+.ai-dismiss {
+  position: absolute;
+  top: var(--s3);
+  right: var(--s3);
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: var(--r-xs);
+  transition: all var(--fast);
+}
+
+.ai-dismiss:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--text-primary);
+}
+
+/* Activity Feed */
+.feed-item {
+  display: flex;
+  gap: var(--s3);
+  padding: var(--s3) 0;
+  border-bottom: 1px solid var(--border-hair);
+}
+
+.feed-item:last-child {
+  border-bottom: none;
+}
+
+.feed-av {
+  position: relative;
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--r-full);
+  background: var(--brand);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.feed-live::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 10px;
+  height: 10px;
+  background: var(--success);
+  border: 2px solid var(--bg-raised);
+  border-radius: var(--r-full);
+  animation: pulse 2s infinite;
+}
+
+.feed-text {
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.feed-text strong {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.feed-time {
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+
+/* Panel Component */
+.panel {
+  background: var(--bg-raised);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--r-md);
   overflow: hidden;
 }
 
-.rbc-day-bg {
-  border-left: 1px solid #e5e7eb;
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--s4) var(--s5);
+  border-bottom: 1px solid var(--border-soft);
 }
 
-.rbc-today {
-  background-color: #dbeafe !important;
+.panel-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
 }
 
-.dark .rbc-today {
-  background-color: #1e3a8a !important;
+.panel-body {
+  padding: var(--s5);
 }
 
-.rbc-off-range-bg {
-  background: #f9fafb;
+/* Tag Component */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: var(--r-sm);
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
 }
 
-.dark .rbc-off-range-bg {
-  background: #1f2937;
+.tag-g {
+  background: var(--success-dim);
+  color: var(--success);
+  border: 1px solid rgba(90, 138, 90, 0.3);
 }
 
-.rbc-event {
-  padding: 2px 5px;
-  cursor: pointer;
-  font-size: 12px;
-  font-weight: 500;
+.tag-y {
+  background: var(--warning-dim);
+  color: var(--warning);
+  border: 1px solid rgba(196, 154, 58, 0.3);
 }
 
-.rbc-event:hover {
-  opacity: 1 !important;
+.tag-r {
+  background: var(--danger-dim);
+  color: var(--danger);
+  border: 1px solid rgba(176, 80, 80, 0.3);
 }
 
-.rbc-toolbar button {
-  padding: 8px 16px;
-  border-radius: 6px;
-  border: 1px solid #d1d5db;
-  background: white;
-  color: #374151;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
+/* Divider */
+.divider {
+  height: 1px;
+  background: var(--border-soft);
+  margin: var(--s4) 0;
 }
 
-.rbc-toolbar button:hover {
-  background: #f3f4f6;
-}
-
-.rbc-toolbar button.rbc-active {
-  background: #3b82f6;
-  color: white;
-  border-color: #3b82f6;
-}
-
-.dark .rbc-toolbar button {
-  background: #374151;
-  color: #f3f4f6;
-  border-color: #4b5563;
-}
-
-.dark .rbc-toolbar button:hover {
-  background: #4b5563;
-}
-
-.dark .rbc-toolbar button.rbc-active {
-  background: #3b82f6;
-  color: white;
-}
-/* ========================================
-   MOBILE RESPONSIVE STYLES
-   ======================================== */
-
-/* Base mobile styles */
-@media (max-width: 767px) {
-  /* Ensure proper touch targets */
-  button:not(.no-min-height), a:not(.no-min-height), input, select, textarea {
-    min-height: 44px;
+/* Animations */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
   }
-
-  /* Adjust padding for mobile */
-  .p-6 {
-    padding: 1rem !important;
-  }
-
-  .px-6 {
-    padding-left: 1rem !important;
-    padding-right: 1rem !important;
-  }
-
-  .py-6 {
-    padding-top: 1rem !important;
-    padding-bottom: 1rem !important;
-  }
-
-  /* Make tables horizontally scrollable */
-  .overflow-x-auto {
-    -webkit-overflow-scrolling: touch;
-  }
-
-  /* Hide desktop-only elements */
-  .hidden-mobile {
-    display: none !important;
-  }
-
-  /* Responsive text sizes */
-  h1 {
-    font-size: 1.5rem !important;
-  }
-
-  h2 {
-    font-size: 1.25rem !important;
-  }
-
-  h3 {
-    font-size: 1.125rem !important;
-  }
-
-  /* Make modals responsive on mobile */
-  .fixed.inset-0 > div {
-    margin: 1rem;
-    max-height: calc(100vh - 2rem);
-  }
-
-  /* Chart responsiveness */
-  .recharts-wrapper {
-    width: 100% !important;
-    height: auto !important;
-  }
-
-  /* Card spacing on mobile */
-  .gap-6 {
-    gap: 1rem !important;
-  }
-
-  /* Grid adjustments */
-  .grid.grid-cols-2.md\:grid-cols-2 {
-    grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
-  }
-
-  .grid.grid-cols-3.md\:grid-cols-3 {
-    grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
+  50% {
+    opacity: 0.6;
+    transform: scale(1.2);
   }
 }
 
-/* Tablet styles */
-@media (min-width: 768px) and (max-width: 1023px) {
-  /* Adjust grid for tablets */
-  .grid-cols-4 {
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-/* Touch device optimizations */
-@media (hover: none) and (pointer: coarse) {
-  /* Better scrolling on touch */
-  * {
-    -webkit-overflow-scrolling: touch;
-  }
-}
-
-/* Landscape mobile adjustments */
-@media (max-width: 767px) and (orientation: landscape) {
-  /* Reduce header/navbar height in landscape */
-  header {
-    min-height: 48px !important;
-  }
-}
-
-/* Small mobile devices (< 375px) */
-@media (max-width: 374px) {
-  /* Further reduce padding */
-  .p-4, .p-6 {
-    padding: 0.75rem !important;
-  }
-
-  /* Smaller font sizes */
-  .text-lg {
-    font-size: 1rem !important;
-  }
-
-  .text-xl {
-    font-size: 1.125rem !important;
-  }
-
-  /* Compact buttons */
-  button {
-    padding: 8px 12px;
-    font-size: 0.875rem;
-  }
-}
-
-/* Print styles */
-@media print {
-  /* Hide navigation and sidebar when printing */
-  aside, header nav {
-    display: none !important;
-  }
-
-  /* Full width for content */
-  main {
-    width: 100% !important;
-    margin: 0 !important;
-  }
-}
-
-/* Safe area insets for notched devices */
-@supports (padding: max(0px)) {
-  body {
-    padding-left: env(safe-area-inset-left);
-    padding-right: env(safe-area-inset-right);
-  }
-
-  header {
-    padding-left: max(1rem, env(safe-area-inset-left));
-    padding-right: max(1rem, env(safe-area-inset-right));
-  }
-}
-
-/* Additional Mobile Optimizations */
-@media (max-width: 767px) {
-  /* Ensure sidebar doesn't cause horizontal scroll */
-  body {
-    overflow-x: hidden;
-  }
-
-  /* Better table cell padding on mobile */
-  table td, table th {
-    padding: 0.5rem !important;
-    font-size: 0.875rem;
-  }
-
-  /* Hide less important table columns on mobile */
-  .hide-on-mobile {
-    display: none !important;
-  }
-
-  /* Make action buttons easier to tap */
-  button[aria-label], 
-  button[title] {
-    min-width: 44px;
-    min-height: 44px;
-  }
-
-  /* Adjust chart height for mobile */
-  .recharts-wrapper {
-    height: 250px !important;
-  }
-
-  /* Better modal sizing on mobile */
-  .fixed > div[class*='max-w'] {
-    max-width: 95vw !important;
-    margin: 1rem !important;
-  }
-
-  /* Reduce gap spacing */
-  .gap-6 {
-    gap: 1rem !important;
-  }
-
-  .gap-8 {
-    gap: 1.5rem !important;
-  }
-}
-
-/* Prevent zoom on input focus for iOS */
-@supports (-webkit-touch-callout: none) {
-  input, select, textarea {
-    font-size: 16px !important;
-  }
-}
-
-/* ========================================
-   COMPREHENSIVE MOBILE RESPONSIVE FIXES
-   ======================================== */
-
-/* Mobile-First Base Styles */
-@media (max-width: 767px) {
-  /* Ensure no horizontal overflow */
-  html, body {
-    overflow-x: hidden;
-    width: 100%;
-  }
-
-  /* Responsive Typography */
-  h1 {
-    font-size: 1.5rem !important;
-    line-height: 2rem !important;
-  }
-
-  h2 {
-    font-size: 1.25rem !important;
-    line-height: 1.75rem !important;
-  }
-
-  h3 {
-    font-size: 1.125rem !important;
-    line-height: 1.5rem !important;
-  }
-
-  h4 {
-    font-size: 1rem !important;
-    line-height: 1.5rem !important;
-  }
-
-  /* Base text sizing */
-  .text-xl {
-    font-size: 1.125rem !important;
-  }
-
-  .text-lg {
-    font-size: 1rem !important;
-  }
-
-  .text-base {
-    font-size: 0.875rem !important;
-  }
-
-  /* Responsive Spacing */
-  .p-8 {
-    padding: 1rem !important;
-  }
-
-  .p-6 {
-    padding: 0.75rem !important;
-  }
-
-  .p-4 {
-    padding: 0.5rem !important;
-  }
-
-  .px-8 {
-    padding-left: 1rem !important;
-    padding-right: 1rem !important;
-  }
-
-  .px-6 {
-    padding-left: 0.75rem !important;
-    padding-right: 0.75rem !important;
-  }
-
-  .py-6 {
-    padding-top: 0.75rem !important;
-    padding-bottom: 0.75rem !important;
-  }
-
-  /* Responsive Margins */
-  .mb-8 {
-    margin-bottom: 1.5rem !important;
-  }
-
-  .mb-6 {
-    margin-bottom: 1rem !important;
-  }
-
-  .mb-4 {
-    margin-bottom: 0.75rem !important;
-  }
-
-  /* Responsive Gaps */
-  .gap-8 {
-    gap: 1rem !important;
-  }
-
-  .gap-6 {
-    gap: 0.75rem !important;
-  }
-
-  .gap-4 {
-    gap: 0.5rem !important;
-  }
-
-  /* Card/Panel Responsiveness */
-  .rounded-lg {
-    border-radius: 0.375rem !important;
-  }
-
-  /* Chart containers */
-  .recharts-wrapper {
-    height: 200px !important;
-  }
-
-  .recharts-responsive-container {
-    min-height: 200px !important;
-  }
-
-  /* Table Responsiveness */
-  table {
-    font-size: 0.75rem !important;
-  }
-
-  table td,
-  table th {
-    padding: 0.375rem !important;
-    white-space: nowrap;
-  }
-
-  /* Hide non-essential columns on mobile */
-  table th:nth-child(n+5),
-  table td:nth-child(n+5) {
-    display: none;
-  }
-
-  /* Button Sizing */
-  button {
-    font-size: 0.875rem !important;
-  }
-
-  /* Input Fields */
-  input,
-  select,
-  textarea {
-    font-size: 16px !important;
-    padding: 0.5rem !important;
-  }
-
-  /* Modal Responsiveness */
-  .fixed > div {
-    margin: 0.5rem !important;
-    max-width: calc(100vw - 1rem) !important;
-    max-height: calc(100vh - 1rem) !important;
-  }
-
-  /* Grid Adjustments */
-  .grid-cols-2,
-  .grid-cols-3,
-  .grid-cols-4 {
-    grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
-  }
-
-  .md\:grid-cols-2,
-  .md\:grid-cols-3,
-  .md\:grid-cols-4 {
-    grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
-  }
-
-  .lg\:grid-cols-2,
-  .lg\:grid-cols-3,
-  .lg\:grid-cols-4 {
-    grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
-  }
-
-  /* Flexbox Adjustments */
-  .flex-row {
-    flex-direction: column !important;
-  }
-
-  /* Widget/Card Sizing */
-  .w-80,
-  .w-96 {
-    width: 100% !important;
-  }
-
-  .max-w-7xl,
-  .max-w-6xl,
-  .max-w-5xl,
-  .max-w-4xl,
-  .max-w-3xl,
-  .max-w-2xl {
-    max-width: 100% !important;
-  }
-
-  /* Icon Sizing */
-  svg {
-    width: 1.25rem !important;
-    height: 1.25rem !important;
-  }
-
-  /* Hide decorative elements */
-  .hidden-mobile {
-    display: none !important;
-  }
-}
-
-/* Small Mobile Devices (iPhone SE, older phones) */
-@media (max-width: 374px) {
-  h1 {
-    font-size: 1.25rem !important;
-  }
-
-  h2 {
-    font-size: 1.125rem !important;
-  }
-
-  .text-lg {
-    font-size: 0.875rem !important;
-  }
-
-  .text-base {
-    font-size: 0.8125rem !important;
-  }
-
-  .text-sm {
-    font-size: 0.75rem !important;
-  }
-
-  button {
-    padding: 0.375rem 0.75rem !important;
-    font-size: 0.8125rem !important;
-  }
-
-  .p-4 {
-    padding: 0.375rem !important;
-  }
-
-  .px-4 {
-    padding-left: 0.5rem !important;
-    padding-right: 0.5rem !important;
-  }
-}
-
-/* Landscape Mobile */
-@media (max-width: 767px) and (orientation: landscape) {
-  header {
-    height: 3rem !important;
-    padding-top: 0.5rem !important;
-    padding-bottom: 0.5rem !important;
-  }
-
-  .h-16 {
-    height: 3rem !important;
-  }
-
-  /* Reduce vertical spacing in landscape */
-  .py-4 {
-    padding-top: 0.5rem !important;
-    padding-bottom: 0.5rem !important;
-  }
-}
-
-/* Tablet Adjustments */
-@media (min-width: 768px) and (max-width: 1023px) {
-  .lg\:grid-cols-3 {
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-  }
-
-  .lg\:grid-cols-4 {
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-  }
-}
+/* Stagger animations for KPI cards */
+.kpi-card:nth-child(1) { animation: fadeUp 0.4s var(--ease) backwards; }
+.kpi-card:nth-child(2) { animation: fadeUp 0.4s var(--ease) 0.065s backwards; }
+.kpi-card:nth-child(3) { animation: fadeUp 0.4s var(--ease) 0.13s backwards; }
+.kpi-card:nth-child(4) { animation: fadeUp 0.4s var(--ease) 0.195s backwards; }

@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { useTheme } from '../context/ThemeContext';
 
 const ProgressBar = ({ progress = 0, size = 'md', showPercentage = true, animated = true }) => {

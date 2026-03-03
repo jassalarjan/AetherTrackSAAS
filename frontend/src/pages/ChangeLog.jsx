@@ -1,10 +1,9 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import { useSidebar } from '../context/SidebarContext';
 import { useNavigate } from 'react-router-dom';
 import { useConfirmModal } from '../hooks/useConfirmModal';
-import Sidebar from '../components/Sidebar';
+import ResponsivePageLayout from '../components/layouts/ResponsivePageLayout';
 import ConfirmModal from '../components/modals/ConfirmModal';
 import api from '../api/axios';
 import {
@@ -28,7 +27,6 @@ import {
 const ChangeLog = () => {
   const { user } = useAuth();
   const { theme } = useTheme();
-  const { toggleMobileSidebar } = useSidebar();
   const navigate = useNavigate();
   const confirmModal = useConfirmModal();
   const [logs, setLogs] = useState([]);
@@ -263,9 +261,7 @@ const ChangeLog = () => {
   };
 
   return (
-    <div className={`flex h-screen ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'}`}>
-      <Sidebar />
-      <div className={`flex-1 overflow-auto ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'}`}>
+    <ResponsivePageLayout title="Change Log" icon={Activity}>
         <div className="p-6 max-w-7xl mx-auto">
           {/* Error Alert */}
           {error && (
@@ -288,15 +284,8 @@ const ChangeLog = () => {
           <div className="mb-8">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center space-x-3">
-                <button
-                  onClick={toggleMobileSidebar}
-                  className={`lg:hidden ${theme === 'dark' ? 'text-[#9da8b9] hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}
-                  aria-label="Toggle menu"
-                >
-                  <Menu size={24} />
-                </button>
-                <Activity className="w-8 h-8 text-[#136dec]" />
-                <h1 className={`text-3xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Change Log</h1>
+                <Activity className="w-8 h-8" style={{ color: 'var(--brand)' }} />
+                <h1 className="text-3xl font-bold" style={{ color: 'var(--text-primary)' }}>Change Log</h1>
               </div>
               <div className="flex items-center space-x-3">
                 <button
@@ -718,7 +707,6 @@ const ChangeLog = () => {
             )}
           </div>
         </div>
-      </div>
 
       {/* Confirm Modal */}
       <ConfirmModal
@@ -732,7 +720,7 @@ const ChangeLog = () => {
         variant={confirmModal.variant}
         isLoading={confirmModal.isLoading}
       />
-    </div>
+    </ResponsivePageLayout>
   );
 };
 

@@ -1,13 +1,12 @@
-import { useState, useEffect, useCallback } from 'react';
+﻿import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import { useSidebar } from '../context/SidebarContext';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 import { projectsApi } from '../api/projectsApi';
 import useRealtimeSync from '../hooks/useRealtimeSync';
 import { useConfirmModal } from '../hooks/useConfirmModal';
-import Sidebar from '../components/Sidebar';
+import ResponsivePageLayout from '../components/layouts/ResponsivePageLayout';
 import ConfirmModal from '../components/modals/ConfirmModal';
 import ProjectLabel from '../components/ProjectLabel';
 import TeamLabel from '../components/TeamLabel';
@@ -16,13 +15,12 @@ import ProgressBar from '../components/ProgressBar';
 import LatestCommentPreview from '../components/LatestCommentPreview';
 import {
   Plus, X, Search, Settings, UserPlus, Calendar as CalendarIcon,
-  MoreHorizontal, MessageSquare, Menu
+  MoreHorizontal, MessageSquare
 } from 'lucide-react';
 
 const Kanban = () => {
   const { user, socket } = useAuth();
   const { theme } = useTheme();
-  const { toggleMobileSidebar } = useSidebar();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const confirmModal = useConfirmModal();
@@ -387,43 +385,19 @@ const Kanban = () => {
 
   if (loading) {
     return (
-      <div className={`${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'} ${theme === 'dark' ? 'text-white' : 'text-gray-900'} font-['Inter'] h-screen flex items-center justify-center`}>
-        <div className="flex flex-col items-center gap-6">
-          <div className="flex gap-3">
-            {[0, 1, 2, 3].map((i) => (
-              <div
-                key={i}
-                className="w-4 h-12 bg-[#136dec] rounded-full animate-pulse"
-                style={{ animationDelay: `${i * 0.15}s` }}
-              ></div>
-            ))}
-          </div>
-          <p className={`${theme === 'dark' ? 'text-white' : 'text-gray-900'} font-medium`}>Loading Kanban board...</p>
-        </div>
+      <div className="h-screen flex items-center justify-center" style={{ background: 'var(--bg-canvas)' }}>
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-transparent" style={{ borderBottomColor: 'var(--brand)' }} />
       </div>
     );
   }
 
   return (
-    <div className={`flex h-screen w-full ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'}`}>
-      {/* Unified Sidebar */}
-      <Sidebar />
-
-      {/* Main Content */}
-      <main className={`flex-1 flex flex-col h-full w-full min-w-0 ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'} overflow-hidden`}>
+    <ResponsivePageLayout title="Kanban Board" icon={MoreHorizontal} noPadding>
         {/* Header Section */}
         <header className={`border-b ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'} shrink-0`}>
           {/* Top Row: Title and Actions */}
           <div className="flex items-center justify-between px-3 sm:px-6 py-3 sm:py-4">
             <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
-              {/* Mobile Menu Button */}
-              <button
-                onClick={toggleMobileSidebar}
-                className={`lg:hidden ${theme === 'dark' ? 'text-[#9da8b9] hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors flex-shrink-0`}
-                aria-label="Toggle menu"
-              >
-                <Menu size={24} />
-              </button>
               <div className="min-w-0">
                 <h2 className={`${theme === 'dark' ? 'text-white' : 'text-gray-900'} text-base sm:text-xl font-bold leading-tight truncate`}>Kanban Board</h2>
                 <p className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} text-xs mt-0.5 sm:mt-1 hidden sm:block`}>Visual task workflow with drag & drop</p>
@@ -663,7 +637,6 @@ const Kanban = () => {
             })}
           </div>
         </div>
-      </main>
 
       {/* Create Task Modal */}
       {showCreateModal && (
@@ -982,7 +955,7 @@ const Kanban = () => {
         variant={confirmModal.variant}
         isLoading={confirmModal.isLoading}
       />
-    </div>
+    </ResponsivePageLayout>
   );
 };
 

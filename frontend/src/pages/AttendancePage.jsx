@@ -1,12 +1,12 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useSidebar } from '../context/SidebarContext';
 import { useSearchParams } from 'react-router-dom';
 import api from '../api/axios';
 import ResponsivePageLayout from '../components/layouts/ResponsivePageLayout';
-import { Calendar, Clock, CheckCircle, XCircle, AlertCircle, Edit2, Save, X, Menu, Users, ChevronLeft, ChevronRight, Layers } from 'lucide-react';
-import { ShiftConfigPanel } from './ShiftManagement';
+import AttendanceReviewModal from '../components/AttendanceReviewModal';
+import { Calendar, Clock, CheckCircle, XCircle, AlertCircle, Edit2, Save, X, Menu, Users, ChevronLeft, ChevronRight, Shield, AlertTriangle, FileText, Check, Ban, Search, Eye } from 'lucide-react';
 
 export default function AttendancePage() {
   const { user } = useAuth();
@@ -24,6 +24,22 @@ export default function AttendancePage() {
   const [selectedDate, setSelectedDate] = useState(null);
   const [dateAttendance, setDateAttendance] = useState([]);
   const [showDateModal, setShowDateModal] = useState(false);
+  
+  // New state for advanced features
+  const [policies, setPolicies] = useState([]);
+  const [exceptions, setExceptions] = useState([]);
+  const [dashboardStats, setDashboardStats] = useState(null);
+  const [showPolicyModal, setShowPolicyModal] = useState(false);
+  const [editingPolicy, setEditingPolicy] = useState(null);
+  const [exceptionFilter, setExceptionFilter] = useState('PENDING');
+
+  // Verification state
+  const [pendingReviews, setPendingReviews] = useState([]);
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [reviewFilter, setReviewFilter] = useState('PENDING');
+  const [reviewSearch, setReviewSearch] = useState('');
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [selectedAttendance, setSelectedAttendance] = useState(null);
 
   const isAdmin = user && (user.role === 'admin' || user.role === 'hr');
   const [searchParams] = useSearchParams();
@@ -35,7 +51,13 @@ export default function AttendancePage() {
     fetchAttendance();
     fetchSummary();
     checkTodayAttendance();
-  }, [currentMonth, currentYear]);
+    if (isAdmin) {
+      fetchPolicies();
+      fetchExceptions();
+      fetchDashboardStats();
+      fetchPendingReviews();
+    }
+  }, [currentMonth, currentYear, exceptionFilter, reviewFilter]);
 
   const fetchAttendance = async () => {
     try {
@@ -78,6 +100,85 @@ export default function AttendancePage() {
       setCheckedIn(todayRecord && todayRecord.checkIn && !todayRecord.checkOut);
     } catch (error) {
       console.error('Error checking today attendance:', error);
+    }
+  };
+
+  const fetchPolicies = async () => {
+    try {
+      const response = await api.get('/hr/attendance/policies');
+      setPolicies(response.data.policies || []);
+    } catch (error) {
+      console.error('Error fetching policies:', error);
+    }
+  };
+
+  const fetchExceptions = async () => {
+    try {
+      const response = await api.get('/hr/attendance/exceptions', {
+        params: { status: exceptionFilter }
+      });
+      setExceptions(response.data.exceptions || []);
+    } catch (error) {
+      console.error('Error fetching exceptions:', error);
+    }
+  };
+
+  const fetchDashboardStats = async () => {
+    try {
+      const response = await api.get('/hr/attendance/dashboard');
+      setDashboardStats(response.data.stats);
+    } catch (error) {
+      console.error('Error fetching dashboard:', error);
+    }
+  };
+
+  const fetchPendingReviews = async () => {
+    try {
+      setReviewLoading(true);
+      const response = await api.get('/hr/attendance/pending-reviews', {
+        params: { status: reviewFilter }
+      });
+      setPendingReviews(response.data.reviews || response.data || []);
+    } catch (error) {
+      console.error('Error fetching pending reviews:', error);
+    } finally {
+      setReviewLoading(false);
+    }
+  };
+
+  const openReviewModal = (attendance) => {
+    setSelectedAttendance(attendance);
+    setShowReviewModal(true);
+  };
+
+  const handleReviewComplete = (action) => {
+    fetchPendingReviews();
+    fetchAttendance();
+    fetchDashboardStats();
+  };
+
+  const handleApproveException = async (exceptionId) => {
+    try {
+      await api.post(`/hr/attendance/exceptions/${exceptionId}/approve`);
+      fetchExceptions();
+      fetchDashboardStats();
+      alert('Exception approved successfully');
+    } catch (error) {
+      alert(error.response?.data?.message || 'Failed to approve exception');
+    }
+  };
+
+  const handleRejectException = async (exceptionId) => {
+    const reason = prompt('Please provide a reason for rejection:');
+    if (reason === null) return;
+    try {
+      await api.post(`/hr/attendance/exceptions/${exceptionId}/reject`, {
+        response_reason: reason
+      });
+      fetchExceptions();
+      alert('Exception rejected');
+    } catch (error) {
+      alert(error.response?.data?.message || 'Failed to reject exception');
     }
   };
 
@@ -227,7 +328,10 @@ export default function AttendancePage() {
             <div className={`flex gap-1 p-1 rounded-xl border ${currentTheme.border} mb-6 w-fit bg-black/[0.02] dark:bg-white/[0.02]`}>
               {[
                 { id: 'attendance',   label: 'Attendance',  icon: Clock },
-                { id: 'shift-config', label: 'Shift Config', icon: Layers },
+                { id: 'dashboard',    label: 'Dashboard',   icon: Calendar },
+                { id: 'verification', label: 'Verification', icon: Shield },
+                { id: 'exceptions',  label: 'Exceptions',  icon: AlertTriangle },
+                { id: 'policies',    label: 'Policies',    icon: Shield },
               ].map(({ id, label, icon: Icon }) => (
                 <button
                   key={id}
@@ -244,10 +348,291 @@ export default function AttendancePage() {
             </div>
           )}
 
-          {/* ── Shift Config panel ── */}
-          {pageTab === 'shift-config' && isAdmin ? (
-            <ShiftConfigPanel />
-          ) : (
+          {/* Show attendance content for non-admin or attendance tab */}
+          {(pageTab === 'attendance' || !isAdmin) && (
+          <div>
+          {/* ── Verification Tab ── */}
+          {pageTab === 'verification' && isAdmin && (
+            <div className="space-y-4">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <h3 className={`text-lg font-bold ${currentTheme.text}`}>Pending Reviews</h3>
+                <div className="flex items-center gap-3">
+                  {/* Status Filter */}
+                  <select
+                    value={reviewFilter}
+                    onChange={(e) => setReviewFilter(e.target.value)}
+                    className={`px-3 py-2 rounded-lg border text-sm ${currentTheme.surface} ${currentTheme.border} ${currentTheme.text}`}
+                  >
+                    <option value="PENDING">Pending</option>
+                    <option value="APPROVED">Approved</option>
+                    <option value="REJECTED">Rejected</option>
+                    <option value="">All</option>
+                  </select>
+                  {/* Search */}
+                  <div className={`relative flex items-center gap-2 px-3 py-2 rounded-lg border ${currentTheme.border}`}>
+                    <Search className={`w-4 h-4 ${currentTheme.textSecondary}`} />
+                    <input
+                      type="text"
+                      placeholder="Search by name..."
+                      value={reviewSearch}
+                      onChange={(e) => setReviewSearch(e.target.value)}
+                      className={`bg-transparent outline-none text-sm ${currentTheme.text}`}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Pending Reviews List */}
+              {reviewLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                </div>
+              ) : pendingReviews.length === 0 ? (
+                <div className={`${currentTheme.surface} border ${currentTheme.border} rounded-lg p-8 text-center`}>
+                  <Shield className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+                  <p className={currentTheme.textSecondary}>No pending reviews</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {pendingReviews
+                    .filter(r => !reviewSearch || (r.userId?.name || r.user?.name || '').toLowerCase().includes(reviewSearch.toLowerCase()))
+                    .map((review) => (
+                      <div
+                        key={review._id}
+                        className={`${currentTheme.surface} border ${currentTheme.border} rounded-lg p-4 hover:shadow-md transition-shadow`}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <h4 className={`font-medium ${currentTheme.text}`}>
+                                {review.userId?.name || review.user?.name || 'Unknown User'}
+                              </h4>
+                              {/* Verification Status Badge */}
+                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                review.verificationStatus === 'PENDING' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
+                                review.verificationStatus === 'APPROVED' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
+                                review.verificationStatus === 'REJECTED' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
+                                'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'
+                              }`}>
+                                {review.verificationStatus || 'PENDING'}
+                              </span>
+                            </div>
+                            <div className={`text-sm ${currentTheme.textSecondary}`}>
+                              <p>{new Date(review.date || review.createdAt).toLocaleDateString()}</p>
+                              <p>
+                                {review.checkIn && `In: ${new Date(review.checkIn).toLocaleTimeString()}`}
+                                {review.checkOut && ` | Out: ${new Date(review.checkOut).toLocaleTimeString()}`}
+                              </p>
+                              {review.workMode && <p className="capitalize">Mode: {review.workMode}</p>}
+                            </div>
+                            {/* Verification Flags */}
+                            {review.verificationFlags && review.verificationFlags.length > 0 && (
+                              <div className="flex flex-wrap gap-1 mt-2">
+                                {review.verificationFlags.map((flag, idx) => (
+                                  <span key={idx} className="px-2 py-0.5 bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200 rounded text-xs">
+                                    {flag}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                          <button
+                            onClick={() => openReviewModal(review)}
+                            className={`ml-4 flex items-center gap-2 px-3 py-2 rounded-lg ${currentTheme.primary} ${currentTheme.primaryHover} text-white text-sm`}
+                          >
+                            <Eye size={16} />
+                            Review
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── Dashboard Tab ── */}
+          {pageTab === 'dashboard' && isAdmin && dashboardStats && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className={`${currentTheme.surface} rounded-lg p-4 border ${currentTheme.border}`}>
+                  <p className={`text-sm ${currentTheme.textSecondary}`}>Today Present</p>
+                  <p className="text-3xl font-bold text-green-600">{dashboardStats.today?.present || 0}</p>
+                </div>
+                <div className={`${currentTheme.surface} rounded-lg p-4 border ${currentTheme.border}`}>
+                  <p className={`text-sm ${currentTheme.textSecondary}`}>Today Absent</p>
+                  <p className="text-3xl font-bold text-red-600">{dashboardStats.today?.absent || 0}</p>
+                </div>
+                <div className={`${currentTheme.surface} rounded-lg p-4 border ${currentTheme.border}`}>
+                  <p className={`text-sm ${currentTheme.textSecondary}`}>Flagged Records</p>
+                  <p className="text-3xl font-bold text-amber-600">{dashboardStats.flaggedRecords || 0}</p>
+                </div>
+                <div className={`${currentTheme.surface} rounded-lg p-4 border ${currentTheme.border}`}>
+                  <p className={`text-sm ${currentTheme.textSecondary}`}>Pending Exceptions</p>
+                  <p className="text-3xl font-bold text-blue-600">{dashboardStats.pendingExceptions || 0}</p>
+                </div>
+              </div>
+              
+              <div className={`${currentTheme.surface} rounded-lg border ${currentTheme.border} p-6`}>
+                <h3 className={`text-lg font-bold ${currentTheme.text} mb-4`}>Attendance by Status</h3>
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                  {dashboardStats.attendanceByStatus?.map((stat) => (
+                    <div key={stat._id} className="text-center p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                      <p className="text-2xl font-bold">{stat.count}</p>
+                      <p className="text-sm text-gray-500 capitalize">{stat._id || 'unknown'}</p>
+                      <p className="text-xs text-gray-400">{stat.totalHours?.toFixed(1) || 0} hrs</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── Exceptions Tab ── */}
+          {pageTab === 'exceptions' && isAdmin && (
+            <div className="space-y-4">
+              <div className="flex gap-2 mb-4">
+                {['PENDING', 'APPROVED', 'REJECTED'].map((status) => (
+                  <button
+                    key={status}
+                    onClick={() => setExceptionFilter(status)}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium ${
+                      exceptionFilter === status
+                        ? 'bg-[#135bec] text-white'
+                        : `${currentTheme.surface} border ${currentTheme.border}`
+                    }`}
+                  >
+                    {status}
+                  </button>
+                ))}
+              </div>
+              
+              <div className="space-y-3">
+                {exceptions.length === 0 ? (
+                  <div className={`${currentTheme.surface} border ${currentTheme.border} rounded-lg p-8 text-center`}>
+                    <AlertTriangle className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+                    <p className={currentTheme.textSecondary}>No exceptions found</p>
+                  </div>
+                ) : (
+                  exceptions.map((exc) => (
+                    <div key={exc._id} className={`${currentTheme.surface} border ${currentTheme.border} rounded-lg p-4`}>
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className={`px-2 py-1 rounded text-xs font-medium ${
+                              exc.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
+                              exc.status === 'APPROVED' ? 'bg-green-100 text-green-800' :
+                              'bg-red-100 text-red-800'
+                            }`}>
+                              {exc.status}
+                            </span>
+                            <span className="text-sm font-medium">{exc.exception_type?.replace(/_/g, ' ')}</span>
+                          </div>
+                          <p className={`text-sm ${currentTheme.textSecondary}`}>
+                            {exc.user_id?.full_name} - {new Date(exc.date).toLocaleDateString()}
+                          </p>
+                          {exc.details?.reason && (
+                            <p className={`text-sm mt-2 ${currentTheme.text}`}>
+                              <FileText size={14} className="inline mr-1" />
+                              {exc.details.reason}
+                            </p>
+                          )}
+                          {exc.approval?.response_reason && (
+                            <p className="text-sm mt-2 text-gray-500">
+                              Response: {exc.approval.response_reason}
+                            </p>
+                          )}
+                        </div>
+                        {exc.status === 'PENDING' && (
+                          <div className="flex gap-2 ml-4">
+                            <button
+                              onClick={() => handleApproveException(exc._id)}
+                              className="p-2 bg-green-100 text-green-600 rounded-lg hover:bg-green-200"
+                            >
+                              <Check size={18} />
+                            </button>
+                            <button
+                              onClick={() => handleRejectException(exc._id)}
+                              className="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200"
+                            >
+                              <Ban size={18} />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ── Policies Tab ── */}
+          {pageTab === 'policies' && isAdmin && (
+            <div className="space-y-4">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className={`text-lg font-bold ${currentTheme.text}`}>Attendance Policies</h3>
+                <button
+                  onClick={() => {
+                    setEditingPolicy({});
+                    setShowPolicyModal(true);
+                  }}
+                  className="px-4 py-2 bg-[#135bec] text-white rounded-lg text-sm font-medium hover:bg-[#0d4ac7]"
+                >
+                  + Create Policy
+                </button>
+              </div>
+              
+              <div className="space-y-3">
+                {policies.length === 0 ? (
+                  <div className={`${currentTheme.surface} border ${currentTheme.border} rounded-lg p-8 text-center`}>
+                    <Shield className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+                    <p className={currentTheme.textSecondary}>No policies configured. Create one to get started.</p>
+                  </div>
+                ) : (
+                  policies.map((policy) => (
+                    <div key={policy._id} className={`${currentTheme.surface} border ${currentTheme.border} rounded-lg p-4`}>
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <h4 className="font-medium">{policy.policy_name}</h4>
+                            {policy.is_active ? (
+                              <span className="px-2 py-1 bg-green-100 text-green-800 rounded text-xs">Active</span>
+                            ) : (
+                              <span className="px-2 py-1 bg-gray-100 text-gray-800 rounded text-xs">Inactive</span>
+                            )}
+                          </div>
+                          {policy.description && (
+                            <p className={`text-sm ${currentTheme.textSecondary} mb-2`}>
+                              {policy.description}
+                            </p>
+                          )}
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
+                            <div>
+                              <span className="text-gray-500">Grace Period:</span>
+                              <span className="ml-1">{policy.rules?.grace_period_minutes || 15} min</span>
+                            </div>
+                            <div>
+                              <span className="text-gray-500">Min Hours:</span>
+                              <span className="ml-1">{policy.rules?.minimum_working_hours || 8} hrs</span>
+                            </div>
+                            <div>
+                              <span className="text-gray-500">Half Day:</span>
+                              <span className="ml-1">{policy.rules?.half_day_hours_threshold || 4} hrs</span>
+                            </div>
+                            <div>
+                              <span className="text-gray-500">Priority:</span>
+                              <span className="ml-1">{policy.priority || 0}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
           <>
           {/* Summary Cards */}
           {summary && (
@@ -695,7 +1080,18 @@ export default function AttendancePage() {
             </div>
           )}
           </>
+          </div>
           )}
+        {/* Attendance Review Modal */}
+        <AttendanceReviewModal
+          isOpen={showReviewModal}
+          onClose={() => {
+            setShowReviewModal(false);
+            setSelectedAttendance(null);
+          }}
+          attendanceId={selectedAttendance?._id}
+          onActionComplete={handleReviewComplete}
+        />
     </ResponsivePageLayout>
   );
 }

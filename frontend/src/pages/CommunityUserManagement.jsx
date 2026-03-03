@@ -1,18 +1,16 @@
-import { useState, useEffect, useMemo } from 'react';
+﻿import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import { useSidebar } from '../context/SidebarContext';
 import { useConfirmModal } from '../hooks/useConfirmModal';
 import api from '../api/axios';
-import Sidebar from '../components/Sidebar';
 import ConfirmModal from '../components/modals/ConfirmModal';
+import ResponsivePageLayout from '../components/layouts/ResponsivePageLayout';
 import useRealtimeSync from '../hooks/useRealtimeSync';
 import { Search, Users as UsersIcon, User, Trash2, Edit2, Key, Plus, X, Menu } from 'lucide-react';
 
 export default function CommunityUserManagement() {
   const { user } = useAuth();
   const { theme } = useTheme();
-  const { toggleMobileSidebar } = useSidebar();
   const isDark = theme === 'dark';
   const confirmModal = useConfirmModal();
   
@@ -197,16 +195,9 @@ export default function CommunityUserManagement() {
 
   if (!hasPermission) {
     return (
-      <div className="flex h-screen">
-        <Sidebar />
-        <div className={`flex-1 overflow-auto ${isDark ? 'bg-[#0f1419] text-white' : 'bg-gray-50 text-gray-900'}`}>
-          <div className="p-8">
-            <div className={`${isDark ? 'bg-red-900/20 border-red-700' : 'bg-red-50 border-red-200'} border rounded-lg p-4`}>
-              <p className={isDark ? 'text-red-300' : 'text-red-800'}>
-                You do not have permission to access this page. Only Community Administrators can manage users.
-              </p>
-            </div>
-          </div>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg-canvas)' }}>
+        <div className="p-4 rounded-lg" style={{ background: 'var(--danger-dim)', border: '1px solid var(--danger)' }}>
+          <p style={{ color: 'var(--danger)' }}>You do not have permission to access this page. Only Community Administrators can manage users.</p>
         </div>
       </div>
     );
@@ -214,43 +205,29 @@ export default function CommunityUserManagement() {
 
   if (loading) {
     return (
-      <div className="flex h-screen">
-        <Sidebar />
-        <div className={`flex-1 overflow-auto ${isDark ? 'bg-[#0f1419]' : 'bg-gray-50'} flex items-center justify-center`}>
-          <div className="text-center">
-            <div className={`inline-block animate-spin rounded-full h-12 w-12 border-b-2 ${isDark ? 'border-blue-400' : 'border-blue-600'}`}></div>
-            <p className={`mt-4 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Loading users...</p>
-          </div>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg-canvas)' }}>
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-transparent" style={{ borderBottomColor: 'var(--brand)' }}></div>
+          <p className="mt-4" style={{ color: 'var(--text-secondary)' }}>Loading users...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex h-screen">
-      <Sidebar />
+    <ResponsivePageLayout title="Community" icon={UsersIcon}>
       <div className={`flex-1 overflow-auto ${isDark ? 'bg-[#0f1419]' : 'bg-gray-50'}`}>
         <div className="p-8">
           {/* Header */}
           <div className="mb-6">
-            <div className="flex items-center gap-4">
-              {/* Mobile Menu Button */}
-              <button
-                onClick={toggleMobileSidebar}
-                className={`lg:hidden ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}
-                aria-label="Toggle menu"
-              >
-                <Menu size={24} />
-              </button>
-              <div>
-                <h1 className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
-                  Community User Management
-                </h1>
+            <div>
+              <h1 className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                Community User Management
+              </h1>
                 <p className={`mt-2 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
                   Manage users in your community workspace
                 </p>
               </div>
-            </div>
           </div>
 
           {/* Alerts */}
@@ -625,6 +602,6 @@ export default function CommunityUserManagement() {
         variant={confirmModal.variant}
         isLoading={confirmModal.isLoading}
       />
-    </div>
+    </ResponsivePageLayout>
   );
 }

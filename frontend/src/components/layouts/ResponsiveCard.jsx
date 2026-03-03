@@ -1,4 +1,4 @@
-import { useTheme } from '../../context/ThemeContext';
+﻿import { useTheme } from '../../context/ThemeContext';
 
 /**
  * ResponsiveCard - A mobile-first card component
@@ -21,17 +21,12 @@ const ResponsiveCard = ({
   return (
     <div
       onClick={onClick}
-      className={`
-        rounded-lg border
-        ${theme === 'dark' 
-          ? 'bg-[#1c2027] border-[#282f39]' 
-          : 'bg-white border-gray-200'
-        }
-        ${noPadding ? '' : 'p-4 sm:p-6'}
-        ${hover ? (theme === 'dark' ? 'hover:border-[#4b5563]' : 'hover:border-gray-300') + ' transition-colors' : ''}
-        ${onClick ? 'cursor-pointer' : ''}
-        ${className}
-      `}
+      className={`rounded-xl border transition-colors ${noPadding ? '' : 'p-4 sm:p-6'} ${hover ? 'cursor-pointer' : ''} ${onClick ? 'cursor-pointer' : ''} ${className}`}
+      style={{
+        background: 'var(--bg-raised)',
+        borderColor: 'var(--border-soft)',
+        boxShadow: 'var(--shadow-xs)',
+      }}
     >
       {children}
     </div>
