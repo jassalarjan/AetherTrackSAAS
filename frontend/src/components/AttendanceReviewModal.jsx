@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import attendanceApi from '../api/attendanceApi';
 import MapView from '../components/MapView';
@@ -417,7 +417,7 @@ export default function AttendanceReviewModal({
                   </button>
                   <button
                     onClick={() => setActionMode('override')}
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700"
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#C4713A] text-white hover:bg-[#A35C28]"
                   >
                     <FileText className="w-4 h-4" />
                     Override
@@ -611,7 +611,7 @@ export default function AttendanceReviewModal({
                     <button
                       onClick={handleOverride}
                       disabled={submitting || !rejectReason.trim()}
-                      className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+                      className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#C4713A] text-white hover:bg-[#A35C28] disabled:opacity-50"
                     >
                       {submitting ? <Loader className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
                       Confirm Override

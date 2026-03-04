@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import { Lock, CheckCircle, AlertCircle, Eye, EyeOff } from 'lucide-react';
@@ -109,8 +109,8 @@ const ResetPassword = () => {
           {!success ? (
             <>
               <div className="text-center mb-6">
-                <div className={`inline-flex items-center justify-center w-16 h-16 rounded-full mb-4 ${theme === 'dark' ? 'bg-[#136dec]/10' : 'bg-blue-50'}`}>
-                  <Lock size={32} className="text-[#136dec]" />
+                <div className={`inline-flex items-center justify-center w-16 h-16 rounded-full mb-4 ${theme === 'dark' ? 'bg-[#C4713A]/10' : 'bg-blue-50'}`}>
+                  <Lock size={32} className="text-[#C4713A]" />
                 </div>
                 <h2 className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2`}>
                   Reset Password
@@ -134,7 +134,7 @@ const ResetPassword = () => {
                   </p>
                   <Link
                     to="/forgot-password"
-                    className="text-[#136dec] hover:underline text-sm font-medium"
+                    className="text-[#C4713A] hover:underline text-sm font-medium"
                   >
                     Request a new password reset
                   </Link>
@@ -151,7 +151,7 @@ const ResetPassword = () => {
                         value={newPassword}
                         onChange={(e) => handlePasswordChange(e.target.value)}
                         placeholder="Enter new password"
-                        className={`w-full p-3 pr-10 ${theme === 'dark' ? 'bg-[#111418] border-[#282f39] text-white placeholder:text-[#58606e]' : 'bg-white border-gray-300 text-gray-900'} border rounded-lg focus:ring-2 focus:ring-[#136dec] focus:border-transparent`}
+                        className={`w-full p-3 pr-10 ${theme === 'dark' ? 'bg-[#111418] border-[#282f39] text-white placeholder:text-[#58606e]' : 'bg-white border-gray-300 text-gray-900'} border rounded-lg focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
                         required
                         autoFocus
                       />
@@ -205,7 +205,7 @@ const ResetPassword = () => {
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         placeholder="Confirm new password"
-                        className={`w-full p-3 pr-10 ${theme === 'dark' ? 'bg-[#111418] border-[#282f39] text-white placeholder:text-[#58606e]' : 'bg-white border-gray-300 text-gray-900'} border rounded-lg focus:ring-2 focus:ring-[#136dec] focus:border-transparent`}
+                        className={`w-full p-3 pr-10 ${theme === 'dark' ? 'bg-[#111418] border-[#282f39] text-white placeholder:text-[#58606e]' : 'bg-white border-gray-300 text-gray-900'} border rounded-lg focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
                         required
                       />
                       <button
@@ -221,7 +221,7 @@ const ResetPassword = () => {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full bg-[#136dec] text-white py-3 rounded-lg font-semibold hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full bg-[#C4713A] text-white py-3 rounded-lg font-semibold hover:bg-[#A35C28] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {loading ? 'Resetting Password...' : 'Reset Password'}
                   </button>
@@ -249,9 +249,9 @@ const ResetPassword = () => {
                 Your password has been successfully reset. Redirecting to login...
               </p>
               <div className="flex items-center justify-center gap-2">
-                <div className="w-2 h-2 bg-[#136dec] rounded-full animate-bounce" style={{ animationDelay: '0s' }}></div>
-                <div className="w-2 h-2 bg-[#136dec] rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                <div className="w-2 h-2 bg-[#136dec] rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+                <div className="w-2 h-2 bg-[#C4713A] rounded-full animate-bounce" style={{ animationDelay: '0s' }}></div>
+                <div className="w-2 h-2 bg-[#C4713A] rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                <div className="w-2 h-2 bg-[#C4713A] rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
               </div>
             </div>
           )}

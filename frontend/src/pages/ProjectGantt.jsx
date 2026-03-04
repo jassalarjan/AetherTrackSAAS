@@ -4,6 +4,7 @@ import { useTheme } from '../context/ThemeContext';
 import ResponsivePageLayout from '../components/layouts/ResponsivePageLayout';
 import { projectsApi } from '../api/projectsApi';
 import api from '../api/axios';
+import { PageLoader } from '../components/Spinner';
 import * as XLSX from 'xlsx';
 import {
   Plus, Share2, Calendar, ChevronRight, Check, Loader, Database,
@@ -370,13 +371,7 @@ const ProjectGantt = () => {
     setShowExportMenu(false);
   };
 
-  if (loading) {
-    return (
-      <div className="h-screen flex items-center justify-center" style={{ background: 'var(--bg-canvas)' }}>
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-transparent" style={{ borderBottomColor: 'var(--brand)' }} />
-      </div>
-    );
-  }
+  if (loading) return <PageLoader label="Loading Gantt chart…" />;
 
   return (
     <ResponsivePageLayout title={project?.name || 'Gantt Chart'} icon={Calendar} noPadding>
@@ -693,7 +688,7 @@ const ProjectGantt = () => {
             </div>
             <div className="flex-1 overflow-y-auto">
               {scheduledTasks.map((task, index) => (
-                <div key={task._id} className="flex items-center border-b border-gray-100 dark:border-gray-800/50 hover:bg-blue-50/30 dark:hover:bg-blue-900/10 transition-colors h-12 group cursor-pointer">
+                <div key={task._id} className="flex items-center border-b border-gray-100 dark:border-gray-800/50 hover:bg-[#C4713A]/5 dark:hover:bg-[#C4713A]/10 transition-colors h-12 group cursor-pointer">
                   <div className="w-64 px-4 flex items-center gap-2.5">
                     {/* Enhanced status indicator */}
                     <div className={`w-2.5 h-2.5 rounded-full shrink-0 ring-2 ring-offset-1 ${
@@ -903,7 +898,7 @@ const ProjectGantt = () => {
                   const isMilestone = task.task_type === 'milestone';
 
                   return (
-                    <div key={task._id || task.id} className="h-12 border-b border-gray-100 dark:border-gray-800/50 flex items-center relative group hover:bg-blue-50/30 dark:hover:bg-blue-900/10 transition-colors">
+                    <div key={task._id || task.id} className="h-12 border-b border-gray-100 dark:border-gray-800/50 flex items-center relative group hover:bg-[#C4713A]/5 dark:hover:bg-[#C4713A]/10 transition-colors">
 
                       {/* Slack / float zone */}
                       {showCriticalPath && slackWidth > 2 && (

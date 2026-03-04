@@ -10,12 +10,14 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
+import { SectionLoader } from '../components/Spinner';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import api from '../api/axios';
 import '../aethertrack-reference.css';
 import GlobalSidebar from '../components/GlobalSidebar';
+import ALL_PAGES from '../data/pages.json';
 
 // Sparkline SVG component
 const Sparkline = ({ color = 'var(--brand)', data = [] }) => {
@@ -320,7 +322,7 @@ const TasksPanel = ({ tasks, loading, onTaskComplete, onNavigate }) => {
       
       <div className="task-list" role="list">
         {loading ? (
-          <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-secondary)' }}>Loading tasks...</div>
+          <SectionLoader label="Loading tasks…" minHeight="80px" />
         ) : filteredTasks.length === 0 ? (
           <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-secondary)' }}>No tasks found</div>
         ) : (
@@ -583,7 +585,7 @@ const ActivityFeed = ({ activities, loading }) => {
         </div>
       </div>
       {loading ? (
-        <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-secondary)' }}>Loading...</div>
+        <SectionLoader label="Loading activity…" minHeight="80px" />
       ) : (
         <div role="log" aria-live="polite" aria-label="Activity feed">
           {displayActivities.map((a, i) => (
@@ -627,7 +629,7 @@ const LeaveBalances = ({ leaveBalances, loading, onNavigate }) => {
         <button className="btn btn-primary btn-sm" onClick={() => onNavigate && onNavigate('/hr/leaves')}>Apply</button>
       </div>
       {loading ? (
-        <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-secondary)' }}>Loading...</div>
+        <SectionLoader label="Loading leave balances…" minHeight="80px" />
       ) : (
         <div className="radials">
           {balances.map((b, i) => (
@@ -772,7 +774,7 @@ const TeamGrid = ({ teamMembers, loading }) => {
         <span className="tag tag-g">{onlineCount} present</span>
       </div>
       {loading ? (
-        <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-secondary)' }}>Loading...</div>
+        <SectionLoader label="Loading team…" minHeight="80px" />
       ) : (
         <div className="team-grid" role="list">
           {members.map((m, i) => (
@@ -833,7 +835,7 @@ const ProjectsList = ({ projects, loading, onNavigate }) => {
         <button className="btn btn-ghost btn-sm">All →</button>
       </div>
       {loading ? (
-        <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-secondary)' }}>Loading...</div>
+        <SectionLoader label="Loading projects…" minHeight="80px" />
       ) : (
         <div>
           {projectList.map((p, i) => (
@@ -845,119 +847,319 @@ const ProjectsList = ({ projects, loading, onNavigate }) => {
   );
 };
 
+// Status icon helpers
+const taskStatusIcon = (status) => {
+  const map = { done: '✓', in_progress: '◑', review: '◐', todo: '○', cancelled: '✕' };
+  return map[status] || '○';
+};
+const priorityIcon = (p) => ({ urgent: '🔴', high: '🟠', medium: '🟡', low: '🟢' }[p] || '·');
+
 // Command Palette component
-const CommandPalette = ({ isOpen, onClose, onNavigate, onToggleTheme }) => {
+const CommandPalette = ({ isOpen, onClose, onNavigate, onToggleTheme, tasks = [], projects = [], teamMembers = [] }) => {
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
-  
-  const items = [
-    { type: 'recent', icon: '⬡', label: 'Dashboard', hint: 'Page', path: '/dashboard' },
-    { type: 'recent', icon: '◫', label: 'Tasks', hint: 'Page', path: '/tasks' },
-    { type: 'recent', icon: '◉', label: 'Attendance', hint: 'HR', path: '/hr/attendance' },
-    { type: 'recent', icon: '◈', label: 'Projects', hint: 'Page', path: '/projects' },
-    { type: 'recent', icon: '⊞', label: 'Team', hint: 'HR', path: '/teams' },
-    { type: 'action', icon: '+', label: 'Create new task', hint: '⌘N', path: '/tasks' },
-    { type: 'action', icon: '☽', label: 'Toggle dark / light mode', hint: '', path: null },
-    { type: 'action', icon: '⬟', label: 'Sprints', hint: '', path: '/sprints' },
-    { type: 'action', icon: '△', label: 'Reports', hint: '', path: '/resources' },
-  ];
+  const [debouncedQuery, setDebouncedQuery] = useState('');
+
+  // Debounce the query
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedQuery(query), 120);
+    return () => clearTimeout(t);
+  }, [query]);
 
   useEffect(() => {
     if (isOpen) {
       setQuery('');
+      setDebouncedQuery('');
       setSelectedIndex(0);
     }
   }, [isOpen]);
 
+  // Close on Escape
+  useEffect(() => {
+    if (!isOpen) return;
+    const handler = (e) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [isOpen, onClose]);
+
+  const q = debouncedQuery.toLowerCase().trim();
+
+  // ── Build result sections ────────────────────────────────────────────────
+  const matchedPages = q
+    ? ALL_PAGES.filter(p =>
+        p.label.toLowerCase().includes(q) ||
+        p.hint.toLowerCase().includes(q) ||
+        p.keywords.includes(q)
+      ).slice(0, 6)
+    : ALL_PAGES.slice(0, 8); // Show top pages when no query
+
+  const matchedTasks = q
+    ? tasks
+        .filter(t =>
+          (t.title || '').toLowerCase().includes(q) ||
+          (t.description || '').toLowerCase().includes(q) ||
+          (t.status || '').includes(q) ||
+          (t.priority || '').toLowerCase().includes(q)
+        )
+        .slice(0, 5)
+    : [];
+
+  const matchedProjects = q
+    ? projects
+        .filter(p =>
+          (p.name || '').toLowerCase().includes(q) ||
+          (p.status || '').toLowerCase().includes(q) ||
+          (p.description || '').toLowerCase().includes(q)
+        )
+        .slice(0, 4)
+    : [];
+
+  const matchedPeople = q
+    ? teamMembers
+        .filter(u =>
+          (u.full_name || '').toLowerCase().includes(q) ||
+          (u.email || '').toLowerCase().includes(q) ||
+          (u.role || '').toLowerCase().includes(q)
+        )
+        .slice(0, 4)
+    : [];
+
+  const matchedActions = !q
+    ? [
+        { icon: '☽', label: 'Toggle dark / light mode', hint: 'Theme', path: null, isTheme: true },
+        { icon: '+', label: 'Go to Tasks → Create task', hint: '⌘N', path: '/tasks' },
+      ]
+    : [];
+
+  // Flatten all items for keyboard nav
+  const flatItems = [
+    ...matchedPages.map(i => ({ ...i, _type: 'page' })),
+    ...matchedTasks.map(i => ({ ...i, _type: 'task' })),
+    ...matchedProjects.map(i => ({ ...i, _type: 'project' })),
+    ...matchedPeople.map(i => ({ ...i, _type: 'person' })),
+    ...matchedActions.map(i => ({ ...i, _type: 'action' })),
+  ];
+
   const handleKeyDown = (e) => {
     if (e.key === 'ArrowDown') {
       e.preventDefault();
-      setSelectedIndex(i => Math.min(i + 1, items.length - 1));
+      setSelectedIndex(i => Math.min(i + 1, flatItems.length - 1));
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
       setSelectedIndex(i => Math.max(i - 1, 0));
     } else if (e.key === 'Enter') {
       e.preventDefault();
-      const selected = items[selectedIndex];
-      if (selected?.path) onNavigate(selected.path);
-      else if (selected?.label === 'Toggle dark / light mode') onToggleTheme();
+      const sel = flatItems[selectedIndex];
+      if (!sel) return;
+      if (sel.isTheme) onToggleTheme();
+      else if (sel._type === 'task') onNavigate(`/tasks`);
+      else if (sel._type === 'project') onNavigate(`/projects/${sel._id || ''}`);
+      else if (sel._type === 'person') onNavigate(`/users`);
+      else if (sel.path) onNavigate(sel.path);
       onClose();
     }
   };
 
+  const handleItemClick = (item) => {
+    if (item.isTheme) onToggleTheme();
+    else if (item._type === 'task') onNavigate(`/tasks`);
+    else if (item._type === 'project') onNavigate(`/projects/${item._id || ''}`);
+    else if (item._type === 'person') onNavigate(`/users`);
+    else if (item.path) onNavigate(item.path);
+    onClose();
+  };
+
+  const isEmpty = flatItems.length === 0;
+  let runningIdx = 0;
+
+  const renderItem = (item, localIdx) => {
+    const globalIdx = runningIdx++;
+    const isSel = selectedIndex === globalIdx;
+    return (
+      <div
+        key={`${item._type}-${localIdx}`}
+        className={`cmd-item ${isSel ? 'sel' : ''}`}
+        role="option"
+        aria-selected={isSel}
+        tabIndex="0"
+        onMouseEnter={() => setSelectedIndex(globalIdx)}
+        onClick={() => handleItemClick(item)}
+      >
+        <div className="cmd-item-icon" aria-hidden="true">{item.icon}</div>
+        <div className="cmd-item-label">{item.label}</div>
+        <div className="cmd-item-hint">{item.hint}</div>
+      </div>
+    );
+  };
+
   if (!isOpen) return null;
 
-  const filteredItems = query 
-    ? items.filter(i => i.label.toLowerCase().includes(query.toLowerCase()))
-    : items;
-
-  const recentItems = filteredItems.filter(i => i.type === 'recent');
-  const actionItems = filteredItems.filter(i => i.type === 'action');
-
   return (
-    <div 
-      className="cmd-overlay open" 
-      role="dialog" 
-      aria-modal="true" 
+    <div
+      className="cmd-overlay open"
+      role="dialog"
+      aria-modal="true"
       aria-label="Command palette"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div className="cmd-box">
+        {/* Search input */}
         <div className="cmd-in-wrap">
           <span className="cmd-icon" aria-hidden="true">⌕</span>
-          <input 
-            className="cmd-input" 
-            type="text" 
-            placeholder="Search tasks, pages, people, settings…"
+          <input
+            className="cmd-input"
+            type="text"
+            placeholder="Search tasks, projects, people, pages…"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => { setQuery(e.target.value); setSelectedIndex(0); }}
             onKeyDown={handleKeyDown}
             autoFocus
           />
-          <span className="kbd">Esc</span>
+          {query && (
+            <button
+              className="kbd"
+              style={{ cursor: 'pointer', background: 'none', border: 'none', padding: '2px 6px' }}
+              onClick={() => { setQuery(''); setSelectedIndex(0); }}
+              aria-label="Clear"
+            >✕</button>
+          )}
+          {!query && <span className="kbd">Esc</span>}
         </div>
+
+        {/* Results */}
         <div className="cmd-results" role="listbox">
-          {recentItems.length > 0 && (
+          {isEmpty && q && (
+            <div style={{ padding: '28px 16px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px' }}>
+              No results for &ldquo;{query}&rdquo;
+            </div>
+          )}
+
+          {/* Pages */}
+          {matchedPages.length > 0 && (
             <>
-              <div className="cmd-group">Recent</div>
-              {recentItems.map((item, i) => (
-                <div 
-                  key={`recent-${i}`} 
-                  className={`cmd-item ${selectedIndex === i ? 'sel' : ''}`}
-                  role="option"
-                  tabIndex="0"
-                  onClick={() => { if (item.path) onNavigate(item.path); onClose(); }}
-                >
-                  <div className="cmd-item-icon" aria-hidden="true">{item.icon}</div>
-                  <div className="cmd-item-label">{item.label}</div>
-                  <div className="cmd-item-hint">{item.hint}</div>
-                </div>
-              ))}
+              <div className="cmd-group">{q ? 'Pages' : 'Quick Access'}</div>
+              {matchedPages.map((item, i) => renderItem({ ...item, _type: 'page' }, i))}
             </>
           )}
-          {actionItems.length > 0 && (
+
+          {/* Tasks */}
+          {matchedTasks.length > 0 && (
+            <>
+              <div className="cmd-group">Tasks</div>
+              {matchedTasks.map((task, i) => {
+                const globalIdx = runningIdx;
+                const isSel = selectedIndex === globalIdx;
+                runningIdx++;
+                return (
+                  <div
+                    key={`task-${task._id}`}
+                    className={`cmd-item ${isSel ? 'sel' : ''}`}
+                    role="option"
+                    aria-selected={isSel}
+                    tabIndex="0"
+                    onMouseEnter={() => setSelectedIndex(globalIdx)}
+                    onClick={() => { onNavigate('/tasks'); onClose(); }}
+                  >
+                    <div className="cmd-item-icon" aria-hidden="true">{taskStatusIcon(task.status)}</div>
+                    <div className="cmd-item-label" style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {task.title}
+                    </div>
+                    <div className="cmd-item-hint" style={{ display: 'flex', gap: '6px', alignItems: 'center', flexShrink: 0 }}>
+                      <span>{priorityIcon(task.priority)}</span>
+                      <span style={{ fontSize: '11px', opacity: 0.7 }}>{task.status?.replace('_', ' ')}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </>
+          )}
+
+          {/* Projects */}
+          {matchedProjects.length > 0 && (
+            <>
+              <div className="cmd-group">Projects</div>
+              {matchedProjects.map((project, i) => {
+                const globalIdx = runningIdx;
+                const isSel = selectedIndex === globalIdx;
+                runningIdx++;
+                return (
+                  <div
+                    key={`proj-${project._id}`}
+                    className={`cmd-item ${isSel ? 'sel' : ''}`}
+                    role="option"
+                    aria-selected={isSel}
+                    tabIndex="0"
+                    onMouseEnter={() => setSelectedIndex(globalIdx)}
+                    onClick={() => { onNavigate(project._id ? `/projects/${project._id}` : '/projects'); onClose(); }}
+                  >
+                    <div className="cmd-item-icon" aria-hidden="true">◈</div>
+                    <div className="cmd-item-label" style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {project.name}
+                    </div>
+                    <div className="cmd-item-hint" style={{ fontSize: '11px', opacity: 0.7, flexShrink: 0 }}>
+                      {project.status?.replace('_', ' ')}
+                    </div>
+                  </div>
+                );
+              })}
+            </>
+          )}
+
+          {/* People */}
+          {matchedPeople.length > 0 && (
+            <>
+              <div className="cmd-group">People</div>
+              {matchedPeople.map((person, i) => {
+                const globalIdx = runningIdx;
+                const isSel = selectedIndex === globalIdx;
+                runningIdx++;
+                return (
+                  <div
+                    key={`person-${person._id}`}
+                    className={`cmd-item ${isSel ? 'sel' : ''}`}
+                    role="option"
+                    aria-selected={isSel}
+                    tabIndex="0"
+                    onMouseEnter={() => setSelectedIndex(globalIdx)}
+                    onClick={() => { onNavigate('/users'); onClose(); }}
+                  >
+                    <div className="cmd-item-icon" aria-hidden="true">◉</div>
+                    <div style={{ flex: 1, overflow: 'hidden' }}>
+                      <div className="cmd-item-label" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {person.full_name}
+                      </div>
+                      <div style={{ fontSize: '11px', opacity: 0.6, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {person.email}
+                      </div>
+                    </div>
+                    <div className="cmd-item-hint" style={{ fontSize: '11px', opacity: 0.7, flexShrink: 0 }}>
+                      {person.role?.replace('_', ' ')}
+                    </div>
+                  </div>
+                );
+              })}
+            </>
+          )}
+
+          {/* Actions (shown when no query) */}
+          {matchedActions.length > 0 && (
             <>
               <div className="cmd-group">Actions</div>
-              {actionItems.map((item, i) => (
-                <div 
-                  key={`action-${i}`} 
-                  className={`cmd-item ${selectedIndex === recentItems.length + i ? 'sel' : ''}`}
-                  role="option"
-                  tabIndex="0"
-                  onClick={() => { if (item.path) onNavigate(item.path); else if (item.label === 'Toggle dark / light mode') onToggleTheme(); onClose(); }}
-                >
-                  <div className="cmd-item-icon" aria-hidden="true">{item.icon}</div>
-                  <div className="cmd-item-label">{item.label}</div>
-                  <div className="cmd-item-hint">{item.hint}</div>
-                </div>
-              ))}
+              {matchedActions.map((item, i) => renderItem({ ...item, _type: 'action' }, i))}
             </>
           )}
         </div>
+
+        {/* Footer */}
         <div className="cmd-foot">
           <div className="cmd-hint"><span className="kbd">↑</span><span className="kbd">↓</span> Navigate</div>
           <div className="cmd-hint"><span className="kbd">↵</span> Select</div>
           <div className="cmd-hint"><span className="kbd">Esc</span> Close</div>
+          {q && flatItems.length > 0 && (
+            <div className="cmd-hint" style={{ marginLeft: 'auto', fontSize: '11px', opacity: 0.5 }}>
+              {flatItems.length} result{flatItems.length !== 1 ? 's' : ''}
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -1359,6 +1561,9 @@ const Workspace = () => {
         onClose={() => setCmdOpen(false)}
         onNavigate={handleNavigate}
         onToggleTheme={toggleTheme}
+        tasks={tasks}
+        projects={projects}
+        teamMembers={teamMembers}
       />
       
       {/* Toast Stack */}

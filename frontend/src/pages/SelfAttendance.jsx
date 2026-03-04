@@ -5,6 +5,8 @@ import PhotoCapture from '../components/PhotoCapture';
 import LocationCapture from '../components/LocationCapture';
 import useVerification from '../hooks/useVerification';
 import api from '../api/axios';
+import { PageLoader } from '../components/Spinner';
+import Spinner from '../components/Spinner';
 import { Clock, CheckCircle, XCircle, Calendar, MapPin, Briefcase, Home, Building, AlertTriangle, FileText, Upload, Camera, Shield, ShieldCheck, ShieldAlert } from 'lucide-react';
 
 const SelfAttendance = () => {
@@ -290,13 +292,7 @@ const SelfAttendance = () => {
 
   const weekStats = getWeekStats();
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg-canvas)' }}>
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-transparent" style={{ borderBottomColor: 'var(--brand)' }}></div>
-      </div>
-    );
-  }
+  if (loading) return <PageLoader label="Loading attendance…" />;
 
   return (
     <ResponsivePageLayout title="Attendance" icon={Clock}>
@@ -341,7 +337,7 @@ const SelfAttendance = () => {
                   <button
                     onClick={() => setShowCheckInModal(true)}
                     disabled={verificationLoading}
-                    className="flex items-center gap-2 px-6 py-3 bg-[#135bec] text-white rounded-lg font-bold hover:bg-[#0d4ac7] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex items-center gap-2 px-6 py-3 bg-[#C4713A] text-white rounded-lg font-bold hover:bg-[#A35C28] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <CheckCircle size={20} />
                     Check In
@@ -630,7 +626,7 @@ const SelfAttendance = () => {
                   disabled={checkingIn}
                   className={`p-3 rounded-lg border-2 flex items-center justify-center gap-2 transition-all ${
                     workMode === 'onsite'
-                      ? 'border-[#135bec] bg-blue-50 dark:bg-blue-900/20 text-[#135bec]'
+                      ? 'border-[#C4713A] bg-blue-50 dark:bg-blue-900/20 text-[#C4713A]'
                       : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-gray-300'
                   } disabled:opacity-50`}
                 >
@@ -663,7 +659,7 @@ const SelfAttendance = () => {
                 onChange={(e) => setReason(e.target.value)}
                 placeholder="Add any notes about your attendance..."
                 disabled={checkingIn}
-                className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#135bec] disabled:opacity-50"
+                className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#C4713A] disabled:opacity-50"
                 rows={3}
               />
             </div>
@@ -699,11 +695,11 @@ const SelfAttendance = () => {
                 type="button"
                 onClick={handleCheckIn}
                 disabled={checkingIn || (isPhotoRequired() && !capturedPhoto) || (isGPSRequired() && !capturedLocation)}
-                className="flex-1 px-4 py-2 bg-[#135bec] text-white rounded-lg font-bold hover:bg-[#0d4ac7] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="flex-1 px-4 py-2 bg-[#C4713A] text-white rounded-lg font-bold hover:bg-[#A35C28] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {checkingIn ? (
                   <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                    <Spinner size="xs" color="white" />
                     Checking In...
                   </>
                 ) : (

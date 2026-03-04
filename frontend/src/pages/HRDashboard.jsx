@@ -4,6 +4,9 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useSidebar } from '../context/SidebarContext';
 import { useConfirmModal } from '../hooks/useConfirmModal';
+import { usePageShortcuts } from '../hooks/usePageShortcuts';
+import ShortcutsOverlay from '../components/ShortcutsOverlay';
+import { PageLoader } from '../components/Spinner';
 import api from '../api/axios';
 import ResponsivePageLayout from '../components/layouts/ResponsivePageLayout';
 import ConfirmModal from '../components/modals/ConfirmModal';
@@ -54,6 +57,18 @@ export default function HRDashboard() {
   
   // Mass attendance
   const [massAttendanceStatus, setMassAttendanceStatus] = useState('present');
+
+  // Keyboard shortcuts overlay
+  const [showHelp, setShowHelp] = useState(false);
+  const hrShortcuts = [
+    { keys: ['?'], description: 'Show keyboard shortcuts' },
+    { keys: ['Escape'], description: 'Close modal / overlay' },
+    { keys: ['1'], description: 'Switch to Overview tab' },
+    { keys: ['2'], description: 'Switch to Attendance tab' },
+    { keys: ['3'], description: 'Switch to Leaves tab' },
+    { keys: ['4'], description: 'Switch to Calendar tab' },
+    { keys: ['5'], description: 'Switch to Email tab' },
+  ];
 
   // Email management
   const [emailConfig, setEmailConfig] = useState(null);
@@ -854,16 +869,7 @@ export default function HRDashboard() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className={`min-h-screen ${currentTheme.background} flex items-center justify-center`}>
-        <div className="text-center">
-          <Clock className="w-16 h-16 text-blue-600 dark:text-blue-400 animate-spin mx-auto mb-4" />
-          <p className={currentTheme.textSecondary}>Loading HR Dashboard...</p>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return <PageLoader label="Loading HR Dashboard…" />;
 
   return (
     <>
@@ -989,7 +995,7 @@ export default function HRDashboard() {
                   <h2 className={`text-xl font-bold ${currentTheme.text}`}>User Directory</h2>
                   <button
                     onClick={() => setActiveTab('attendance')}
-                    className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-sm font-medium"
+                    className="text-[#C4713A] dark:text-[#D4905A] hover:text-[#A35C28] dark:hover:text-[#C4713A] text-sm font-medium"
                   >
                     View Attendance
                   </button>
@@ -2009,6 +2015,14 @@ export default function HRDashboard() {
       cancelText={confirmModal.cancelText}
       variant={confirmModal.variant}
       isLoading={confirmModal.isLoading}
+    />
+
+    {/* Keyboard shortcuts help overlay */}
+    <ShortcutsOverlay
+      show={showHelp}
+      onClose={() => setShowHelp(false)}
+      shortcuts={hrShortcuts}
+      pageName="HR Dashboard"
     />
     </>
   );

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * HRCalendar â€” HR Calendar with native Meeting Management integration.
  *
  * Architecture:
@@ -39,7 +39,7 @@ const ATTENDANCE_COLORS = {
   present:  '#22c55e',
   absent:   '#dc2626',
   half_day: '#eab308',
-  leave:    '#3b82f6',
+  leave:    '#C4713A',
   holiday:  '#9333ea',
 };
 
@@ -48,7 +48,7 @@ const LEGEND = [
   { color: '#22c55e', label: 'Present' },
   { color: '#dc2626', label: 'Absent' },
   { color: '#eab308', label: 'Half Day' },
-  { color: '#3b82f6', label: 'Leave' },
+  { color: '#C4713A', label: 'Leave' },
   { color: '#9333ea', label: 'Holiday' },
   ...Object.entries(MEETING_TYPE_COLORS).map(([k, v]) => ({
     color: v, label: `Mtg: ${MEETING_TYPE_LABELS[k]}`, isDot: true
@@ -247,7 +247,7 @@ export default function HRCalendar({ embedded = false }) {
         {canManage && (
           <button
             onClick={() => { setEditingMeeting(null); setFormDefaultStart(new Date()); setShowForm(true); }}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors shadow-sm"
+            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-blue-600 hover:bg-[#A35C28] text-white rounded-lg transition-colors shadow-sm"
           >
             <Plus className="w-4 h-4" /> Schedule Meeting
           </button>
@@ -271,11 +271,8 @@ export default function HRCalendar({ embedded = false }) {
 
       {/* Calendar */}
       {loading ? (
-        <div className={`flex items-center justify-center py-16 rounded-xl border ${currentTheme.surface} ${currentTheme.border}`}>
-          <div className="flex gap-3 items-center">
-            {[0, 1, 2, 3].map(i => <div key={i} className="w-3 h-10 bg-blue-600 rounded-full animate-pulse" style={{ animationDelay: `${i * 0.15}s` }} />)}
-            <p className={`ml-3 ${currentTheme.textSecondary} font-medium`}>Loading calendarâ€¦</p>
-          </div>
+        <div className={`rounded-xl border ${currentTheme.surface} ${currentTheme.border} py-4`}>
+          <SectionLoader label="Loading calendar…" minHeight="180px" />
         </div>
       ) : (
         <div className={`calendar-container ${currentTheme.surface} rounded-xl border ${currentTheme.border} p-4`}>
@@ -361,7 +358,7 @@ export default function HRCalendar({ embedded = false }) {
         />
       )}
 
-      <style dangerouslySetInnerHTML={{ __html: calendarStyles(theme) }} />
+      <style dangerouslySetInnerHTML={{ __html: calendarStyles() }} />
     </div>
   );
 
@@ -389,31 +386,30 @@ function CalendarEventComponent({ event }) {
 }
 
 // â”€â”€ Theme-aware calendar CSS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-function calendarStyles(theme) {
-  const d = theme === 'dark';
+function calendarStyles() {
   return `
-    .calendar-container .rbc-calendar { font-family: 'Inter', sans-serif; color: ${d ? '#f1f5f9' : '#111827'}; }
-    .calendar-container .rbc-header { padding: 10px; font-weight: 700; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; background: ${d ? '#1c2027' : '#f9fafb'}; color: ${d ? '#94a3b8' : '#374151'}; border-color: ${d ? '#334155' : '#e2e8f0'}; }
-    .calendar-container .rbc-today { background-color: ${d ? '#1e3a5f' : '#dbeafe'}; }
-    .calendar-container .rbc-off-range-bg { background: ${d ? '#0f172a' : '#f8fafc'}; }
-    .calendar-container .rbc-day-bg { background: ${d ? '#1e293b' : '#fff'}; border-color: ${d ? '#334155' : '#e2e8f0'}; }
-    .calendar-container .rbc-month-view { background: ${d ? '#1e293b' : '#fff'}; border-color: ${d ? '#334155' : '#e2e8f0'}; }
-    .calendar-container .rbc-date-cell { color: ${d ? '#e2e8f0' : '#1e293b'}; padding: 4px; font-size: 0.78rem; }
-    .calendar-container .rbc-off-range { color: ${d ? '#475569' : '#94a3b8'}; }
+    .calendar-container .rbc-calendar { font-family: 'Inter', sans-serif; color: var(--text-primary); }
+    .calendar-container .rbc-header { padding: 10px; font-weight: 700; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; background: var(--bg-surface); color: var(--text-muted); border-color: var(--border-soft); }
+    .calendar-container .rbc-today { background-color: var(--brand-dim); }
+    .calendar-container .rbc-off-range-bg { background: var(--bg-sunken); }
+    .calendar-container .rbc-day-bg { background: var(--bg-base); border-color: var(--border-soft); }
+    .calendar-container .rbc-month-view { background: var(--bg-base); border-color: var(--border-soft); }
+    .calendar-container .rbc-date-cell { color: var(--text-secondary); padding: 4px; font-size: 0.78rem; }
+    .calendar-container .rbc-off-range { color: var(--text-muted); }
     .calendar-container .rbc-event { transition: transform 0.15s, box-shadow 0.15s; }
     .calendar-container .rbc-event:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
-    .calendar-container .rbc-toolbar { color: ${d ? '#f1f5f9' : '#1e293b'}; margin-bottom: 16px; }
-    .calendar-container .rbc-toolbar button { color: ${d ? '#cbd5e1' : '#475569'}; background: ${d ? '#1e293b' : '#fff'}; border: 1px solid ${d ? '#475569' : '#cbd5e1'}; border-radius: 0.375rem; padding: 6px 14px; font-size: 0.83rem; font-weight: 500; transition: all 0.15s; }
-    .calendar-container .rbc-toolbar button:hover { background: ${d ? '#334155' : '#f1f5f9'}; }
-    .calendar-container .rbc-toolbar button.rbc-active { background: #3b82f6; color: #fff; border-color: #3b82f6; }
-    .calendar-container .rbc-time-view { background: ${d ? '#1e293b' : '#fff'}; border-color: ${d ? '#334155' : '#e2e8f0'}; }
-    .calendar-container .rbc-time-header { background: ${d ? '#1c2027' : '#f9fafb'}; border-color: ${d ? '#334155' : '#e2e8f0'}; }
-    .calendar-container .rbc-time-content { border-color: ${d ? '#334155' : '#e2e8f0'}; }
-    .calendar-container .rbc-time-slot { color: ${d ? '#94a3b8' : '#6b7280'}; border-color: ${d ? '#1e293b' : '#f1f5f9'}; }
-    .calendar-container .rbc-current-time-indicator { background: #3b82f6; height: 2px; }
-    .calendar-container .rbc-agenda-view table.rbc-agenda-table { border-color: ${d ? '#334155' : '#e2e8f0'}; }
-    .calendar-container .rbc-agenda-view table.rbc-agenda-table tbody > tr { color: ${d ? '#e2e8f0' : '#111827'}; }
-    .calendar-container .rbc-agenda-view table.rbc-agenda-table tbody > tr > td { border-color: ${d ? '#334155' : '#e2e8f0'}; }
+    .calendar-container .rbc-toolbar { color: var(--text-primary); margin-bottom: 16px; }
+    .calendar-container .rbc-toolbar button { color: var(--text-muted); background: var(--bg-raised); border: 1px solid var(--border-mid); border-radius: 0.375rem; padding: 6px 14px; font-size: 0.83rem; font-weight: 500; transition: all 0.15s; }
+    .calendar-container .rbc-toolbar button:hover { background: var(--bg-surface); }
+    .calendar-container .rbc-toolbar button.rbc-active { background: var(--brand); color: #fff; border-color: var(--brand); }
+    .calendar-container .rbc-time-view { background: var(--bg-base); border-color: var(--border-soft); }
+    .calendar-container .rbc-time-header { background: var(--bg-surface); border-color: var(--border-soft); }
+    .calendar-container .rbc-time-content { border-color: var(--border-soft); }
+    .calendar-container .rbc-time-slot { color: var(--text-muted); border-color: var(--border-hair); }
+    .calendar-container .rbc-current-time-indicator { background: var(--brand); height: 2px; }
+    .calendar-container .rbc-agenda-view table.rbc-agenda-table { border-color: var(--border-soft); }
+    .calendar-container .rbc-agenda-view table.rbc-agenda-table tbody > tr { color: var(--text-secondary); }
+    .calendar-container .rbc-agenda-view table.rbc-agenda-table tbody > tr > td { border-color: var(--border-soft); }
     .rbc-addons-dnd .rbc-addons-dnd-drag-preview { opacity: 0.75; }
   `;
 }

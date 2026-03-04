@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import notificationService from '../utils/notificationService';
 import { Bell, BellOff, Check, X } from 'lucide-react';
@@ -107,7 +107,7 @@ const NotificationSettings = () => {
           {permission !== 'granted' && (
             <button
               onClick={handleRequestPermission}
-              className="btn bg-blue-600 text-white hover:bg-blue-700 text-sm px-4 py-2 w-full sm:w-auto"
+              className="btn bg-[#C4713A] text-white hover:bg-[#A35C28] text-sm px-4 py-2 w-full sm:w-auto"
             >
               Enable Notifications
             </button>

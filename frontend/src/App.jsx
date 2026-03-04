@@ -329,9 +329,12 @@ function App() {
           <SidebarProvider>
             <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
               {/* Skip link - first focusable element per WCAG 2.2 */}
-              <a 
-                href="#main-content" 
+              <a
+                href="#main-content"
                 className="skip-link"
+                style={{ position: 'fixed', opacity: 0, pointerEvents: 'none', transform: 'translateY(calc(-100% - 32px))' }}
+                onFocus={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.pointerEvents = 'auto'; e.currentTarget.style.transform = 'translateY(0)'; }}
+                onBlur={e => { e.currentTarget.style.opacity = '0'; e.currentTarget.style.pointerEvents = 'none'; e.currentTarget.style.transform = 'translateY(calc(-100% - 32px))'; }}
               >
                 Skip to main content
               </a>

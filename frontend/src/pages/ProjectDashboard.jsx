@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { projectsApi } from '../api/projectsApi';
 import { useNavigate } from 'react-router-dom';
 import ResponsivePageLayout from '../components/layouts/ResponsivePageLayout';
@@ -129,7 +129,7 @@ const ProjectDashboard = () => {
 
   const getStatusBadgeClass = (status) => {
     const classes = {
-      active: 'bg-blue-100 text-[#135bec] dark:bg-[#135bec]/20',
+      active: 'bg-[#C4713A]/10 text-[#C4713A] dark:bg-[#C4713A]/20',
       on_hold: 'bg-amber-100 text-amber-700 dark:bg-amber-400/20 dark:text-amber-400',
       completed: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-500',
       archived: 'bg-gray-100 text-gray-700 dark:bg-gray-400/20 dark:text-gray-400'
@@ -139,7 +139,7 @@ const ProjectDashboard = () => {
 
   const getStatusBorderClass = (status) => {
     const borders = {
-      active: 'border-[#135bec]',
+      active: 'border-[#C4713A]',
       on_hold: 'border-amber-400',
       completed: 'border-emerald-500',
       archived: 'border-gray-400'
@@ -149,7 +149,7 @@ const ProjectDashboard = () => {
 
   const getProgressColor = (status) => {
     const colors = {
-      active: 'bg-[#135bec]',
+      active: 'bg-[#C4713A]',
       on_hold: 'bg-amber-400',
       completed: 'bg-emerald-500',
       archived: 'bg-gray-400'
@@ -316,7 +316,7 @@ const ProjectDashboard = () => {
             <Filter size={20} />
             <span>Filters</span>
             {(filters.status || filters.priority || filters.search) && (
-              <span className="ml-1 px-2 py-0.5 bg-blue-500 text-white text-xs rounded-full">
+              <span className="ml-1 px-2 py-0.5 bg-[#C4713A] text-white text-xs rounded-full">
                 Active
               </span>
             )}
@@ -351,7 +351,7 @@ const ProjectDashboard = () => {
           {canManageProjects && (
             <button 
               onClick={handleCreateProject}
-              className="flex items-center gap-2 px-4 py-2 bg-[#135bec] text-white rounded-lg text-sm font-bold hover:bg-blue-700 transition-all shadow-sm"
+              className="flex items-center gap-2 px-4 py-2 bg-[#C4713A] text-white rounded-lg text-sm font-bold hover:bg-[#A35C28] transition-all shadow-sm"
             >
               <Plus size={20} />
               <span>New Project</span>
@@ -375,7 +375,7 @@ const ProjectDashboard = () => {
                   value={filters.search}
                   onChange={(e) => setFilters({ ...filters, search: e.target.value })}
                   placeholder="Search by name..."
-                  className="w-full pl-10 pr-4 py-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-[#135bec] focus:border-[#135bec]"
+                  className="w-full pl-10 pr-4 py-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-[#C4713A] focus:border-[#C4713A]"
                 />
               </div>
             </div>
@@ -386,7 +386,7 @@ const ProjectDashboard = () => {
               <select
                 value={filters.status}
                 onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-                className="w-full px-4 py-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-[#135bec] focus:border-[#135bec]"
+                className="w-full px-4 py-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-[#C4713A] focus:border-[#C4713A]"
               >
                 <option value="">All Statuses</option>
                 <option value="active">Active</option>
@@ -402,7 +402,7 @@ const ProjectDashboard = () => {
               <select
                 value={filters.priority}
                 onChange={(e) => setFilters({ ...filters, priority: e.target.value })}
-                className="w-full px-4 py-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-[#135bec] focus:border-[#135bec]"
+                className="w-full px-4 py-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-[#C4713A] focus:border-[#C4713A]"
               >
                 <option value="">All Priorities</option>
                 <option value="low">Low</option>
@@ -427,7 +427,7 @@ const ProjectDashboard = () => {
       {stats && (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
           <div className="bg-white dark:bg-[#1a2234] p-6 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm flex items-center gap-4">
-            <div className="size-12 bg-blue-50 dark:bg-blue-900/20 rounded-xl flex items-center justify-center text-[#135bec]">
+            <div className="size-12 bg-[#C4713A]/10 dark:bg-[#C4713A]/20 rounded-xl flex items-center justify-center text-[#C4713A]">
               <FolderOpen size={24} />
             </div>
             <div>
@@ -514,7 +514,7 @@ const ProjectDashboard = () => {
         <div className="xl:col-span-2 space-y-6">
           <div className="flex items-center justify-between">
             <h3 className="text-xl font-bold dark:text-white">Active Projects</h3>
-            <button className="text-sm font-bold text-[#135bec] hover:underline">
+            <button className="text-sm font-bold text-[#C4713A] hover:underline">
               View All
             </button>
           </div>
@@ -548,7 +548,7 @@ const ProjectDashboard = () => {
                             e.stopPropagation();
                             handleEditProject(project);
                           }}
-                          className="p-1 text-gray-400 hover:text-[#135bec] hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors"
+                          className="p-1 text-gray-400 hover:text-[#C4713A] hover:bg-[#C4713A]/10 dark:hover:bg-[#C4713A]/20 rounded transition-colors"
                           title="Edit project"
                         >
                           <Edit size={16} />
@@ -568,7 +568,7 @@ const ProjectDashboard = () => {
                   </div>
                 </div>
 
-                <h4 className="text-lg font-bold mb-1 dark:text-white group-hover:text-[#135bec] transition-colors">
+                <h4 className="text-lg font-bold mb-1 dark:text-white group-hover:text-[#C4713A] transition-colors">
                   {project.name}
                 </h4>
                 <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 mb-6 leading-relaxed">
@@ -578,7 +578,7 @@ const ProjectDashboard = () => {
                 <div className="space-y-3">
                   <div className="flex justify-between text-xs font-bold">
                     <span className="text-gray-400 uppercase tracking-tighter">Progress</span>
-                    <span className={project.status === 'active' ? 'text-[#135bec]' : project.status === 'on_hold' ? 'text-amber-600' : project.status === 'completed' ? 'text-emerald-600' : 'text-gray-600 dark:text-gray-400'}>
+                    <span className={project.status === 'active' ? 'text-[#C4713A]' : project.status === 'on_hold' ? 'text-amber-600' : project.status === 'completed' ? 'text-emerald-600' : 'text-gray-600 dark:text-gray-400'}>
                       {project.progress}%
                     </span>
                   </div>
@@ -620,12 +620,12 @@ const ProjectDashboard = () => {
           {stats && (
             <div className="bg-white dark:bg-[#1a2234] rounded-xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm">
               <h3 className="font-bold mb-6 flex items-center gap-2 dark:text-white">
-                <PieChart size={20} className="text-[#135bec]" />
+                <PieChart size={20} className="text-[#C4713A]" />
                 Budget & Resources
               </h3>
 
               <div className="flex items-center justify-center py-4">
-                <div className="relative size-32 rounded-full border-[10px] border-[#135bec] flex items-center justify-center border-t-gray-100 dark:border-t-gray-700 -rotate-45">
+                <div className="relative size-32 rounded-full border-[10px] border-[#C4713A] flex items-center justify-center border-t-gray-100 dark:border-t-gray-700 -rotate-45">
                   <div className="rotate-45 text-center">
                     <p className="text-xl font-black text-[#0d121b] dark:text-white">
                       {formatCurrency(stats.budget.spent)}
@@ -647,7 +647,7 @@ const ProjectDashboard = () => {
                   </div>
                   <div className="w-full bg-gray-100 dark:bg-gray-800 h-1.5 rounded-full overflow-hidden">
                     <div
-                      className="bg-[#135bec] h-full rounded-full"
+                      className="bg-[#C4713A] h-full rounded-full"
                       style={{ width: `${stats.budget.utilization}%` }}
                     ></div>
                   </div>
@@ -715,7 +715,7 @@ const ProjectDashboard = () => {
                 <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">No active risks</p>
               )}
             </div>
-            <button className="w-full mt-6 py-2 text-xs font-bold text-gray-400 dark:text-gray-500 hover:text-[#135bec] transition-colors border-t border-gray-100 dark:border-gray-800 pt-4 flex items-center justify-center gap-2">
+            <button className="w-full mt-6 py-2 text-xs font-bold text-gray-400 dark:text-gray-500 hover:text-[#C4713A] transition-colors border-t border-gray-100 dark:border-gray-800 pt-4 flex items-center justify-center gap-2">
               View All Issues
               <ArrowRight size={16} />
             </button>
@@ -748,7 +748,7 @@ const ProjectDashboard = () => {
                   required
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:ring-2 focus:ring-[#135bec] focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:ring-2 focus:ring-[#C4713A] focus:border-transparent"
                   placeholder="Enter project name"
                 />
               </div>
@@ -758,7 +758,7 @@ const ProjectDashboard = () => {
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:ring-2 focus:ring-[#135bec] focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:ring-2 focus:ring-[#C4713A] focus:border-transparent"
                   rows="3"
                   placeholder="Enter project description"
                 />
@@ -770,7 +770,7 @@ const ProjectDashboard = () => {
                   <select
                     value={formData.status}
                     onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:ring-2 focus:ring-[#135bec] focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:ring-2 focus:ring-[#C4713A] focus:border-transparent"
                   >
                     <option value="active">Active</option>
                     <option value="on_hold">On Hold</option>
@@ -784,7 +784,7 @@ const ProjectDashboard = () => {
                   <select
                     value={formData.priority}
                     onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:ring-2 focus:ring-[#135bec] focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:ring-2 focus:ring-[#C4713A] focus:border-transparent"
                   >
                     <option value="low">Low</option>
                     <option value="medium">Medium</option>
@@ -801,7 +801,7 @@ const ProjectDashboard = () => {
                     type="date"
                     value={formData.start_date}
                     onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:ring-2 focus:ring-[#135bec] focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:ring-2 focus:ring-[#C4713A] focus:border-transparent"
                   />
                 </div>
 
@@ -811,7 +811,7 @@ const ProjectDashboard = () => {
                     type="date"
                     value={formData.due_date}
                     onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:ring-2 focus:ring-[#135bec] focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:ring-2 focus:ring-[#C4713A] focus:border-transparent"
                   />
                 </div>
               </div>
@@ -826,7 +826,7 @@ const ProjectDashboard = () => {
                       ...formData, 
                       budget: { ...formData.budget, allocated: parseFloat(e.target.value) || 0 }
                     })}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:ring-2 focus:ring-[#135bec] focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:ring-2 focus:ring-[#C4713A] focus:border-transparent"
                     placeholder="0"
                   />
                 </div>
@@ -839,7 +839,7 @@ const ProjectDashboard = () => {
                     max="100"
                     value={formData.progress}
                     onChange={(e) => setFormData({ ...formData, progress: parseInt(e.target.value) || 0 })}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:ring-2 focus:ring-[#135bec] focus:border-transparent"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:ring-2 focus:ring-[#C4713A] focus:border-transparent"
                     placeholder="0"
                   />
                 </div>
@@ -855,7 +855,7 @@ const ProjectDashboard = () => {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-[#135bec] text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+                  className="flex-1 px-4 py-2 bg-[#C4713A] text-white rounded-lg font-semibold hover:bg-[#A35C28] transition-colors"
                 >
                   {editingProject ? 'Update Project' : 'Create Project'}
                 </button>
@@ -899,7 +899,7 @@ const ProjectDashboard = () => {
                   <select
                     value={selectedUserId}
                     onChange={(e) => setSelectedUserId(e.target.value)}
-                    className="flex-1 px-4 py-2.5 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#135bec] focus:border-[#135bec]"
+                    className="flex-1 px-4 py-2.5 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#C4713A] focus:border-[#C4713A]"
                   >
                     <option value="">Select a user...</option>
                     {users
@@ -914,7 +914,7 @@ const ProjectDashboard = () => {
                   <button
                     onClick={handleAddMember}
                     disabled={!selectedUserId}
-                    className="px-6 py-2.5 bg-[#135bec] text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    className="px-6 py-2.5 bg-[#C4713A] text-white rounded-lg font-semibold hover:bg-[#A35C28] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                   >
                     <Plus size={18} />
                     Add
@@ -969,7 +969,7 @@ const ProjectDashboard = () => {
             <div className="sticky bottom-0 bg-white dark:bg-[#1a2234] border-t border-gray-200 dark:border-gray-800 px-6 py-4 flex justify-end">
               <button
                 onClick={() => setShowMemberModal(false)}
-                className="px-5 py-2.5 text-sm font-semibold text-white bg-[#135bec] rounded-lg hover:bg-blue-700 transition-colors"
+                className="px-5 py-2.5 text-sm font-semibold text-white bg-[#C4713A] rounded-lg hover:bg-[#A35C28] transition-colors"
               >
                 Done
               </button>

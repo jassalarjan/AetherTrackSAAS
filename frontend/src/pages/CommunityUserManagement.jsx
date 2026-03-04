@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useConfirmModal } from '../hooks/useConfirmModal';
@@ -299,7 +299,7 @@ export default function CommunityUserManagement() {
               {/* Add User Button */}
               <button
                 onClick={openCreateModal}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap"
+                className="flex items-center gap-2 px-4 py-2 bg-[#C4713A] text-white rounded-lg hover:bg-[#A35C28] transition-colors whitespace-nowrap"
               >
                 <Plus size={20} />
                 Add User
@@ -580,7 +580,7 @@ export default function CommunityUserManagement() {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  className="flex-1 px-4 py-2 bg-[#C4713A] text-white rounded-lg hover:bg-[#A35C28] transition-colors"
                 >
                   {modalMode === 'create' ? 'Create User' : 'Update User'}
                 </button>

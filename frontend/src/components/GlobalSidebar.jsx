@@ -8,6 +8,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { useSidebar } from '../context/SidebarContext';
 import '../aethertrack-reference.css';
 
 /* ─── Section detection ───────────────────────────────────────────────────── */
@@ -45,6 +46,7 @@ const GlobalSidebar = () => {
   const location  = useLocation();
   const { user }  = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const { isCollapsed, toggleCollapse } = useSidebar();
 
   const [activeSection, setActiveSection] = useState(() => detectSection(location.pathname));
 
@@ -79,7 +81,7 @@ const GlobalSidebar = () => {
   const nav = (path) => () => navigate(path);
 
   return (
-    <aside className="sidebar" aria-label="Main navigation">
+    <aside className={`sidebar${isCollapsed ? ' sidebar--collapsed' : ''}`} aria-label="Main navigation">
 
       {/* ── Icon Rail (52 px) ── */}
       <div className="nav-rail">
@@ -91,7 +93,7 @@ const GlobalSidebar = () => {
           {/* Overview — everyone */}
           <button
             className={`rail-item${activeSection === 'overview' ? ' active' : ''}`}
-            onClick={() => setActiveSection('overview')}
+            onClick={() => { setActiveSection('overview'); navigate('/dashboard'); }}
             title="Overview"
             aria-label="Overview"
           >
@@ -102,7 +104,7 @@ const GlobalSidebar = () => {
           {/* Projects — everyone */}
           <button
             className={`rail-item${activeSection === 'projects' ? ' active' : ''}`}
-            onClick={() => setActiveSection('projects')}
+            onClick={() => { setActiveSection('projects'); navigate('/projects'); }}
             title="Projects"
             aria-label="Projects"
           >
@@ -114,7 +116,7 @@ const GlobalSidebar = () => {
           {isHROrAbove && (
             <button
               className={`rail-item${activeSection === 'hr' ? ' active' : ''}`}
-              onClick={() => setActiveSection('hr')}
+              onClick={() => { setActiveSection('hr'); navigate(isAdmin ? '/hr/dashboard' : '/hr/attendance'); }}
               title="People & HR"
               aria-label="People & HR"
             >
@@ -127,7 +129,7 @@ const GlobalSidebar = () => {
           {showSystem && (
             <button
               className={`rail-item${activeSection === 'system' ? ' active' : ''}`}
-              onClick={() => setActiveSection('system')}
+              onClick={() => { setActiveSection('system'); navigate('/settings'); }}
               title="System"
               aria-label="System"
             >
@@ -140,6 +142,14 @@ const GlobalSidebar = () => {
         <div className="rail-foot">
           <button className="theme-btn" onClick={toggleTheme} aria-label="Toggle theme">
             {theme === 'dark' ? '☀' : '☽'}
+          </button>
+          <button
+            className="rail-collapse-btn"
+            onClick={toggleCollapse}
+            aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          >
+            {isCollapsed ? '›' : '‹'}
           </button>
         </div>
       </div>

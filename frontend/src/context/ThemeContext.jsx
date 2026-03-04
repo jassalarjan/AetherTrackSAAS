@@ -40,8 +40,13 @@ export const THEMES = {
 
 /**
  * Available color schemes (5 schemes per spec)
+ * Default: 'warm' (Terracotta/warm paper — matches the dashboard design)
  */
 export const COLOR_SCHEMES = {
+  warm: {
+    name: 'Warm Paper',
+    primaryHex: '#C4713A',
+  },
   blue: {
     name: 'Blue',
     primaryHex: '#2563eb',
@@ -53,10 +58,6 @@ export const COLOR_SCHEMES = {
   green: {
     name: 'Green',
     primaryHex: '#16a34a',
-  },
-  orange: {
-    name: 'Orange',
-    primaryHex: '#ea580c',
   },
   pink: {
     name: 'Pink',
@@ -91,10 +92,17 @@ export const ThemeProvider = ({ children }) => {
     return localStorage.getItem('theme') || THEMES.light;
   });
 
-  // Color scheme: 'blue', 'purple', 'green', 'orange', 'pink'
+  // Color scheme: default is 'warm' (terracotta warm paper system)
+  // Migrates legacy 'orange' value → 'warm'
   const [colorScheme, setColorScheme] = useState(() => {
-    if (typeof window === 'undefined') return 'blue';
-    return localStorage.getItem('colorScheme') || 'blue';
+    if (typeof window === 'undefined') return 'warm';
+    const stored = localStorage.getItem('colorScheme');
+    // Migrate old 'orange' alias → 'warm'
+    if (stored === 'orange') {
+      localStorage.setItem('colorScheme', 'warm');
+      return 'warm';
+    }
+    return stored || 'warm';
   });
 
   // Density mode: 'default' or 'compact'
@@ -133,22 +141,17 @@ export const ThemeProvider = ({ children }) => {
   useEffect(() => {
     const root = document.documentElement;
     
-    // Set data-theme attribute (replaces class-based dark mode)
+    // Set data-theme attribute: 'dark' | 'light' | 'dark-<scheme>'
+    // Using 'dark' cleanly so tokens.css [data-theme="dark"] rules fire correctly.
+    // Color-scheme selection is tracked via data-scheme separately.
     if (effectiveTheme === THEMES.dark) {
       root.setAttribute('data-theme', 'dark');
     } else {
       root.setAttribute('data-theme', 'light');
     }
 
-    // Set color scheme as data-scheme attribute
+    // Set color scheme as dedicated data-scheme attribute
     root.setAttribute('data-scheme', colorScheme);
-    
-    // Also set the color scheme as data-theme when not dark
-    if (effectiveTheme === THEMES.dark) {
-      root.setAttribute('data-theme', `dark-${colorScheme}`);
-    } else {
-      root.setAttribute('data-theme', colorScheme);
-    }
     
     // Set density mode
     root.setAttribute('data-density', densityMode);
@@ -181,8 +184,7 @@ export const ThemeProvider = ({ children }) => {
     
     const handleChange = (e) => {
       const root = document.documentElement;
-      const newTheme = e.matches ? THEMES.dark : THEMES.light;
-      root.setAttribute('data-theme', newTheme === THEMES.dark ? `dark-${colorScheme}` : colorScheme);
+      root.setAttribute('data-theme', e.matches ? 'dark' : 'light');
     };
     
     // Apply initial value
@@ -272,24 +274,28 @@ export const ThemeProvider = ({ children }) => {
       primaryText: `text-[${hex}]`,
       primaryLight: `bg-[${hex}]`,
       primaryRing: `ring-[${hex}]`,
+      // Semantic status colours (fixed — not scheme-dependent)
+      success: 'bg-green-500',
+      warning: 'bg-amber-500',
+      danger:  'bg-red-500',
+      info:    'bg-sky-500',
     };
   }, [colorScheme, enterpriseBranding]);
 
   // Build theme object for backwards compatibility
+  // Uses CSS variables so colors always follow the active warm-paper token set
   const currentTheme = useMemo(() => {
-    const isDark = effectiveTheme === THEMES.dark;
-    
     return {
-      surface: isDark ? 'bg-[#1c2027]' : 'bg-white',
-      surfaceElevated: isDark ? 'bg-[#282f39]' : 'bg-white',
-      text: isDark ? 'text-white' : 'text-gray-900',
-      textSecondary: isDark ? 'text-gray-300' : 'text-gray-600',
-      textMuted: isDark ? 'text-gray-400' : 'text-gray-500',
-      border: isDark ? 'border-[#3e454f]' : 'border-gray-200',
-      hover: isDark ? 'hover:bg-[#323941]' : 'hover:bg-gray-50',
-      focus: isDark ? 'focus:ring-blue-400' : 'focus:ring-blue-500',
+      surface: 'bg-[var(--bg-base)]',
+      surfaceElevated: 'bg-[var(--bg-raised)]',
+      text: 'text-[var(--text-primary)]',
+      textSecondary: 'text-[var(--text-secondary)]',
+      textMuted: 'text-[var(--text-muted)]',
+      border: 'border-[var(--border-mid)]',
+      hover: 'hover:bg-[var(--bg-surface)]',
+      focus: 'focus:ring-[var(--brand)]',
     };
-  }, [effectiveTheme]);
+  }, []);
 
   // Context value
   const value = useMemo(() => ({

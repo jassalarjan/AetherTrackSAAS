@@ -172,7 +172,7 @@ const ThemeToggle = ({ className = '' }) => {
             <div className="px-3 py-1.5 text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">
               Color Scheme
             </div>
-            <div className="grid grid-cols-5 gap-2 px-3 py-2">
+            <div className="grid grid-cols-5 gap-2 px-3 py-2 flex-wrap">
               {Object.entries(colorSchemes).map(([key, scheme]) => (
                 <button
                   key={key}

@@ -1,10 +1,12 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Calendar as BigCalendar, momentLocalizer } from 'react-big-calendar';
 import moment from 'moment';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import ResponsivePageLayout from '../components/layouts/ResponsivePageLayout';
 import useRealtimeSync from '../hooks/useRealtimeSync';
+import { usePageShortcuts } from '../hooks/usePageShortcuts';
+import ShortcutsOverlay from '../components/ShortcutsOverlay';
 import { Plus, X, Calendar as CalendarIcon, Filter, Settings } from 'lucide-react';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 
@@ -23,6 +25,15 @@ const Calendar = () => {
     showMyTasksOnly: false,
   });
   const [showLegend, setShowLegend] = useState(true);
+  const [calendarDate, setCalendarDate] = useState(new Date());
+
+  // ── Keyboard shortcuts ──────────────────────────────────────────────────
+  const calendarShortcuts = [
+    { key: 't', label: 'Go to Today',    description: 'Navigate the calendar to today', action: () => setCalendarDate(new Date()) },
+    { key: 'f', label: 'Toggle Legend',  description: 'Show/hide the colour legend',    action: () => setShowLegend((v) => !v) },
+    { key: 'r', label: 'Refresh',        description: 'Reload all calendar events',     action: () => fetchTasks() },
+  ];
+  const { showHelp, setShowHelp } = usePageShortcuts(calendarShortcuts);
 
   useEffect(() => {
     fetchTasks();
@@ -80,7 +91,7 @@ const Calendar = () => {
   const getStatusColor = (status) => {
     const colors = {
       todo: '#6b7280',
-      in_progress: '#136dec',
+      in_progress: '#C4713A',
       review: '#eab308',
       done: '#22c55e',
       archived: '#ef4444',
@@ -148,7 +159,7 @@ const Calendar = () => {
               </button>
               <button
                 onClick={() => window.location.href = '/tasks?create=true'}
-                className="flex items-center justify-center rounded h-9 px-4 bg-[#136dec] text-white gap-2 text-sm font-bold hover:bg-blue-600 transition-colors shadow-sm shadow-blue-900/20"
+                className="flex items-center justify-center rounded h-9 px-4 bg-[#C4713A] text-white gap-2 text-sm font-bold hover:bg-[#A35C28] transition-colors shadow-sm shadow-blue-900/20"
               >
                 <Plus size={20} />
                 <span>Create Task</span>
@@ -166,7 +177,7 @@ const Calendar = () => {
             <select
               value={filters.status}
               onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-              className={`h-9 px-3 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-white'} border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} rounded text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'} focus:ring-2 focus:ring-[#136dec] focus:border-transparent`}
+              className={`h-9 px-3 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-white'} border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} rounded text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'} focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
             >
               <option value="">All Statuses</option>
               <option value="todo">To Do</option>
@@ -178,7 +189,7 @@ const Calendar = () => {
             <select
               value={filters.priority}
               onChange={(e) => setFilters({ ...filters, priority: e.target.value })}
-              className={`h-9 px-3 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-white'} border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} rounded text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'} focus:ring-2 focus:ring-[#136dec] focus:border-transparent`}
+              className={`h-9 px-3 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-white'} border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} rounded text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'} focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
             >
               <option value="">All Priorities</option>
               <option value="low">Low</option>
@@ -191,7 +202,7 @@ const Calendar = () => {
               onClick={() => setFilters({ ...filters, showMyTasksOnly: !filters.showMyTasksOnly })}
               className={`h-9 px-4 rounded text-sm font-medium transition-colors ${
                 filters.showMyTasksOnly
-                  ? 'bg-[#136dec] text-white border-[#136dec]'
+                  ? 'bg-[#C4713A] text-white border-[#C4713A]'
                   : `${theme === 'dark' ? 'bg-[#282f39]' : 'bg-white'} ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} ${theme === 'dark' ? 'hover:text-white' : 'hover:text-gray-900'}`
               } border`}
             >
@@ -226,7 +237,7 @@ const Calendar = () => {
                       <span className={`text-sm ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`}>To Do</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className="w-4 h-4 bg-[#136dec] rounded"></div>
+                      <div className="w-4 h-4 bg-[#C4713A] rounded"></div>
                       <span className={`text-sm ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`}>In Progress</span>
                     </div>
                     <div className="flex items-center gap-2">
@@ -277,6 +288,8 @@ const Calendar = () => {
               selectable
               views={['month', 'week', 'day', 'agenda']}
               defaultView="month"
+              date={calendarDate}
+              onNavigate={(date) => setCalendarDate(date)}
               popup
               tooltipAccessor={(event) => `${event.title} - ${event.resource.priority}`}
             />
@@ -374,7 +387,7 @@ const Calendar = () => {
 
               <button
                 onClick={() => window.location.href = `/tasks`}
-                className="w-full px-6 py-2 bg-[#136dec] text-white rounded hover:bg-blue-600 transition-colors font-semibold"
+                className="w-full px-6 py-2 bg-[var(--brand)] text-white rounded hover:bg-[var(--brand-light)] transition-colors font-semibold"
               >
                 View in Tasks
               </button>
@@ -386,7 +399,7 @@ const Calendar = () => {
       <style dangerouslySetInnerHTML={{__html: `
         .calendar-container .rbc-calendar {
           font-family: 'Inter', sans-serif;
-          color: ${theme === 'dark' ? '#fff' : '#111827'};
+          color: var(--text-primary);
         }
         .calendar-container .rbc-header {
           padding: 12px;
@@ -394,30 +407,30 @@ const Calendar = () => {
           font-size: 0.75rem;
           text-transform: uppercase;
           letter-spacing: 0.05em;
-          background: ${theme === 'dark' ? '#1c2027' : '#f9fafb'};
-          color: ${theme === 'dark' ? '#9da8b9' : '#6b7280'};
-          border-color: ${theme === 'dark' ? '#282f39' : '#e5e7eb'};
+          background: var(--bg-surface);
+          color: var(--text-muted);
+          border-color: var(--border-soft);
         }
         .calendar-container .rbc-today {
-          background-color: ${theme === 'dark' ? '#136dec20' : '#136dec10'};
+          background-color: var(--brand-dim);
         }
         .calendar-container .rbc-off-range-bg {
-          background: ${theme === 'dark' ? '#0e1217' : '#f9fafb'};
+          background: var(--bg-sunken);
         }
         .calendar-container .rbc-date-cell {
-          color: ${theme === 'dark' ? '#d1d5db' : '#374151'};
+          color: var(--text-secondary);
           padding: 4px;
         }
         .calendar-container .rbc-off-range {
-          color: ${theme === 'dark' ? '#4b5563' : '#9ca3af'};
+          color: var(--text-muted);
         }
         .calendar-container .rbc-month-view {
-          background: ${theme === 'dark' ? '#1c2027' : '#ffffff'};
-          border-color: ${theme === 'dark' ? '#282f39' : '#e5e7eb'};
+          background: var(--bg-base);
+          border-color: var(--border-soft);
         }
         .calendar-container .rbc-day-bg {
-          background: ${theme === 'dark' ? '#1c2027' : '#ffffff'};
-          border-color: ${theme === 'dark' ? '#282f39' : '#e5e7eb'};
+          background: var(--bg-base);
+          border-color: var(--border-soft);
         }
         .calendar-container .rbc-event {
           transition: all 0.2s ease;
@@ -427,61 +440,69 @@ const Calendar = () => {
           box-shadow: 0 4px 12px rgba(0,0,0,0.4);
         }
         .calendar-container .rbc-toolbar {
-          color: ${theme === 'dark' ? '#fff' : '#111827'};
+          color: var(--text-primary);
           margin-bottom: 20px;
           padding: 12px;
-          background: ${theme === 'dark' ? '#111418' : '#f9fafb'};
+          background: var(--bg-canvas);
           border-radius: 0.125rem;
         }
         .calendar-container .rbc-toolbar button {
-          color: ${theme === 'dark' ? '#9da8b9' : '#6b7280'};
-          background: ${theme === 'dark' ? '#282f39' : '#ffffff'};
-          border: 1px solid ${theme === 'dark' ? '#3e454f' : '#d1d5db'};
+          color: var(--text-muted);
+          background: var(--bg-raised);
+          border: 1px solid var(--border-mid);
           border-radius: 0.125rem;
           padding: 6px 12px;
           font-size: 0.875rem;
           font-weight: 500;
         }
         .calendar-container .rbc-toolbar button:hover {
-          background: ${theme === 'dark' ? '#3a4454' : '#f3f4f6'};
-          color: ${theme === 'dark' ? '#fff' : '#111827'};
+          background: var(--bg-surface);
+          color: var(--text-primary);
         }
         .calendar-container .rbc-toolbar button.rbc-active {
-          background: #136dec;
-          color: white;
-          border-color: #136dec;
+          background: var(--brand);
+          color: #fff;
+          border-color: var(--brand);
         }
         .calendar-container .rbc-agenda-view {
-          background: ${theme === 'dark' ? '#1c2027' : '#ffffff'};
+          background: var(--bg-base);
         }
         .calendar-container .rbc-agenda-view table {
-          border-color: ${theme === 'dark' ? '#282f39' : '#e5e7eb'};
+          border-color: var(--border-soft);
         }
         .calendar-container .rbc-agenda-table tbody > tr > td {
-          color: ${theme === 'dark' ? '#d1d5db' : '#374151'};
-          border-color: ${theme === 'dark' ? '#282f39' : '#e5e7eb'};
+          color: var(--text-secondary);
+          border-color: var(--border-soft);
         }
         .calendar-container .rbc-agenda-date-cell,
         .calendar-container .rbc-agenda-time-cell {
-          color: ${theme === 'dark' ? '#9da8b9' : '#6b7280'};
+          color: var(--text-muted);
         }
         .calendar-container .rbc-time-view {
-          background: ${theme === 'dark' ? '#1c2027' : '#ffffff'};
-          border-color: ${theme === 'dark' ? '#282f39' : '#e5e7eb'};
+          background: var(--bg-base);
+          border-color: var(--border-soft);
         }
         .calendar-container .rbc-time-header-content {
-          border-color: ${theme === 'dark' ? '#282f39' : '#e5e7eb'};
+          border-color: var(--border-soft);
         }
         .calendar-container .rbc-time-content {
-          border-color: ${theme === 'dark' ? '#282f39' : '#e5e7eb'};
+          border-color: var(--border-soft);
         }
         .calendar-container .rbc-time-slot {
-          border-color: ${theme === 'dark' ? '#282f39' : '#e5e7eb'};
+          border-color: var(--border-hair);
         }
         .calendar-container .rbc-current-time-indicator {
-          background-color: #136dec;
+          background-color: var(--brand);
         }
       `}} />
+
+      {/* Keyboard shortcuts help overlay */}
+      <ShortcutsOverlay
+        show={showHelp}
+        onClose={() => setShowHelp(false)}
+        shortcuts={calendarShortcuts}
+        pageName="Calendar"
+      />
     </ResponsivePageLayout>
   );
 };

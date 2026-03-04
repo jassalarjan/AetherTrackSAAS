@@ -1,4 +1,5 @@
 ﻿import { useState, useRef } from 'react';
+import Spinner from '../components/Spinner';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -256,11 +257,11 @@ const Settings = () => {
   return (
     <ResponsivePageLayout title="Settings" icon={SettingsIcon} noPadding>
         {/* Header */}
-        <header className="border-b border-gray-200 dark:border-[#282f39] bg-white dark:bg-[#111418] shrink-0">
-          <div className="flex items-center justify-between px-6 py-4">
+        <header className="border-b shrink-0" style={{ background: 'var(--bg-canvas)', borderColor: 'var(--border-soft)' }}>
+          <div className="flex items-center justify-between px-8 py-5">
             <div>
-              <h2 className="text-gray-900 dark:text-white text-xl font-bold leading-tight">Settings</h2>
-              <p className="text-gray-600 dark:text-[#9da8b9] text-xs mt-1">Customize your AetherTrack experience</p>
+              <h2 style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-heading)', fontSize: '20px', fontWeight: 500, letterSpacing: '-0.02em' }}>Settings</h2>
+              <p style={{ color: 'var(--text-muted)', fontSize: '12px', marginTop: '2px', fontFamily: 'var(--font-body)' }}>Customize your AetherTrack experience</p>
             </div>
           </div>
         </header>
@@ -269,10 +270,10 @@ const Settings = () => {
         <div className="flex-1 overflow-auto p-6">
           <div className="max-w-4xl mx-auto space-y-6">
             {/* Profile Section */}
-            <div className="bg-white dark:bg-[#1c2027] border-gray-200 dark:border-[#282f39] rounded border p-6">
+            <div className="rounded-xl border p-6" style={{ background: 'var(--bg-raised)', borderColor: 'var(--card-border, var(--border-soft))', boxShadow: 'var(--card-shadow)' }}>
               <div className="flex items-center gap-3 mb-6">
-                <User className={currentColorScheme.primaryText} size={24} />
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white uppercase tracking-wider">Profile</h3>
+                <User style={{ color: 'var(--brand)' }} size={24} />
+                <h3 className="text-lg font-bold uppercase tracking-wider" style={{ color: 'var(--text-primary)' }}>Profile</h3>
               </div>
 
               {/* Profile Picture Section */}
@@ -287,19 +288,19 @@ const Settings = () => {
                       <img
                         src={user.profile_picture}
                         alt={user?.full_name || 'User'}
-                        className={`w-24 h-24 rounded-full object-cover border-4 ${currentColorScheme.primaryText.replace('text-', 'border-')}`}
+                        className="w-24 h-24 rounded-full object-cover border-4" style={{ borderColor: 'var(--brand)' }}
                       />
                     ) : (
                       <div 
-                        className={`w-24 h-24 rounded-full flex items-center justify-center text-white text-2xl font-bold border-4 ${currentColorScheme.primaryText.replace('text-', 'border-')}`}
-                        style={{ backgroundColor: getColorFromName(user?.full_name) }}
+                        className="w-24 h-24 rounded-full flex items-center justify-center text-white text-2xl font-bold border-4"
+                        style={{ backgroundColor: getColorFromName(user?.full_name), borderColor: 'var(--brand)' }}
                       >
                         {getInitials(user?.full_name)}
                       </div>
                     )}
                     {isUploadingPicture && (
                       <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center">
-                        <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        <Spinner size="sm" color="white" />
                       </div>
                     )}
                   </div>
@@ -318,7 +319,8 @@ const Settings = () => {
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
                       disabled={isUploadingPicture}
-                      className={`flex items-center gap-2 px-4 py-2 ${currentColorScheme.primary} text-white rounded ${currentColorScheme.primaryHover} transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
+                      className="flex items-center gap-2 px-4 py-2 text-white rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      style={{ background: 'var(--brand)' }}
                     >
                       <Upload size={16} />
                       <span>{user?.profile_picture ? 'Change Picture' : 'Upload Picture'}</span>
@@ -401,10 +403,10 @@ const Settings = () => {
             </div>
 
             {/* Security Section */}
-            <div className="bg-white dark:bg-[#1c2027] border-gray-200 dark:border-[#282f39] rounded border p-6">
+            <div className="rounded-xl border p-6" style={{ background: 'var(--bg-raised)', borderColor: 'var(--card-border, var(--border-soft))', boxShadow: 'var(--card-shadow)' }}>
               <div className="flex items-center gap-3 mb-6">
-                <Lock className={currentColorScheme.primaryText} size={24} />
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white uppercase tracking-wider">Security</h3>
+                <Lock style={{ color: 'var(--brand)' }} size={24} />
+                <h3 className="text-lg font-bold uppercase tracking-wider" style={{ color: 'var(--text-primary)' }}>Security</h3>
               </div>
               <form onSubmit={handlePasswordChange} className="space-y-4">
                 <div>
@@ -417,7 +419,8 @@ const Settings = () => {
                       type={showOldPassword ? "text" : "password"}
                       value={passwordData.oldPassword}
                       onChange={(e) => setPasswordData({ ...passwordData, oldPassword: e.target.value })}
-                      className={`w-full px-3 py-2 pr-10 bg-white dark:bg-[#111418] border-gray-300 dark:border-[#282f39] text-gray-900 dark:text-white border rounded focus:ring-2 ${currentColorScheme.primaryText.replace('text-', 'focus:ring-')} focus:border-transparent`}
+                      className="w-full px-3 py-2 pr-10 rounded border outline-none transition-colors"
+                      style={{ background: 'var(--bg-base)', borderColor: 'var(--border-mid)', color: 'var(--text-primary)' }}
                       required
                     />
                     <button
@@ -440,7 +443,8 @@ const Settings = () => {
                       type={showNewPassword ? "text" : "password"}
                       value={passwordData.newPassword}
                       onChange={(e) => handlePasswordFieldChange('newPassword', e.target.value)}
-                      className={`w-full px-3 py-2 pr-10 bg-white dark:bg-[#111418] border-gray-300 dark:border-[#282f39] text-gray-900 dark:text-white border rounded focus:ring-2 ${currentColorScheme.primaryText.replace('text-', 'focus:ring-')} focus:border-transparent`}
+                      className="w-full px-3 py-2 pr-10 rounded border outline-none transition-colors"
+                      style={{ background: 'var(--bg-base)', borderColor: 'var(--border-mid)', color: 'var(--text-primary)' }}
                       required
                       minLength={6}
                     />
@@ -494,7 +498,8 @@ const Settings = () => {
                       type={showConfirmPassword ? "text" : "password"}
                       value={passwordData.confirmPassword}
                       onChange={(e) => handlePasswordFieldChange('confirmPassword', e.target.value)}
-                      className={`w-full px-3 py-2 pr-10 bg-white dark:bg-[#111418] border-gray-300 dark:border-[#282f39] text-gray-900 dark:text-white border rounded focus:ring-2 ${currentColorScheme.primaryText.replace('text-', 'focus:ring-')} focus:border-transparent`}
+                      className="w-full px-3 py-2 pr-10 rounded border outline-none transition-colors"
+                      style={{ background: 'var(--bg-base)', borderColor: 'var(--border-mid)', color: 'var(--text-primary)' }}
                       required
                       minLength={6}
                     />
@@ -525,7 +530,10 @@ const Settings = () => {
                 <button
                   type="submit"
                   disabled={isChangingPassword}
-                  className={`w-full ${currentColorScheme.primary} ${currentColorScheme.primaryHover} text-white font-bold py-2 px-4 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
+                  className="w-full text-white font-bold py-2 px-4 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{ background: 'var(--brand)' }}
+                  onMouseOver={(e) => { if (!isChangingPassword) e.currentTarget.style.background = 'var(--brand-light)'; }}
+                  onMouseOut={(e) => { e.currentTarget.style.background = 'var(--brand)'; }}
                 >
                   {isChangingPassword ? 'Changing Password...' : 'Change Password'}
                 </button>
@@ -533,26 +541,26 @@ const Settings = () => {
             </div>
 
             {/* Appearance Section */}
-            <div className="bg-white dark:bg-[#1c2027] border-gray-200 dark:border-[#282f39] rounded border p-6">
+            <div className="rounded-xl border p-6" style={{ background: 'var(--bg-raised)', borderColor: 'var(--card-border, var(--border-soft))', boxShadow: 'var(--card-shadow)' }}>
               <div className="flex items-center gap-3 mb-6">
-                <Palette className={currentColorScheme.primaryText} size={24} />
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white uppercase tracking-wider">Appearance</h3>
+                <Palette style={{ color: 'var(--brand)' }} size={24} />
+                <h3 className="text-lg font-bold uppercase tracking-wider" style={{ color: 'var(--text-primary)' }}>Appearance</h3>
               </div>
               <div className="space-y-6">
                 <div>
-                  <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">Theme & Color Scheme</h4>
-                  <p className="text-sm text-gray-600 dark:text-[#9da8b9] mb-4">
+                  <h4 className="text-sm font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>Theme &amp; Color Scheme</h4>
+                  <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
                     Customize how AetherTrack looks and feels. Changes are saved automatically.
                   </p>
                   <ThemeToggle />
                 </div>
 
-                <div className="border-t border-gray-200 dark:border-[#282f39] pt-6">
+                <div className="border-t pt-6" style={{ borderColor: 'var(--border-soft)' }}>
                   <div className="flex items-center gap-3">
-                    <Monitor className="text-gray-600 dark:text-[#9da8b9]" size={20} />
+                    <Monitor style={{ color: 'var(--text-muted)' }} size={20} />
                     <div>
-                      <h4 className="font-medium text-gray-900 dark:text-white text-sm">System Integration</h4>
-                      <p className="text-xs text-gray-600 dark:text-[#9da8b9] mt-1">
+                      <h4 className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>System Integration</h4>
+                      <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
                         Your theme preferences are automatically synced across devices and saved locally.
                       </p>
                     </div>
@@ -562,51 +570,51 @@ const Settings = () => {
             </div>
 
             {/* Preferences Section */}
-            <div className="bg-white dark:bg-[#1c2027] border-gray-200 dark:border-[#282f39] rounded border p-6">
+            <div className="rounded-xl border p-6" style={{ background: 'var(--bg-raised)', borderColor: 'var(--card-border, var(--border-soft))', boxShadow: 'var(--card-shadow)' }}>
               <div className="flex items-center gap-3 mb-6">
-                <SettingsIcon className={currentColorScheme.primaryText} size={24} />
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white uppercase tracking-wider">Preferences</h3>
+                <SettingsIcon style={{ color: 'var(--brand)' }} size={24} />
+                <h3 className="text-lg font-bold uppercase tracking-wider" style={{ color: 'var(--text-primary)' }}>Preferences</h3>
               </div>
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h4 className="font-medium text-gray-900 dark:text-white text-sm">Email Notifications</h4>
-                    <p className="text-xs text-gray-600 dark:text-[#9da8b9] mt-1">Receive email updates about your tasks</p>
+                    <h4 className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>Email Notifications</h4>
+                    <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>Receive email updates about your tasks</p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input type="checkbox" className="sr-only peer" defaultChecked />
-                    <div className={`w-11 h-6 bg-gray-200 dark:bg-[#282f39] border-gray-300 dark:border-[#3e454f] peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all border ${currentColorScheme.primary.replace('bg-', 'peer-checked:bg-')}`}></div>
+                    <div className="w-11 h-6 rounded-full peer peer-checked:after:translate-x-full border after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all" style={{ background: 'var(--bg-surface)', borderColor: 'var(--border-mid)' }}></div>
                   </label>
                 </div>
 
                 <div className="flex items-center justify-between">
                   <div>
-                    <h4 className="font-medium text-gray-900 dark:text-white text-sm">Task Reminders</h4>
-                    <p className="text-xs text-gray-600 dark:text-[#9da8b9] mt-1">Get reminded about upcoming due dates</p>
+                    <h4 className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>Task Reminders</h4>
+                    <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>Get reminded about upcoming due dates</p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input type="checkbox" className="sr-only peer" defaultChecked />
-                    <div className={`w-11 h-6 bg-gray-200 dark:bg-[#282f39] border-gray-300 dark:border-[#3e454f] peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all border ${currentColorScheme.primary.replace('bg-', 'peer-checked:bg-')}`}></div>
+                    <div className="w-11 h-6 rounded-full peer peer-checked:after:translate-x-full border after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all" style={{ background: 'var(--bg-surface)', borderColor: 'var(--border-mid)' }}></div>
                   </label>
                 </div>
               </div>
             </div>
 
             {/* Notification Settings */}
-            <div className="bg-white dark:bg-[#1c2027] border-gray-200 dark:border-[#282f39] rounded border p-6">
+            <div className="rounded-xl border p-6" style={{ background: 'var(--bg-raised)', borderColor: 'var(--card-border, var(--border-soft))', boxShadow: 'var(--card-shadow)' }}>
               <div className="flex items-center gap-3 mb-6">
-                <Bell className={currentColorScheme.primaryText} size={24} />
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white uppercase tracking-wider">Notifications</h3>
+                <Bell style={{ color: 'var(--brand)' }} size={24} />
+                <h3 className="text-lg font-bold uppercase tracking-wider" style={{ color: 'var(--text-primary)' }}>Notifications</h3>
               </div>
               <NotificationSettings />
             </div>
 
             {/* Debug Info - Admin Only */}
             {user?.role === 'admin' && (
-              <div className="bg-white dark:bg-[#1c2027] border-gray-200 dark:border-[#282f39] rounded border p-6">
+              <div className="rounded-xl border p-6" style={{ background: 'var(--bg-raised)', borderColor: 'var(--card-border, var(--border-soft))', boxShadow: 'var(--card-shadow)' }}>
                 <div className="flex items-center gap-3 mb-4">
                   <AlertCircle className="text-yellow-500" size={24} />
-                  <h3 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider">Notification Debug (Admin Only)</h3>
+                  <h3 className="text-sm font-bold uppercase tracking-wider" style={{ color: 'var(--text-primary)' }}>Notification Debug (Admin Only)</h3>
                 </div>
                 <div className="space-y-2 text-xs font-mono">
                   <div className="grid grid-cols-2 gap-2">

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -113,7 +113,7 @@ const Sidebar = () => {
               className={`flex items-center gap-3 px-3 py-2 rounded transition-colors group ${
                 active
                   ? isDark
-                    ? 'bg-[#136dec]/10 text-[#136dec]'
+                    ? 'bg-[#C4713A]/10 text-[#C4713A]'
                     : 'bg-blue-50 text-blue-600'
                   : isDark
                     ? 'text-[#9da8b9] hover:bg-[#1c2027] hover:text-white'
@@ -147,7 +147,7 @@ const Sidebar = () => {
                   className={`flex items-center gap-3 px-3 py-2 rounded transition-colors group ${
                     active
                       ? isDark
-                        ? 'bg-[#136dec]/10 text-[#136dec]'
+                        ? 'bg-[#C4713A]/10 text-[#C4713A]'
                         : 'bg-blue-50 text-blue-600'
                       : isDark
                         ? 'text-[#9da8b9] hover:bg-[#1c2027] hover:text-white'
@@ -206,7 +206,7 @@ const Sidebar = () => {
               className={`flex items-center gap-3 px-3 py-2 rounded transition-colors group w-full ${
                 active
                   ? isDark
-                    ? 'bg-[#136dec]/10 text-[#136dec]'
+                    ? 'bg-[#C4713A]/10 text-[#C4713A]'
                     : 'bg-blue-50 text-blue-600'
                   : isDark
                     ? 'text-[#9da8b9] hover:bg-[#1c2027] hover:text-white'

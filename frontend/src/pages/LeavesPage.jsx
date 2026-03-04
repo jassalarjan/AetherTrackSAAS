@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useSidebar } from '../context/SidebarContext';
@@ -41,7 +41,7 @@ export default function LeavesPage() {
     annualQuota: 10,
     carryForward: false,
     maxCarryForward: 0,
-    color: '#3b82f6',
+    color: '#C4713A',
     description: ''
   });
 
@@ -192,7 +192,7 @@ export default function LeavesPage() {
         annualQuota: 10,
         carryForward: false,
         maxCarryForward: 0,
-        color: '#3b82f6',
+        color: '#C4713A',
         description: ''
       });
       fetchData();
@@ -211,7 +211,7 @@ export default function LeavesPage() {
       annualQuota: leaveType.annualQuota,
       carryForward: leaveType.carryForward || false,
       maxCarryForward: leaveType.maxCarryForward || 0,
-      color: leaveType.color || '#3b82f6',
+      color: leaveType.color || '#C4713A',
       description: leaveType.description || ''
     });
     setShowLeaveTypeModal(true);
@@ -226,7 +226,7 @@ export default function LeavesPage() {
       annualQuota: 10,
       carryForward: false,
       maxCarryForward: 0,
-      color: '#3b82f6',
+      color: '#C4713A',
       description: ''
     });
   };
@@ -261,7 +261,7 @@ export default function LeavesPage() {
             )}
             <button
               onClick={() => setShowModal(true)}
-              className="px-3 sm:px-4 py-2 bg-[#136dec] text-white hover:bg-blue-600 flex items-center gap-2 rounded-lg transition-colors text-sm sm:text-base font-medium whitespace-nowrap"
+              className="px-3 sm:px-4 py-2 bg-[#C4713A] text-white hover:bg-[#A35C28] flex items-center gap-2 rounded-lg transition-colors text-sm sm:text-base font-medium whitespace-nowrap"
             >
               <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
               <span>Apply Leave</span>
@@ -418,7 +418,7 @@ export default function LeavesPage() {
                           <div className="flex gap-2">
                             <button
                               onClick={() => openDetailsModal(request)}
-                              className="px-3 py-1 bg-blue-600 dark:bg-blue-500 text-white text-xs rounded hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors"
+                              className="px-3 py-1 bg-blue-600 dark:bg-blue-500 text-white text-xs rounded hover:bg-[#A35C28] dark:hover:bg-[#A35C28] transition-colors"
                             >
                               View Details
                             </button>
@@ -563,7 +563,7 @@ export default function LeavesPage() {
                   <button
                     type="submit"
                     disabled={leaveTypes.length === 0}
-                    className="px-4 py-2 bg-[#136dec] text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                    className="px-4 py-2 bg-[#C4713A] text-white rounded-lg hover:bg-[#A35C28] transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
                   >
                     Submit Request
                   </button>
@@ -626,7 +626,7 @@ export default function LeavesPage() {
                         <button
                           type="button"
                           onClick={() => handleEditLeaveType(type)}
-                          className="ml-2 px-3 py-1.5 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors flex-shrink-0"
+                          className="ml-2 px-3 py-1.5 text-xs bg-[#C4713A] text-white rounded hover:bg-[#A35C28] transition-colors flex-shrink-0"
                         >
                           Edit
                         </button>
@@ -710,7 +710,7 @@ export default function LeavesPage() {
                     id="carryForward"
                     checked={leaveTypeForm.carryForward}
                     onChange={(e) => setLeaveTypeForm({ ...leaveTypeForm, carryForward: e.target.checked })}
-                    className="rounded border-gray-500 text-[#136dec] focus:ring-[#136dec]"
+                    className="rounded border-gray-500 text-[#C4713A] focus:ring-[#C4713A]"
                   />
                   <label htmlFor="carryForward" className={`text-sm ${currentTheme.text}`}>
                     Allow carry forward to next year
@@ -892,7 +892,7 @@ export default function LeavesPage() {
                         ✅ {selectedRequest.reallocationCount || 0} task{selectedRequest.reallocationCount !== 1 ? 's' : ''} were
                         automatically reallocated to the Team Lead.
                         <button
-                          className="ml-2 underline text-blue-400 hover:text-blue-300"
+                          className="ml-2 underline text-[#C4713A] hover:text-[#A35C28]"
                           onClick={() => { setShowDetailsModal(false); navigate('/hr/reallocation'); }}
                         >
                           View details →

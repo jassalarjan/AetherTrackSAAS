@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import { Mail, ArrowLeft, CheckCircle, Lock, Eye, EyeOff } from 'lucide-react';
@@ -132,8 +132,8 @@ const ForgotPassword = () => {
           {step === 1 && (
             <>
               <div className="text-center mb-6">
-                <div className={`inline-flex items-center justify-center w-16 h-16 rounded-full mb-4 ${theme === 'dark' ? 'bg-[#136dec]/10' : 'bg-blue-50'}`}>
-                  <Mail size={32} className="text-[#136dec]" />
+                <div className={`inline-flex items-center justify-center w-16 h-16 rounded-full mb-4 ${theme === 'dark' ? 'bg-[#C4713A]/10' : 'bg-blue-50'}`}>
+                  <Mail size={32} className="text-[#C4713A]" />
                 </div>
                 <h2 className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2`}>
                   Forgot Password?
@@ -159,7 +159,7 @@ const ForgotPassword = () => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="Enter your email"
-                    className={`w-full p-3 ${theme === 'dark' ? 'bg-[#111418] border-[#282f39] text-white placeholder:text-[#58606e]' : 'bg-white border-gray-300 text-gray-900'} border rounded-lg focus:ring-2 focus:ring-[#136dec] focus:border-transparent`}
+                    className={`w-full p-3 ${theme === 'dark' ? 'bg-[#111418] border-[#282f39] text-white placeholder:text-[#58606e]' : 'bg-white border-gray-300 text-gray-900'} border rounded-lg focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
                     required
                     autoFocus
                   />
@@ -168,7 +168,7 @@ const ForgotPassword = () => {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-[#136dec] text-white py-3 rounded-lg font-semibold hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full bg-[#C4713A] text-white py-3 rounded-lg font-semibold hover:bg-[#A35C28] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loading ? 'Sending...' : 'Send Reset Code'}
                 </button>
@@ -189,8 +189,8 @@ const ForgotPassword = () => {
           {step === 2 && (
             <>
               <div className="text-center mb-6">
-                <div className={`inline-flex items-center justify-center w-16 h-16 rounded-full mb-4 ${theme === 'dark' ? 'bg-[#136dec]/10' : 'bg-blue-50'}`}>
-                  <Lock size={32} className="text-[#136dec]" />
+                <div className={`inline-flex items-center justify-center w-16 h-16 rounded-full mb-4 ${theme === 'dark' ? 'bg-[#C4713A]/10' : 'bg-blue-50'}`}>
+                  <Lock size={32} className="text-[#C4713A]" />
                 </div>
                 <h2 className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2`}>
                   Enter Reset Code
@@ -216,7 +216,7 @@ const ForgotPassword = () => {
                     value={token}
                     onChange={(e) => setToken(e.target.value.replace(/\D/g, '').slice(0, 6))}
                     placeholder="Enter 6-digit code"
-                    className={`w-full p-3 text-center text-2xl tracking-widest font-mono ${theme === 'dark' ? 'bg-[#111418] border-[#282f39] text-white placeholder:text-[#58606e]' : 'bg-white border-gray-300 text-gray-900'} border rounded-lg focus:ring-2 focus:ring-[#136dec] focus:border-transparent`}
+                    className={`w-full p-3 text-center text-2xl tracking-widest font-mono ${theme === 'dark' ? 'bg-[#111418] border-[#282f39] text-white placeholder:text-[#58606e]' : 'bg-white border-gray-300 text-gray-900'} border rounded-lg focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
                     required
                     maxLength={6}
                     autoFocus
@@ -233,7 +233,7 @@ const ForgotPassword = () => {
                       value={newPassword}
                       onChange={(e) => handlePasswordChange(e.target.value)}
                       placeholder="Enter new password"
-                      className={`w-full p-3 pr-10 ${theme === 'dark' ? 'bg-[#111418] border-[#282f39] text-white placeholder:text-[#58606e]' : 'bg-white border-gray-300 text-gray-900'} border rounded-lg focus:ring-2 focus:ring-[#136dec] focus:border-transparent`}
+                      className={`w-full p-3 pr-10 ${theme === 'dark' ? 'bg-[#111418] border-[#282f39] text-white placeholder:text-[#58606e]' : 'bg-white border-gray-300 text-gray-900'} border rounded-lg focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
                       required
                     />
                     <button
@@ -286,7 +286,7 @@ const ForgotPassword = () => {
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       placeholder="Confirm new password"
-                      className={`w-full p-3 pr-10 ${theme === 'dark' ? 'bg-[#111418] border-[#282f39] text-white placeholder:text-[#58606e]' : 'bg-white border-gray-300 text-gray-900'} border rounded-lg focus:ring-2 focus:ring-[#136dec] focus:border-transparent`}
+                      className={`w-full p-3 pr-10 ${theme === 'dark' ? 'bg-[#111418] border-[#282f39] text-white placeholder:text-[#58606e]' : 'bg-white border-gray-300 text-gray-900'} border rounded-lg focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
                       required
                     />
                     <button
@@ -302,7 +302,7 @@ const ForgotPassword = () => {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-[#136dec] text-white py-3 rounded-lg font-semibold hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed mb-3"
+                  className="w-full bg-[#C4713A] text-white py-3 rounded-lg font-semibold hover:bg-[#A35C28] transition-colors disabled:opacity-50 disabled:cursor-not-allowed mb-3"
                 >
                   {loading ? 'Resetting Password...' : 'Reset Password'}
                 </button>
@@ -341,9 +341,9 @@ const ForgotPassword = () => {
                 Your password has been successfully reset. Redirecting to login...
               </p>
               <div className="flex items-center justify-center gap-2">
-                <div className="w-2 h-2 bg-[#136dec] rounded-full animate-bounce" style={{ animationDelay: '0s' }}></div>
-                <div className="w-2 h-2 bg-[#136dec] rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                <div className="w-2 h-2 bg-[#136dec] rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+                <div className="w-2 h-2 bg-[#C4713A] rounded-full animate-bounce" style={{ animationDelay: '0s' }}></div>
+                <div className="w-2 h-2 bg-[#C4713A] rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                <div className="w-2 h-2 bg-[#C4713A] rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
               </div>
             </div>
           )}

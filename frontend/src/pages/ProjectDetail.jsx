@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import ResponsivePageLayout from '../components/layouts/ResponsivePageLayout';
 import { projectsApi } from '../api/projectsApi';
@@ -245,8 +245,8 @@ const ProjectDetail = () => {
   };
 
   const getMilestoneBgColor = (status) => {
-    if (status === 'done') return 'bg-[#135bec]';
-    if (status === 'in_progress') return 'bg-[#135bec]';
+    if (status === 'done') return 'bg-[#C4713A]';
+    if (status === 'in_progress') return 'bg-[#C4713A]';
     return 'bg-white dark:bg-gray-800';
   };
 
@@ -389,7 +389,7 @@ const ProjectDetail = () => {
         <header className="min-h-16 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1a2234] sticky top-0 z-30">
           <div className="px-4 sm:px-8 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400 min-w-0">
-              <button onClick={() => navigate('/projects')} className="hover:text-[#135bec] transition-colors whitespace-nowrap">
+              <button onClick={() => navigate('/projects')} className="hover:text-[#C4713A] transition-colors whitespace-nowrap">
                 Projects
               </button>
               <span className="text-gray-400">›</span>
@@ -435,7 +435,7 @@ const ProjectDetail = () => {
                   </div>
                 )}
               </div>
-              <button className="bg-[#135bec] text-white text-sm font-semibold px-3 py-2 rounded-lg flex items-center gap-2 shadow-sm whitespace-nowrap">
+              <button className="bg-[#C4713A] text-white text-sm font-semibold px-3 py-2 rounded-lg flex items-center gap-2 shadow-sm whitespace-nowrap">
                 <Plus size={16} />
                 <span className="hidden sm:inline">New Task</span>
                 <span className="sm:hidden">Task</span>
@@ -457,7 +457,7 @@ const ProjectDetail = () => {
                   value={filters.search}
                   onChange={(e) => setFilters({ ...filters, search: e.target.value })}
                   placeholder="Search by name..."
-                  className="w-full px-4 py-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-[#135bec] focus:border-[#135bec]"
+                  className="w-full px-4 py-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-[#C4713A] focus:border-[#C4713A]"
                 />
               </div>
               <div>
@@ -467,7 +467,7 @@ const ProjectDetail = () => {
                 <select
                   value={filters.status}
                   onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-                  className="w-full px-4 py-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-[#135bec] focus:border-[#135bec]"
+                  className="w-full px-4 py-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-[#C4713A] focus:border-[#C4713A]"
                 >
                   <option value="">All Statuses</option>
                   <option value="todo">To Do</option>
@@ -483,7 +483,7 @@ const ProjectDetail = () => {
                 <select
                   value={filters.priority}
                   onChange={(e) => setFilters({ ...filters, priority: e.target.value })}
-                  className="w-full px-4 py-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-[#135bec] focus:border-[#135bec]"
+                  className="w-full px-4 py-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-[#C4713A] focus:border-[#C4713A]"
                 >
                   <option value="">All Priorities</option>
                   <option value="low">Low</option>
@@ -518,7 +518,7 @@ const ProjectDetail = () => {
                 <h2 className="text-3xl font-black tracking-tight text-[#0d121b] dark:text-white leading-none">
                   {project.name}
                 </h2>
-                <Edit size={20} className="text-gray-400 dark:text-gray-500 cursor-pointer hover:text-[#135bec] transition-colors" />
+                <Edit size={20} className="text-gray-400 dark:text-gray-500 cursor-pointer hover:text-[#C4713A] transition-colors" />
               </div>
               <p className="text-gray-500 dark:text-gray-400 font-medium">{project.description}</p>
             </div>
@@ -536,7 +536,7 @@ const ProjectDetail = () => {
 
           {/* Meta Row (Status, Priority, Deadline, Completion) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-white dark:bg-gray-900 p-4 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm flex flex-col gap-1 cursor-pointer hover:border-[#135bec]/40 transition-colors">
+            <div className="bg-white dark:bg-gray-900 p-4 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm flex flex-col gap-1 cursor-pointer hover:border-[#C4713A]/40 transition-colors">
               <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Current Status</span>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -549,7 +549,7 @@ const ProjectDetail = () => {
               </div>
             </div>
 
-            <div className="bg-white dark:bg-gray-900 p-4 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm flex flex-col gap-1 cursor-pointer hover:border-[#135bec]/40 transition-colors">
+            <div className="bg-white dark:bg-gray-900 p-4 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm flex flex-col gap-1 cursor-pointer hover:border-[#C4713A]/40 transition-colors">
               <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Priority</span>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -562,7 +562,7 @@ const ProjectDetail = () => {
               </div>
             </div>
 
-            <div className="bg-white dark:bg-gray-900 p-4 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm flex flex-col gap-1 cursor-pointer hover:border-[#135bec]/40 transition-colors">
+            <div className="bg-white dark:bg-gray-900 p-4 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm flex flex-col gap-1 cursor-pointer hover:border-[#C4713A]/40 transition-colors">
               <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Project Deadline</span>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -577,7 +577,7 @@ const ProjectDetail = () => {
               <span className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">Completion</span>
               <div className="flex items-center gap-3">
                 <div className="flex-1 bg-gray-100 dark:bg-gray-800 h-1.5 rounded-full overflow-hidden">
-                  <div className="bg-[#135bec] h-full" style={{ width: `${project.progress}%` }}></div>
+                  <div className="bg-[#C4713A] h-full" style={{ width: `${project.progress}%` }}></div>
                 </div>
                 <span className="text-sm font-bold dark:text-white">{project.progress}%</span>
               </div>
@@ -596,7 +596,7 @@ const ProjectDetail = () => {
                     onClick={() => setActiveTab(tab.id)}
                     className={`py-4 border-b-2 ${
                       activeTab === tab.id
-                        ? 'border-[#135bec] text-[#135bec]'
+                        ? 'border-[#C4713A] text-[#C4713A]'
                         : 'border-transparent text-gray-500 hover:text-[#0d121b] dark:hover:text-white'
                     } text-sm font-${activeTab === tab.id ? 'bold' : 'medium'} flex items-center gap-2 whitespace-nowrap transition-colors`}
                   >
@@ -622,7 +622,7 @@ const ProjectDetail = () => {
                       <h3 className="font-bold text-lg">Project Milestones</h3>
                       <button 
                         onClick={() => { setMilestoneForm({ name: '', status: 'pending' }); setEditingMilestone(null); setShowMilestoneModal(true); }}
-                        className="flex items-center gap-2 px-3 py-1.5 bg-[#135bec] text-white rounded-lg text-sm font-semibold hover:bg-blue-700"
+                        className="flex items-center gap-2 px-3 py-1.5 bg-[#C4713A] text-white rounded-lg text-sm font-semibold hover:bg-[#A35C28]"
                       >
                         <Plus size={16} />
                         Add Milestone
@@ -632,7 +632,7 @@ const ProjectDetail = () => {
                       <div className="flex items-center justify-between min-w-[600px] relative py-10">
                         {/* Connection Line */}
                         <div className="absolute h-0.5 bg-gray-200 dark:bg-gray-700 top-1/2 left-0 right-0" style={{ zIndex: 1 }}></div>
-                        <div className="absolute h-0.5 bg-[#135bec] top-1/2 left-0" style={{ 
+                        <div className="absolute h-0.5 bg-[#C4713A] top-1/2 left-0" style={{ 
                           width: `${milestones.filter(m => m.status === 'done').length / milestones.length * 100}%`, 
                           zIndex: 2 
                         }}></div>
@@ -647,8 +647,8 @@ const ProjectDetail = () => {
                             </div>
                             <div className="text-center">
                               <p className={`text-[11px] font-bold uppercase tracking-tighter ${
-                                milestone.status === 'done' ? 'text-[#135bec]' :
-                                milestone.status === 'in_progress' ? 'text-[#135bec]' :
+                                milestone.status === 'done' ? 'text-[#C4713A]' :
+                                milestone.status === 'in_progress' ? 'text-[#C4713A]' :
                                 'text-gray-400'
                               }`}>
                                 {milestone.status === 'done' ? 'Done' : milestone.status === 'in_progress' ? 'Current' : 'Pending'}
@@ -665,7 +665,7 @@ const ProjectDetail = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <section className="bg-white dark:bg-gray-900 p-6 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm">
                       <h3 className="font-bold text-sm mb-4 flex items-center gap-2">
-                        <FileText size={20} className="text-[#135bec]" />
+                        <FileText size={20} className="text-[#C4713A]" />
                         Project Details
                       </h3>
                       <div className="space-y-3 text-sm">
@@ -686,7 +686,7 @@ const ProjectDetail = () => {
 
                     <section className="bg-white dark:bg-gray-900 p-6 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm">
                       <h3 className="font-bold text-sm mb-4 flex items-center gap-2 dark:text-white">
-                        <DollarSign size={20} className="text-[#135bec]" />
+                        <DollarSign size={20} className="text-[#C4713A]" />
                         Budget Utilization
                       </h3>
                       <div className="space-y-4">
@@ -729,7 +729,7 @@ const ProjectDetail = () => {
                               {member.role || 'Member'}
                             </p>
                           </div>
-                          <MessageCircle size={16} className="text-[#135bec]" />
+                          <MessageCircle size={16} className="text-[#C4713A]" />
                         </div>
                       ))}
                     </div>
@@ -758,7 +758,7 @@ const ProjectDetail = () => {
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-bold dark:text-white">Project Tasks</h3>
-                  <button className="flex items-center gap-2 px-4 py-2 bg-[#135bec] text-white rounded-lg text-sm font-semibold hover:bg-blue-700">
+                  <button className="flex items-center gap-2 px-4 py-2 bg-[#C4713A] text-white rounded-lg text-sm font-semibold hover:bg-[#A35C28]">
                     <Plus size={18} />
                     Add Task
                   </button>
@@ -770,7 +770,7 @@ const ProjectDetail = () => {
                     </div>
                     <h4 className="text-lg font-bold mb-2 dark:text-white">No Tasks Yet</h4>
                     <p className="text-gray-500 dark:text-gray-400 mb-6">Create your first task to start tracking progress</p>
-                    <button className="px-6 py-3 bg-[#135bec] text-white rounded-lg font-semibold hover:bg-blue-700">
+                    <button className="px-6 py-3 bg-[#C4713A] text-white rounded-lg font-semibold hover:bg-[#A35C28]">
                       Create First Task
                     </button>
                   </div>
@@ -848,13 +848,13 @@ const ProjectDetail = () => {
               <div className="bg-white dark:bg-gray-900 p-6 rounded-xl border border-gray-200 dark:border-gray-800">
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="text-lg font-bold dark:text-white">Project Timeline</h3>
-                  <button className="text-sm text-[#135bec] font-semibold hover:underline">View Gantt Chart</button>
+                  <button className="text-sm text-[#C4713A] font-semibold hover:underline">View Gantt Chart</button>
                 </div>
                 <div className="space-y-6">
                   <div className="relative pl-8 pb-8 border-l-2 border-gray-200 dark:border-gray-700">
-                    <div className="absolute -left-2 top-0 w-4 h-4 rounded-full bg-[#135bec] border-4 border-white dark:border-gray-900"></div>
+                    <div className="absolute -left-2 top-0 w-4 h-4 rounded-full bg-[#C4713A] border-4 border-white dark:border-gray-900"></div>
                     <div className="mb-1 text-xs text-gray-500 dark:text-gray-400">{formatDate(project.start_date)}</div>
-                    <h4 className="font-bold text-[#135bec]">Project Started</h4>
+                    <h4 className="font-bold text-[#C4713A]">Project Started</h4>
                     <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Project kickoff and initial planning phase</p>
                   </div>
                   {tasks.filter(t => t.status === 'done').slice(0, 3).map((task, idx) => (
@@ -891,7 +891,7 @@ const ProjectDetail = () => {
                   <h3 className="text-lg font-bold dark:text-white">Team Members</h3>
                   <button 
                     onClick={() => setShowMemberModal(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-[#135bec] text-white rounded-lg text-sm font-semibold hover:bg-blue-700"
+                    className="flex items-center gap-2 px-4 py-2 bg-[#C4713A] text-white rounded-lg text-sm font-semibold hover:bg-[#A35C28]"
                   >
                     <Plus size={18} />
                     Add Member
@@ -904,7 +904,7 @@ const ProjectDetail = () => {
                     </div>
                     <h4 className="text-lg font-bold mb-2 dark:text-white">No Team Members</h4>
                     <p className="text-gray-500 dark:text-gray-400 mb-6">Add team members to collaborate on this project</p>
-                    <button className="px-6 py-3 bg-[#135bec] text-white rounded-lg font-semibold hover:bg-blue-700">
+                    <button className="px-6 py-3 bg-[#C4713A] text-white rounded-lg font-semibold hover:bg-[#A35C28]">
                       Add First Member
                     </button>
                   </div>
@@ -929,7 +929,7 @@ const ProjectDetail = () => {
                           <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 rounded-full text-xs font-bold uppercase">
                             {member.role || 'Member'}
                           </span>
-                          <button className="text-[#135bec] hover:underline text-sm font-semibold">
+                          <button className="text-[#C4713A] hover:underline text-sm font-semibold">
                             Edit Role
                           </button>
                         </div>
@@ -946,7 +946,7 @@ const ProjectDetail = () => {
                   <h3 className="text-lg font-bold dark:text-white">Project Documents</h3>
                   <button 
                     onClick={() => setShowDocumentModal(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-[#135bec] text-white rounded-lg text-sm font-semibold hover:bg-blue-700"
+                    className="flex items-center gap-2 px-4 py-2 bg-[#C4713A] text-white rounded-lg text-sm font-semibold hover:bg-[#A35C28]"
                   >
                     <Plus size={18} />
                     Upload Document
@@ -961,7 +961,7 @@ const ProjectDetail = () => {
                     <p className="text-gray-500 dark:text-gray-400 mb-6">Upload project documents, specifications, and files</p>
                     <button 
                       onClick={() => setShowDocumentModal(true)}
-                      className="px-6 py-3 bg-[#135bec] text-white rounded-lg font-semibold hover:bg-blue-700"
+                      className="px-6 py-3 bg-[#C4713A] text-white rounded-lg font-semibold hover:bg-[#A35C28]"
                     >
                       Upload First Document
                     </button>
@@ -972,7 +972,7 @@ const ProjectDetail = () => {
                       <div key={idx} className="bg-white dark:bg-gray-900 p-6 rounded-xl border border-gray-200 dark:border-gray-800 hover:shadow-lg transition-shadow">
                         <div className="flex items-start gap-4">
                           <div className="w-12 h-12 rounded-lg bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center flex-shrink-0">
-                            <FileText size={24} className="text-[#135bec]" />
+                            <FileText size={24} className="text-[#C4713A]" />
                           </div>
                           <div className="flex-1 min-w-0">
                             <h4 className="font-bold text-sm mb-1 truncate dark:text-white">{doc.name}</h4>
@@ -982,7 +982,7 @@ const ProjectDetail = () => {
                                 href={doc.url} 
                                 target="_blank" 
                                 rel="noopener noreferrer"
-                                className="text-xs text-[#135bec] hover:underline"
+                                className="text-xs text-[#C4713A] hover:underline"
                               >
                                 View Document →
                               </a>
@@ -1070,7 +1070,7 @@ const ProjectDetail = () => {
               <select
                 value={selectedUserId}
                 onChange={(e) => setSelectedUserId(e.target.value)}
-                className="w-full px-4 py-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-[#135bec] focus:border-[#135bec] mb-4"
+                className="w-full px-4 py-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-[#C4713A] focus:border-[#C4713A] mb-4"
               >
                 <option value="">Choose a user...</option>
                 {Array.isArray(users) && users.filter(u => !project.team_members?.some(m => m.user?._id === u._id)).map(user => (
@@ -1087,7 +1087,7 @@ const ProjectDetail = () => {
                 <button
                   onClick={handleAddMember}
                   disabled={!selectedUserId}
-                  className="flex-1 px-4 py-2 bg-[#135bec] text-white rounded-lg font-bold hover:bg-[#0d4ac7] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 px-4 py-2 bg-[#C4713A] text-white rounded-lg font-bold hover:bg-[#A35C28] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Add Member
                 </button>
@@ -1115,7 +1115,7 @@ const ProjectDetail = () => {
                   value={documentName}
                   onChange={(e) => setDocumentName(e.target.value)}
                   placeholder="Enter document name..."
-                  className="w-full px-4 py-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-[#135bec] focus:border-[#135bec]"
+                  className="w-full px-4 py-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-[#C4713A] focus:border-[#C4713A]"
                 />
               </div>
               <div>
@@ -1123,7 +1123,7 @@ const ProjectDetail = () => {
                 <input
                   type="file"
                   onChange={(e) => setDocumentFile(e.target.files[0])}
-                  className="w-full px-4 py-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-[#135bec] focus:border-[#135bec]"
+                  className="w-full px-4 py-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-[#C4713A] focus:border-[#C4713A]"
                 />
                 {documentFile && (
                   <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
@@ -1141,7 +1141,7 @@ const ProjectDetail = () => {
                 <button
                   onClick={handleDocumentUpload}
                   disabled={!documentFile || uploading}
-                  className="flex-1 px-4 py-2 bg-[#135bec] text-white rounded-lg font-bold hover:bg-[#0d4ac7] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="flex-1 px-4 py-2 bg-[#C4713A] text-white rounded-lg font-bold hover:bg-[#A35C28] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {uploading ? (
                     <>
@@ -1181,7 +1181,7 @@ const ProjectDetail = () => {
                   value={milestoneForm.name}
                   onChange={(e) => setMilestoneForm({ ...milestoneForm, name: e.target.value })}
                   placeholder="e.g., Requirements Gathering"
-                  className="w-full px-4 py-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-[#135bec] focus:border-[#135bec]"
+                  className="w-full px-4 py-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-[#C4713A] focus:border-[#C4713A]"
                 />
               </div>
               <div>
@@ -1189,7 +1189,7 @@ const ProjectDetail = () => {
                 <select
                   value={milestoneForm.status}
                   onChange={(e) => setMilestoneForm({ ...milestoneForm, status: e.target.value })}
-                  className="w-full px-4 py-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-[#135bec] focus:border-[#135bec]"
+                  className="w-full px-4 py-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-[#C4713A] focus:border-[#C4713A]"
                 >
                   <option value="pending">Pending</option>
                   <option value="in_progress">In Progress</option>
@@ -1214,7 +1214,7 @@ const ProjectDetail = () => {
                 <button
                   onClick={handleMilestoneSubmit}
                   disabled={!milestoneForm.name}
-                  className="flex-1 px-4 py-2 bg-[#135bec] text-white rounded-lg font-bold hover:bg-[#0d4ac7] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 px-4 py-2 bg-[#C4713A] text-white rounded-lg font-bold hover:bg-[#A35C28] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {editingMilestone !== null ? 'Update' : 'Add'}
                 </button>

@@ -1,4 +1,4 @@
-﻿import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { Home, ArrowLeft, SearchX } from 'lucide-react';
@@ -80,7 +80,7 @@ function NotFoundContent() {
 
         <button
           onClick={() => navigate('/dashboard')}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white transition-colors shadow-sm"
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium bg-blue-600 hover:bg-[#A35C28] text-white transition-colors shadow-sm"
         >
           <Home size={15} />
           Go to Dashboard

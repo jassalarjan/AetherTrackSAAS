@@ -1,6 +1,6 @@
 ﻿/**
  * AppHeader — Phase 2 global top bar
- * 58 px fixed, warm-paper tokens throughout.
+ * 64 px fixed, warm-paper tokens throughout.
  * Props: title, subtitle, actions, icon (Lucide component), breadcrumbs[]
  */
 import { useState, useEffect, useRef, useCallback } from 'react';
@@ -9,9 +9,12 @@ import { useAuth }    from '../context/AuthContext';
 import { useTheme }   from '../context/ThemeContext';
 import { useSidebar } from '../context/SidebarContext';
 import api from '../api/axios';
+import { CommandPalette } from './CommandPalette';
+import Spinner from './Spinner';
 import {
   Bell, Search, Sun, Moon, Menu,
   ChevronRight, X, CheckCheck, ExternalLink,
+  LogOut, User as UserIcon, Settings as SettingsIcon,
 } from 'lucide-react';
 
 // ── Utility: human-readable time-ago ───────────────────────────────────────
@@ -99,11 +102,8 @@ const NotifPanel = ({ open, onClose, panelRef }) => {
       {/* Body */}
       <div className="max-h-[360px] overflow-y-auto">
         {loading ? (
-          <div className="py-10 text-center">
-            <div
-              className="w-5 h-5 rounded-full border-2 border-t-transparent animate-spin mx-auto"
-              style={{ borderColor: 'var(--brand)', borderTopColor: 'transparent' }}
-            />
+          <div className="py-10 flex items-center justify-center">
+            <Spinner size="sm" color="brand" />
           </div>
         ) : items.length === 0 ? (
           <div className="py-10 text-center">
@@ -194,10 +194,11 @@ const AppHeader = ({
   breadcrumbs,         // optional string[] that overrides auto-breadcrumb
   noPadding = false,
 }) => {
-  const { user }     = useAuth();
-  const { theme, toggleTheme }     = useTheme();
+  const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const { toggleMobileSidebar, isMobile } = useSidebar();
   const location = useLocation();
+  const navigate = useNavigate();
   const isDark   = theme === 'dark';
 
   // Notification bell state
@@ -205,6 +206,19 @@ const AppHeader = ({
   const [unread,    setUnread]    = useState(0);
   const bellRef  = useRef(null);
   const panelRef = useRef(null);
+
+  // Command palette + user menu state
+  const [cmdOpen, setCmdOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef(null);
+
+  // Derive user initials
+  const userInitials = (
+    user?.full_name?.split(' ').map(n => n[0]).join('').slice(0, 2) ||
+    user?.name?.split(' ').map(n => n[0]).join('').slice(0, 2) ||
+    user?.email?.[0]?.toUpperCase() ||
+    'U'
+  );
 
   // Fetch unread count
   useEffect(() => {
@@ -220,7 +234,19 @@ const AppHeader = ({
     return () => { cancelled = true; clearInterval(id); };
   }, []);
 
-  // Close on outside click
+  // ⌘K / Ctrl+K → open command palette
+  useEffect(() => {
+    const handler = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setCmdOpen(true);
+      }
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, []);
+
+  // Close bell on outside click
   useEffect(() => {
     if (!bellOpen) return;
     const handler = (e) => {
@@ -233,6 +259,18 @@ const AppHeader = ({
     return () => document.removeEventListener('mousedown', handler);
   }, [bellOpen]);
 
+  // Close user menu on outside click
+  useEffect(() => {
+    if (!userMenuOpen) return;
+    const handler = (e) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target)) {
+        setUserMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [userMenuOpen]);
+
   // Build breadcrumb segments
   const segments = breadcrumbs
     ? breadcrumbs
@@ -241,16 +279,17 @@ const AppHeader = ({
       : ['AetherTrack'];
 
   return (
+    <>
     <header
       className="flex-none flex items-center border-b"
       style={{
-        height:      'var(--header-h, 58px)',
+        height:      'var(--header-h, 64px)',
         background:  'var(--bg-canvas)',
         borderColor: 'var(--border-soft)',
         paddingInline: noPadding ? 0 : undefined,
       }}
     >
-      <div className={`flex items-center justify-between w-full h-full ${noPadding ? '' : 'px-4 sm:px-5'}`}>
+      <div className={`flex items-center justify-between w-full h-full ${noPadding ? '' : 'px-6 sm:px-8'}`}>
 
         {/* ── LEFT: hamburger + breadcrumb ──────────────────────────────── */}
         <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -274,8 +313,8 @@ const AppHeader = ({
               <div
                 className="flex items-center justify-center rounded-md shrink-0"
                 style={{
-                  width: '26px',
-                  height: '26px',
+                  width: '28px',
+                  height: '28px',
                   background: 'var(--brand-dim)',
                 }}
               >
@@ -296,7 +335,7 @@ const AppHeader = ({
           </div>
         </div>
 
-        {/* ── RIGHT: search trigger + bell + theme + actions ───────────── */}
+        {/* ── RIGHT: search + bell + theme + actions + user ──────── */}
         <div className="flex items-center gap-1.5 flex-none">
 
           {/* Search trigger ⌘K */}
@@ -310,11 +349,11 @@ const AppHeader = ({
               fontSize:     '13px',
             }}
             aria-label="Quick search (⌘K)"
+            onClick={() => setCmdOpen(true)}
             onMouseOver={(e) => { e.currentTarget.style.borderColor = 'var(--border-mid)'; e.currentTarget.style.color = 'var(--text-secondary)'; }}
             onMouseOut={(e)  => { e.currentTarget.style.borderColor = 'var(--border-soft)'; e.currentTarget.style.color = 'var(--text-muted)'; }}
             onFocus={(e) => { e.currentTarget.style.boxShadow = 'var(--focus-ring)'; e.currentTarget.style.borderColor = 'var(--brand)'; }}
             onBlur={(e)  => { e.currentTarget.style.boxShadow = ''; e.currentTarget.style.borderColor = 'var(--border-soft)'; }}
-            onKeyDown={(e) => { if (e.key === 'Enter') { /* TODO: open CommandPalette */ } }}
           >
             <Search size={13} />
             <span>Search…</span>
@@ -331,6 +370,18 @@ const AppHeader = ({
             >
               ⌘K
             </kbd>
+          </button>
+
+          {/* Keyboard shortcuts help '?' */}
+          <button
+            className="w-8 h-8 flex items-center justify-center rounded-lg transition-colors focus-visible:outline-none"
+            style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', fontSize: '14px', fontWeight: 700 }}
+            aria-label="Keyboard shortcuts (?)"
+            onClick={() => window.dispatchEvent(new CustomEvent('show-shortcuts-help'))}
+            onMouseOver={(e) => { e.currentTarget.style.background = 'var(--border-hair)'; e.currentTarget.style.color = 'var(--text-secondary)'; }}
+            onMouseOut={(e)  => { e.currentTarget.style.background = ''; e.currentTarget.style.color = 'var(--text-muted)'; }}
+          >
+            ?
           </button>
 
           {/* Notifications bell */}
@@ -393,9 +444,105 @@ const AppHeader = ({
               <div className="flex items-center gap-1.5">{actions}</div>
             </>
           )}
+
+          {/* Divider before avatar */}
+          <div className="w-px h-5 mx-1" style={{ background: 'var(--border-soft)' }} />
+
+          {/* User avatar — rightmost */}
+          <div className="relative" ref={userMenuRef}>
+            <button
+              onClick={() => setUserMenuOpen((v) => !v)}
+              className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold focus-visible:outline-none transition-all"
+              style={{
+                background: user?.profile_picture ? 'transparent' : 'linear-gradient(135deg, var(--brand-light), #8B5E3C)',
+                border: `2px solid ${userMenuOpen ? 'var(--brand)' : 'var(--border-soft)'}`,
+                fontFamily: 'var(--font-body)',
+                overflow: 'hidden',
+              }}
+              aria-label="Account menu"
+              aria-haspopup="true"
+              aria-expanded={userMenuOpen}
+              onMouseOver={(e) => { e.currentTarget.style.borderColor = 'var(--brand)'; }}
+              onMouseOut={(e)  => { if (!userMenuOpen) e.currentTarget.style.borderColor = 'var(--border-soft)'; }}
+            >
+              {user?.profile_picture
+                ? <img src={user.profile_picture} alt="" className="w-full h-full object-cover" />
+                : userInitials
+              }
+            </button>
+
+            {/* User dropdown */}
+            {userMenuOpen && (
+              <div
+                className="absolute right-0 top-full mt-2 w-52 z-[500] rounded-xl overflow-hidden"
+                style={{
+                  background: 'var(--bg-raised)',
+                  border:     '1px solid var(--card-border, var(--border-soft))',
+                  boxShadow:  'var(--shadow-xl)',
+                }}
+              >
+                {/* User info header */}
+                <div className="px-4 py-3 border-b" style={{ borderColor: 'var(--border-soft)' }}>
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
+                      style={{ background: user?.profile_picture ? 'transparent' : 'linear-gradient(135deg, var(--brand-light), #8B5E3C)', overflow: 'hidden' }}
+                    >
+                      {user?.profile_picture
+                        ? <img src={user.profile_picture} alt="" className="w-full h-full object-cover" />
+                        : userInitials
+                      }
+                    </div>
+                    <div className="min-w-0">
+                      <p style={{ fontFamily: 'var(--font-body)', fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.3 }}>
+                        {user?.full_name || user?.name || 'User'}
+                      </p>
+                      <p style={{ fontFamily: 'var(--font-body)', fontSize: '11px', color: 'var(--text-muted)', lineHeight: 1.3 }} className="truncate">
+                        {user?.email || ''}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Menu items */}
+                <div className="py-1">
+                  <button
+                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-left transition-colors focus-visible:outline-none"
+                    style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-body)', fontSize: '13px', background: 'transparent', border: 'none', cursor: 'pointer' }}
+                    onClick={() => { navigate('/settings'); setUserMenuOpen(false); }}
+                    onMouseOver={(e) => { e.currentTarget.style.background = 'var(--bg-base)'; e.currentTarget.style.color = 'var(--text-primary)'; }}
+                    onMouseOut={(e)  => { e.currentTarget.style.background = ''; e.currentTarget.style.color = 'var(--text-secondary)'; }}
+                  >
+                    <SettingsIcon size={14} style={{ color: 'var(--brand)', flexShrink: 0 }} />
+                    Profile &amp; Settings
+                  </button>
+                  <div className="mx-4 my-0.5" style={{ height: '1px', background: 'var(--border-hair)' }} />
+                  <button
+                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-left transition-colors focus-visible:outline-none"
+                    style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-body)', fontSize: '13px', background: 'transparent', border: 'none', cursor: 'pointer' }}
+                    onClick={() => { logout(); setUserMenuOpen(false); }}
+                    onMouseOver={(e) => { e.currentTarget.style.background = 'var(--danger-dim)'; e.currentTarget.style.color = 'var(--danger)'; }}
+                    onMouseOut={(e)  => { e.currentTarget.style.background = ''; e.currentTarget.style.color = 'var(--text-secondary)'; }}
+                  >
+                    <LogOut size={14} style={{ flexShrink: 0 }} />
+                    Sign Out
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
         </div>
       </div>
     </header>
+
+    {/* Global Command Palette */}
+    <CommandPalette
+      isOpen={cmdOpen}
+      onClose={() => setCmdOpen(false)}
+      onThemeToggle={toggleTheme}
+    />
+    </>
   );
 };
 

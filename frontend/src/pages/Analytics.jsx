@@ -1,9 +1,12 @@
-﻿import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import ResponsivePageLayout from '../components/layouts/ResponsivePageLayout';
 import api from '../api/axios';
 import useRealtimeSync from '../hooks/useRealtimeSync';
+import { usePageShortcuts } from '../hooks/usePageShortcuts';
+import ShortcutsOverlay from '../components/ShortcutsOverlay';
+import { PageLoader } from '../components/Spinner';
 import { Filter, Calendar, AlertTriangle, TrendingUp, BarChart3, Target, User, Users, Clock, Download, FileSpreadsheet, FileText, X, ChevronDown } from 'lucide-react';
 import { PieChart as RechartsPieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, LineChart, Line, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Legend } from 'recharts';
 import { generateExcelReport } from '../utils/reportGenerator';
@@ -31,6 +34,14 @@ const Analytics = () => {
   const [reportPeriod, setReportPeriod] = useState('all');
   const [showReportOptions, setShowReportOptions] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+
+  // -- Keyboard shortcuts --------------------------------------------------
+  const analyticsShortcuts = [
+    { key: 'f', label: 'Toggle Filters',  description: 'Show/hide the filter panel',     action: () => setShowFilters((v) => !v) },
+    { key: 'e', label: 'Export Options',  description: 'Show/hide report export options', action: () => setShowReportOptions((v) => !v) },
+    { key: 'r', label: 'Refresh',         description: 'Reload all analytics data',       action: () => fetchTasks() },
+  ];
+  const { showHelp, setShowHelp } = usePageShortcuts(analyticsShortcuts);
   const [analyticsData, setAnalyticsData] = useState({
     totalTasks: 0,
     overdueTasks: 0,
@@ -337,7 +348,7 @@ const Analytics = () => {
     const projectStatusDistribution = Object.entries(projectStatusCounts).map(([status, count]) => ({
       name: status.replace('_', ' ').toUpperCase(),
       value: count,
-      color: status === 'active' ? '#136dec' : status === 'completed' ? '#22c55e' : status === 'on_hold' ? '#f59e0b' : '#6b7280',
+      color: status === 'active' ? '#C4713A' : status === 'completed' ? '#22c55e' : status === 'on_hold' ? '#f59e0b' : '#6b7280',
     }));
 
     const projectPriorityCounts = projects.reduce((acc, project) => {
@@ -355,7 +366,7 @@ const Analytics = () => {
     const projectProgressDistribution = [
       { range: '0-25%', count: 0, color: '#ef4444' },
       { range: '25-50%', count: 0, color: '#f59e0b' },
-      { range: '50-75%', count: 0, color: '#136dec' },
+      { range: '50-75%', count: 0, color: '#C4713A' },
       { range: '75-100%', count: 0, color: '#22c55e' },
     ];
 
@@ -514,7 +525,7 @@ const Analytics = () => {
   const getStatusChartColor = (status) => {
     const colors = {
       todo: '#6b7280',
-      in_progress: '#136dec',
+      in_progress: '#C4713A',
       review: '#eab308',
       done: '#22c55e',
       archived: '#ef4444',
@@ -560,6 +571,7 @@ const Analytics = () => {
   }
 
   return (
+    <>
     <ResponsivePageLayout title="Analytics & Reports" icon={BarChart3} noPadding>
         {/* Header Section */}
         <header className={`border-b ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'} shrink-0`}>
@@ -649,7 +661,7 @@ const Analytics = () => {
               {showFilters && (
                 <button
                   onClick={() => setFilters({ status: '', priority: '', team: '', user: '', project: '', dateRange: 'all', customStartDate: '', customEndDate: '' })}
-                  className="text-[10px] sm:text-xs text-[#136dec] hover:text-blue-400 font-medium"
+                  className="text-[10px] sm:text-xs text-[#C4713A] hover:text-[#A35C28] font-medium"
                 >
                   Reset All
                 </button>
@@ -659,7 +671,7 @@ const Analytics = () => {
               <select
                 value={filters.status}
                 onChange={(e) => setFilters({...filters, status: e.target.value})}
-                className={`h-9 px-2 sm:px-3 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-white'} border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} rounded text-xs sm:text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'} focus:ring-2 focus:ring-[#136dec] focus:border-transparent`}
+                className={`h-9 px-2 sm:px-3 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-white'} border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} rounded text-xs sm:text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'} focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
               >
                 <option value="">All Status</option>
                 <option value="todo">To Do</option>
@@ -672,7 +684,7 @@ const Analytics = () => {
               <select
                 value={filters.priority}
                 onChange={(e) => setFilters({...filters, priority: e.target.value})}
-                className={`h-9 px-2 sm:px-3 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-white'} border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} rounded text-xs sm:text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'} focus:ring-2 focus:ring-[#136dec] focus:border-transparent`}
+                className={`h-9 px-2 sm:px-3 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-white'} border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} rounded text-xs sm:text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'} focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
               >
                 <option value="">All Priority</option>
                 <option value="low">Low</option>
@@ -686,7 +698,7 @@ const Analytics = () => {
                   <select
                     value={filters.dateRange}
                     onChange={(e) => setFilters({...filters, dateRange: e.target.value})}
-                    className={`h-9 px-2 sm:px-3 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-white'} border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} rounded text-xs sm:text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'} focus:ring-2 focus:ring-[#136dec] focus:border-transparent`}
+                    className={`h-9 px-2 sm:px-3 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-white'} border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} rounded text-xs sm:text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'} focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
                   >
                     <option value="all">All Time</option>
                     <option value="today">Today</option>
@@ -698,7 +710,7 @@ const Analytics = () => {
                   <select
                     value={filters.project}
                     onChange={(e) => setFilters({...filters, project: e.target.value})}
-                    className={`h-9 px-2 sm:px-3 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-white'} border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} rounded text-xs sm:text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'} focus:ring-2 focus:ring-[#136dec] focus:border-transparent`}
+                    className={`h-9 px-2 sm:px-3 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-white'} border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} rounded text-xs sm:text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'} focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
                   >
                     <option value="">All Projects</option>
                     {projects.map(project => (
@@ -709,7 +721,7 @@ const Analytics = () => {
                   <select
                     value={filters.team}
                     onChange={(e) => setFilters({...filters, team: e.target.value})}
-                    className={`h-9 px-2 sm:px-3 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-white'} border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} rounded text-xs sm:text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'} focus:ring-2 focus:ring-[#136dec] focus:border-transparent`}
+                    className={`h-9 px-2 sm:px-3 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-white'} border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} rounded text-xs sm:text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'} focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
                   >
                     <option value="">All Teams</option>
                     {teams.map(team => (
@@ -720,7 +732,7 @@ const Analytics = () => {
                   <select
                     value={filters.user}
                     onChange={(e) => setFilters({...filters, user: e.target.value})}
-                    className={`h-9 px-2 sm:px-3 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-white'} border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} rounded text-xs sm:text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'} focus:ring-2 focus:ring-[#136dec] focus:border-transparent`}
+                    className={`h-9 px-2 sm:px-3 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-white'} border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} rounded text-xs sm:text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'} focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
                   >
                     <option value="">All Users</option>
                     <option value="unassigned">Unassigned</option>
@@ -738,13 +750,13 @@ const Analytics = () => {
                   type="date"
                   value={filters.customStartDate}
                   onChange={(e) => setFilters({...filters, customStartDate: e.target.value})}
-                  className={`h-9 px-2 sm:px-3 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-white'} border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} rounded text-xs sm:text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'} focus:ring-2 focus:ring-[#136dec] focus:border-transparent`}
+                  className={`h-9 px-2 sm:px-3 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-white'} border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} rounded text-xs sm:text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'} focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
                 />
                 <input
                   type="date"
                   value={filters.customEndDate}
                   onChange={(e) => setFilters({...filters, customEndDate: e.target.value})}
-                  className={`h-9 px-2 sm:px-3 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-white'} border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} rounded text-xs sm:text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'} focus:ring-2 focus:ring-[#136dec] focus:border-transparent`}
+                  className={`h-9 px-2 sm:px-3 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-white'} border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} rounded text-xs sm:text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'} focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
                 />
               </div>
             )}
@@ -761,7 +773,7 @@ const Analytics = () => {
                   <p className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} text-[10px] sm:text-xs uppercase tracking-wider font-medium`}>Total Tasks</p>
                   <p className={`text-2xl sm:text-3xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mt-1 sm:mt-2`}>{analyticsData.totalTasks}</p>
                 </div>
-                <BarChart3 className="text-[#136dec] hidden sm:block" size={40} />
+                <BarChart3 className="text-[#C4713A] hidden sm:block" size={40} />
               </div>
             </div>
 
@@ -835,7 +847,7 @@ const Analytics = () => {
                     <XAxis dataKey="name" stroke="#9da8b9" tick={{ fontSize: 10 }} />
                     <YAxis stroke="#9da8b9" tick={{ fontSize: 10 }} />
                     <Tooltip contentStyle={{ backgroundColor: '#1c2027', border: '1px solid #282f39', borderRadius: '0.5rem' }} />
-                    <Bar dataKey="value" fill="#136dec" />
+                    <Bar dataKey="value" fill="#C4713A" />
                   </BarChart>
                 </ResponsiveContainer>
                 </div>
@@ -873,7 +885,7 @@ const Analytics = () => {
                         <XAxis dataKey="date" stroke="#9da8b9" tick={{ fontSize: 7 }} angle={-60} textAnchor="end" height={50} />
                         <YAxis stroke="#9da8b9" tick={{ fontSize: 9 }} />
                       <Tooltip contentStyle={{ backgroundColor: '#1c2027', border: '1px solid #282f39', borderRadius: '0.5rem' }} />
-                      <Area type="monotone" dataKey="created" stackId="1" stroke="#136dec" fill="#136dec" />
+                      <Area type="monotone" dataKey="created" stackId="1" stroke="#C4713A" fill="#C4713A" />
                       <Area type="monotone" dataKey="completed" stackId="2" stroke="#22c55e" fill="#22c55e" />
                     </AreaChart>
                   </ResponsiveContainer>
@@ -891,7 +903,7 @@ const Analytics = () => {
                     <XAxis dataKey="name" stroke="#9da8b9" tick={{ fontSize: 7 }} angle={-60} textAnchor="end" height={70} />
                     <YAxis stroke="#9da8b9" tick={{ fontSize: 10 }} />
                     <Tooltip contentStyle={{ backgroundColor: '#1c2027', border: '1px solid #282f39', borderRadius: '0.5rem' }} />
-                    <Bar dataKey="total" fill="#136dec" name="Total Tasks" />
+                    <Bar dataKey="total" fill="#C4713A" name="Total Tasks" />
                     <Bar dataKey="completed" fill="#22c55e" name="Completed" />
                     <Bar dataKey="overdue" fill="#ef4444" name="Overdue" />
                   </BarChart>
@@ -938,7 +950,7 @@ const Analytics = () => {
                       <Tooltip contentStyle={{ backgroundColor: '#1c2027', border: '1px solid #282f39', borderRadius: '0.5rem' }} />
                       <Legend wrapperStyle={{ fontSize: '11px' }} />
                       <Line type="monotone" dataKey="completed" stroke="#22c55e" strokeWidth={2} name="Completed" />
-                      <Line type="monotone" dataKey="inProgress" stroke="#136dec" strokeWidth={2} name="In Progress" />
+                      <Line type="monotone" dataKey="inProgress" stroke="#C4713A" strokeWidth={2} name="In Progress" />
                       <Line type="monotone" dataKey="todo" stroke="#6b7280" strokeWidth={2} name="To Do" />
                     </LineChart>
                   </ResponsiveContainer>
@@ -1026,7 +1038,7 @@ const Analytics = () => {
           {analyticsData.totalProjects > 0 && (
             <div className="mb-8">
               <h2 className={`text-lg font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-4 flex items-center gap-2`}>
-                <BarChart3 size={20} className="text-[#136dec]" />
+                <BarChart3 size={20} className="text-[#C4713A]" />
                 Project Analytics
               </h2>
               
@@ -1209,6 +1221,15 @@ const Analytics = () => {
           </div>
         </div>
     </ResponsivePageLayout>
+
+      {/* Keyboard shortcuts help overlay */}
+      <ShortcutsOverlay
+        show={showHelp}
+        onClose={() => setShowHelp(false)}
+        shortcuts={analyticsShortcuts}
+        pageName="Analytics"
+      />
+    </>
   );
 };
 

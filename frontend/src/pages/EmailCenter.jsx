@@ -816,7 +816,7 @@ export default function EmailCenter() {
                   <button 
                     onClick={() => resetToAutoMapping(emailRecipients[activeRecipientIndex]?.id)}
                     title="Reset to Smart Mapping"
-                    className="p-2 hover:bg-blue-50 text-blue-500 rounded-xl transition-colors"
+                    className="p-2 hover:bg-[#C4713A]/10 text-[#C4713A] rounded-xl transition-colors"
                   >
                     <RefreshCw className="w-4 h-4" />
                   </button>

@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useSidebar } from '../context/SidebarContext';
@@ -211,7 +211,7 @@ export default function AuditLog() {
               onClick={() => setShowFilters(!showFilters)}
               className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
                 showFilters || hasActiveFilters
-                  ? 'bg-blue-600 text-white'
+                  ? 'bg-[#C4713A] text-white'
                   : isDark 
                     ? 'bg-[#282f39] text-white hover:bg-[#333a47]' 
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -264,7 +264,7 @@ export default function AuditLog() {
               {hasActiveFilters && (
                 <button
                   onClick={clearFilters}
-                  className="text-sm text-blue-500 hover:text-blue-600"
+                  className="text-sm text-[#C4713A] hover:text-[#A35C28]"
                 >
                   Clear all
                 </button>

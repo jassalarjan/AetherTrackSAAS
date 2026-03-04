@@ -1,8 +1,10 @@
-﻿import { useState, useEffect } from 'react';
+﻿import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ResponsivePageLayout from '../components/layouts/ResponsivePageLayout';
 import api from '../api/axios';
 import { projectsApi } from '../api/projectsApi';
+import { usePageShortcuts } from '../hooks/usePageShortcuts';
+import ShortcutsOverlay from '../components/ShortcutsOverlay';
 import { 
   FolderOpen, Calendar, Users, TrendingUp, 
   Filter, Search, ChevronRight, Circle, CheckCircle2,
@@ -18,6 +20,16 @@ const MyProjects = () => {
   const [userRole, setUserRole] = useState('member');
   const [userName, setUserName] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const searchInputRef = useRef(null);
+
+  // ── Keyboard shortcuts ──────────────────────────────────────────────────
+  const projectShortcuts = [
+    { key: 'n', label: 'New Project',    description: 'Open the create project form', action: () => setShowCreateModal(true) },
+    { key: '/', label: 'Focus Search',   description: 'Jump to the search input',     action: () => searchInputRef.current?.focus() },
+    { key: 'f', label: 'Toggle Filters', description: 'Show/hide the filter panel',   action: () => setShowFilters((v) => !v) },
+    { key: 'r', label: 'Refresh',        description: 'Reload all projects',           action: () => fetchMyProjects() },
+  ];
+  const { showHelp, setShowHelp } = usePageShortcuts(projectShortcuts);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -67,7 +79,7 @@ const MyProjects = () => {
 
   const getStatusBadge = (status) => {
     const badges = {
-      active: 'bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800',
+      active: 'bg-[#C4713A]/10 dark:bg-[#C4713A]/20 text-[#C4713A] dark:text-[#D4905A] border-[#C4713A]/20 dark:border-[#C4713A]/30',
       completed: 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800',
       on_hold: 'bg-amber-100 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800',
       archived: 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-400 border-gray-200 dark:border-gray-700'
@@ -183,7 +195,7 @@ const MyProjects = () => {
               {canCreateProjects() && (
                 <button 
                   onClick={handleCreateProject}
-                  className="flex items-center gap-2 px-4 py-2 bg-[#135bec] text-white rounded-lg text-sm font-bold hover:bg-[#0d4ac7] transition-all shadow-sm"
+                  className="flex items-center gap-2 px-4 py-2 bg-[#C4713A] text-white rounded-lg text-sm font-bold hover:bg-[#A35C28] transition-all shadow-sm"
                 >
                   <Plus size={20} />
                   <span>New Project</span>
@@ -196,7 +208,7 @@ const MyProjects = () => {
                 <Filter size={20} />
                 <span>Filters</span>
                 {(filters.status || filters.priority || filters.search) && (
-                  <span className="ml-1 px-2 py-0.5 bg-blue-500 text-white text-xs rounded-full">
+                  <span className="ml-1 px-2 py-0.5 bg-[#C4713A] text-white text-xs rounded-full">
                     Active
                   </span>
                 )}
@@ -215,11 +227,12 @@ const MyProjects = () => {
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                     <input
+                      ref={searchInputRef}
                       type="text"
                       value={filters.search}
                       onChange={(e) => setFilters({ ...filters, search: e.target.value })}
                       placeholder="Search by name..."
-                      className="w-full pl-10 pr-4 py-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-[#135bec] focus:border-[#135bec]"
+                      className="w-full pl-10 pr-4 py-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-[#C4713A] focus:border-[#C4713A]"
                     />
                   </div>
                 </div>
@@ -230,7 +243,7 @@ const MyProjects = () => {
                   <select
                     value={filters.status}
                     onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-                    className="w-full px-4 py-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-[#135bec] focus:border-[#135bec]"
+                    className="w-full px-4 py-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-[#C4713A] focus:border-[#C4713A]"
                   >
                     <option value="">All Statuses</option>
                     <option value="active">Active</option>
@@ -246,7 +259,7 @@ const MyProjects = () => {
                   <select
                     value={filters.priority}
                     onChange={(e) => setFilters({ ...filters, priority: e.target.value })}
-                    className="w-full px-4 py-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-[#135bec] focus:border-[#135bec]"
+                    className="w-full px-4 py-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-[#C4713A] focus:border-[#C4713A]"
                   >
                     <option value="">All Priorities</option>
                     <option value="urgent">Urgent</option>
@@ -296,7 +309,7 @@ const MyProjects = () => {
                   </div>
 
                   {/* Project Name */}
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2 group-hover:text-[#135bec] transition-colors line-clamp-1">
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2 group-hover:text-[#C4713A] transition-colors line-clamp-1">
                     {project.name}
                   </h3>
 
@@ -355,7 +368,7 @@ const MyProjects = () => {
 
                   {/* View Details Arrow */}
                   <div className="flex items-center justify-end mt-4 pt-4 border-t border-gray-100 dark:border-gray-800">
-                    <span className="text-sm font-semibold text-[#135bec] group-hover:gap-2 flex items-center gap-1 transition-all">
+                    <span className="text-sm font-semibold text-[#C4713A] group-hover:gap-2 flex items-center gap-1 transition-all">
                       View Details
                       <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
                     </span>
@@ -370,8 +383,8 @@ const MyProjects = () => {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mt-8">
               <div className="bg-white dark:bg-[#1a2234] rounded-xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
-                    <FolderOpen size={20} className="text-blue-600" />
+                  <div className="w-10 h-10 rounded-lg bg-[#C4713A]/10 dark:bg-[#C4713A]/20 flex items-center justify-center">
+                    <FolderOpen size={20} className="text-[#C4713A]" />
                   </div>
                   <div>
                     <p className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -447,7 +460,7 @@ const MyProjects = () => {
                   required
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-4 py-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-[#135bec] focus:border-[#135bec]"
+                  className="w-full px-4 py-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-[#C4713A] focus:border-[#C4713A]"
                   placeholder="Enter project name"
                 />
               </div>
@@ -459,7 +472,7 @@ const MyProjects = () => {
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   rows={3}
-                  className="w-full px-4 py-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-[#135bec] focus:border-[#135bec]"
+                  className="w-full px-4 py-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-[#C4713A] focus:border-[#C4713A]"
                   placeholder="Enter project description"
                 />
               </div>
@@ -471,7 +484,7 @@ const MyProjects = () => {
                   <select
                     value={formData.status}
                     onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                    className="w-full px-4 py-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-[#135bec] focus:border-[#135bec]"
+                    className="w-full px-4 py-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-[#C4713A] focus:border-[#C4713A]"
                   >
                     <option value="active">Active</option>
                     <option value="on_hold">On Hold</option>
@@ -486,7 +499,7 @@ const MyProjects = () => {
                   <select
                     value={formData.priority}
                     onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
-                    className="w-full px-4 py-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-[#135bec] focus:border-[#135bec]"
+                    className="w-full px-4 py-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-[#C4713A] focus:border-[#C4713A]"
                   >
                     <option value="low">Low</option>
                     <option value="medium">Medium</option>
@@ -504,7 +517,7 @@ const MyProjects = () => {
                     type="date"
                     value={formData.start_date}
                     onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-                    className="w-full px-4 py-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-[#135bec] focus:border-[#135bec]"
+                    className="w-full px-4 py-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-[#C4713A] focus:border-[#C4713A]"
                   />
                 </div>
                 <div>
@@ -515,7 +528,7 @@ const MyProjects = () => {
                     type="date"
                     value={formData.due_date}
                     onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
-                    className="w-full px-4 py-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-[#135bec] focus:border-[#135bec]"
+                    className="w-full px-4 py-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-[#C4713A] focus:border-[#C4713A]"
                   />
                 </div>
               </div>
@@ -529,7 +542,7 @@ const MyProjects = () => {
                     min="0"
                     value={formData.budget.allocated}
                     onChange={(e) => setFormData({ ...formData, budget: { ...formData.budget, allocated: parseFloat(e.target.value) || 0 }})}
-                    className="w-full px-4 py-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-[#135bec] focus:border-[#135bec]"
+                    className="w-full px-4 py-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-[#C4713A] focus:border-[#C4713A]"
                   />
                 </div>
                 <div>
@@ -542,7 +555,7 @@ const MyProjects = () => {
                     max="100"
                     value={formData.progress}
                     onChange={(e) => setFormData({ ...formData, progress: parseInt(e.target.value) || 0 })}
-                    className="w-full px-4 py-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-[#135bec] focus:border-[#135bec]"
+                    className="w-full px-4 py-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-[#C4713A] focus:border-[#C4713A]"
                   />
                 </div>
               </div>
@@ -556,7 +569,7 @@ const MyProjects = () => {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-[#135bec] text-white rounded-lg font-bold hover:bg-[#0d4ac7] transition-colors"
+                  className="flex-1 px-4 py-2 bg-[#C4713A] text-white rounded-lg font-bold hover:bg-[#A35C28] transition-colors"
                 >
                   Create Project
                 </button>
@@ -565,6 +578,14 @@ const MyProjects = () => {
           </div>
         </div>
       )}
+
+      {/* Keyboard shortcuts help overlay */}
+      <ShortcutsOverlay
+        show={showHelp}
+        onClose={() => setShowHelp(false)}
+        shortcuts={projectShortcuts}
+        pageName="My Projects"
+      />
     </ResponsivePageLayout>
   );
 };

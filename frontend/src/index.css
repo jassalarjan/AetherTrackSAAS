@@ -110,10 +110,10 @@ textarea:focus-visible,
   box-shadow: var(--focus-ring);
 }
 
-/* Skip link - first focusable element */
+/* Skip link - first focusable element, visually hidden until focused */
 .skip-link {
-  position: absolute;
-  top: -100%;
+  position: fixed;
+  top: var(--s4);
   left: var(--s4);
   z-index: var(--z-toast);
   padding: var(--s3) var(--s4);
@@ -124,11 +124,17 @@ textarea:focus-visible,
   font-weight: 500;
   border-radius: var(--r-md);
   text-decoration: none;
-  transition: top var(--fast) var(--ease);
+  /* Off-screen by default — only visible on keyboard focus */
+  transform: translateY(calc(-100% - 32px));
+  opacity: 0;
+  pointer-events: none;
+  transition: transform var(--fast) var(--ease), opacity var(--fast) var(--ease);
 }
 
 .skip-link:focus {
-  top: var(--s4);
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: auto;
   box-shadow: var(--focus-ring);
 }
 
@@ -867,3 +873,327 @@ body {
 .kpi-card:nth-child(2) { animation: fadeUp 0.4s var(--ease) 0.065s backwards; }
 .kpi-card:nth-child(3) { animation: fadeUp 0.4s var(--ease) 0.13s backwards; }
 .kpi-card:nth-child(4) { animation: fadeUp 0.4s var(--ease) 0.195s backwards; }
+
+/* ==========================================================================
+   14. WARM PAPER THEME — GLOBAL TAILWIND OVERRIDE MAP
+   Maps standard Tailwind neutral/gray utilities to warm-paper CSS variables.
+   This ensures ALL pages in the system inherit the warm color scheme.
+   The CSS variables themselves swap automatically for dark mode via tokens.css.
+   ========================================================================== */
+
+/* ── Background surfaces ── */
+.bg-white        { background-color: var(--bg-raised)   !important; }
+.bg-gray-50      { background-color: var(--bg-canvas)   !important; }
+.bg-gray-100     { background-color: var(--bg-base)     !important; }
+.bg-gray-200     { background-color: var(--bg-surface)  !important; }
+.bg-gray-300     { background-color: var(--bg-sunken)   !important; }
+.bg-gray-400     { background-color: var(--bg-sunken)   !important; }
+.bg-slate-50     { background-color: var(--bg-canvas)   !important; }
+.bg-slate-100    { background-color: var(--bg-base)     !important; }
+.bg-slate-200    { background-color: var(--bg-surface)  !important; }
+.bg-zinc-50      { background-color: var(--bg-canvas)   !important; }
+.bg-zinc-100     { background-color: var(--bg-base)     !important; }
+.bg-zinc-200     { background-color: var(--bg-surface)  !important; }
+.bg-neutral-50   { background-color: var(--bg-canvas)   !important; }
+.bg-neutral-100  { background-color: var(--bg-base)     !important; }
+.bg-stone-50     { background-color: var(--bg-canvas)   !important; }
+.bg-stone-100    { background-color: var(--bg-base)     !important; }
+
+/* Hover surface overrides */
+.hover\:bg-white:hover      { background-color: var(--bg-raised)   !important; }
+.hover\:bg-gray-50:hover    { background-color: var(--bg-canvas)   !important; }
+.hover\:bg-gray-100:hover   { background-color: var(--bg-base)     !important; }
+.hover\:bg-gray-200:hover   { background-color: var(--bg-surface)  !important; }
+
+/* ── Text colors ── */
+.text-gray-900   { color: var(--text-primary)   !important; }
+.text-gray-800   { color: var(--text-primary)   !important; }
+.text-gray-700   { color: var(--text-secondary) !important; }
+.text-gray-600   { color: var(--text-secondary) !important; }
+.text-gray-500   { color: var(--text-muted)     !important; }
+.text-gray-400   { color: var(--text-faint)     !important; }
+.text-gray-300   { color: var(--text-faint)     !important; }
+.text-slate-900  { color: var(--text-primary)   !important; }
+.text-slate-700  { color: var(--text-secondary) !important; }
+.text-slate-600  { color: var(--text-secondary) !important; }
+.text-slate-500  { color: var(--text-muted)     !important; }
+.text-zinc-900   { color: var(--text-primary)   !important; }
+.text-zinc-700   { color: var(--text-secondary) !important; }
+.text-zinc-600   { color: var(--text-secondary) !important; }
+.text-zinc-500   { color: var(--text-muted)     !important; }
+.text-neutral-900 { color: var(--text-primary)  !important; }
+.text-neutral-700 { color: var(--text-secondary)!important; }
+.text-neutral-600 { color: var(--text-secondary)!important; }
+.text-neutral-500 { color: var(--text-muted)    !important; }
+
+/* ── Border colors ── */
+.border-gray-100   { border-color: var(--border-hair)   !important; }
+.border-gray-200   { border-color: var(--border-soft)   !important; }
+.border-gray-300   { border-color: var(--border-mid)    !important; }
+.border-gray-400   { border-color: var(--border-strong) !important; }
+.border-slate-200  { border-color: var(--border-soft)   !important; }
+.border-slate-300  { border-color: var(--border-mid)    !important; }
+.border-zinc-200   { border-color: var(--border-soft)   !important; }
+.border-zinc-300   { border-color: var(--border-mid)    !important; }
+.border-neutral-200 { border-color: var(--border-soft)  !important; }
+.border-neutral-300 { border-color: var(--border-mid)   !important; }
+
+/* Divide colors */
+.divide-gray-100 > * + * { border-color: var(--border-hair) !important; }
+.divide-gray-200 > * + * { border-color: var(--border-soft) !important; }
+.divide-gray-300 > * + * { border-color: var(--border-mid)  !important; }
+
+/* ── Ring / focus colors ── */
+.ring-gray-200   { --tw-ring-color: var(--border-soft)   !important; }
+.ring-gray-300   { --tw-ring-color: var(--border-mid)    !important; }
+
+/* ── Placeholder text ── */
+.placeholder-gray-400::placeholder { color: var(--text-faint)  !important; }
+.placeholder-gray-500::placeholder { color: var(--text-muted)  !important; }
+
+/* ── Semantic brand / primary — map blue Tailwind to warm brand ── */
+.bg-blue-500,
+.bg-blue-600 {
+  background-color: var(--brand) !important;
+}
+.hover\:bg-blue-600:hover,
+.hover\:bg-blue-700:hover {
+  background-color: var(--brand-light) !important;
+}
+.text-blue-600,
+.text-blue-700 {
+  color: var(--brand) !important;
+}
+.border-blue-500,
+.border-blue-600 {
+  border-color: var(--brand) !important;
+}
+.ring-blue-500,
+.focus\:ring-blue-500:focus,
+.focus\:ring-blue-400:focus {
+  --tw-ring-color: var(--brand) !important;
+}
+.bg-blue-50 {
+  background-color: var(--brand-dim) !important;
+}
+.text-blue-500 {
+  color: var(--brand) !important;
+}
+
+/* ── Input / form field base ── */
+input, textarea, select {
+  background-color: var(--bg-raised);
+  color: var(--text-primary);
+  border-color: var(--border-mid);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-faint);
+}
+
+/* ── Generic surface classes ── */
+.surface         { background-color: var(--bg-raised);  color: var(--text-primary); }
+.surface-base    { background-color: var(--bg-base);    color: var(--text-primary); }
+.surface-canvas  { background-color: var(--bg-canvas);  color: var(--text-primary); }
+.surface-sunken  { background-color: var(--bg-sunken);  color: var(--text-primary); }
+
+/* ── Dark-mode: keep the [#xxxxx] hardcoded values from legacy code visually consistent ── */
+/* When dark mode is active tokens.css already handles bg-canvas etc.                       */
+/* Explicit dark hex values used in older components get nudged here:                       */
+[data-theme="dark"] .bg-\[\#111418\]    { background-color: var(--bg-canvas)  !important; }
+[data-theme="dark"] .bg-\[\#1c2027\]   { background-color: var(--bg-base)    !important; }
+[data-theme="dark"] .bg-\[\#282f39\]   { background-color: var(--bg-surface) !important; }
+[data-theme="dark"] .bg-\[\#323941\]   { background-color: var(--bg-raised)  !important; }
+[data-theme="dark"] .bg-\[\#333a47\]   { background-color: var(--bg-raised)  !important; }
+[data-theme="dark"] .bg-\[\#1a2234\]   { background-color: var(--bg-base)    !important; }
+[data-theme="dark"] .border-\[\#282f39\]  { border-color: var(--border-soft)  !important; }
+[data-theme="dark"] .border-\[\#3e454f\]  { border-color: var(--border-mid)   !important; }
+[data-theme="dark"] .border-\[\#333a47\]  { border-color: var(--border-mid)   !important; }
+[data-theme="dark"] .text-\[\#9da8b9\]    { color: var(--text-secondary)      !important; }
+[data-theme="dark"] .text-\[\#58606e\]    { color: var(--text-muted)          !important; }
+[data-theme="dark"] .text-white           { color: var(--text-primary)        !important; }
+/* Dark-mode dark: variant classes — Tailwind generates [data-theme="dark"] .dark\:* */
+[data-theme="dark"] .dark\:bg-\[\#111418\]   { background-color: var(--bg-canvas)  !important; }
+[data-theme="dark"] .dark\:bg-\[\#1c2027\]   { background-color: var(--bg-base)    !important; }
+[data-theme="dark"] .dark\:bg-\[\#282f39\]   { background-color: var(--bg-surface) !important; }
+[data-theme="dark"] .dark\:bg-\[\#1a2234\]   { background-color: var(--bg-base)    !important; }
+[data-theme="dark"] .dark\:border-\[\#282f39\] { border-color: var(--border-soft)  !important; }
+[data-theme="dark"] .dark\:border-\[\#3e454f\] { border-color: var(--border-mid)   !important; }
+[data-theme="dark"] .dark\:text-\[\#9da8b9\]   { color: var(--text-secondary)      !important; }
+[data-theme="dark"] .dark\:text-white          { color: var(--text-primary)        !important; }
+/* Dark-mode gray-800/700 classes (used in standalone page headers) */
+[data-theme="dark"] .dark\:border-gray-800  { border-color: var(--border-soft)  !important; }
+[data-theme="dark"] .dark\:border-gray-700  { border-color: var(--border-mid)   !important; }
+[data-theme="dark"] .dark\:bg-gray-800      { background-color: var(--bg-surface) !important; }
+[data-theme="dark"] .dark\:bg-gray-900      { background-color: var(--bg-canvas)  !important; }
+[data-theme="dark"] .dark\:text-gray-200    { color: var(--text-primary)         !important; }
+[data-theme="dark"] .dark\:text-gray-300    { color: var(--text-secondary)       !important; }
+[data-theme="dark"] .dark\:text-gray-400    { color: var(--text-muted)           !important; }
+/* also add plain (non-dark:) high gray shades used in tables/rows */
+.bg-gray-700   { background-color: var(--bg-sunken)  !important; }
+.bg-gray-800   { background-color: var(--bg-surface) !important; }
+.bg-gray-900   { background-color: var(--bg-canvas)  !important; }
+.text-gray-100 { color: var(--text-primary)           !important; }
+.text-gray-200 { color: var(--text-primary)           !important; }
+.border-gray-700 { border-color: var(--border-mid)    !important; }
+.border-gray-800 { border-color: var(--border-soft)   !important; }
+
+/* ==========================================================================
+   15. HARDCODED BLUE HEX OVERRIDES — Warm Brand
+   Catches arbitrary Tailwind classes using specific blue hex codes.
+   CSS selectors for arbitrary values: bg-[#136dec] → .bg-\[\#136dec\]
+   ========================================================================== */
+
+/* ── bg-[#136dec] and variants (old UI kit primary blue) ── */
+.bg-\[\#136dec\]                     { background-color: var(--brand)       !important; }
+.bg-\[\#136dec\]\/90                 { background-color: var(--brand)       !important; }
+.bg-\[\#136dec\]\/20                 { background-color: var(--brand-dim)   !important; }
+.bg-\[\#136dec\]\/10                 { background-color: var(--brand-dim)   !important; }
+.bg-\[\#136dec\]\/5                  { background-color: var(--brand-dim)   !important; }
+.border-\[\#136dec\]\/30             { border-color: var(--brand)           !important; opacity: 0.3; }
+.border-\[\#136dec\]\/20             { border-color: var(--brand)           !important; opacity: 0.2; }
+.hover\:bg-\[\#136dec\]:hover        { background-color: var(--brand-light) !important; }
+.hover\:bg-\[\#136dec\]\/90:hover    { background-color: var(--brand-light) !important; }
+.text-\[\#136dec\]                   { color: var(--brand)                  !important; }
+.hover\:text-\[\#136dec\]:hover      { color: var(--brand)                  !important; }
+.border-\[\#136dec\]                 { border-color: var(--brand)           !important; }
+.focus\:ring-\[\#136dec\]:focus      { --tw-ring-color: var(--brand)        !important; }
+.focus\:border-\[\#136dec\]:focus    { border-color: var(--brand)           !important; }
+.focus\:ring-2.focus\:ring-\[\#136dec\]:focus { --tw-ring-color: var(--brand) !important; }
+
+/* ── bg-[#135bec] and variants (alternate old blue) ── */
+.bg-\[\#135bec\]                     { background-color: var(--brand)       !important; }
+.hover\:bg-\[\#135bec\]:hover        { background-color: var(--brand-light) !important; }
+.text-\[\#135bec\]                   { color: var(--brand)                  !important; }
+.hover\:text-\[\#135bec\]:hover      { color: var(--brand)                  !important; }
+.border-\[\#135bec\]                 { border-color: var(--brand)           !important; }
+.focus\:ring-\[\#135bec\]:focus      { --tw-ring-color: var(--brand)        !important; }
+.focus\:border-\[\#135bec\]:focus    { border-color: var(--brand)           !important; }
+
+/* ── hover blues that were follow-on states ── */
+.hover\:bg-blue-600:hover            { background-color: var(--brand-light) !important; }
+.hover\:bg-blue-700:hover            { background-color: var(--brand-light) !important; }
+.bg-\[\#0d4ac7\]                     { background-color: var(--brand)       !important; }
+.hover\:bg-\[\#0d4ac7\]:hover        { background-color: var(--brand-light) !important; }
+
+/* ── Complete blue palette → warm brand ── */
+.bg-blue-400                         { background-color: var(--brand)       !important; }
+.bg-blue-500                         { background-color: var(--brand)       !important; }
+.bg-blue-600                         { background-color: var(--brand)       !important; }
+.bg-blue-700                         { background-color: var(--brand-light) !important; }
+.bg-blue-800                         { background-color: var(--brand-light) !important; }
+.bg-blue-50                          { background-color: var(--brand-dim)   !important; }
+.bg-blue-100                         { background-color: var(--brand-dim)   !important; }
+/* bg-blue-500/20, /30 — opacity opaque overrides */
+.bg-blue-500\/20                     { background-color: var(--brand-dim)   !important; }
+.bg-blue-500\/10                     { background-color: var(--brand-glow)  !important; }
+.bg-blue-500\/30                     { background-color: var(--brand-dim)   !important; }
+.bg-blue-100\/50                     { background-color: var(--brand-glow)  !important; }
+/* dark-mode blue transparent accents */
+.bg-blue-900\/20                     { background-color: var(--brand-dim)   !important; }
+.bg-blue-900\/10                     { background-color: var(--brand-glow)  !important; }
+.bg-blue-900\/30                     { background-color: var(--brand-dim)   !important; }
+
+/* ── Blue text including shaded variants ── */
+.text-blue-400                       { color: var(--brand-light)            !important; }
+.text-blue-300                       { color: var(--brand-light)            !important; }
+.text-blue-500                       { color: var(--brand)                  !important; }
+.text-blue-600                       { color: var(--brand)                  !important; }
+.text-blue-700                       { color: var(--brand)                  !important; }
+.text-blue-800                       { color: var(--brand)                  !important; }
+.text-blue-200                       { color: var(--brand-light)            !important; }
+
+/* ── Border blue variants ── */
+.border-blue-400                     { border-color: var(--brand)           !important; }
+.border-blue-500                     { border-color: var(--brand)           !important; }
+.border-blue-600                     { border-color: var(--brand)           !important; }
+.border-blue-500\/30                 { border-color: var(--brand-dim)       !important; }
+
+/* ── Ring / focus blue variants ── */
+.ring-blue-500                       { --tw-ring-color: var(--brand)        !important; }
+.focus\:ring-blue-500:focus          { --tw-ring-color: var(--brand)        !important; }
+.focus\:ring-blue-400:focus          { --tw-ring-color: var(--brand)        !important; }
+.focus\:ring-2:focus, .focus\:ring-2.focus\:ring-\[\#136dec\]:focus { --tw-ring-color: var(--brand) !important; }
+.shadow-blue-900\/20                 { --tw-shadow-color: var(--brand-dim)  !important; }
+.shadow-blue-500\/25                 { --tw-shadow-color: var(--brand-dim)  !important; }
+
+/* ── Brand indicator (active state highlight) — blue-500 active ── */
+.active\:bg-blue-600:active          { background-color: var(--brand)       !important; }
+
+/* ── indigo overrides (also treated as primary) ── */
+.bg-indigo-500, .bg-indigo-600       { background-color: var(--brand)       !important; }
+.text-indigo-500, .text-indigo-600   { color: var(--brand)                  !important; }
+.border-indigo-500, .border-indigo-600 { border-color: var(--brand)         !important; }
+.hover\:bg-indigo-600:hover, .hover\:bg-indigo-700:hover {
+  background-color: var(--brand-light) !important;
+}
+
+/* ==========================================================================
+   16. INNER PAGE HEADER NORMALIZATION
+   Pages using ResponsivePageLayout that have their own inner <header>
+   elements (Analytics, Calendar, Kanban, etc.) — normalize to warm tokens.
+   The duplicate h2 page title is visually reduced (AppHeader breadcrumb
+   already shows it), and colours match the warm paper system.
+   ========================================================================== */
+
+/* Inner page header sitting below AppHeader inside the scroll area */
+#main-content header,
+.page-inner-header {
+  background-color: var(--bg-canvas)    !important;
+  border-color:     var(--border-soft)  !important;
+}
+
+#main-content header h2,
+#main-content header h1,
+.page-inner-header h2,
+.page-inner-header h1 {
+  color:        var(--text-primary)   !important;
+  font-family:  var(--font-heading)   !important;
+  letter-spacing: -0.025em;
+}
+
+#main-content header p,
+.page-inner-header p {
+  color: var(--text-secondary) !important;
+}
+
+/* Wrappers inside inner headers using old dark hex backgrounds */
+#main-content header .bg-\[\#282f39\],
+#main-content header [class*="bg-[#282f39]"] {
+  background-color: var(--bg-surface) !important;
+}
+
+/* form controls inside inner headers */
+#main-content header select,
+#main-content header input {
+  background-color: var(--bg-raised)  !important;
+  border-color:     var(--border-mid) !important;
+  color:            var(--text-primary) !important;
+}
+
+/* ── secondary action buttons in inner headers ── */
+#main-content header button:not([class*="bg-brand"]):not([class*="bg-[#"]):not([class*="bg-blue"]):not([class*="bg-green"]):not([class*="bg-red"]):not([class*="bg-warm"]) {
+  background-color: var(--bg-raised)   !important;
+  border-color:     var(--border-mid)  !important;
+  color:            var(--text-secondary) !important;
+}
+
+#main-content header button:not([class*="bg-brand"]):not([class*="bg-[#"]):not([class*="bg-blue"]):not([class*="bg-green"]):not([class*="bg-red"]):not([class*="bg-warm"]):hover {
+  background-color: var(--bg-surface)  !important;
+  color:            var(--text-primary) !important;
+}
+
+/* Pages that have standalone layouts (not using ResponsivePageLayout)
+   e.g. ProjectDetail, ProjectGantt, ResourceWorkload, SprintManagement */
+.page-standalone-header,
+header.min-h-16,
+header.h-16 {
+  background-color: var(--bg-canvas)  !important;
+  border-color:     var(--border-soft) !important;
+}
+
+/* Remove the old dark blue panel bg used in some page standalone headers */
+.bg-\[\#1a2234\]   { background-color: var(--bg-base)    !important; }
+.bg-\[\#0d121b\]   { background-color: var(--bg-canvas)  !important; }
+.text-\[\#0d121b\] { color: var(--text-primary)          !important; }

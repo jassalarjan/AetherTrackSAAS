@@ -1,7 +1,8 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ResponsivePageLayout from '../components/layouts/ResponsivePageLayout';
 import api from '../api/axios';
+import { PageLoader } from '../components/Spinner';
 import {
   Plus, ChevronRight, Info, Flag, CheckCircle, Circle,
   ArrowUp, Minus, Check, X, Calendar, Users, Target, Settings
@@ -82,7 +83,7 @@ const SprintManagement = () => {
   const getStatusBadge = (status) => {
     const badges = {
       todo: 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700',
-      in_progress: 'bg-blue-100 dark:bg-blue-900/20 text-[#135bec] border-[#135bec]/20',
+      in_progress: 'bg-[#C4713A]/10 dark:bg-[#C4713A]/20 text-[#C4713A] border-[#C4713A]/20',
       review: 'bg-purple-100 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400 border-purple-200',
       done: 'bg-emerald-100 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border-emerald-200'
     };
@@ -141,13 +142,7 @@ const SprintManagement = () => {
     { sprint: 'S12', points: totalStoryPoints, percentage: 40, current: true }
   ];
 
-  if (loading) {
-    return (
-      <div className="h-screen flex items-center justify-center" style={{ background: 'var(--bg-canvas)' }}>
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-transparent" style={{ borderBottomColor: 'var(--brand)' }} />
-      </div>
-    );
-  }
+  if (loading) return <PageLoader label="Loading sprints…" />;
 
   return (
     <ResponsivePageLayout title="Sprint Management" icon={Target} noPadding>
@@ -156,11 +151,11 @@ const SprintManagement = () => {
           <div className="flex items-center gap-8">
             <h2 className="text-xl font-bold tracking-tight">Sprint Management</h2>
             <nav className="hidden md:flex items-center gap-6">
-              <button onClick={() => navigate('/projects')} className="text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-[#135bec] transition-colors">
+              <button onClick={() => navigate('/projects')} className="text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-[#C4713A] transition-colors">
                 Projects
               </button>
-              <button className="text-sm font-semibold text-[#135bec]">Sprints</button>
-              <button onClick={() => navigate('/teams')} className="text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-[#135bec] transition-colors">
+              <button className="text-sm font-semibold text-[#C4713A]">Sprints</button>
+              <button onClick={() => navigate('/teams')} className="text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-[#C4713A] transition-colors">
                 Team
               </button>
             </nav>
@@ -173,7 +168,7 @@ const SprintManagement = () => {
         </header>
         <div className="bg-white dark:bg-[#1a2234] border-b border-gray-200 dark:border-gray-800 px-8 py-3 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2 text-sm">
-            <button onClick={() => navigate('/projects')} className="text-gray-500 dark:text-gray-400 hover:text-[#135bec]">
+            <button onClick={() => navigate('/projects')} className="text-gray-500 dark:text-gray-400 hover:text-[#C4713A]">
               {selectedProject?.name || 'All Projects'}
             </button>
             <ChevronRight size={16} className="text-gray-400" />
@@ -190,7 +185,7 @@ const SprintManagement = () => {
               <Settings size={16} />
               Sprint Settings
             </button>
-            <button className="px-4 py-1.5 text-sm font-semibold bg-[#135bec] text-white rounded-lg hover:bg-blue-700 shadow-sm transition-colors">
+            <button className="px-4 py-1.5 text-sm font-semibold bg-[#C4713A] text-white rounded-lg hover:bg-[#A35C28] shadow-sm transition-colors">
               Complete Sprint
             </button>
           </div>
@@ -208,7 +203,7 @@ const SprintManagement = () => {
                     Oct 15 - Oct 29 • {totalStoryPoints} Story Points • {tasks.length} Tasks
                   </p>
                 </div>
-                <button className="flex items-center gap-2 px-4 py-2 bg-[#135bec]/10 text-[#135bec] text-sm font-bold rounded-lg hover:bg-[#135bec]/20 transition-colors">
+                <button className="flex items-center gap-2 px-4 py-2 bg-[#C4713A]/10 text-[#C4713A] text-sm font-bold rounded-lg hover:bg-[#C4713A]/20 transition-colors">
                   <Plus size={18} />
                   Add Item
                 </button>
@@ -225,7 +220,7 @@ const SprintManagement = () => {
                     <p className="text-sm text-gray-500 dark:text-gray-400 text-center max-w-md mb-6">
                       Start by adding tasks to this sprint from the backlog or create new tasks for your team.
                     </p>
-                    <button className="flex items-center gap-2 px-6 py-3 bg-[#135bec] text-white text-sm font-bold rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
+                    <button className="flex items-center gap-2 px-6 py-3 bg-[#C4713A] text-white text-sm font-bold rounded-lg hover:bg-[#A35C28] transition-colors shadow-sm">
                       <Plus size={18} />
                       Add First Task
                     </button>
@@ -249,7 +244,7 @@ const SprintManagement = () => {
                             <span className="text-xs text-gray-400 font-medium mb-1 tracking-wider uppercase">
                               TASK-{String(index + 100).padStart(3, '0')}
                             </span>
-                            <span className="font-semibold dark:text-white group-hover:text-[#135bec]">{task.title}</span>
+                            <span className="font-semibold dark:text-white group-hover:text-[#C4713A]">{task.title}</span>
                           </div>
                         </td>
                         <td className="px-4 py-4">
@@ -290,7 +285,7 @@ const SprintManagement = () => {
                 <h3 className="font-bold dark:text-white">Burndown Chart</h3>
                 <Info size={18} className="text-gray-400 cursor-help" />
               </div>
-              <div className="h-40 w-full rounded-lg flex items-center justify-center relative bg-gradient-to-b from-[#135bec]/5 to-transparent">
+              <div className="h-40 w-full rounded-lg flex items-center justify-center relative bg-gradient-to-b from-[#C4713A]/5 to-transparent">
                 <svg className="w-full h-full" preserveAspectRatio="none" viewBox="0 0 200 100">
                   {/* Ideal line */}
                   <line
@@ -304,7 +299,7 @@ const SprintManagement = () => {
                   <path
                     d="M 0 10 L 25 15 L 50 12 L 75 35 L 100 30 L 125 45 L 150 50"
                     fill="none"
-                    stroke="#135bec"
+                    stroke="#C4713A"
                     strokeWidth="2"
                   />
                 </svg>
@@ -321,8 +316,8 @@ const SprintManagement = () => {
               <div className="flex items-center justify-between mb-6">
                 <h3 className="font-bold dark:text-white">Velocity Graph</h3>
                 <div className="flex gap-1">
-                  <div className="w-2.5 h-2.5 rounded-full bg-[#135bec]/30"></div>
-                  <div className="w-2.5 h-2.5 rounded-full bg-[#135bec]"></div>
+                  <div className="w-2.5 h-2.5 rounded-full bg-[#C4713A]/30"></div>
+                  <div className="w-2.5 h-2.5 rounded-full bg-[#C4713A]"></div>
                 </div>
               </div>
               <div className="flex items-end justify-between h-32 px-4">
@@ -330,18 +325,18 @@ const SprintManagement = () => {
                   <div key={sprint.sprint} className="flex flex-col items-center gap-2">
                     <div
                       className={`w-8 rounded-t-lg relative ${
-                        sprint.current ? 'bg-[#135bec]' : 'bg-gray-200 dark:bg-gray-800'
+                        sprint.current ? 'bg-[#C4713A]' : 'bg-gray-200 dark:bg-gray-800'
                       }`}
                       style={{ height: `${sprint.percentage}%` }}
                     >
                       {sprint.current && (
-                        <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] font-bold text-[#135bec]">
+                        <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-[10px] font-bold text-[#C4713A]">
                           {sprint.points}
                         </div>
                       )}
                     </div>
                     <span className={`text-[10px] font-bold ${
-                      sprint.current ? 'text-[#135bec]' : 'text-gray-400'
+                      sprint.current ? 'text-[#C4713A]' : 'text-gray-400'
                     }`}>
                       {sprint.sprint}
                     </span>
@@ -353,10 +348,10 @@ const SprintManagement = () => {
             {/* Sprint Goals */}
             <div className="bg-white dark:bg-[#1a2234] rounded-xl border border-gray-200 dark:border-gray-800 p-5 shadow-sm">
               <h3 className="font-bold mb-4 flex items-center gap-2">
-                <Flag size={18} className="text-[#135bec]" />
+                <Flag size={18} className="text-[#C4713A]" />
                 Sprint Goals
               </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed italic border-l-2 border-[#135bec]/30 pl-4">
+              <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed italic border-l-2 border-[#C4713A]/30 pl-4">
                 "Successfully migrate the legacy authentication system to OAuth 2.0 while ensuring zero downtime for current enterprise users."
               </p>
             </div>
@@ -364,7 +359,7 @@ const SprintManagement = () => {
             {/* Key Deliverables */}
             <div className="bg-white dark:bg-[#1a2234] rounded-xl border border-gray-200 dark:border-gray-800 p-5 shadow-sm">
               <h3 className="font-bold mb-4 flex items-center gap-2">
-                <CheckCircle size={18} className="text-[#135bec]" />
+                <CheckCircle size={18} className="text-[#C4713A]" />
                 Key Deliverables
               </h3>
               <ul className="space-y-3">
@@ -376,7 +371,7 @@ const SprintManagement = () => {
                       </div>
                     ) : (
                       <div className="w-5 h-5 rounded border border-gray-300 dark:border-gray-700 flex items-center justify-center">
-                        <div className="w-2 h-2 bg-[#135bec] rounded-sm opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                        <div className="w-2 h-2 bg-[#C4713A] rounded-sm opacity-0 group-hover:opacity-100 transition-opacity"></div>
                       </div>
                     )}
                     <span className={`text-sm ${
@@ -417,8 +412,8 @@ const SprintManagement = () => {
             {/* Modal Header */}
             <div className="sticky top-0 bg-white dark:bg-[#1a2234] border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between z-10">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-[#135bec]/10 flex items-center justify-center">
-                  <Settings size={20} className="text-[#135bec]" />
+                <div className="w-10 h-10 rounded-lg bg-[#C4713A]/10 flex items-center justify-center">
+                  <Settings size={20} className="text-[#C4713A]" />
                 </div>
                 <div>
                   <h2 className="text-xl font-bold">Sprint Settings</h2>
@@ -438,14 +433,14 @@ const SprintManagement = () => {
               {/* Sprint Name */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
-                  <Target size={16} className="text-[#135bec]" />
+                  <Target size={16} className="text-[#C4713A]" />
                   Sprint Name
                 </label>
                 <input
                   type="text"
                   value={sprintSettings.name}
                   onChange={(e) => setSprintSettings({ ...sprintSettings, name: e.target.value })}
-                  className="w-full px-4 py-2.5 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#135bec] focus:border-[#135bec] transition-all"
+                  className="w-full px-4 py-2.5 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#C4713A] focus:border-[#C4713A] transition-all"
                   placeholder="Enter sprint name..."
                 />
               </div>
@@ -454,26 +449,26 @@ const SprintManagement = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
-                    <Calendar size={16} className="text-[#135bec]" />
+                    <Calendar size={16} className="text-[#C4713A]" />
                     Start Date
                   </label>
                   <input
                     type="date"
                     value={sprintSettings.startDate}
                     onChange={(e) => setSprintSettings({ ...sprintSettings, startDate: e.target.value })}
-                    className="w-full px-4 py-2.5 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#135bec] focus:border-[#135bec] transition-all"
+                    className="w-full px-4 py-2.5 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#C4713A] focus:border-[#C4713A] transition-all"
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
-                    <Calendar size={16} className="text-[#135bec]" />
+                    <Calendar size={16} className="text-[#C4713A]" />
                     End Date
                   </label>
                   <input
                     type="date"
                     value={sprintSettings.endDate}
                     onChange={(e) => setSprintSettings({ ...sprintSettings, endDate: e.target.value })}
-                    className="w-full px-4 py-2.5 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#135bec] focus:border-[#135bec] transition-all"
+                    className="w-full px-4 py-2.5 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#C4713A] focus:border-[#C4713A] transition-all"
                   />
                 </div>
               </div>
@@ -481,14 +476,14 @@ const SprintManagement = () => {
               {/* Sprint Goal */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
-                  <Flag size={16} className="text-[#135bec]" />
+                  <Flag size={16} className="text-[#C4713A]" />
                   Sprint Goal
                 </label>
                 <textarea
                   value={sprintSettings.goal}
                   onChange={(e) => setSprintSettings({ ...sprintSettings, goal: e.target.value })}
                   rows={4}
-                  className="w-full px-4 py-2.5 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#135bec] focus:border-[#135bec] transition-all resize-none"
+                  className="w-full px-4 py-2.5 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#C4713A] focus:border-[#C4713A] transition-all resize-none"
                   placeholder="Define the primary objective for this sprint..."
                 />
                 <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">Clear, measurable goal that defines sprint success</p>
@@ -498,7 +493,7 @@ const SprintManagement = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
-                    <Users size={16} className="text-[#135bec]" />
+                    <Users size={16} className="text-[#C4713A]" />
                     Team Size
                   </label>
                   <input
@@ -506,12 +501,12 @@ const SprintManagement = () => {
                     min="1"
                     value={sprintSettings.teamSize}
                     onChange={(e) => setSprintSettings({ ...sprintSettings, teamSize: parseInt(e.target.value) || 1 })}
-                    className="w-full px-4 py-2.5 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#135bec] focus:border-[#135bec] transition-all"
+                    className="w-full px-4 py-2.5 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#C4713A] focus:border-[#C4713A] transition-all"
                   />
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
-                    <Target size={16} className="text-[#135bec]" />
+                    <Target size={16} className="text-[#C4713A]" />
                     Story Points Capacity
                   </label>
                   <input
@@ -519,7 +514,7 @@ const SprintManagement = () => {
                     min="0"
                     value={sprintSettings.capacity}
                     onChange={(e) => setSprintSettings({ ...sprintSettings, capacity: parseInt(e.target.value) || 0 })}
-                    className="w-full px-4 py-2.5 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#135bec] focus:border-[#135bec] transition-all"
+                    className="w-full px-4 py-2.5 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#C4713A] focus:border-[#C4713A] transition-all"
                   />
                 </div>
               </div>
@@ -527,7 +522,7 @@ const SprintManagement = () => {
               {/* Info Box */}
               <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
                 <div className="flex gap-3">
-                  <Info size={20} className="text-[#135bec] flex-shrink-0 mt-0.5" />
+                  <Info size={20} className="text-[#C4713A] flex-shrink-0 mt-0.5" />
                   <div className="text-sm text-gray-700 dark:text-gray-300">
                     <p className="font-semibold mb-1">Sprint Duration</p>
                     <p className="text-gray-600 dark:text-gray-400">
@@ -553,7 +548,7 @@ const SprintManagement = () => {
               </button>
               <button
                 onClick={handleSaveSettings}
-                className="px-5 py-2.5 text-sm font-semibold text-white bg-[#135bec] rounded-lg hover:bg-blue-700 transition-colors shadow-sm flex items-center gap-2"
+                className="px-5 py-2.5 text-sm font-semibold text-white bg-[#C4713A] rounded-lg hover:bg-[#A35C28] transition-colors shadow-sm flex items-center gap-2"
               >
                 <Check size={16} />
                 Save Changes

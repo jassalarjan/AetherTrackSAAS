@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useSidebar } from '../context/SidebarContext';
@@ -401,8 +401,8 @@ export default function VerificationSettings() {
                 disabled={saving}
                 className={`flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-medium text-white transition-colors ${
                   isDark 
-                    ? 'bg-blue-600 hover:bg-blue-700' 
-                    : 'bg-blue-600 hover:bg-blue-700'
+                    ? 'bg-blue-600 hover:bg-[#A35C28]' 
+                    : 'bg-blue-600 hover:bg-[#A35C28]'
                 } disabled:opacity-50 disabled:cursor-not-allowed`}
               >
                 {saving ? (

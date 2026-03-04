@@ -324,7 +324,7 @@ const Teams = () => {
               </button>
               <button
                 onClick={() => setShowCreateModal(true)}
-                className="px-4 py-2 bg-[#136dec] text-white rounded-[0.125rem] hover:bg-[#1158c7] transition-colors flex items-center space-x-2"
+                className="px-4 py-2 bg-[#C4713A] text-white rounded-[0.125rem] hover:bg-[#A35C28] transition-colors flex items-center space-x-2"
                 data-testid="create-team-btn"
               >
                 <Plus className="w-5 h-5" />
@@ -380,7 +380,7 @@ const Teams = () => {
               <div className="flex items-center justify-between mb-4 mt-4">
                 <h3 className={`text-xl font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{team.name}</h3>
                 <div className="flex items-center space-x-2">
-                  <Users className="w-6 h-6 text-[#136dec]" />
+                  <Users className="w-6 h-6 text-[#C4713A]" />
                   {['admin', 'hr', 'community_admin'].includes(user?.role) && (
                     <>
                       <button
@@ -608,7 +608,7 @@ const Teams = () => {
                       placeholder="Search by name or email..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-10 pr-4 py-3 bg-[#111418] border border-[#282f39] rounded-[0.125rem] text-white placeholder-[#9da8b9] focus:border-[#136dec] focus:outline-none transition-colors"
+                      className="w-full pl-10 pr-4 py-3 bg-[#111418] border border-[#282f39] rounded-[0.125rem] text-white placeholder-[#9da8b9] focus:border-[#C4713A] focus:outline-none transition-colors"
                     />
                   </div>
 
@@ -625,7 +625,7 @@ const Teams = () => {
                         onClick={() => setRoleFilter(role)}
                         className={`px-3 py-1.5 rounded-[0.125rem] text-xs font-medium transition-colors ${
                           roleFilter === role
-                            ? 'bg-[#136dec] text-white'
+                            ? 'bg-[#C4713A] text-white'
                             : 'bg-[#282f39] text-[#9da8b9] hover:bg-[#3e454f] hover:text-white'
                         }`}
                       >
@@ -636,7 +636,7 @@ const Teams = () => {
                 </div>
 
                 {/* Multi-Select Toggle */}
-                <div className="flex items-center justify-between p-4 bg-gradient-to-r from-[#136dec]/10 to-transparent rounded-[0.125rem] border border-[#136dec]/20">
+                <div className="flex items-center justify-between p-4 bg-gradient-to-r from-[#C4713A]/10 to-transparent rounded-[0.125rem] border border-[#C4713A]/20">
                   <div>
                     <span className="text-sm font-semibold text-white block">
                       {isMultiSelect ? '✓ Multi-Select Mode Active' : 'Single Select Mode'}
@@ -655,7 +655,7 @@ const Teams = () => {
                     className={`px-5 py-2.5 rounded-[0.125rem] text-sm font-medium transition-all ${
                       isMultiSelect 
                         ? 'bg-green-600 text-white hover:bg-green-700 shadow-lg shadow-green-600/25' 
-                        : 'bg-[#136dec] text-white hover:bg-[#1158c7] shadow-lg shadow-[#136dec]/25'
+                        : 'bg-[#C4713A] text-white hover:bg-[#A35C28] shadow-lg shadow-[#C4713A]/25'
                     }`}
                   >
                     {isMultiSelect ? '← Single Select' : 'Multi-Select →'}
@@ -673,7 +673,7 @@ const Teams = () => {
                       <button
                         type="button"
                         onClick={toggleSelectAll}
-                        className="text-sm font-medium text-[#136dec] hover:text-[#1158c7] transition-colors"
+                        className="text-sm font-medium text-[#C4713A] hover:text-[#A35C28] transition-colors"
                       >
                         {selectedUserIds.length === filteredUsers.length && filteredUsers.length > 0
                           ? '✗ Deselect All'
@@ -690,10 +690,10 @@ const Teams = () => {
                             type="checkbox"
                             checked={selectedUserIds.includes(u._id)}
                             onChange={() => toggleUserSelection(u._id)}
-                            className="w-5 h-5 text-[#136dec] rounded focus:ring-[#136dec] mr-4 cursor-pointer"
+                            className="w-5 h-5 text-[#C4713A] rounded focus:ring-[#C4713A] mr-4 cursor-pointer"
                           />
                           <div className="flex-1 min-w-0">
-                            <div className="font-semibold text-white group-hover:text-[#136dec] transition-colors">{u.full_name}</div>
+                            <div className="font-semibold text-white group-hover:text-[#C4713A] transition-colors">{u.full_name}</div>
                             <div className="text-sm text-[#9da8b9] truncate">
                               {u.email}
                             </div>
@@ -732,10 +732,10 @@ const Teams = () => {
                               value={u._id}
                               checked={selectedUserId === u._id}
                               onChange={(e) => setSelectedUserId(e.target.value)}
-                              className="w-5 h-5 text-[#136dec] focus:ring-[#136dec] mr-4 cursor-pointer"
+                              className="w-5 h-5 text-[#C4713A] focus:ring-[#C4713A] mr-4 cursor-pointer"
                             />
                             <div className="flex-1 min-w-0">
-                              <div className="font-semibold text-white group-hover:text-[#136dec] transition-colors">{u.full_name}</div>
+                              <div className="font-semibold text-white group-hover:text-[#C4713A] transition-colors">{u.full_name}</div>
                               <div className="text-sm text-[#9da8b9] truncate">
                                 {u.email}
                               </div>
@@ -775,7 +775,7 @@ const Teams = () => {
                 </button>
                 <button 
                   type="submit" 
-                  className="px-5 py-2.5 bg-[#136dec] text-white rounded-[0.125rem] hover:bg-[#1158c7] transition-colors font-medium shadow-lg shadow-[#136dec]/25 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2" 
+                  className="px-5 py-2.5 bg-[#C4713A] text-white rounded-[0.125rem] hover:bg-[#A35C28] transition-colors font-medium shadow-lg shadow-[#C4713A]/25 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2" 
                   data-testid="submit-add-member"
                   disabled={isMultiSelect ? selectedUserIds.length === 0 : !selectedUserId}
                 >

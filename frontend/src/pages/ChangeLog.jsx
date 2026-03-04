@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+﻿import { SectionLoader } from '../components/Spinner';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useNavigate } from 'react-router-dom';
@@ -299,7 +299,7 @@ const ChangeLog = () => {
                 <button
                   onClick={handleExport}
                   disabled={exporting}
-                  className="flex items-center space-x-2 px-4 py-2 rounded-[0.125rem] bg-[#136dec] hover:bg-[#136dec]/90 text-white transition-colors disabled:opacity-50"
+                  className="flex items-center space-x-2 px-4 py-2 rounded-[0.125rem] bg-[#C4713A] hover:bg-[#C4713A]/90 text-white transition-colors disabled:opacity-50"
                 >
                   <Download className="w-4 h-4" />
                   <span>{exporting ? 'Exporting...' : 'Export CSV'}</span>
@@ -329,7 +329,7 @@ const ChangeLog = () => {
                     <p className={`text-sm mb-1 ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`}>Total Events</p>
                     <p className={`text-3xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{stats.total.toLocaleString()}</p>
                   </div>
-                  <TrendingUp className="w-10 h-10 text-[#136dec] opacity-50" />
+                  <TrendingUp className="w-10 h-10 text-[#C4713A] opacity-50" />
                 </div>
               </div>
 
@@ -340,7 +340,7 @@ const ChangeLog = () => {
                     <p className={`text-sm mb-1 ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`}>Event Types</p>
                     <p className={`text-3xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{stats.by_event_type.length}</p>
                   </div>
-                  <Target className="w-10 h-10 text-[#136dec] opacity-50" />
+                  <Target className="w-10 h-10 text-[#C4713A] opacity-50" />
                 </div>
               </div>
 
@@ -351,7 +351,7 @@ const ChangeLog = () => {
                     <p className={`text-sm mb-1 ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`}>Active Users</p>
                     <p className={`text-3xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{stats.top_users.length}</p>
                   </div>
-                  <User className="w-10 h-10 text-[#136dec] opacity-50" />
+                  <User className="w-10 h-10 text-[#C4713A] opacity-50" />
                 </div>
               </div>
             </div>
@@ -566,9 +566,8 @@ const ChangeLog = () => {
           <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded-[0.125rem] border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} shadow-sm overflow-hidden`}>
             <div className="overflow-x-auto">
               {loading ? (
-                <div className="p-12 text-center">
-                  <RefreshCw className="w-8 h-8 text-[#136dec] animate-spin mx-auto mb-4" />
-                  <p className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`}>Loading change logs...</p>
+                <div className="p-12">
+                  <SectionLoader label="Loading change logs…" minHeight="120px" />
                 </div>
               ) : logs.length === 0 ? (
                 <div className="p-12 text-center">

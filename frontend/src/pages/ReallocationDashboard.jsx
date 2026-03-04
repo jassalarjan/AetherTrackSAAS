@@ -1,4 +1,4 @@
-﻿/**
+/**
  * ReallocationDashboard.jsx
  * ─────────────────────────────────────────────────────────────────────────────
  * Team Lead command centre for reviewing, accepting, redistributing, or
@@ -7,7 +7,7 @@
  * Also serves as a read-only history view for HR/Admin.
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { SectionLoader } from '../components/Spinner';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import api from '../api/axios';
@@ -576,7 +576,7 @@ export default function ReallocationDashboard() {
                   onClick={() => setTab(t.key)}
                   className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors
                     ${tab === t.key
-                      ? 'bg-blue-600 text-white'
+                      ? 'bg-[#C4713A] text-white'
                       : theme === 'dark'
                         ? 'text-gray-400 hover:text-white hover:bg-[#282f39]'
                         : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'}`}
@@ -616,8 +616,8 @@ export default function ReallocationDashboard() {
           {/* Content */}
           <div className="p-4">
             {loading ? (
-              <div className="flex items-center justify-center py-16">
-                <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+              <div className="py-10">
+                <SectionLoader label="Loading requests…" minHeight="160px" />
               </div>
             ) : error ? (
               <div className="flex flex-col items-center justify-center py-16 gap-3">

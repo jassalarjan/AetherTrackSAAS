@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useConfirmModal } from '../hooks/useConfirmModal';
@@ -393,7 +393,7 @@ export default function UserManagement() {
               </button>
               <button
                 onClick={openCreateModal}
-                className="flex items-center justify-center rounded h-7 sm:h-8 md:h-9 px-2 sm:px-3 md:px-4 bg-[#136dec] text-white gap-1 sm:gap-1.5 text-[10px] sm:text-xs md:text-sm font-bold hover:bg-blue-600 transition-colors"
+                className="flex items-center justify-center rounded h-7 sm:h-8 md:h-9 px-2 sm:px-3 md:px-4 bg-[#C4713A] text-white gap-1 sm:gap-1.5 text-[10px] sm:text-xs md:text-sm font-bold hover:bg-[#A35C28] transition-colors"
               >
                 <Plus size={14} className="sm:w-4 sm:h-4" />
                 <span className="hidden sm:inline">Create User</span>
@@ -410,7 +410,7 @@ export default function UserManagement() {
                 <input
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className={`w-full h-5 sm:h-8 md:h-9 lg:h-10 pl-5 sm:pl-8 md:pl-10 pr-1 sm:pr-3 md:pr-4 ${currentTheme.surface} border ${currentTheme.border} rounded text-[9px] sm:text-xs md:text-sm ${currentTheme.text} placeholder-[#6b7280] focus:ring-1 focus:ring-[#136dec] focus:border-transparent`}
+                  className={`w-full h-5 sm:h-8 md:h-9 lg:h-10 pl-5 sm:pl-8 md:pl-10 pr-1 sm:pr-3 md:pr-4 ${currentTheme.surface} border ${currentTheme.border} rounded text-[9px] sm:text-xs md:text-sm ${currentTheme.text} placeholder-[#6b7280] focus:ring-1 focus:ring-[#C4713A] focus:border-transparent`}
                   placeholder="Search..."
                 />
               </div>
@@ -418,7 +418,7 @@ export default function UserManagement() {
                 <select
                   value={roleFilter}
                   onChange={(e) => setRoleFilter(e.target.value)}
-                  className={`h-5 sm:h-8 md:h-9 lg:h-10 px-0.5 sm:px-2 md:px-3 ${currentTheme.surface} border ${currentTheme.border} rounded text-[8px] sm:text-xs md:text-sm ${currentTheme.text} focus:ring-1 focus:ring-[#136dec] focus:border-transparent overflow-hidden`}
+                  className={`h-5 sm:h-8 md:h-9 lg:h-10 px-0.5 sm:px-2 md:px-3 ${currentTheme.surface} border ${currentTheme.border} rounded text-[8px] sm:text-xs md:text-sm ${currentTheme.text} focus:ring-1 focus:ring-[#C4713A] focus:border-transparent overflow-hidden`}
                   style={{ textOverflow: 'ellipsis' }}
                 >
                   <option value="all">All</option>
@@ -430,7 +430,7 @@ export default function UserManagement() {
                 <select
                   value={teamFilter}
                   onChange={(e) => setTeamFilter(e.target.value)}
-                  className={`h-5 sm:h-8 md:h-9 lg:h-10 px-0.5 sm:px-2 md:px-3 ${currentTheme.surface} border ${currentTheme.border} rounded text-[8px] sm:text-xs md:text-sm ${currentTheme.text} focus:ring-1 focus:ring-[#136dec] focus:border-transparent overflow-hidden`}
+                  className={`h-5 sm:h-8 md:h-9 lg:h-10 px-0.5 sm:px-2 md:px-3 ${currentTheme.surface} border ${currentTheme.border} rounded text-[8px] sm:text-xs md:text-sm ${currentTheme.text} focus:ring-1 focus:ring-[#C4713A] focus:border-transparent overflow-hidden`}
                   style={{ textOverflow: 'ellipsis' }}
                 >
                   <option value="all">All Teams</option>
@@ -446,7 +446,7 @@ export default function UserManagement() {
           {/* Bulk Actions */}
           {selectedUserIds.length > 0 && (
             <div className="px-4 sm:px-6 pb-4">
-              <div className={`${theme === 'dark' ? 'bg-[#136dec]/10 border-[#136dec]/30' : 'bg-blue-50 border-blue-200'} border rounded p-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3`}>
+              <div className={`${theme === 'dark' ? 'bg-[#C4713A]/10 border-[#C4713A]/30' : 'bg-blue-50 border-blue-200'} border rounded p-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3`}>
                 <span className={`text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'} font-medium`}>{selectedUserIds.length} user(s) selected</span>
                 <div className="flex gap-2">
                   <button
@@ -499,7 +499,7 @@ export default function UserManagement() {
                         type="checkbox"
                         checked={selectedUserIds.length === users.filter(usr => usr._id !== user.id).length && users.length > 1}
                         onChange={toggleSelectAll}
-                        className="rounded border-[#4b5563] text-[#136dec] focus:ring-[#136dec]"
+                        className="rounded border-[#4b5563] text-[#C4713A] focus:ring-[#C4713A]"
                       />
                     </th>
                     <th className={`px-4 py-3 text-left text-[10px] font-bold ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} uppercase tracking-wider`}>User</th>
@@ -529,7 +529,7 @@ export default function UserManagement() {
                               checked={selectedUserIds.includes(usr._id)}
                               onChange={() => toggleSelectUser(usr._id)}
                               disabled={usr._id === user.id}
-                              className="rounded border-[#4b5563] text-[#136dec] focus:ring-[#136dec] disabled:opacity-50"
+                              className="rounded border-[#4b5563] text-[#C4713A] focus:ring-[#C4713A] disabled:opacity-50"
                             />
                           </td>
                           <td className="px-4 py-3">
@@ -622,7 +622,7 @@ export default function UserManagement() {
                         checked={selectedUserIds.includes(usr._id)}
                         onChange={() => toggleSelectUser(usr._id)}
                         disabled={usr._id === user.id}
-                        className="mt-1 rounded border-[#4b5563] text-[#136dec] focus:ring-[#136dec] disabled:opacity-50"
+                        className="mt-1 rounded border-[#4b5563] text-[#C4713A] focus:ring-[#C4713A] disabled:opacity-50"
                       />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2 mb-2">
@@ -715,7 +715,7 @@ export default function UserManagement() {
                       name="full_name"
                       value={formData.full_name}
                       onChange={handleInputChange}
-                      className={`w-full px-4 py-2 ${currentTheme.surfaceSecondary} border ${currentTheme.border} rounded ${currentTheme.text} focus:ring-2 focus:ring-[#136dec] focus:border-transparent`}
+                      className={`w-full px-4 py-2 ${currentTheme.surfaceSecondary} border ${currentTheme.border} rounded ${currentTheme.text} focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
                       required
                     />
                   </div>
@@ -727,7 +727,7 @@ export default function UserManagement() {
                       name="email"
                       value={formData.email}
                       onChange={handleInputChange}
-                      className={`w-full px-4 py-2 ${currentTheme.surfaceSecondary} border ${currentTheme.border} rounded ${currentTheme.text} focus:ring-2 focus:ring-[#136dec] focus:border-transparent`}
+                      className={`w-full px-4 py-2 ${currentTheme.surfaceSecondary} border ${currentTheme.border} rounded ${currentTheme.text} focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
                       required
                     />
                   </div>
@@ -740,7 +740,7 @@ export default function UserManagement() {
                         name="password"
                         value={formData.password}
                         onChange={handleInputChange}
-                        className={`w-full px-4 py-2 ${currentTheme.surfaceSecondary} border ${currentTheme.border} rounded ${currentTheme.text} focus:ring-2 focus:ring-[#136dec] focus:border-transparent`}
+                        className={`w-full px-4 py-2 ${currentTheme.surfaceSecondary} border ${currentTheme.border} rounded ${currentTheme.text} focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
                         required
                         minLength={6}
                       />
@@ -761,7 +761,7 @@ export default function UserManagement() {
                       name="role"
                       value={formData.role}
                       onChange={handleInputChange}
-                      className={`w-full px-4 py-2 ${currentTheme.surfaceSecondary} border ${currentTheme.border} rounded ${currentTheme.text} focus:ring-2 focus:ring-[#136dec] focus:border-transparent`}
+                      className={`w-full px-4 py-2 ${currentTheme.surfaceSecondary} border ${currentTheme.border} rounded ${currentTheme.text} focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
                       required
                     >
                       <option value="member">Member</option>
@@ -778,7 +778,7 @@ export default function UserManagement() {
                         name="employmentStatus"
                         value={formData.employmentStatus}
                         onChange={handleInputChange}
-                        className={`w-full px-4 py-2 ${currentTheme.surfaceSecondary} border ${currentTheme.border} rounded ${currentTheme.text} focus:ring-2 focus:ring-[#136dec] focus:border-transparent`}
+                        className={`w-full px-4 py-2 ${currentTheme.surfaceSecondary} border ${currentTheme.border} rounded ${currentTheme.text} focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
                         required
                       >
                         <option value="ACTIVE">Active</option>
@@ -819,14 +819,14 @@ export default function UserManagement() {
                                   isSelected 
                                     ? 'bg-blue-500/10 border-blue-500/30' 
                                     : `${currentTheme.surface} border-${currentTheme.border}`
-                                } hover:bg-blue-500/5`}
+                                } hover:bg-[#D4905A]/5`}
                               >
                                 <div className="flex items-center gap-3">
                                   <input
                                     type="checkbox"
                                     checked={isSelected}
                                     onChange={() => handleTeamToggle(team._id)}
-                                    className="rounded border-gray-500 text-[#136dec] focus:ring-[#136dec]"
+                                    className="rounded border-gray-500 text-[#C4713A] focus:ring-[#C4713A]"
                                   />
                                   <div>
                                     <span className={`text-sm font-medium ${currentTheme.text}`}>{team.name}</span>
@@ -872,7 +872,7 @@ export default function UserManagement() {
                             name="team_id"
                             value={formData.team_id}
                             onChange={handleInputChange}
-                            className={`w-full px-3 py-2 text-sm ${currentTheme.surfaceSecondary} border ${currentTheme.border} rounded ${currentTheme.text} focus:ring-2 focus:ring-[#136dec]`}
+                            className={`w-full px-3 py-2 text-sm ${currentTheme.surfaceSecondary} border ${currentTheme.border} rounded ${currentTheme.text} focus:ring-2 focus:ring-[#C4713A]`}
                           >
                             {formData.teams.map(teamId => {
                               const team = teams.find(t => t._id === teamId);
@@ -891,7 +891,7 @@ export default function UserManagement() {
                         name="team_id"
                         value={formData.team_id}
                         onChange={handleInputChange}
-                        className={`w-full px-4 py-2 ${currentTheme.surfaceSecondary} border ${currentTheme.border} rounded ${currentTheme.text} focus:ring-2 focus:ring-[#136dec] focus:border-transparent`}
+                        className={`w-full px-4 py-2 ${currentTheme.surfaceSecondary} border ${currentTheme.border} rounded ${currentTheme.text} focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
                       >
                         <option value="">No Team</option>
                         {teams.map(team => (
@@ -925,7 +925,7 @@ export default function UserManagement() {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 sm:px-6 py-2.5 bg-[#136dec] text-white rounded hover:bg-blue-600 transition-colors font-semibold text-sm sm:text-base"
+                  className="px-4 sm:px-6 py-2.5 bg-[#C4713A] text-white rounded hover:bg-[#A35C28] transition-colors font-semibold text-sm sm:text-base"
                 >
                   {modalMode === 'create' ? 'Create User' : 'Update User'}
                 </button>
@@ -973,7 +973,7 @@ export default function UserManagement() {
                   </button>
                   <button
                     onClick={() => downloadTemplate('json')}
-                    className="flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-sm font-medium"
+                    className="flex items-center justify-center gap-2 px-4 py-2.5 bg-[#C4713A] text-white rounded hover:bg-[#A35C28] transition-colors text-sm font-medium"
                   >
                     <FileJson size={16} />
                     JSON Template (.json)
@@ -991,7 +991,7 @@ export default function UserManagement() {
                   type="file"
                   accept=".json,.xlsx,.xls"
                   onChange={handleFileSelect}
-                  className={`w-full px-3 py-2 text-sm ${currentTheme.surfaceSecondary} border ${currentTheme.border} rounded ${currentTheme.text} file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:bg-[#136dec] file:text-white file:cursor-pointer file:text-sm hover:file:bg-blue-600`}
+                  className={`w-full px-3 py-2 text-sm ${currentTheme.surfaceSecondary} border ${currentTheme.border} rounded ${currentTheme.text} file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:bg-[#C4713A] file:text-white file:cursor-pointer file:text-sm hover:file:bg-blue-600`}
                 />
                 {bulkImportFile && (
                   <div className="mt-2 flex items-center gap-2">
@@ -1090,7 +1090,7 @@ export default function UserManagement() {
                 <button
                   onClick={handleBulkImport}
                   disabled={!bulkImportFile || bulkImportLoading}
-                  className="px-4 sm:px-6 py-2.5 bg-[#136dec] text-white rounded hover:bg-blue-600 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base flex items-center justify-center gap-2"
+                  className="px-4 sm:px-6 py-2.5 bg-[#C4713A] text-white rounded hover:bg-[#A35C28] transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base flex items-center justify-center gap-2"
                 >
                   {bulkImportLoading ? (
                     <>
@@ -1143,7 +1143,7 @@ export default function UserManagement() {
                   value={passwordResetData.newPassword}
                   onChange={(e) => setPasswordResetData({ ...passwordResetData, newPassword: e.target.value })}
                   placeholder="Enter new password (min 6 characters)"
-                  className={`w-full p-3 ${currentTheme.surfaceSecondary} border ${currentTheme.border} ${currentTheme.text} placeholder:text-[#58606e] rounded-lg focus:ring-2 focus:ring-[#136dec] focus:border-transparent`}
+                  className={`w-full p-3 ${currentTheme.surfaceSecondary} border ${currentTheme.border} ${currentTheme.text} placeholder:text-[#58606e] rounded-lg focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
                   required
                   minLength={6}
                   autoFocus
@@ -1162,7 +1162,7 @@ export default function UserManagement() {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-[#136dec] text-white rounded hover:bg-blue-600 transition-colors font-semibold"
+                  className="px-4 py-2 bg-[#C4713A] text-white rounded hover:bg-[#A35C28] transition-colors font-semibold"
                 >
                   Reset Password
                 </button>

@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Bell, X, Smartphone } from 'lucide-react';
 import notificationService from '../utils/notificationService';
 
@@ -60,7 +60,7 @@ const NotificationPrompt = () => {
       <div className="fixed bottom-4 right-4 z-40">
         <button
           onClick={handleReshow}
-          className="bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-full shadow-lg transition-all hover:scale-110"
+          className="bg-[#C4713A] hover:bg-[#A35C28] text-white p-3 rounded-full shadow-lg transition-all hover:scale-110"
           title="Enable Notifications"
         >
           <Bell size={24} />
@@ -77,7 +77,7 @@ const NotificationPrompt = () => {
 
   return (
     <div className="fixed bottom-0 left-0 right-0 md:bottom-4 md:left-auto md:right-4 md:max-w-md z-50 animate-slide-up">
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-none md:rounded-lg shadow-2xl p-4 md:p-5">
+      <div className="bg-gradient-to-r from-[#C4713A] to-[#3A2A1E] text-white rounded-none md:rounded-lg shadow-2xl p-4 md:p-5">
         <button
           onClick={handleDismiss}
           className="absolute top-2 right-2 text-white/80 hover:text-white transition-colors"
@@ -110,7 +110,7 @@ const NotificationPrompt = () => {
             <div className="flex flex-col sm:flex-row gap-2">
               <button
                 onClick={handleEnable}
-                className="flex-1 bg-white text-blue-600 hover:bg-gray-100 font-medium px-4 py-2 rounded-lg transition-colors"
+                className="flex-1 bg-white text-[#C4713A] hover:bg-gray-100 font-medium px-4 py-2 rounded-lg transition-colors"
               >
                 Enable Notifications
               </button>

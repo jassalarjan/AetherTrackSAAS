@@ -121,7 +121,7 @@ export default function FeatureMatrix() {
           onClick={() => setShowTags(v => !v)}
           className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-all ${
             showTags
-              ? 'bg-[#135bec] border-transparent text-white'
+              ? 'bg-[#C4713A] border-transparent text-white'
               : isDark
                 ? 'bg-[#1a1d23] border-[#282f39] text-gray-300 hover:border-[#3a4150]'
                 : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'

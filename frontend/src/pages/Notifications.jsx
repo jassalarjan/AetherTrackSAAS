@@ -2,6 +2,7 @@
 import { useAuth } from '../context/AuthContext';
 import ResponsivePageLayout from '../components/layouts/ResponsivePageLayout';
 import api from '../api/axios';
+import { PageLoader } from '../components/Spinner';
 import { Bell, Check, CheckCheck, Trash2, Filter, Calendar, User, AlertCircle } from 'lucide-react';
 
 const Notifications = () => {
@@ -125,16 +126,7 @@ const Notifications = () => {
 
   const filteredNotifications = getFilteredNotifications();
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg-canvas)' }}>
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4" style={{ borderColor: 'var(--brand)' }}></div>
-          <p className="font-medium" style={{ color: 'var(--text-secondary)' }}>Loading notifications…</p>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return <PageLoader label="Loading notifications…" />;
 
   return (
     <ResponsivePageLayout

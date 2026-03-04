@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { SectionLoader } from '../components/Spinner';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useSidebar } from '../context/SidebarContext';
@@ -307,7 +307,7 @@ export default function GeofenceManagement() {
 
             <button
               onClick={() => setShowForm(true)}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#C4713A] text-white hover:bg-[#A35C28] transition-colors"
             >
               <Plus className="w-4 h-4" />
               Add Geofence
@@ -359,8 +359,8 @@ export default function GeofenceManagement() {
         </div>
 
         {loading ? (
-          <div className="flex items-center justify-center h-64">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+          <div className="h-64">
+            <SectionLoader label="Loading geofences…" minHeight="250px" />
           </div>
         ) : viewMode === 'map' ? (
           <div className={`rounded-lg border overflow-hidden ${
@@ -603,7 +603,7 @@ export default function GeofenceManagement() {
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700"
+                    className="px-4 py-2 rounded-lg bg-[#C4713A] text-white hover:bg-[#A35C28]"
                   >
                     {editingGeofence ? 'Update' : 'Create'}
                   </button>

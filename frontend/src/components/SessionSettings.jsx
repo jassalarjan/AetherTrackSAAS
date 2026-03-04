@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Clock, Info } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 
@@ -93,7 +93,7 @@ const SessionSettings = () => {
 
         <button
           onClick={handleSave}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors text-sm sm:text-base"
+          className="w-full bg-[#C4713A] hover:bg-[#A35C28] text-white font-medium py-2 px-4 rounded-lg transition-colors text-sm sm:text-base"
         >
           {saved ? '✓ Saved!' : 'Save Session Settings'}
         </button>

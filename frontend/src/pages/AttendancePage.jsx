@@ -498,7 +498,7 @@ export default function AttendancePage() {
                     onClick={() => setExceptionFilter(status)}
                     className={`px-4 py-2 rounded-lg text-sm font-medium ${
                       exceptionFilter === status
-                        ? 'bg-[#135bec] text-white'
+                        ? 'bg-[#C4713A] text-white'
                         : `${currentTheme.surface} border ${currentTheme.border}`
                     }`}
                   >
@@ -577,7 +577,7 @@ export default function AttendancePage() {
                     setEditingPolicy({});
                     setShowPolicyModal(true);
                   }}
-                  className="px-4 py-2 bg-[#135bec] text-white rounded-lg text-sm font-medium hover:bg-[#0d4ac7]"
+                  className="px-4 py-2 bg-[#C4713A] text-white rounded-lg text-sm font-medium hover:bg-[#A35C28]"
                 >
                   + Create Policy
                 </button>
@@ -908,7 +908,7 @@ export default function AttendancePage() {
                                     notes: record.notes || ''
                                   });
                                 }}
-                                className="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300"
+                                className="text-[#C4713A] dark:text-[#D4905A] hover:text-[#A35C28] dark:hover:text-[#C4713A]"
                               >
                                 <Edit2 className="w-4 h-4" />
                               </button>

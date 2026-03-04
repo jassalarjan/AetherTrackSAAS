@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Camera, Download, Eye, EyeOff, Info } from 'lucide-react';
 import { getMockDataBundle } from '../utils/mockDataGenerator';
 
@@ -67,7 +67,7 @@ const ScreenshotDemo = () => {
             {/* Hide Controls Toggle */}
             <button
               onClick={() => setHideControls(true)}
-              className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm font-medium transition-colors flex items-center justify-center space-x-2"
+              className="w-full px-4 py-2 bg-[#C4713A] hover:bg-[#A35C28] text-white rounded-lg text-sm font-medium transition-colors flex items-center justify-center space-x-2"
             >
               <EyeOff className="w-4 h-4" />
               <span>Hide Controls (Take Screenshot)</span>
@@ -95,7 +95,7 @@ const ScreenshotDemo = () => {
       {hideControls && (
         <button
           onClick={() => setHideControls(false)}
-          className="fixed top-4 right-4 z-50 p-3 bg-blue-600 hover:bg-blue-500 text-white rounded-full shadow-2xl transition-colors"
+          className="fixed top-4 right-4 z-50 p-3 bg-[#C4713A] hover:bg-[#A35C28] text-white rounded-full shadow-2xl transition-colors"
           title="Show controls"
         >
           <Eye className="w-5 h-5" />

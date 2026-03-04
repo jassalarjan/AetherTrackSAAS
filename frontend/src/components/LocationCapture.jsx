@@ -152,7 +152,7 @@ const LocationCapture = ({
     <div className="bg-white dark:bg-[#1a2234] rounded-xl border border-gray-200 dark:border-gray-800 p-4 shadow-sm">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-          <MapPin size={20} className="text-[#135bec]" />
+          <MapPin size={20} className="text-[#C4713A]" />
           GPS Location
         </h3>
         {location && (
@@ -188,7 +188,7 @@ const LocationCapture = ({
       {/* Loading State */}
       {isLoading && (
         <div className="flex flex-col items-center justify-center py-8">
-          <Loader2 className="h-12 w-12 text-[#135bec] animate-spin mb-3" />
+          <Loader2 className="h-12 w-12 text-[#C4713A] animate-spin mb-3" />
           <p className="text-sm text-gray-500 dark:text-gray-400">Getting your location...</p>
           <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
             This may take up to {timeout / 1000} seconds
@@ -269,7 +269,7 @@ const LocationCapture = ({
           <button
             onClick={getLocation}
             disabled={disabled}
-            className="flex items-center gap-2 px-6 py-3 bg-[#135bec] text-white rounded-lg font-medium hover:bg-[#0d4ac7] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 px-6 py-3 bg-[#C4713A] text-white rounded-lg font-medium hover:bg-[#A35C28] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <MapPin size={16} />
             Get My Location

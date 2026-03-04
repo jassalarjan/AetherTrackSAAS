@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -81,7 +81,7 @@ const Sidebar = () => {
             }`}>
               AetherTrack
             </span>theme === 'dark'
-                    ? 'bg-[#136dec]/10 text-[#136dec]'
+                    ? 'bg-[#C4713A]/10 text-[#C4713A]'
                     : 'bg-blue-50 text-blue-600'
                   : theme === 'dark'
                     ? 'text-[#9da8b9] hover:bg-[#1c2027] hover:text-white'
@@ -89,7 +89,7 @@ const Sidebar = () => {
               }`}
               title={collapsed ? item.label : ''}
             >
-              <Icon size={20} className={`${active ? 'fill-current' : theme === 'dark' ? 'group-hover:text-[#136dec]' : 'group-hover:text-blue-600
+              <Icon size={20} className={`${active ? 'fill-current' : theme === 'dark' ? 'group-hover:text-[#C4713A]' : 'group-hover:text-blue-600
             className="w-8 h-8 object-contain"
             title="AetherTrack"
           />
@@ -115,12 +115,12 @@ const Sidebar = () => {
               onClick={() => navigate(item.path)}
               className={`flex items-center gap-3 px-3 py-2 rounded transition-colors group ${
                 active
-                  ? 'bg-[#136dec]/10 text-[#136dec]'
+                  ? 'bg-[#C4713A]/10 text-[#C4713A]'
                   : 'text-[#9da8b9] hover:bg-[#1c2027] hover:text-white'
               }`}
               title={collapsed ? item.label : ''}
             >
-              <Icon size={20} className={`${active ? 'fill-current' : 'group-hover:text-[#136dec]'}`} />
+              <Icon size={20} className={`${active ? 'fill-current' : 'group-hover:text-[#C4713A]'}`} />
               {!collapsed && <span className="text-sm font-medium">{item.label}</span>}
             </button>
           );
@@ -142,7 +142,7 @@ const Sidebar = () => {
                   className={`flex items-center gap-3 px-3 py-2 rounded transition-colors group ${
                     active
                       ? theme === 'dark'
-                        ? 'bg-[#136dec]/10 text-[#136dec]'
+                        ? 'bg-[#C4713A]/10 text-[#C4713A]'
                         : 'bg-blue-50 text-blue-600'
                       : theme === 'dark'
                         ? 'text-[#9da8b9] hover:bg-[#1c2027] hover:text-white'
@@ -150,11 +150,11 @@ const Sidebar = () => {
                   }`}
                   title={collapsed ? item.label : ''}
                 >
-                  <Icon size={20} className={`${active ? 'fill-current' : theme === 'dark' ? 'group-hover:text-[#136dec]' : 'group-hover:text-blue-600
+                  <Icon size={20} className={`${active ? 'fill-current' : theme === 'dark' ? 'group-hover:text-[#C4713A]' : 'group-hover:text-blue-600
                   }`}
                   title={collapsed ? item.label : ''}
                 >
-                  <Icon size={20} className={`${active ? 'fill-current' : 'group-hover:text-[#136dec]'}`} />
+                  <Icon size={20} className={`${active ? 'fill-current' : 'group-hover:text-[#C4713A]'}`} />
                   {!col{`p-4 border-t ${
           theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'
         }`}>
@@ -193,7 +193,7 @@ const Sidebar = () => {
               className={`flex items-center gap-3 px-3 py-2 rounded transition-colors group w-full ${
                 active
                   ? theme === 'dark'
-                    ? 'bg-[#136dec]/10 text-[#136dec]'
+                    ? 'bg-[#C4713A]/10 text-[#C4713A]'
                     : 'bg-blue-50 text-blue-600'
                   : theme === 'dark'
                     ? 'text-[#9da8b9] hover:bg-[#1c2027] hover:text-white'
@@ -201,7 +201,7 @@ const Sidebar = () => {
               }`}
               title={collapsed ? item.label : ''}
             >
-              <Icon size={20} className={`${active ? '' : theme === 'dark' ? 'group-hover:text-[#136dec]' : 'group-hover:text-blue-600'}`} />
+              <Icon size={20} className={`${active ? '' : theme === 'dark' ? 'group-hover:text-[#C4713A]' : 'group-hover:text-blue-600'}`} />
               {!collapsed && <span className="text-sm font-medium">{item.label}</span>}
             </button>
           );
@@ -217,7 +217,7 @@ const Sidebar = () => {
             : 'text-gray-600 hover:text-gray-900 border-gray-200 hover:bg-gray-100'
         }`}
             >
-              <Icon size={20} className={`${active ? '' : 'group-hover:text-[#136dec]'}`} />
+              <Icon size={20} className={`${active ? '' : 'group-hover:text-[#C4713A]'}`} />
               {!collapsed && <span className="text-sm font-medium">{item.label}</span>}
             </button>
           );

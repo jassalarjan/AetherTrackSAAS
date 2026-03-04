@@ -10,10 +10,19 @@ export default {
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
-  // Use class-based dark mode with data-theme attribute
+  // Dark mode: matches data-theme="dark" attribute (Tailwind v3 custom selector)
   darkMode: ['class', '[data-theme="dark"]'],
   
   safelist: [
+    // ── Warm Paper scheme (default) ──
+    'bg-canvas', 'bg-base', 'bg-surface', 'bg-raised', 'bg-sunken',
+    'text-primary', 'text-secondary', 'text-muted', 'text-faint',
+    'border-hair', 'border-soft', 'border-mid', 'border-strong',
+    // ── Brand / warm scheme ──
+    'bg-brand', 'text-brand', 'border-brand',
+    'bg-warm-500', 'bg-warm-600', 'bg-warm-50',
+    'text-warm-600',
+    'hover:bg-warm-600', 'hover:bg-warm-700',
     // Color scheme backgrounds - for dynamic theming
     'bg-blue-500', 'bg-blue-600', 'bg-blue-50',
     'bg-purple-500', 'bg-purple-600', 'bg-purple-50',
@@ -57,6 +66,46 @@ export default {
       // Reference: Section 1.2 - Color System
       // ===========================================
       colors: {
+        // ── Warm Paper surface tokens (primary design system) ──
+        canvas:  'var(--bg-canvas)',
+        base:    'var(--bg-base)',
+        raised:  'var(--bg-raised)',
+        sunken:  'var(--bg-sunken)',
+
+        // ── Warm brand (terracotta) ──
+        brand: {
+          DEFAULT: 'var(--brand)',
+          light:   'var(--brand-light)',
+          dim:     'var(--brand-dim)',
+          glow:    'var(--brand-glow)',
+        },
+
+        // ── Warm Paper text tokens ──
+        primary:   'var(--text-primary)',
+        secondary: 'var(--text-secondary)',
+        muted:     'var(--text-muted)',
+        faint:     'var(--text-faint)',
+
+        // ── Warm Paper border tokens ──
+        hair:   'var(--border-hair)',
+        soft:   'var(--border-soft)',
+        mid:    'var(--border-mid)',
+        strong: 'var(--border-strong)',
+
+        // ── Warm scheme palette ──
+        warm: {
+          50:  '#FDF5EE',
+          100: '#F7EBD8',
+          200: '#EDD5B5',
+          300: '#DFB88A',
+          400: '#D4905A',
+          500: '#C4713A',
+          600: '#A85E30',
+          700: '#8C4C26',
+          800: '#703C1E',
+          900: '#542D16',
+        },
+
         // Surface colors - mapped to tokens
         surface: {
           base: 'var(--color-surface-base)',

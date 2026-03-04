@@ -1,6 +1,7 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ResponsivePageLayout from '../components/layouts/ResponsivePageLayout';
+import { PageLoader } from '../components/Spinner';
 import api from '../api/axios';
 import { 
   Search, Filter, Share2, Plus, ChevronLeft, ChevronRight,
@@ -212,13 +213,7 @@ const ResourceWorkload = () => {
   const dateRange = getDateRange();
   const daysOfWeek = getDaysOfWeek();
 
-  if (loading) {
-    return (
-      <div className="h-screen flex items-center justify-center" style={{ background: 'var(--bg-canvas)' }}>
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-transparent" style={{ borderBottomColor: 'var(--brand)' }} />
-      </div>
-    );
-  }
+  if (loading) return <PageLoader label="Loading workload…" />;
 
   return (
     <ResponsivePageLayout title="Resource & Workload" icon={User} noPadding>
@@ -263,14 +258,14 @@ const ResourceWorkload = () => {
             <div className="relative w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
               <input
-                className="w-full bg-gray-100 dark:bg-gray-800 border-none rounded-lg py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-[#135bec]/20 placeholder:text-gray-500 dark:placeholder:text-gray-400"
+                className="w-full bg-gray-100 dark:bg-gray-800 border-none rounded-lg py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-[#C4713A]/20 placeholder:text-gray-500 dark:placeholder:text-gray-400"
                 placeholder="Search resources..."
                 type="text"
               />
             </div>
             <button 
               onClick={() => setShowAddModal(true)}
-              className="bg-[#135bec] text-white text-sm font-bold px-4 py-2 rounded-lg flex items-center gap-2"
+              className="bg-[#C4713A] text-white text-sm font-bold px-4 py-2 rounded-lg flex items-center gap-2"
             >
               <Plus size={18} />
               Add Resource
@@ -354,7 +349,7 @@ const ResourceWorkload = () => {
               </p>
               <button 
                 onClick={() => setShowAddModal(true)}
-                className="flex items-center gap-2 px-6 py-3 bg-[#135bec] text-white text-sm font-bold rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+                className="flex items-center gap-2 px-6 py-3 bg-[#C4713A] text-white text-sm font-bold rounded-lg hover:bg-[#A35C28] transition-colors shadow-sm"
               >
                 <Plus size={20} />
                 Add Team Members
@@ -374,13 +369,13 @@ const ResourceWorkload = () => {
                       <th
                         key={idx}
                         className={`px-4 py-4 text-center border-b border-gray-200 dark:border-gray-800 border-r border-gray-100 dark:border-gray-800 ${
-                          day.isToday ? 'bg-[#135bec]/5' : day.isWeekend ? 'bg-gray-50/50 dark:bg-gray-800/20' : ''
+                          day.isToday ? 'bg-[#C4713A]/5' : day.isWeekend ? 'bg-gray-50/50 dark:bg-gray-800/20' : ''
                         }`}
                       >
-                        <div className={`text-xs font-bold ${day.isToday ? 'text-[#135bec]' : day.isWeekend ? 'text-gray-400' : ''}`}>
+                        <div className={`text-xs font-bold ${day.isToday ? 'text-[#C4713A]' : day.isWeekend ? 'text-gray-400' : ''}`}>
                           {day.name}
                         </div>
-                        <div className={`text-[10px] ${day.isToday ? 'text-[#135bec]/70' : 'text-gray-400'}`}>
+                        <div className={`text-[10px] ${day.isToday ? 'text-[#C4713A]/70' : 'text-gray-400'}`}>
                           {dateRange.start.toLocaleDateString('en-US', { month: 'short' })} {day.date}
                         </div>
                       </th>
@@ -436,12 +431,12 @@ const ResourceWorkload = () => {
                             <td
                               key={dayIdx}
                               className={`p-2 border-r border-gray-100 dark:border-gray-800 ${
-                                day.isToday ? 'bg-[#135bec]/5' : day.isWeekend ? 'bg-gray-50/30 dark:bg-gray-800/10' : ''
+                                day.isToday ? 'bg-[#C4713A]/5' : day.isWeekend ? 'bg-gray-50/30 dark:bg-gray-800/10' : ''
                               }`}
                             >
                               {!day.isWeekend && (
                                 <div 
-                                  className={`h-14 rounded-lg border flex flex-col justify-center px-3 cursor-pointer hover:ring-2 hover:ring-[#135bec]/30 transition-all ${getWorkloadBgColor(workload.percentage)}`}
+                                  className={`h-14 rounded-lg border flex flex-col justify-center px-3 cursor-pointer hover:ring-2 hover:ring-[#C4713A]/30 transition-all ${getWorkloadBgColor(workload.percentage)}`}
                                   onClick={() => setEditingCell(cellKey)}
                                 >
                                   <div className="flex items-center justify-between mb-1">
@@ -459,7 +454,7 @@ const ResourceWorkload = () => {
                                             setEditingCell(null);
                                           }
                                         }}
-                                        className="w-16 px-1 py-0.5 text-[10px] font-bold border border-[#135bec] rounded focus:outline-none focus:ring-2 focus:ring-[#135bec]"
+                                        className="w-16 px-1 py-0.5 text-[10px] font-bold border border-[#C4713A] rounded focus:outline-none focus:ring-2 focus:ring-[#C4713A]"
                                         autoFocus
                                       />
                                     ) : (
@@ -647,7 +642,7 @@ const ResourceWorkload = () => {
                   type="text"
                   value={formData.full_name}
                   onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-[#111418] focus:ring-2 focus:ring-[#135bec] focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-[#111418] focus:ring-2 focus:ring-[#C4713A] focus:border-transparent"
                   required
                 />
               </div>
@@ -657,7 +652,7 @@ const ResourceWorkload = () => {
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-[#111418] focus:ring-2 focus:ring-[#135bec] focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-[#111418] focus:ring-2 focus:ring-[#C4713A] focus:border-transparent"
                   required
                 />
               </div>
@@ -667,7 +662,7 @@ const ResourceWorkload = () => {
                   type="text"
                   value={formData.username}
                   onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-[#111418] focus:ring-2 focus:ring-[#135bec] focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-[#111418] focus:ring-2 focus:ring-[#C4713A] focus:border-transparent"
                   required
                 />
               </div>
@@ -677,7 +672,7 @@ const ResourceWorkload = () => {
                   type="password"
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-[#111418] focus:ring-2 focus:ring-[#135bec] focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-[#111418] focus:ring-2 focus:ring-[#C4713A] focus:border-transparent"
                   required
                 />
               </div>
@@ -686,7 +681,7 @@ const ResourceWorkload = () => {
                 <select
                   value={formData.role}
                   onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-[#111418] focus:ring-2 focus:ring-[#135bec] focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-[#111418] focus:ring-2 focus:ring-[#C4713A] focus:border-transparent"
                   required
                 >
                   <option value="member">Member</option>
@@ -705,7 +700,7 @@ const ResourceWorkload = () => {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-[#135bec] text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                  className="flex-1 px-4 py-2 bg-[#C4713A] text-white rounded-lg hover:bg-[#A35C28] transition-colors font-medium"
                 >
                   Add Resource
                 </button>
@@ -735,7 +730,7 @@ const ResourceWorkload = () => {
                   type="text"
                   value={formData.full_name}
                   onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-[#111418] focus:ring-2 focus:ring-[#135bec] focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-[#111418] focus:ring-2 focus:ring-[#C4713A] focus:border-transparent"
                   required
                 />
               </div>
@@ -745,7 +740,7 @@ const ResourceWorkload = () => {
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-[#111418] focus:ring-2 focus:ring-[#135bec] focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-[#111418] focus:ring-2 focus:ring-[#C4713A] focus:border-transparent"
                   required
                 />
               </div>
@@ -754,7 +749,7 @@ const ResourceWorkload = () => {
                 <select
                   value={formData.role}
                   onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-[#111418] focus:ring-2 focus:ring-[#135bec] focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-[#111418] focus:ring-2 focus:ring-[#C4713A] focus:border-transparent"
                   required
                 >
                   <option value="member">Member</option>
@@ -773,7 +768,7 @@ const ResourceWorkload = () => {
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 bg-[#135bec] text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                  className="flex-1 px-4 py-2 bg-[#C4713A] text-white rounded-lg hover:bg-[#A35C28] transition-colors font-medium"
                 >
                   Update Resource
                 </button>
