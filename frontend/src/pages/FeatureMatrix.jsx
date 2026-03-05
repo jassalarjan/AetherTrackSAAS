@@ -136,15 +136,15 @@ export default function FeatureMatrix() {
       {/* ── Table ── */}
       <div className="p-6">
         <div className={`rounded-2xl border overflow-hidden shadow-sm ${
-          isDark ? 'border-[#282f39] bg-[#111418]' : 'border-gray-200 bg-white'
+          'border-[var(--border-soft)] bg-[var(--bg-base)]'
         }`}>
           <div className="overflow-x-auto">
             <table className="w-full min-w-[640px] border-collapse">
 
               {/* Header */}
               <thead>
-                <tr className={`border-b ${isDark ? 'border-[#282f39] bg-[#1a1d23]' : 'border-gray-200 bg-gray-50'}`}>
-                  <th className={`sticky left-0 z-10 px-6 py-4 text-left w-48 ${isDark ? 'bg-[#1a1d23]' : 'bg-gray-50'}`}>
+                <tr className={`border-b border-[var(--border-soft)] bg-[var(--bg-sunken)]`}>
+                  <th className={`sticky left-0 z-10 px-6 py-4 text-left w-48 bg-[var(--bg-sunken)]`}>
                     <span className={`text-xs font-bold uppercase tracking-widest ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
                       Feature
                     </span>
@@ -195,17 +195,17 @@ export default function FeatureMatrix() {
                   <tr
                     key={row.id}
                     className={`group border-b last:border-b-0 transition-colors ${
-                      isDark ? 'border-[#282f39] hover:bg-[#1c2027]' : 'border-gray-100 hover:bg-gray-50/80'
+                      'border-[var(--border-soft)] hover:bg-[var(--bg-raised)]'
                     }`}
                   >
                     {/* Row label — sticky */}
                     <td className={`sticky left-0 z-10 px-6 py-5 align-top transition-colors ${
-                      isDark ? 'bg-[#111418] group-hover:bg-[#1c2027]' : 'bg-white group-hover:bg-gray-50/80'
+                      'bg-[var(--bg-base)] group-hover:bg-[var(--bg-raised)]'
                     }`}>
                       <div className="flex items-start gap-2.5">
                         <div className={`mt-1 w-2 h-2 rounded-full shrink-0 ${ACCENT_DOT[row.accent]}`} />
                         <div>
-                          <p className={`text-sm font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                          <p className={`text-sm font-bold text-[var(--text-primary)]`}>
                             {row.label}
                           </p>
                           <p className={`text-xs mt-0.5 leading-snug ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
@@ -258,7 +258,7 @@ export default function FeatureMatrix() {
             <span className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>2030 AI-enhanced state</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className={`px-2 py-0.5 rounded-full font-mono text-[10px] ${isDark ? 'bg-[#1c2027] text-gray-500' : 'bg-stone-100 text-stone-500'}`}>
+            <span className={`px-2 py-0.5 rounded-full font-mono text-[10px] bg-[var(--bg-raised)] text-[var(--text-muted)]`}>
               tag
             </span>
             <span className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>Source citation — hover for details</span>

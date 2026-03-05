@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useSidebar } from '../context/SidebarContext';
@@ -156,7 +156,7 @@ export default function VerificationSettings() {
     }`}>
       <div className="flex items-start gap-4 mb-4">
         <div className={`p-2 rounded-lg ${
-          isDark ? 'bg-[#282f39]' : 'bg-gray-100'
+          'bg-[var(--bg-surface)]'
         }`}>
           <Icon className="w-5 h-5 text-blue-500" />
         </div>
@@ -168,7 +168,7 @@ export default function VerificationSettings() {
           </h3>
           {description && (
             <p className={`text-sm ${
-              isDark ? 'text-[#9da8b9]' : 'text-gray-500'
+              'text-[var(--text-muted)]'
             }`}>
               {description}
             </p>
@@ -188,7 +188,7 @@ export default function VerificationSettings() {
           {label}
         </p>
         {description && (
-          <p className={`text-sm ${isDark ? 'text-[#9da8b9]' : 'text-gray-500'}`}>
+          <p className={`text-sm text-[var(--text-muted)]`}>
             {description}
           </p>
         )}
@@ -201,7 +201,7 @@ export default function VerificationSettings() {
     return (
       <ResponsivePageLayout>
         <div className={`flex items-center justify-center h-64 ${
-          isDark ? 'text-[#9da8b9]' : 'text-gray-500'
+          'text-[var(--text-muted)]'
         }`}>
           <div className="text-center">
             <AlertCircle className="w-12 h-12 mx-auto mb-4 text-yellow-500" />
@@ -222,7 +222,7 @@ export default function VerificationSettings() {
             <button
               onClick={toggleMobileSidebar}
               className={`lg:hidden p-2 rounded-lg ${
-                isDark ? 'hover:bg-[#282f39]' : 'hover:bg-gray-100'
+                'hover:bg-[var(--bg-surface)]'
               }`}
             >
               <SettingsIcon className="w-5 h-5" />
@@ -234,7 +234,7 @@ export default function VerificationSettings() {
                 Verification Settings
               </h1>
               <p className={`text-sm ${
-                isDark ? 'text-[#9da8b9]' : 'text-gray-500'
+                'text-[var(--text-muted)]'
               }`}>
                 Configure attendance verification requirements
               </p>
@@ -350,7 +350,7 @@ export default function VerificationSettings() {
                         : 'bg-white border-gray-300 text-gray-900'
                     } disabled:opacity-50`}
                   />
-                  <span className={isDark ? 'text-[#9da8b9]' : 'text-gray-500'}>meters</span>
+                  <span className={'text-[var(--text-muted)]'}>meters</span>
                 </div>
               </SettingRow>
 
@@ -372,7 +372,7 @@ export default function VerificationSettings() {
                         : 'bg-white border-gray-300 text-gray-900'
                     } disabled:opacity-50`}
                   />
-                  <span className={isDark ? 'text-[#9da8b9]' : 'text-gray-500'}>seconds</span>
+                  <span className={'text-[var(--text-muted)]'}>seconds</span>
                 </div>
               </SettingRow>
             </SettingSection>

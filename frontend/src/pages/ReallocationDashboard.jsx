@@ -1,4 +1,4 @@
-/**
+﻿/**
  * ReallocationDashboard.jsx
  * ─────────────────────────────────────────────────────────────────────────────
  * Team Lead command centre for reviewing, accepting, redistributing, or
@@ -57,12 +57,12 @@ const StatusBadge = ({ status }) => {
 // ─── Stat card ────────────────────────────────────────────────────────────────
 const StatCard = ({ label, value, icon: Icon, color, theme }) => (
   <div className={`rounded-xl border p-4 flex items-center gap-3
-    ${theme === 'dark' ? 'bg-[#1c2027] border-[#282f39]' : 'bg-white border-gray-200'}`}>
+    bg-[var(--bg-raised)] border-[var(--border-soft)]`}>
     <div className={`p-2 rounded-lg ${color}`}>
       <Icon className="w-5 h-5" />
     </div>
     <div>
-      <p className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{value}</p>
+      <p className={`text-2xl font-bold text-[var(--text-primary)]`}>{value}</p>
       <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>{label}</p>
     </div>
   </div>
@@ -93,9 +93,9 @@ function RedistributeModal({ log, theme, onClose, onSubmit, teamMembers }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
       <div className={`w-full max-w-md rounded-2xl border shadow-2xl
-        ${theme === 'dark' ? 'bg-[#1c2027] border-[#282f39]' : 'bg-white border-gray-200'}`}>
+        bg-[var(--bg-raised)] border-[var(--border-soft)]`}>
         <div className="p-6 border-b border-inherit">
-          <h3 className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+          <h3 className={`text-lg font-semibold text-[var(--text-primary)]`}>
             🔀 Redistribute Task
           </h3>
           <p className={`text-sm mt-1 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
@@ -188,9 +188,9 @@ function RejectModal({ log, theme, onClose, onSubmit }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
       <div className={`w-full max-w-md rounded-2xl border shadow-2xl
-        ${theme === 'dark' ? 'bg-[#1c2027] border-[#282f39]' : 'bg-white border-gray-200'}`}>
+        bg-[var(--bg-raised)] border-[var(--border-soft)]`}>
         <div className="p-6 border-b border-inherit">
-          <h3 className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+          <h3 className={`text-lg font-semibold text-[var(--text-primary)]`}>
             ❌ Reject Reallocation
           </h3>
           <p className={`text-sm mt-1 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
@@ -311,7 +311,7 @@ function ReallocationCard({ log, theme, user, onAction, teamMembers }) {
         {/* Expanded details */}
         {expanded && (
           <div className={`border-t px-4 py-3 space-y-3
-            ${theme === 'dark' ? 'border-[#282f39] bg-[#111418]/50' : 'border-gray-100 bg-gray-50'}`}>
+            border-[var(--border-soft)] bg-[var(--bg-base)]/50`}>
             <div className="grid grid-cols-2 gap-3 text-xs">
               <div>
                 <span className={textSecondary}>Leave Period</span>
@@ -506,13 +506,10 @@ export default function ReallocationDashboard() {
     );
   });
 
-  const cardBg    = theme === 'dark' ? 'bg-[#1c2027] border-[#282f39]' : 'bg-white border-gray-200';
-  const textPrimary   = theme === 'dark' ? 'text-white' : 'text-gray-900';
-  const textSecondary = theme === 'dark' ? 'text-gray-400' : 'text-gray-500';
-  const inputCls  = `rounded-lg border px-3 py-2 text-sm
-    ${theme === 'dark'
-      ? 'bg-[#111418] border-[#282f39] text-white placeholder-gray-500'
-      : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'}`;
+  const cardBg      = 'bg-[var(--bg-raised)] border-[var(--border-soft)]';
+  const textPrimary   = 'text-[var(--text-primary)]';
+  const textSecondary = 'text-[var(--text-muted)]';
+  const inputCls  = 'rounded-lg border border-[var(--border-soft)] px-3 py-2 text-sm bg-[var(--bg-base)] text-[var(--text-primary)] placeholder-text-[var(--text-muted)]';
 
   return (
     <ResponsivePageLayout
@@ -525,10 +522,7 @@ export default function ReallocationDashboard() {
       actions={
         <button
           onClick={fetchData}
-          className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm border transition-colors
-            ${theme === 'dark'
-              ? 'border-[#282f39] text-gray-300 hover:bg-[#282f39]'
-              : 'border-gray-300 text-gray-700 hover:bg-gray-50'}`}
+          className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm border transition-colors border-[var(--border-soft)] text-[var(--text-secondary)] hover:bg-[var(--bg-surface)]"
         >
           <RefreshCw className="w-4 h-4" /> Refresh
         </button>
@@ -564,7 +558,7 @@ export default function ReallocationDashboard() {
         {/* Tabs + filters */}
         <div className={`rounded-xl border ${cardBg} overflow-hidden`}>
           <div className={`flex items-center justify-between gap-3 px-4 py-3 border-b
-            ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'}`}>
+            border-[var(--border-soft)]`}>
             {/* Tabs */}
             <div className="flex gap-1">
               {[
@@ -656,7 +650,7 @@ export default function ReallocationDashboard() {
           {/* Pagination (history tab) */}
           {tab === 'history' && totalPages > 1 && !loading && (
             <div className={`flex items-center justify-center gap-3 px-4 py-3 border-t
-              ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'}`}>
+              border-[var(--border-soft)]`}>
               <button
                 disabled={page <= 1}
                 onClick={() => setPage(p => p - 1)}

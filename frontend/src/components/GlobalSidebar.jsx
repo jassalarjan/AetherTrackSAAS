@@ -49,6 +49,8 @@ const GlobalSidebar = () => {
   const { isCollapsed, toggleCollapse } = useSidebar();
 
   const [activeSection, setActiveSection] = useState(() => detectSection(location.pathname));
+  // Hover state: when collapsed, hovering over the rail temporarily reveals the label panel
+  const [isHovered, setIsHovered] = useState(false);
 
   /* Sync active section when navigating */
   useEffect(() => {
@@ -80,8 +82,20 @@ const GlobalSidebar = () => {
 
   const nav = (path) => () => navigate(path);
 
+  // Compute sidebar class: hover-expanded overlays the panel without shifting layout
+  const sidebarClass = [
+    'sidebar',
+    isCollapsed && !isHovered ? 'sidebar--collapsed' : '',
+    isCollapsed && isHovered ? 'sidebar--collapsed sidebar--hover-expanded' : '',
+  ].filter(Boolean).join(' ');
+
   return (
-    <aside className={`sidebar${isCollapsed ? ' sidebar--collapsed' : ''}`} aria-label="Main navigation">
+    <aside
+      className={sidebarClass}
+      aria-label="Main navigation"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
 
       {/* ── Icon Rail (52 px) ── */}
       <div className="nav-rail">

@@ -285,6 +285,28 @@ body {
   pointer-events: none;
 }
 
+/* Hover-expand: when collapsed and hovered, overlay the panel over main content
+   without causing a layout shift in the flex container */
+.sidebar--hover-expanded .nav-panel {
+  position: absolute;
+  left: 64px;
+  top: 0;
+  height: 100%;
+  width: 220px !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  z-index: 50;
+  box-shadow: var(--shadow-xl);
+  transition: width 220ms cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 200ms ease;
+}
+/* Keyboard accessibility: show panel when rail receives focus while collapsed */
+.sidebar--collapsed .nav-rail:focus-within ~ .nav-panel {
+  width: 220px;
+  opacity: 1;
+  pointer-events: auto;
+}
+
 /* Collapse toggle button in rail footer */
 .rail-collapse-btn {
   width: 34px; height: 34px;

@@ -1,4 +1,4 @@
-import { useNavigate, useLocation } from 'react-router-dom';
+﻿import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { Home, ArrowLeft, SearchX } from 'lucide-react';
@@ -25,7 +25,7 @@ function NotFoundContent() {
       <div className="relative -mt-12 sm:-mt-16 mb-6">
         <div
           className={`inline-flex items-center justify-center w-16 h-16 rounded-2xl shadow-lg ${
-            isDark ? 'bg-[#1c2027] border border-[#282f39]' : 'bg-white border border-gray-200'
+            'bg-[var(--bg-raised)] border border-[var(--border-soft)]'
           }`}
         >
           <SearchX size={28} className={isDark ? 'text-blue-400' : 'text-blue-600'} />
@@ -42,13 +42,13 @@ function NotFoundContent() {
 
       <p
         className={`text-sm sm:text-base mb-1 max-w-md ${
-          isDark ? 'text-[#9da8b9]' : 'text-gray-500'
+          'text-[var(--text-muted)]'
         }`}
       >
         The route{' '}
         <code
           className={`px-1.5 py-0.5 rounded text-xs font-mono ${
-            isDark ? 'bg-[#282f39] text-blue-300' : 'bg-gray-100 text-blue-600'
+            'bg-[var(--bg-surface)] text-[var(--brand)]'
           }`}
         >
           {location.pathname}
@@ -58,7 +58,7 @@ function NotFoundContent() {
 
       <p
         className={`text-xs sm:text-sm mb-8 ${
-          isDark ? 'text-[#9da8b9]' : 'text-gray-400'
+          'text-[var(--text-muted)]'
         }`}
       >
         It may have been moved, deleted, or you may have mistyped the URL.
@@ -108,7 +108,7 @@ export default function NotFound() {
   return (
     <div
       className={`min-h-screen flex items-center justify-center ${
-        isDark ? 'bg-[#111418]' : 'bg-gray-50'
+        'bg-[var(--bg-base)]'
       }`}
     >
       <NotFoundContent />

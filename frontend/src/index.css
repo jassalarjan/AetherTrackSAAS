@@ -73,6 +73,12 @@ body {
   min-height: 100vh;
 }
 
+/* Ensure native form controls (select, input) follow the current color-scheme
+   so browser-rendered dropdowns and date pickers use light/dark appearance */
+input, select, textarea, button {
+  color-scheme: inherit;
+}
+
 .font-heading,
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading), 'Fraunces', Georgia, serif;

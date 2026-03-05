@@ -14,7 +14,7 @@ import { generateComprehensivePDFReport } from '../utils/comprehensiveReportGene
 
 const Analytics = () => {
   const { user } = useAuth();
-  const { theme } = useTheme();
+  const { theme, effectiveTheme } = useTheme();
   const [tasks, setTasks] = useState([]);
   const [projects, setProjects] = useState([]);
   const [filteredTasks, setFilteredTasks] = useState([]);
@@ -562,6 +562,35 @@ const Analytics = () => {
     }
   };
 
+  // ── Derived metrics ───────────────────────────────────────────────────────
+  const completionRate = analyticsData.totalTasks > 0
+    ? Math.round((analyticsData.completedTasks / analyticsData.totalTasks) * 100)
+    : 0;
+  const overdueRate = analyticsData.totalTasks > 0
+    ? Math.round((analyticsData.overdueTasks / analyticsData.totalTasks) * 100)
+    : 0;
+  const inProgressRate = analyticsData.totalTasks > 0
+    ? Math.round((analyticsData.inProgressTasks / analyticsData.totalTasks) * 100)
+    : 0;
+
+  // ── Theme-aware chart colors (SVG doesn't support CSS vars, so we compute) ──
+  const isDark = effectiveTheme === 'dark';
+  const chartColors = {
+    grid:          isDark ? 'rgba(240,232,220,0.08)' : 'rgba(42,30,22,0.09)',
+    axis:          isDark ? '#A89880' : '#7A6A58',
+    tooltipBg:     isDark ? '#2A1E14' : '#FFFFFF',
+    tooltipBorder: isDark ? 'rgba(240,232,220,0.12)' : 'rgba(42,30,22,0.12)',
+    tooltipText:   isDark ? '#F0E8DC' : '#2A1E16',
+  };
+  const tooltipStyle = {
+    backgroundColor: chartColors.tooltipBg,
+    border: `1px solid ${chartColors.tooltipBorder}`,
+    borderRadius: '8px',
+    color: chartColors.tooltipText,
+    boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
+    fontSize: '12px',
+  };
+
   if (loading) {
     return (
       <div className="h-screen flex items-center justify-center" style={{ background: 'var(--bg-canvas)' }}>
@@ -574,12 +603,12 @@ const Analytics = () => {
     <>
     <ResponsivePageLayout title="Analytics & Reports" icon={BarChart3} noPadding>
         {/* Header Section */}
-        <header className={`border-b ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'} shrink-0`}>
+        <header className="border-b border-[var(--border-soft)] bg-[var(--bg-base)] shrink-0">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between px-3 sm:px-6 py-3 sm:py-4 gap-3 sm:gap-0">
             <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
               <div className="min-w-0">
-                <h2 className={`${theme === 'dark' ? 'text-white' : 'text-gray-900'} text-base sm:text-lg md:text-xl font-bold leading-tight truncate`}>Analytics & Reports</h2>
-                <p className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} text-[10px] sm:text-xs mt-0.5 sm:mt-1 line-clamp-2`}>
+                <h2 className="text-[var(--text-primary)] text-base sm:text-lg md:text-xl font-bold leading-tight truncate">Analytics & Reports</h2>
+                <p className="text-[var(--text-muted)] text-[10px] sm:text-xs mt-0.5 sm:mt-1 line-clamp-2">
                   {user?.role === 'member' 
                     ? 'View your personal task statistics' 
                     : user?.role === 'team_lead'
@@ -609,30 +638,30 @@ const Analytics = () => {
                     <ChevronDown size={16} className="hidden sm:block" />
                   </button>
                   {showReportOptions && (
-                    <div className={`absolute right-0 mt-2 w-56 rounded ${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} shadow-lg z-10`}>
+                    <div className="absolute right-0 mt-2 w-56 rounded-lg bg-[var(--bg-raised)] border border-[var(--border-soft)] shadow-[var(--shadow-lg)] z-10">
                       <div className="py-1">
-                        <div className={`px-4 py-2 text-[10px] font-bold ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} uppercase tracking-wider`}>Report Period</div>
+                        <div className="px-4 py-2 text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">Report Period</div>
                         <button
                           onClick={() => { setReportPeriod('daily'); handleExportPDF(); }}
-                          className={`block w-full text-left px-4 py-2 text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'} ${theme === 'dark' ? 'hover:bg-[#282f39]' : 'hover:bg-gray-100'} transition-colors`}
+                          className="block w-full text-left px-4 py-2 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-surface)] transition-colors"
                         >
                           Daily Report (Today)
                         </button>
                         <button
                           onClick={() => { setReportPeriod('weekly'); handleExportPDF(); }}
-                          className={`block w-full text-left px-4 py-2 text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'} ${theme === 'dark' ? 'hover:bg-[#282f39]' : 'hover:bg-gray-100'} transition-colors`}
+                          className="block w-full text-left px-4 py-2 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-surface)] transition-colors"
                         >
                           Weekly Report (Last 7 Days)
                         </button>
                         <button
                           onClick={() => { setReportPeriod('monthly'); handleExportPDF(); }}
-                          className={`block w-full text-left px-4 py-2 text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'} ${theme === 'dark' ? 'hover:bg-[#282f39]' : 'hover:bg-gray-100'} transition-colors`}
+                          className="block w-full text-left px-4 py-2 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-surface)] transition-colors"
                         >
                           Monthly Report (This Month)
                         </button>
                         <button
                           onClick={() => { setReportPeriod('all'); handleExportPDF(); }}
-                          className={`block w-full text-left px-4 py-2 text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'} ${theme === 'dark' ? 'hover:bg-[#282f39]' : 'hover:bg-gray-100'} transition-colors`}
+                          className="block w-full text-left px-4 py-2 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-surface)] transition-colors"
                         >
                           Complete Report (All Time)
                         </button>
@@ -649,19 +678,19 @@ const Analytics = () => {
             <div className="flex items-center justify-between mb-2 sm:mb-3">
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className="flex items-center gap-2 sm:hover:bg-[#282f39]/30 sm:px-2 sm:py-1 sm:rounded transition-colors lg:pointer-events-none"
+                className="flex items-center gap-2 hover:bg-[var(--bg-surface)] px-2 py-1 rounded transition-colors lg:pointer-events-none"
               >
-                <Filter size={14} className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`} />
-                <span className={`text-xs sm:text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'} font-medium`}>Filters</span>
+                <Filter size={14} className="text-[var(--text-muted)]" />
+                <span className="text-xs sm:text-sm text-[var(--text-primary)] font-medium">Filters</span>
                 <ChevronDown 
                   size={16} 
-                  className={`lg:hidden transition-transform ${showFilters ? 'rotate-180' : ''} ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`}
+                  className={`lg:hidden transition-transform ${showFilters ? 'rotate-180' : ''} text-[var(--text-muted)]`}
                 />
               </button>
               {showFilters && (
                 <button
                   onClick={() => setFilters({ status: '', priority: '', team: '', user: '', project: '', dateRange: 'all', customStartDate: '', customEndDate: '' })}
-                  className="text-[10px] sm:text-xs text-[#C4713A] hover:text-[#A35C28] font-medium"
+                  className="text-[10px] sm:text-xs text-[var(--brand)] hover:text-[var(--brand-light)] font-medium transition-colors"
                 >
                   Reset All
                 </button>
@@ -671,7 +700,7 @@ const Analytics = () => {
               <select
                 value={filters.status}
                 onChange={(e) => setFilters({...filters, status: e.target.value})}
-                className={`h-9 px-2 sm:px-3 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-white'} border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} rounded text-xs sm:text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'} focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
+                className="h-9 px-2 sm:px-3 bg-[var(--bg-surface)] border border-[var(--border-mid)] rounded-md text-xs sm:text-sm text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--brand)] focus:border-transparent transition-colors"
               >
                 <option value="">All Status</option>
                 <option value="todo">To Do</option>
@@ -684,7 +713,7 @@ const Analytics = () => {
               <select
                 value={filters.priority}
                 onChange={(e) => setFilters({...filters, priority: e.target.value})}
-                className={`h-9 px-2 sm:px-3 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-white'} border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} rounded text-xs sm:text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'} focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
+                className="h-9 px-2 sm:px-3 bg-[var(--bg-surface)] border border-[var(--border-mid)] rounded-md text-xs sm:text-sm text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--brand)] focus:border-transparent transition-colors"
               >
                 <option value="">All Priority</option>
                 <option value="low">Low</option>
@@ -698,7 +727,7 @@ const Analytics = () => {
                   <select
                     value={filters.dateRange}
                     onChange={(e) => setFilters({...filters, dateRange: e.target.value})}
-                    className={`h-9 px-2 sm:px-3 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-white'} border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} rounded text-xs sm:text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'} focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
+                    className="h-9 px-2 sm:px-3 bg-[var(--bg-surface)] border border-[var(--border-mid)] rounded-md text-xs sm:text-sm text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--brand)] focus:border-transparent transition-colors"
                   >
                     <option value="all">All Time</option>
                     <option value="today">Today</option>
@@ -710,7 +739,7 @@ const Analytics = () => {
                   <select
                     value={filters.project}
                     onChange={(e) => setFilters({...filters, project: e.target.value})}
-                    className={`h-9 px-2 sm:px-3 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-white'} border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} rounded text-xs sm:text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'} focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
+                    className="h-9 px-2 sm:px-3 bg-[var(--bg-surface)] border border-[var(--border-mid)] rounded-md text-xs sm:text-sm text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--brand)] focus:border-transparent transition-colors"
                   >
                     <option value="">All Projects</option>
                     {projects.map(project => (
@@ -721,7 +750,7 @@ const Analytics = () => {
                   <select
                     value={filters.team}
                     onChange={(e) => setFilters({...filters, team: e.target.value})}
-                    className={`h-9 px-2 sm:px-3 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-white'} border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} rounded text-xs sm:text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'} focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
+                    className="h-9 px-2 sm:px-3 bg-[var(--bg-surface)] border border-[var(--border-mid)] rounded-md text-xs sm:text-sm text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--brand)] focus:border-transparent transition-colors"
                   >
                     <option value="">All Teams</option>
                     {teams.map(team => (
@@ -732,7 +761,7 @@ const Analytics = () => {
                   <select
                     value={filters.user}
                     onChange={(e) => setFilters({...filters, user: e.target.value})}
-                    className={`h-9 px-2 sm:px-3 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-white'} border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} rounded text-xs sm:text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'} focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
+                    className="h-9 px-2 sm:px-3 bg-[var(--bg-surface)] border border-[var(--border-mid)] rounded-md text-xs sm:text-sm text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--brand)] focus:border-transparent transition-colors"
                   >
                     <option value="">All Users</option>
                     <option value="unassigned">Unassigned</option>
@@ -750,13 +779,13 @@ const Analytics = () => {
                   type="date"
                   value={filters.customStartDate}
                   onChange={(e) => setFilters({...filters, customStartDate: e.target.value})}
-                  className={`h-9 px-2 sm:px-3 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-white'} border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} rounded text-xs sm:text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'} focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
+                  className="h-9 px-2 sm:px-3 bg-[var(--bg-surface)] border border-[var(--border-mid)] rounded-md text-xs sm:text-sm text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--brand)] focus:border-transparent"
                 />
                 <input
                   type="date"
                   value={filters.customEndDate}
                   onChange={(e) => setFilters({...filters, customEndDate: e.target.value})}
-                  className={`h-9 px-2 sm:px-3 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-white'} border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} rounded text-xs sm:text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'} focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
+                  className="h-9 px-2 sm:px-3 bg-[var(--bg-surface)] border border-[var(--border-mid)] rounded-md text-xs sm:text-sm text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--brand)] focus:border-transparent"
                 />
               </div>
             )}
@@ -767,43 +796,83 @@ const Analytics = () => {
         <div className="flex-1 overflow-auto p-3 sm:p-6">
           {/* Key Metrics */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-6">
-            <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded-lg border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-3 sm:p-4`}>
-              <div className="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between gap-2">
-                <div className="w-full">
-                  <p className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} text-[10px] sm:text-xs uppercase tracking-wider font-medium`}>Total Tasks</p>
-                  <p className={`text-2xl sm:text-3xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mt-1 sm:mt-2`}>{analyticsData.totalTasks}</p>
+            {/* Total Tasks */}
+            <div className="bg-[var(--bg-raised)] rounded-xl border border-[var(--border-soft)] p-4 sm:p-5 shadow-[var(--shadow-xs)] hover:shadow-[var(--shadow-sm)] transition-all duration-200 group">
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex-1 min-w-0">
+                  <p className="text-[var(--text-muted)] text-[10px] sm:text-xs uppercase tracking-wider font-semibold">Total Tasks</p>
+                  <p className="text-2xl sm:text-3xl font-black text-[var(--text-primary)] mt-1 tabular-nums leading-none">{analyticsData.totalTasks}</p>
+                  <p className="text-xs text-[var(--text-muted)] mt-2 flex items-center gap-1">
+                    <TrendingUp size={11} className="text-[var(--success)] flex-shrink-0" />
+                    <span className="text-[var(--success)] font-semibold">{completionRate}%</span>&nbsp;completion
+                  </p>
                 </div>
-                <BarChart3 className="text-[#C4713A] hidden sm:block" size={40} />
+                <div className="w-9 h-9 rounded-lg bg-[var(--brand-dim)] grid place-items-center flex-shrink-0 group-hover:scale-110 transition-transform duration-200">
+                  <BarChart3 size={17} className="text-[var(--brand)]" />
+                </div>
+              </div>
+              <div className="mt-3 h-1.5 rounded-full bg-[var(--bg-surface)] overflow-hidden">
+                <div className="h-full rounded-full bg-[var(--brand)] transition-all duration-700" style={{ width: `${completionRate}%` }} />
               </div>
             </div>
 
-            <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded-lg border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-3 sm:p-4`}>
-              <div className="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between gap-2">
-                <div className="w-full">
-                  <p className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} text-[10px] sm:text-xs uppercase tracking-wider font-medium`}>Overdue</p>
-                  <p className="text-2xl sm:text-3xl font-bold text-red-500 mt-1 sm:mt-2">{analyticsData.overdueTasks}</p>
+            {/* Overdue */}
+            <div className="bg-[var(--bg-raised)] rounded-xl border border-[var(--border-soft)] p-4 sm:p-5 shadow-[var(--shadow-xs)] hover:shadow-[var(--shadow-sm)] transition-all duration-200 group">
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex-1 min-w-0">
+                  <p className="text-[var(--text-muted)] text-[10px] sm:text-xs uppercase tracking-wider font-semibold">Overdue</p>
+                  <p className="text-2xl sm:text-3xl font-black text-[var(--danger)] mt-1 tabular-nums leading-none">{analyticsData.overdueTasks}</p>
+                  <p className="text-xs text-[var(--text-muted)] mt-2 flex items-center gap-1">
+                    <AlertTriangle size={11} className="text-[var(--danger)] flex-shrink-0" />
+                    <span className="text-[var(--danger)] font-semibold">{overdueRate}%</span>&nbsp;of all tasks
+                  </p>
                 </div>
-                <AlertTriangle className="text-red-500 hidden sm:block" size={40} />
+                <div className="w-9 h-9 rounded-lg bg-[var(--danger-dim)] grid place-items-center flex-shrink-0 group-hover:scale-110 transition-transform duration-200">
+                  <AlertTriangle size={17} className="text-[var(--danger)]" />
+                </div>
+              </div>
+              <div className="mt-3 h-1.5 rounded-full bg-[var(--bg-surface)] overflow-hidden">
+                <div className="h-full rounded-full bg-[var(--danger)] transition-all duration-700" style={{ width: `${overdueRate}%` }} />
               </div>
             </div>
 
-            <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded-lg border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-3 sm:p-4`}>
-              <div className="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between gap-2">
-                <div className="w-full">
-                  <p className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} text-[10px] sm:text-xs uppercase tracking-wider font-medium`}>Completed</p>
-                  <p className="text-2xl sm:text-3xl font-bold text-green-500 mt-1 sm:mt-2">{analyticsData.completedTasks}</p>
+            {/* Completed */}
+            <div className="bg-[var(--bg-raised)] rounded-xl border border-[var(--border-soft)] p-4 sm:p-5 shadow-[var(--shadow-xs)] hover:shadow-[var(--shadow-sm)] transition-all duration-200 group">
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex-1 min-w-0">
+                  <p className="text-[var(--text-muted)] text-[10px] sm:text-xs uppercase tracking-wider font-semibold">Completed</p>
+                  <p className="text-2xl sm:text-3xl font-black text-[var(--success)] mt-1 tabular-nums leading-none">{analyticsData.completedTasks}</p>
+                  <p className="text-xs text-[var(--text-muted)] mt-2 flex items-center gap-1">
+                    <TrendingUp size={11} className="text-[var(--success)] flex-shrink-0" />
+                    <span className="text-[var(--success)] font-semibold">{completionRate}%</span>&nbsp;rate
+                  </p>
                 </div>
-                <TrendingUp className="text-green-500 hidden sm:block" size={40} />
+                <div className="w-9 h-9 rounded-lg bg-[var(--success-dim)] grid place-items-center flex-shrink-0 group-hover:scale-110 transition-transform duration-200">
+                  <TrendingUp size={17} className="text-[var(--success)]" />
+                </div>
+              </div>
+              <div className="mt-3 h-1.5 rounded-full bg-[var(--bg-surface)] overflow-hidden">
+                <div className="h-full rounded-full bg-[var(--success)] transition-all duration-700" style={{ width: `${completionRate}%` }} />
               </div>
             </div>
 
-            <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded-lg border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-3 sm:p-4`}>
-              <div className="flex flex-col sm:flex-row items-start sm:items-center sm:justify-between gap-2">
-                <div className="w-full">
-                  <p className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} text-[10px] sm:text-xs uppercase tracking-wider font-medium`}>In Progress</p>
-                  <p className="text-2xl sm:text-3xl font-bold text-yellow-500 mt-1 sm:mt-2">{analyticsData.inProgressTasks}</p>
+            {/* In Progress */}
+            <div className="bg-[var(--bg-raised)] rounded-xl border border-[var(--border-soft)] p-4 sm:p-5 shadow-[var(--shadow-xs)] hover:shadow-[var(--shadow-sm)] transition-all duration-200 group">
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex-1 min-w-0">
+                  <p className="text-[var(--text-muted)] text-[10px] sm:text-xs uppercase tracking-wider font-semibold">In Progress</p>
+                  <p className="text-2xl sm:text-3xl font-black text-[var(--warning)] mt-1 tabular-nums leading-none">{analyticsData.inProgressTasks}</p>
+                  <p className="text-xs text-[var(--text-muted)] mt-2 flex items-center gap-1">
+                    <Clock size={11} className="text-[var(--warning)] flex-shrink-0" />
+                    <span className="text-[var(--warning)] font-semibold">{inProgressRate}%</span>&nbsp;active
+                  </p>
                 </div>
-                <Clock className="text-yellow-500 hidden sm:block" size={40} />
+                <div className="w-9 h-9 rounded-lg bg-[var(--warning-dim)] grid place-items-center flex-shrink-0 group-hover:scale-110 transition-transform duration-200">
+                  <Clock size={17} className="text-[var(--warning)]" />
+                </div>
+              </div>
+              <div className="mt-3 h-1.5 rounded-full bg-[var(--bg-surface)] overflow-hidden">
+                <div className="h-full rounded-full bg-[var(--warning)] transition-all duration-700" style={{ width: `${inProgressRate}%` }} />
               </div>
             </div>
           </div>
@@ -812,8 +881,8 @@ const Analytics = () => {
           {user?.role !== 'member' && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
               {/* Status Distribution */}
-              <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded-lg border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-3 sm:p-6`}>
-                <h3 className={`text-xs sm:text-sm font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} uppercase tracking-wider mb-3 sm:mb-4`}>Task Status Distribution</h3>
+              <div className="bg-[var(--bg-raised)] rounded-xl border border-[var(--border-soft)] p-3 sm:p-6 shadow-[var(--shadow-xs)] hover:shadow-[var(--shadow-sm)] transition-shadow duration-200">
+                <h3 className="text-xs sm:text-sm font-bold text-[var(--text-primary)] uppercase tracking-wider mb-3 sm:mb-4">Task Status Distribution</h3>
                 <div style={{ width: '100%', minWidth: '200px' }}>
                   <ResponsiveContainer width="100%" aspect={1.8} minWidth={200}>
                     <RechartsPieChart>
@@ -831,23 +900,24 @@ const Analytics = () => {
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
-                    <Tooltip contentStyle={{ backgroundColor: '#1c2027', border: '1px solid #282f39', borderRadius: '0.5rem' }} />
+                    <Tooltip contentStyle={tooltipStyle} />
+                    <Legend wrapperStyle={{ fontSize: '11px', color: chartColors.axis }} />
                   </RechartsPieChart>
                 </ResponsiveContainer>
                 </div>
               </div>
 
               {/* Priority Distribution */}
-              <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded-lg border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-3 sm:p-6`}>
-                <h3 className={`text-xs sm:text-sm font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} uppercase tracking-wider mb-3 sm:mb-4`}>Task Priority Distribution</h3>
+              <div className="bg-[var(--bg-raised)] rounded-xl border border-[var(--border-soft)] p-3 sm:p-6 shadow-[var(--shadow-xs)] hover:shadow-[var(--shadow-sm)] transition-shadow duration-200">
+                <h3 className="text-xs sm:text-sm font-bold text-[var(--text-primary)] uppercase tracking-wider mb-3 sm:mb-4">Task Priority Distribution</h3>
                 <div style={{ width: '100%', minWidth: '200px' }}>
                   <ResponsiveContainer width="100%" aspect={1.8} minWidth={200}>
                     <BarChart data={analyticsData.priorityDistribution}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#282f39" />
-                    <XAxis dataKey="name" stroke="#9da8b9" tick={{ fontSize: 10 }} />
-                    <YAxis stroke="#9da8b9" tick={{ fontSize: 10 }} />
-                    <Tooltip contentStyle={{ backgroundColor: '#1c2027', border: '1px solid #282f39', borderRadius: '0.5rem' }} />
-                    <Bar dataKey="value" fill="#C4713A" />
+                    <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} />
+                    <XAxis dataKey="name" stroke={chartColors.axis} tick={{ fontSize: 10, fill: chartColors.axis }} />
+                    <YAxis stroke={chartColors.axis} tick={{ fontSize: 10, fill: chartColors.axis }} />
+                    <Tooltip contentStyle={tooltipStyle} />
+                    <Bar dataKey="value" fill="var(--brand)" radius={[3, 3, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
                 </div>
@@ -859,34 +929,45 @@ const Analytics = () => {
           {['admin', 'hr'].includes(user?.role) && (
             <>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
-                {/* Overdue by Priority */}
-                <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded-lg border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-3 sm:p-6`}>
-                  <h3 className="text-xs sm:text-sm font-bold text-red-500 uppercase tracking-wider mb-3 sm:mb-4">Overdue Tasks by Priority</h3>
+              {/* Overdue by Priority */}
+                <div className="bg-[var(--bg-raised)] rounded-xl border border-[var(--border-soft)] p-3 sm:p-6 shadow-[var(--shadow-xs)] hover:shadow-[var(--shadow-sm)] transition-shadow duration-200">
+                  <h3 className="text-xs sm:text-sm font-bold text-[var(--danger)] uppercase tracking-wider mb-3 sm:mb-4">Overdue Tasks by Priority</h3>
                   <div style={{ width: '100%', minWidth: '200px' }}>
                     <ResponsiveContainer width="100%" aspect={1.8} minWidth={200}>
                       <BarChart data={analyticsData.overdueByPriority}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#282f39" />
-                      <XAxis dataKey="name" stroke="#9da8b9" tick={{ fontSize: 10 }} />
-                      <YAxis stroke="#9da8b9" tick={{ fontSize: 10 }} />
-                      <Tooltip contentStyle={{ backgroundColor: '#1c2027', border: '1px solid #282f39', borderRadius: '0.5rem' }} />
-                      <Bar dataKey="value" fill="#ef4444" />
+                      <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} />
+                      <XAxis dataKey="name" stroke={chartColors.axis} tick={{ fontSize: 10, fill: chartColors.axis }} />
+                      <YAxis stroke={chartColors.axis} tick={{ fontSize: 10, fill: chartColors.axis }} />
+                      <Tooltip contentStyle={tooltipStyle} />
+                      <Bar dataKey="value" fill="var(--danger)" radius={[3, 3, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                   </div>
                 </div>
 
                 {/* Completion Trend */}
-                <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded-lg border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-3 sm:p-6`}>
-                  <h3 className={`text-xs sm:text-sm font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} uppercase tracking-wider mb-3 sm:mb-4`}>Completion Trend (30 Days)</h3>
+                <div className="bg-[var(--bg-raised)] rounded-xl border border-[var(--border-soft)] p-3 sm:p-6 shadow-[var(--shadow-xs)] hover:shadow-[var(--shadow-sm)] transition-shadow duration-200">
+                  <h3 className="text-xs sm:text-sm font-bold text-[var(--text-primary)] uppercase tracking-wider mb-3 sm:mb-4">Completion Trend (30 Days)</h3>
                   <div style={{ width: '100%', minWidth: '200px' }}>
                     <ResponsiveContainer width="100%" aspect={1.8} minWidth={200}>
                       <AreaChart data={analyticsData.completionTrend}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#282f39" />
-                        <XAxis dataKey="date" stroke="#9da8b9" tick={{ fontSize: 7 }} angle={-60} textAnchor="end" height={50} />
-                        <YAxis stroke="#9da8b9" tick={{ fontSize: 9 }} />
-                      <Tooltip contentStyle={{ backgroundColor: '#1c2027', border: '1px solid #282f39', borderRadius: '0.5rem' }} />
-                      <Area type="monotone" dataKey="created" stackId="1" stroke="#C4713A" fill="#C4713A" />
-                      <Area type="monotone" dataKey="completed" stackId="2" stroke="#22c55e" fill="#22c55e" />
+                        <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} />
+                        <XAxis dataKey="date" stroke={chartColors.axis} tick={{ fontSize: 7, fill: chartColors.axis }} angle={-60} textAnchor="end" height={50} />
+                        <YAxis stroke={chartColors.axis} tick={{ fontSize: 9, fill: chartColors.axis }} />
+                      <Tooltip contentStyle={tooltipStyle} />
+                      <defs>
+                        <linearGradient id="createdGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="var(--brand)" stopOpacity={0.3}/>
+                          <stop offset="95%" stopColor="var(--brand)" stopOpacity={0}/>
+                        </linearGradient>
+                        <linearGradient id="completedGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="var(--success)" stopOpacity={0.3}/>
+                          <stop offset="95%" stopColor="var(--success)" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <Area type="monotone" dataKey="created" stackId="1" stroke="var(--brand)" fill="url(#createdGrad)" name="Created" />
+                      <Area type="monotone" dataKey="completed" stackId="2" stroke="var(--success)" fill="url(#completedGrad)" name="Completed" />
+                      <Legend wrapperStyle={{ fontSize: '11px', color: chartColors.axis }} />
                     </AreaChart>
                   </ResponsiveContainer>
                   </div>
@@ -894,35 +975,36 @@ const Analytics = () => {
               </div>
 
               {/* User Performance */}
-              <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded-lg border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-3 sm:p-6 mb-4 sm:mb-6`}>
-                <h3 className={`text-xs sm:text-sm font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} uppercase tracking-wider mb-3 sm:mb-4`}>User Performance</h3>
+              <div className="bg-[var(--bg-raised)] rounded-xl border border-[var(--border-soft)] p-3 sm:p-6 mb-4 sm:mb-6 shadow-[var(--shadow-xs)] hover:shadow-[var(--shadow-sm)] transition-shadow duration-200">
+                <h3 className="text-xs sm:text-sm font-bold text-[var(--text-primary)] uppercase tracking-wider mb-3 sm:mb-4">User Performance</h3>
                 <div style={{ width: '100%', minWidth: '200px' }}>
                   <ResponsiveContainer width="100%" aspect={1.5} minWidth={200}>
                   <BarChart data={analyticsData.assigneePerformance}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#282f39" />
-                    <XAxis dataKey="name" stroke="#9da8b9" tick={{ fontSize: 7 }} angle={-60} textAnchor="end" height={70} />
-                    <YAxis stroke="#9da8b9" tick={{ fontSize: 10 }} />
-                    <Tooltip contentStyle={{ backgroundColor: '#1c2027', border: '1px solid #282f39', borderRadius: '0.5rem' }} />
-                    <Bar dataKey="total" fill="#C4713A" name="Total Tasks" />
-                    <Bar dataKey="completed" fill="#22c55e" name="Completed" />
-                    <Bar dataKey="overdue" fill="#ef4444" name="Overdue" />
+                    <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} />
+                    <XAxis dataKey="name" stroke={chartColors.axis} tick={{ fontSize: 7, fill: chartColors.axis }} angle={-60} textAnchor="end" height={70} />
+                    <YAxis stroke={chartColors.axis} tick={{ fontSize: 10, fill: chartColors.axis }} />
+                    <Tooltip contentStyle={tooltipStyle} />
+                    <Legend wrapperStyle={{ fontSize: '11px', color: chartColors.axis }} />
+                    <Bar dataKey="total" fill="var(--brand)" name="Total Tasks" radius={[2, 2, 0, 0]} />
+                    <Bar dataKey="completed" fill="var(--success)" name="Completed" radius={[2, 2, 0, 0]} />
+                    <Bar dataKey="overdue" fill="var(--danger)" name="Overdue" radius={[2, 2, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
                 </div>
               </div>
 
               {/* Team Distribution */}
-              <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded-lg border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-3 sm:p-6 mb-4 sm:mb-6`}>
-                <h3 className={`text-xs sm:text-sm font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} uppercase tracking-wider mb-3 sm:mb-4`}>Tasks by Team</h3>
+              <div className="bg-[var(--bg-raised)] rounded-xl border border-[var(--border-soft)] p-3 sm:p-6 mb-4 sm:mb-6 shadow-[var(--shadow-xs)] hover:shadow-[var(--shadow-sm)] transition-shadow duration-200">
+                <h3 className="text-xs sm:text-sm font-bold text-[var(--text-primary)] uppercase tracking-wider mb-3 sm:mb-4">Tasks by Team</h3>
                 {analyticsData.teamDistribution && analyticsData.teamDistribution.length > 0 ? (
                   <div style={{ width: '100%', minWidth: '200px' }}>
                     <ResponsiveContainer width="100%" aspect={1.5} minWidth={200}>
                     <BarChart data={analyticsData.teamDistribution}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#282f39" />
-                      <XAxis dataKey="name" stroke="#9da8b9" tick={{ fontSize: 7 }} angle={-60} textAnchor="end" height={80} interval={0} />
-                      <YAxis stroke="#9da8b9" tick={{ fontSize: 10 }} />
-                      <Tooltip contentStyle={{ backgroundColor: '#1c2027', border: '1px solid #282f39', borderRadius: '0.5rem' }} />
-                      <Bar dataKey="value" fill="#22c55e" name="Tasks">
+                      <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} />
+                      <XAxis dataKey="name" stroke={chartColors.axis} tick={{ fontSize: 7, fill: chartColors.axis }} angle={-60} textAnchor="end" height={80} interval={0} />
+                      <YAxis stroke={chartColors.axis} tick={{ fontSize: 10, fill: chartColors.axis }} />
+                      <Tooltip contentStyle={tooltipStyle} />
+                      <Bar dataKey="value" name="Tasks" radius={[2, 2, 0, 0]}>
                         {analyticsData.teamDistribution.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={`hsl(${index * 40}, 70%, 50%)`} />
                         ))}
@@ -931,7 +1013,7 @@ const Analytics = () => {
                   </ResponsiveContainer>
                   </div>
                 ) : (
-                  <p className={`text-center py-8 ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} text-sm`}>No team data available</p>
+                  <p className="text-center py-8 text-[var(--text-muted)] text-sm">No team data available</p>
                 )}
               </div>
 
@@ -939,35 +1021,35 @@ const Analytics = () => {
               
               {/* Weekly Progress Chart */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
-                <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded-lg border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-3 sm:p-6`}>
-                  <h3 className={`text-xs sm:text-sm font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} uppercase tracking-wider mb-3 sm:mb-4`}>Weekly Progress (Last 8 Weeks)</h3>
+                <div className="bg-[var(--bg-raised)] rounded-xl border border-[var(--border-soft)] p-3 sm:p-6 shadow-[var(--shadow-xs)] hover:shadow-[var(--shadow-sm)] transition-shadow duration-200">
+                  <h3 className="text-xs sm:text-sm font-bold text-[var(--text-primary)] uppercase tracking-wider mb-3 sm:mb-4">Weekly Progress (Last 8 Weeks)</h3>
                   <div style={{ width: '100%', minWidth: '200px' }}>
                     <ResponsiveContainer width="100%" aspect={1.8} minWidth={200}>
                     <LineChart data={analyticsData.weeklyProgress}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#282f39" />
-                      <XAxis dataKey="week" stroke="#9da8b9" tick={{ fontSize: 9 }} />
-                      <YAxis stroke="#9da8b9" tick={{ fontSize: 10 }} />
-                      <Tooltip contentStyle={{ backgroundColor: '#1c2027', border: '1px solid #282f39', borderRadius: '0.5rem' }} />
-                      <Legend wrapperStyle={{ fontSize: '11px' }} />
-                      <Line type="monotone" dataKey="completed" stroke="#22c55e" strokeWidth={2} name="Completed" />
-                      <Line type="monotone" dataKey="inProgress" stroke="#C4713A" strokeWidth={2} name="In Progress" />
-                      <Line type="monotone" dataKey="todo" stroke="#6b7280" strokeWidth={2} name="To Do" />
+                      <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} />
+                      <XAxis dataKey="week" stroke={chartColors.axis} tick={{ fontSize: 9, fill: chartColors.axis }} />
+                      <YAxis stroke={chartColors.axis} tick={{ fontSize: 10, fill: chartColors.axis }} />
+                      <Tooltip contentStyle={tooltipStyle} />
+                      <Legend wrapperStyle={{ fontSize: '11px', color: chartColors.axis }} />
+                      <Line type="monotone" dataKey="completed" stroke="var(--success)" strokeWidth={2} dot={{ r: 3 }} name="Completed" />
+                      <Line type="monotone" dataKey="inProgress" stroke="var(--brand)" strokeWidth={2} dot={{ r: 3 }} name="In Progress" />
+                      <Line type="monotone" dataKey="todo" stroke={chartColors.axis} strokeWidth={2} dot={{ r: 3 }} name="To Do" />
                     </LineChart>
                   </ResponsiveContainer>
                   </div>
                 </div>
 
                 {/* Hourly Distribution */}
-                <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded-lg border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-3 sm:p-6`}>
-                  <h3 className={`text-xs sm:text-sm font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} uppercase tracking-wider mb-3 sm:mb-4`}>Task Creation by Hour</h3>
+                <div className="bg-[var(--bg-raised)] rounded-xl border border-[var(--border-soft)] p-3 sm:p-6 shadow-[var(--shadow-xs)] hover:shadow-[var(--shadow-sm)] transition-shadow duration-200">
+                  <h3 className="text-xs sm:text-sm font-bold text-[var(--text-primary)] uppercase tracking-wider mb-3 sm:mb-4">Task Creation by Hour</h3>
                   <div style={{ width: '100%', minWidth: '200px' }}>
                     <ResponsiveContainer width="100%" aspect={1.8} minWidth={200}>
                     <BarChart data={analyticsData.hourlyDistribution}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#282f39" />
-                      <XAxis dataKey="hour" stroke="#9da8b9" tick={{ fontSize: 6 }} angle={-60} textAnchor="end" height={55} />
-                      <YAxis stroke="#9da8b9" tick={{ fontSize: 10 }} />
-                      <Tooltip contentStyle={{ backgroundColor: '#1c2027', border: '1px solid #282f39', borderRadius: '0.5rem' }} />
-                      <Bar dataKey="count" fill="#f59e0b" name="Tasks Created" />
+                      <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} />
+                      <XAxis dataKey="hour" stroke={chartColors.axis} tick={{ fontSize: 6, fill: chartColors.axis }} angle={-60} textAnchor="end" height={55} />
+                      <YAxis stroke={chartColors.axis} tick={{ fontSize: 10, fill: chartColors.axis }} />
+                      <Tooltip contentStyle={tooltipStyle} />
+                      <Bar dataKey="count" fill="var(--warning)" name="Tasks Created" radius={[2, 2, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                   </div>
@@ -976,35 +1058,35 @@ const Analytics = () => {
 
               {/* Task Age Distribution & Priority Trend */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
-                <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded-lg border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-3 sm:p-6`}>
-                  <h3 className={`text-xs sm:text-sm font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} uppercase tracking-wider mb-3 sm:mb-4`}>Open Task Age Distribution</h3>
+                <div className="bg-[var(--bg-raised)] rounded-xl border border-[var(--border-soft)] p-3 sm:p-6 shadow-[var(--shadow-xs)] hover:shadow-[var(--shadow-sm)] transition-shadow duration-200">
+                  <h3 className="text-xs sm:text-sm font-bold text-[var(--text-primary)] uppercase tracking-wider mb-3 sm:mb-4">Open Task Age Distribution</h3>
                   <div style={{ width: '100%', minWidth: '200px' }}>
                     <ResponsiveContainer width="100%" aspect={1.8} minWidth={200}>
                     <BarChart data={analyticsData.taskAgeDistribution} layout="vertical">
-                      <CartesianGrid strokeDasharray="3 3" stroke="#282f39" />
-                      <XAxis type="number" stroke="#9da8b9" tick={{ fontSize: 9 }} />
-                      <YAxis dataKey="range" type="category" stroke="#9da8b9" tick={{ fontSize: 8 }} width={60} />
-                      <Tooltip contentStyle={{ backgroundColor: '#1c2027', border: '1px solid #282f39', borderRadius: '0.5rem' }} />
-                      <Bar dataKey="count" fill="#8b5cf6" name="Tasks" />
+                      <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} />
+                      <XAxis type="number" stroke={chartColors.axis} tick={{ fontSize: 9, fill: chartColors.axis }} />
+                      <YAxis dataKey="range" type="category" stroke={chartColors.axis} tick={{ fontSize: 8, fill: chartColors.axis }} width={60} />
+                      <Tooltip contentStyle={tooltipStyle} />
+                      <Bar dataKey="count" fill="#8b5cf6" name="Tasks" radius={[0, 2, 2, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                   </div>
                 </div>
 
-                <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded-lg border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-3 sm:p-6`}>
-                  <h3 className={`text-xs sm:text-sm font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} uppercase tracking-wider mb-3 sm:mb-4`}>Priority Trend (12 Weeks)</h3>
+                <div className="bg-[var(--bg-raised)] rounded-xl border border-[var(--border-soft)] p-3 sm:p-6 shadow-[var(--shadow-xs)] hover:shadow-[var(--shadow-sm)] transition-shadow duration-200">
+                  <h3 className="text-xs sm:text-sm font-bold text-[var(--text-primary)] uppercase tracking-wider mb-3 sm:mb-4">Priority Trend (12 Weeks)</h3>
                   <div style={{ width: '100%', minWidth: '200px' }}>
                     <ResponsiveContainer width="100%" aspect={1.8} minWidth={200}>
                     <AreaChart data={analyticsData.priorityTrend}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#282f39" />
-                      <XAxis dataKey="week" stroke="#9da8b9" tick={{ fontSize: 8 }} />
-                      <YAxis stroke="#9da8b9" tick={{ fontSize: 9 }} />
-                      <Tooltip contentStyle={{ backgroundColor: '#1c2027', border: '1px solid #282f39', borderRadius: '0.5rem' }} />
-                      <Legend wrapperStyle={{ fontSize: '9px' }} />
-                      <Area type="monotone" dataKey="urgent" stackId="1" stroke="#ef4444" fill="#ef4444" name="Urgent" />
-                      <Area type="monotone" dataKey="high" stackId="1" stroke="#f97316" fill="#f97316" name="High" />
-                      <Area type="monotone" dataKey="medium" stackId="1" stroke="#f59e0b" fill="#f59e0b" name="Medium" />
-                      <Area type="monotone" dataKey="low" stackId="1" stroke="#10b981" fill="#10b981" name="Low" />
+                      <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} />
+                      <XAxis dataKey="week" stroke={chartColors.axis} tick={{ fontSize: 8, fill: chartColors.axis }} />
+                      <YAxis stroke={chartColors.axis} tick={{ fontSize: 9, fill: chartColors.axis }} />
+                      <Tooltip contentStyle={tooltipStyle} />
+                      <Legend wrapperStyle={{ fontSize: '9px', color: chartColors.axis }} />
+                      <Area type="monotone" dataKey="urgent" stackId="1" stroke="#ef4444" fill="#ef4444" name="Urgent" fillOpacity={0.7} />
+                      <Area type="monotone" dataKey="high" stackId="1" stroke="#f97316" fill="#f97316" name="High" fillOpacity={0.7} />
+                      <Area type="monotone" dataKey="medium" stackId="1" stroke="#f59e0b" fill="#f59e0b" name="Medium" fillOpacity={0.7} />
+                      <Area type="monotone" dataKey="low" stackId="1" stroke="#10b981" fill="#10b981" name="Low" fillOpacity={0.7} />
                     </AreaChart>
                   </ResponsiveContainer>
                   </div>
@@ -1012,22 +1094,22 @@ const Analytics = () => {
               </div>
 
               {/* Team Completion Rate */}
-              <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-6 mb-6`}>
-                <h3 className={`text-sm font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} uppercase tracking-wider mb-4`}>Team Completion Rate</h3>
+              <div className="bg-[var(--bg-raised)] rounded-xl border border-[var(--border-soft)] p-4 sm:p-6 mb-6 shadow-[var(--shadow-xs)] hover:shadow-[var(--shadow-sm)] transition-shadow duration-200">
+                <h3 className="text-sm font-bold text-[var(--text-primary)] uppercase tracking-wider mb-4">Team Completion Rate</h3>
                 <ResponsiveContainer width="100%" height={350} minWidth={200} minHeight={350}>
                   <BarChart data={analyticsData.completionRateByTeam}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#282f39" />
-                    <XAxis dataKey="team" stroke="#9da8b9" tick={{ fontSize: 10 }} angle={-45} textAnchor="end" height={100} />
-                    <YAxis stroke="#9da8b9" tick={{ fontSize: 11 }} label={{ value: 'Completion Rate %', angle: -90, position: 'insideLeft' }} />
+                    <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} />
+                    <XAxis dataKey="team" stroke={chartColors.axis} tick={{ fontSize: 10, fill: chartColors.axis }} angle={-45} textAnchor="end" height={100} />
+                    <YAxis stroke={chartColors.axis} tick={{ fontSize: 11, fill: chartColors.axis }} label={{ value: 'Completion Rate %', angle: -90, position: 'insideLeft', fill: chartColors.axis }} />
                     <Tooltip 
-                      contentStyle={{ backgroundColor: '#1c2027', border: '1px solid #282f39', borderRadius: '0.125rem' }}
-                      formatter={(value, name, props) => {
+                      contentStyle={tooltipStyle}
+                      formatter={(value, name) => {
                         if (name === 'rate') return [`${value}%`, 'Completion Rate'];
                         return [value, name];
                       }}
                     />
-                    <Legend />
-                    <Bar dataKey="rate" fill="#06b6d4" name="Completion Rate %" />
+                    <Legend wrapperStyle={{ fontSize: '11px', color: chartColors.axis }} />
+                    <Bar dataKey="rate" fill="#06b6d4" name="Completion Rate %" radius={[2, 2, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -1037,44 +1119,44 @@ const Analytics = () => {
           {/* PROJECT ANALYTICS SECTION */}
           {analyticsData.totalProjects > 0 && (
             <div className="mb-8">
-              <h2 className={`text-lg font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-4 flex items-center gap-2`}>
-                <BarChart3 size={20} className="text-[#C4713A]" />
+              <h2 className="text-lg font-bold text-[var(--text-primary)] mb-4 flex items-center gap-2">
+                <BarChart3 size={20} className="text-[var(--brand)]" />
                 Project Analytics
               </h2>
               
               {/* Project Summary Cards */}
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-4`}>
-                  <p className={`text-2xl font-black ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                <div className="bg-[var(--bg-raised)] rounded-xl border border-[var(--border-soft)] p-4 shadow-[var(--shadow-xs)] hover:shadow-[var(--shadow-sm)] transition-shadow duration-200">
+                  <p className="text-2xl font-black text-[var(--text-primary)]">
                     {analyticsData.totalProjects}
                   </p>
-                  <p className="text-xs text-gray-500 mt-1">Total Projects</p>
+                  <p className="text-xs text-[var(--text-muted)] mt-1">Total Projects</p>
                 </div>
-                <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-4`}>
-                  <p className={`text-2xl font-black ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                <div className="bg-[var(--bg-raised)] rounded-xl border border-[var(--border-soft)] p-4 shadow-[var(--shadow-xs)] hover:shadow-[var(--shadow-sm)] transition-shadow duration-200">
+                  <p className="text-2xl font-black text-[var(--brand)]">
                     {analyticsData.activeProjects}
                   </p>
-                  <p className="text-xs text-gray-500 mt-1">Active</p>
+                  <p className="text-xs text-[var(--text-muted)] mt-1">Active</p>
                 </div>
-                <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-4`}>
-                  <p className={`text-2xl font-black ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                <div className="bg-[var(--bg-raised)] rounded-xl border border-[var(--border-soft)] p-4 shadow-[var(--shadow-xs)] hover:shadow-[var(--shadow-sm)] transition-shadow duration-200">
+                  <p className="text-2xl font-black text-[var(--success)]">
                     {analyticsData.completedProjects}
                   </p>
-                  <p className="text-xs text-gray-500 mt-1">Completed</p>
+                  <p className="text-xs text-[var(--text-muted)] mt-1">Completed</p>
                 </div>
-                <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-4`}>
-                  <p className={`text-2xl font-black ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                <div className="bg-[var(--bg-raised)] rounded-xl border border-[var(--border-soft)] p-4 shadow-[var(--shadow-xs)] hover:shadow-[var(--shadow-sm)] transition-shadow duration-200">
+                  <p className="text-2xl font-black text-[var(--warning)]">
                     {analyticsData.onHoldProjects}
                   </p>
-                  <p className="text-xs text-gray-500 mt-1">On Hold</p>
+                  <p className="text-xs text-[var(--text-muted)] mt-1">On Hold</p>
                 </div>
               </div>
 
               {/* Project Charts */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
                 {analyticsData.projectStatusDistribution.length > 0 && (
-                  <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-4`}>
-                    <h3 className={`text-sm font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-4`}>Project Status</h3>
+                  <div className="bg-[var(--bg-raised)] rounded-xl border border-[var(--border-soft)] p-4 shadow-[var(--shadow-xs)] hover:shadow-[var(--shadow-sm)] transition-shadow duration-200">
+                    <h3 className="text-sm font-bold text-[var(--text-primary)] mb-4">Project Status</h3>
                     <ResponsiveContainer width="100%" height={250}>
                       <RechartsPieChart>
                         <Pie data={analyticsData.projectStatusDistribution} cx="50%" cy="50%" labelLine={false} outerRadius={80} fill="#8884d8" dataKey="value" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
@@ -1082,22 +1164,23 @@ const Analytics = () => {
                             <Cell key={`cell-${index}`} fill={entry.color} />
                           ))}
                         </Pie>
-                        <Tooltip />
+                        <Tooltip contentStyle={tooltipStyle} />
+                        <Legend wrapperStyle={{ fontSize: '11px', color: chartColors.axis }} />
                       </RechartsPieChart>
                     </ResponsiveContainer>
                   </div>
                 )}
 
                 {analyticsData.projectProgressDistribution.length > 0 && (
-                  <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-4`}>
-                    <h3 className={`text-sm font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-4`}>Progress Distribution</h3>
+                  <div className="bg-[var(--bg-raised)] rounded-xl border border-[var(--border-soft)] p-4 shadow-[var(--shadow-xs)] hover:shadow-[var(--shadow-sm)] transition-shadow duration-200">
+                    <h3 className="text-sm font-bold text-[var(--text-primary)] mb-4">Progress Distribution</h3>
                     <ResponsiveContainer width="100%" height={250}>
                       <BarChart data={analyticsData.projectProgressDistribution}>
-                        <CartesianGrid strokeDasharray="3 3" stroke={theme === 'dark' ? '#282f39' : '#e5e7eb'} />
-                        <XAxis dataKey="range" stroke={theme === 'dark' ? '#9da8b9' : '#6b7280'} />
-                        <YAxis stroke={theme === 'dark' ? '#9da8b9' : '#6b7280'} />
-                        <Tooltip />
-                        <Bar dataKey="count" name="Projects">
+                        <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} />
+                        <XAxis dataKey="range" stroke={chartColors.axis} tick={{ fill: chartColors.axis }} />
+                        <YAxis stroke={chartColors.axis} tick={{ fill: chartColors.axis }} />
+                        <Tooltip contentStyle={tooltipStyle} />
+                        <Bar dataKey="count" name="Projects" radius={[3, 3, 0, 0]}>
                           {analyticsData.projectProgressDistribution.map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={entry.color} />
                           ))}
@@ -1108,34 +1191,34 @@ const Analytics = () => {
                 )}
 
                 {analyticsData.tasksPerProject.length > 0 && (
-                  <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-4`}>
-                    <h3 className={`text-sm font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-4`}>Tasks Per Project</h3>
+                  <div className="bg-[var(--bg-raised)] rounded-xl border border-[var(--border-soft)] p-4 shadow-[var(--shadow-xs)] hover:shadow-[var(--shadow-sm)] transition-shadow duration-200">
+                    <h3 className="text-sm font-bold text-[var(--text-primary)] mb-4">Tasks Per Project</h3>
                     <ResponsiveContainer width="100%" height={250}>
                       <BarChart data={analyticsData.tasksPerProject} layout="horizontal">
-                        <CartesianGrid strokeDasharray="3 3" stroke={theme === 'dark' ? '#282f39' : '#e5e7eb'} />
-                        <XAxis type="number" stroke={theme === 'dark' ? '#9da8b9' : '#6b7280'} />
-                        <YAxis type="category" dataKey="name" stroke={theme === 'dark' ? '#9da8b9' : '#6b7280'} width={80} />
-                        <Tooltip />
-                        <Legend />
-                        <Bar dataKey="completed" stackId="a" fill="#22c55e" name="Done" />
-                        <Bar dataKey="pending" stackId="a" fill="#f59e0b" name="Pending" />
+                        <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} />
+                        <XAxis type="number" stroke={chartColors.axis} tick={{ fill: chartColors.axis }} />
+                        <YAxis type="category" dataKey="name" stroke={chartColors.axis} tick={{ fill: chartColors.axis }} width={80} />
+                        <Tooltip contentStyle={tooltipStyle} />
+                        <Legend wrapperStyle={{ fontSize: '11px', color: chartColors.axis }} />
+                        <Bar dataKey="completed" stackId="a" fill="var(--success)" name="Done" />
+                        <Bar dataKey="pending" stackId="a" fill="var(--warning)" name="Pending" />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
                 )}
 
                 {analyticsData.projectHealthScore.length > 0 && (
-                  <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-4`}>
-                    <h3 className={`text-sm font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-4`}>Project Health Score</h3>
+                  <div className="bg-[var(--bg-raised)] rounded-xl border border-[var(--border-soft)] p-4 shadow-[var(--shadow-xs)] hover:shadow-[var(--shadow-sm)] transition-shadow duration-200">
+                    <h3 className="text-sm font-bold text-[var(--text-primary)] mb-4">Project Health Score</h3>
                     <ResponsiveContainer width="100%" height={250}>
                       <BarChart data={analyticsData.projectHealthScore} layout="horizontal">
-                        <CartesianGrid strokeDasharray="3 3" stroke={theme === 'dark' ? '#282f39' : '#e5e7eb'} />
-                        <XAxis type="number" domain={[0, 100]} stroke={theme === 'dark' ? '#9da8b9' : '#6b7280'} />
-                        <YAxis type="category" dataKey="name" stroke={theme === 'dark' ? '#9da8b9' : '#6b7280'} width={80} />
-                        <Tooltip />
-                        <Bar dataKey="score" name="Health">
+                        <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} />
+                        <XAxis type="number" domain={[0, 100]} stroke={chartColors.axis} tick={{ fill: chartColors.axis }} />
+                        <YAxis type="category" dataKey="name" stroke={chartColors.axis} tick={{ fill: chartColors.axis }} width={80} />
+                        <Tooltip contentStyle={tooltipStyle} />
+                        <Bar dataKey="score" name="Health" radius={[0, 3, 3, 0]}>
                           {analyticsData.projectHealthScore.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.score >= 70 ? '#22c55e' : entry.score >= 40 ? '#f59e0b' : '#ef4444'} />
+                            <Cell key={`cell-${index}`} fill={entry.score >= 70 ? 'var(--success)' : entry.score >= 40 ? 'var(--warning)' : 'var(--danger)'} />
                           ))}
                         </Bar>
                       </BarChart>
@@ -1147,9 +1230,9 @@ const Analytics = () => {
           )}
 
           {/* Tasks Table */}
-          <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} overflow-hidden`}>
-            <div className={`p-4 border-b ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'}`}>
-              <h3 className={`text-sm font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} uppercase tracking-wider`}>
+          <div className="bg-[var(--bg-raised)] rounded-xl border border-[var(--border-soft)] overflow-hidden shadow-[var(--shadow-xs)]">
+            <div className="p-4 border-b border-[var(--border-soft)]">
+              <h3 className="text-sm font-bold text-[var(--text-primary)] uppercase tracking-wider">
                 {filters.status || filters.priority || filters.team || filters.user || filters.dateRange !== 'all' 
                   ? `Filtered Tasks (${filteredTasks.length})` 
                   : `All Tasks (${filteredTasks.length})`}
@@ -1157,19 +1240,19 @@ const Analytics = () => {
             </div>
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className={`${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'}`}>
+                <thead className="bg-[var(--bg-base)]">
                   <tr>
-                    <th className={`px-4 py-3 text-left text-[10px] font-bold ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} uppercase tracking-wider`}>Task</th>
-                    <th className={`px-4 py-3 text-left text-[10px] font-bold ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} uppercase tracking-wider`}>Status</th>
-                    <th className={`px-4 py-3 text-left text-[10px] font-bold ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} uppercase tracking-wider`}>Priority</th>
-                    <th className={`px-4 py-3 text-left text-[10px] font-bold ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} uppercase tracking-wider hidden lg:table-cell`}>Assigned</th>
-                    <th className={`px-4 py-3 text-left text-[10px] font-bold ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} uppercase tracking-wider`}>Due Date</th>
+                    <th className="px-4 py-3 text-left text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">Task</th>
+                    <th className="px-4 py-3 text-left text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">Status</th>
+                    <th className="px-4 py-3 text-left text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">Priority</th>
+                    <th className="px-4 py-3 text-left text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider hidden lg:table-cell">Assigned</th>
+                    <th className="px-4 py-3 text-left text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">Due Date</th>
                   </tr>
                 </thead>
-                <tbody className={`divide-y ${theme === 'dark' ? 'divide-[#282f39]' : 'divide-gray-200'}`}>
+                <tbody className="divide-y divide-[var(--border-hair)]">
                   {filteredTasks.length === 0 ? (
                     <tr>
-                      <td colSpan="5" className={`px-4 py-8 text-center ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`}>
+                      <td colSpan="5" className="px-4 py-8 text-center text-[var(--text-muted)]">
                         No tasks found matching the selected filters
                       </td>
                     </tr>
@@ -1177,36 +1260,36 @@ const Analytics = () => {
                     filteredTasks.slice(0, 50).map((task) => {
                       const isOverdue = task.due_date && new Date(task.due_date) < new Date() && task.status !== 'done';
                       return (
-                        <tr key={task._id} className={`${isOverdue ? 'bg-red-900/10' : ''} ${theme === 'dark' ? 'hover:bg-[#282f39]/50' : 'hover:bg-gray-50'} transition-colors`}>
+                        <tr key={task._id} className={`${isOverdue ? 'bg-[var(--danger-dim)]' : ''} hover:bg-[var(--bg-surface)] transition-colors duration-100`}>
                           <td className="px-4 py-3">
-                            <div className={`text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{task.title}</div>
-                            <div className={`text-xs ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} truncate max-w-xs`}>{task.description}</div>
+                            <div className="text-sm font-medium text-[var(--text-primary)]">{task.title}</div>
+                            <div className="text-xs text-[var(--text-muted)] truncate max-w-xs">{task.description}</div>
                           </td>
                           <td className="px-4 py-3 whitespace-nowrap">
-                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded ${
-                              task.status === 'done' ? 'bg-green-500/20 text-green-400' :
-                              task.status === 'in_progress' ? 'bg-blue-500/20 text-blue-400' :
-                              task.status === 'review' ? 'bg-yellow-500/20 text-yellow-400' :
-                              'bg-slate-500/20 text-slate-300'
+                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-md ${
+                              task.status === 'done' ? 'bg-[var(--success-dim)] text-[var(--success)]' :
+                              task.status === 'in_progress' ? 'bg-[var(--brand-dim)] text-[var(--brand)]' :
+                              task.status === 'review' ? 'bg-[var(--warning-dim)] text-[var(--warning)]' :
+                              'bg-[var(--bg-surface)] text-[var(--text-muted)]'
                             }`}>
                               {task.status.replace('_', ' ')}
                             </span>
                           </td>
                           <td className="px-4 py-3 whitespace-nowrap">
-                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded`} style={{ 
+                            <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-md" style={{ 
                               backgroundColor: getPriorityColor(task.priority) + '20', 
                               color: getPriorityColor(task.priority) 
                             }}>
                               {task.priority}
                             </span>
                           </td>
-                          <td className={`px-4 py-3 text-sm ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} hidden lg:table-cell`}>
+                          <td className="px-4 py-3 text-sm text-[var(--text-muted)] hidden lg:table-cell">
                             {task.assigned_to && task.assigned_to.length > 0
                               ? task.assigned_to.map(u => u.full_name).join(', ')
                               : 'Unassigned'}
                           </td>
                           <td className="px-4 py-3 whitespace-nowrap">
-                            <div className={`text-sm flex items-center gap-2 ${isOverdue ? 'text-red-400' : `${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`}`}>
+                            <div className={`text-sm flex items-center gap-2 ${isOverdue ? 'text-[var(--danger)]' : 'text-[var(--text-muted)]'}`}>
                               {isOverdue && <AlertTriangle size={16} />}
                               {task.due_date ? new Date(task.due_date).toLocaleDateString() : 'No date'}
                             </div>

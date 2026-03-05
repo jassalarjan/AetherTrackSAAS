@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+﻿import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useConfirmModal } from '../hooks/useConfirmModal';
@@ -379,8 +379,8 @@ export default function UserManagement() {
         <header className={`border-b ${currentTheme.border} ${currentTheme.background} shrink-0`}>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between px-3 sm:px-4 md:px-6 py-3 sm:py-4 gap-2 sm:gap-3">
             <div>
-              <h2 className={`${theme === 'dark' ? 'text-white' : 'text-gray-900'} text-base sm:text-lg md:text-xl font-bold leading-tight`}>User & Team Management</h2>
-              <p className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} text-[10px] sm:text-xs mt-0.5 sm:mt-1`}>{users.length} users • {teams.length} teams</p>
+              <h2 className={`text-[var(--text-primary)] text-base sm:text-lg md:text-xl font-bold leading-tight`}>User & Team Management</h2>
+              <p className={`text-[var(--text-muted)] text-[10px] sm:text-xs mt-0.5 sm:mt-1`}>{users.length} users • {teams.length} teams</p>
             </div>
             <div className="flex gap-1.5 sm:gap-2">
               <button
@@ -406,7 +406,7 @@ export default function UserManagement() {
           <div className="px-1 sm:px-4 md:px-6 pb-1 sm:pb-3 md:pb-4">
             <div className="flex flex-col gap-0.5 sm:gap-2 md:gap-3">
               <div className="relative">
-                <Search className={`absolute left-1 sm:left-3 top-1/2 -translate-y-1/2 ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`} size={11} />
+                <Search className={`absolute left-1 sm:left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]`} size={11} />
                 <input
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -446,12 +446,12 @@ export default function UserManagement() {
           {/* Bulk Actions */}
           {selectedUserIds.length > 0 && (
             <div className="px-4 sm:px-6 pb-4">
-              <div className={`${theme === 'dark' ? 'bg-[#C4713A]/10 border-[#C4713A]/30' : 'bg-blue-50 border-blue-200'} border rounded p-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3`}>
-                <span className={`text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'} font-medium`}>{selectedUserIds.length} user(s) selected</span>
+              <div className="border rounded p-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3" style={{ backgroundColor: 'color-mix(in srgb, var(--brand) 10%, transparent)', borderColor: 'color-mix(in srgb, var(--brand) 30%, transparent)' }}>
+                <span className={`text-sm text-[var(--text-primary)] font-medium`}>{selectedUserIds.length} user(s) selected</span>
                 <div className="flex gap-2">
                   <button
                     onClick={() => setSelectedUserIds([])}
-                    className={`text-xs ${theme === 'dark' ? 'text-[#9da8b9] hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors px-2 py-1`}
+                    className={`text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors px-2 py-1`}
                   >
                     Clear Selection
                   </button>
@@ -502,12 +502,12 @@ export default function UserManagement() {
                         className="rounded border-[#4b5563] text-[#C4713A] focus:ring-[#C4713A]"
                       />
                     </th>
-                    <th className={`px-4 py-3 text-left text-[10px] font-bold ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} uppercase tracking-wider`}>User</th>
-                    <th className={`px-4 py-3 text-left text-[10px] font-bold ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} uppercase tracking-wider`}>Role</th>
-                    <th className={`px-4 py-3 text-left text-[10px] font-bold ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} uppercase tracking-wider`}>Status</th>
-                    <th className={`px-4 py-3 text-left text-[10px] font-bold ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} uppercase tracking-wider`}>Teams</th>
-                    <th className={`px-4 py-3 text-left text-[10px] font-bold ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} uppercase tracking-wider hidden lg:table-cell`}>Created</th>
-                    <th className={`px-4 py-3 text-right text-[10px] font-bold ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} uppercase tracking-wider`}>Actions</th>
+                    <th className={`px-4 py-3 text-left text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider`}>User</th>
+                    <th className={`px-4 py-3 text-left text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider`}>Role</th>
+                    <th className={`px-4 py-3 text-left text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider`}>Status</th>
+                    <th className={`px-4 py-3 text-left text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider`}>Teams</th>
+                    <th className={`px-4 py-3 text-left text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider hidden lg:table-cell`}>Created</th>
+                    <th className={`px-4 py-3 text-right text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider`}>Actions</th>
                   </tr>
                 </thead>
                 <tbody className={`divide-y ${currentTheme.border}`}>
@@ -533,8 +533,8 @@ export default function UserManagement() {
                             />
                           </td>
                           <td className="px-4 py-3">
-                            <div className={`text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{usr.full_name}</div>
-                            <div className={`text-xs ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`}>{usr.email}</div>
+                            <div className={`text-sm font-medium text-[var(--text-primary)]`}>{usr.full_name}</div>
+                            <div className={`text-xs text-[var(--text-muted)]`}>{usr.email}</div>
                           </td>
                           <td className="px-4 py-3">
                             <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded ${badge.bg} ${badge.text}`}>
@@ -562,25 +562,25 @@ export default function UserManagement() {
                                   {usr.team_id.name}
                                 </span>
                               ) : (
-                                <span className={`text-xs ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-500'}`}>No Team</span>
+                                <span className={`text-xs text-[var(--text-muted)]`}>No Team</span>
                               )}
                             </div>
                           </td>
-                          <td className={`px-4 py-3 text-sm ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} hidden lg:table-cell`}>
+                          <td className={`px-4 py-3 text-sm text-[var(--text-muted)] hidden lg:table-cell`}>
                             {new Date(usr.created_at).toLocaleDateString()}
                           </td>
                           <td className="px-4 py-3">
                             <div className="flex items-center justify-end gap-2">
                               <button
                                 onClick={() => openEditModal(usr)}
-                                className={`p-1.5 ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} ${theme === 'dark' ? 'hover:text-white hover:bg-[#282f39]' : 'hover:text-gray-900 hover:bg-gray-100'} rounded transition-colors`}
+                                className={`p-1.5 text-[var(--text-muted)] ${theme === 'dark' ? 'hover:text-white hover:bg-[#282f39]' : 'hover:text-gray-900 hover:bg-gray-100'} rounded transition-colors`}
                                 title="Edit User"
                               >
                                 <Edit2 size={16} />
                               </button>
                               <button
                                 onClick={() => handleResetPassword(usr._id, usr.email)}
-                                className={`p-1.5 ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} ${theme === 'dark' ? 'hover:text-white hover:bg-[#282f39]' : 'hover:text-gray-900 hover:bg-gray-100'} rounded transition-colors`}
+                                className={`p-1.5 text-[var(--text-muted)] ${theme === 'dark' ? 'hover:text-white hover:bg-[#282f39]' : 'hover:text-gray-900 hover:bg-gray-100'} rounded transition-colors`}
                                 title="Reset Password"
                               >
                                 <Key size={16} />
@@ -588,7 +588,7 @@ export default function UserManagement() {
                               {usr._id !== user.id && (
                                 <button
                                   onClick={() => handleDelete(usr._id, usr.email)}
-                                  className={`p-1.5 ${theme === 'dark' ? 'text-[#9da8b9] hover:text-red-500 hover:bg-red-500/10' : 'text-gray-600 hover:text-red-600 hover:bg-red-50'} rounded transition-colors`}
+                                  className="p-1.5 text-[var(--text-muted)] hover:text-red-500 hover:bg-red-500/10 rounded transition-colors"
                                   title="Delete User"
                                 >
                                   <Trash2 size={16} />
@@ -627,14 +627,14 @@ export default function UserManagement() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2 mb-2">
                           <div className="flex-1 min-w-0">
-                            <h3 className={`text-sm font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} truncate`}>{usr.full_name}</h3>
-                            <p className={`text-xs ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} truncate mt-0.5`}>{usr.email}</p>
+                            <h3 className={`text-sm font-semibold text-[var(--text-primary)] truncate`}>{usr.full_name}</h3>
+                            <p className={`text-xs text-[var(--text-muted)] truncate mt-0.5`}>{usr.email}</p>
                           </div>
                           <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded ${badge.bg} ${badge.text} shrink-0`}>
                             {badge.label}
                           </span>
                         </div>
-                        <div className={`text-xs ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} mb-3`}>
+                        <div className={`text-xs text-[var(--text-muted)] mb-3`}>
                           <div className="flex items-center gap-1.5 flex-wrap">
                             <UsersIcon size={12} className="shrink-0" />
                             {usr.teams && usr.teams.length > 0 ? (
@@ -658,14 +658,14 @@ export default function UserManagement() {
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => openEditModal(usr)}
-                            className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-gray-100'} ${theme === 'dark' ? 'text-white' : 'text-gray-900'} rounded text-xs font-medium transition-colors`}
+                            className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-[var(--bg-surface)] text-[var(--text-primary)] rounded text-xs font-medium transition-colors`}
                           >
                             <Edit2 size={14} />
                             Edit
                           </button>
                           <button
                             onClick={() => handleResetPassword(usr._id, usr.email)}
-                            className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-gray-100'} ${theme === 'dark' ? 'text-white' : 'text-gray-900'} rounded text-xs font-medium transition-colors`}
+                            className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-[var(--bg-surface)] text-[var(--text-primary)] rounded text-xs font-medium transition-colors`}
                           >
                             <Key size={14} />
                             Reset
@@ -919,7 +919,7 @@ export default function UserManagement() {
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className={`px-4 sm:px-6 py-2.5 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-gray-200'} ${theme === 'dark' ? 'text-white' : 'text-gray-900'} rounded ${theme === 'dark' ? 'hover:bg-[#3a4454]' : 'hover:bg-gray-300'} transition-colors text-sm sm:text-base`}
+                  className={`px-4 sm:px-6 py-2.5 bg-[var(--bg-surface)] text-[var(--text-primary)] rounded hover:bg-[var(--bg-raised)] transition-colors text-sm sm:text-base`}
                 >
                   Cancel
                 </button>
@@ -1083,7 +1083,7 @@ export default function UserManagement() {
               <div className="flex flex-col sm:flex-row sm:justify-end gap-2 sm:gap-3 pt-4">
                 <button
                   onClick={() => { setShowBulkImportModal(false); setBulkImportFile(null); setBulkImportResults(null); }}
-                  className={`px-4 sm:px-6 py-2.5 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-gray-200'} ${theme === 'dark' ? 'text-white' : 'text-gray-900'} rounded ${theme === 'dark' ? 'hover:bg-[#3a4454]' : 'hover:bg-gray-300'} transition-colors text-sm sm:text-base`}
+                  className={`px-4 sm:px-6 py-2.5 bg-[var(--bg-surface)] text-[var(--text-primary)] rounded hover:bg-[var(--bg-raised)] transition-colors text-sm sm:text-base`}
                 >
                   Close
                 </button>
@@ -1127,15 +1127,15 @@ export default function UserManagement() {
       {showPasswordModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className={`${currentTheme.surface} rounded-lg shadow-xl max-w-md w-full p-6`}>
-            <h3 className={`text-xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-4`}>
+            <h3 className={`text-xl font-bold text-[var(--text-primary)] mb-4`}>
               Reset Password
             </h3>
-            <p className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} mb-4 text-sm`}>
+            <p className={`text-[var(--text-muted)] mb-4 text-sm`}>
               Enter new password for <span className="font-semibold">{passwordResetData.userEmail}</span>
             </p>
             <form onSubmit={handlePasswordResetSubmit}>
               <div className="mb-4">
-                <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2`}>
+                <label className={`block text-sm font-medium text-[var(--text-primary)] mb-2`}>
                   New Password *
                 </label>
                 <input
@@ -1156,7 +1156,10 @@ export default function UserManagement() {
                     setShowPasswordModal(false);
                     setPasswordResetData({ userId: '', userEmail: '', newPassword: '' });
                   }}
-                  className={`px-4 py-2 ${theme === 'dark' ? 'bg-[#282f39] hover:bg-[#3a4454]' : 'bg-gray-200 hover:bg-gray-300'} ${theme === 'dark' ? 'text-white' : 'text-gray-900'} rounded transition-colors`}
+                  className="px-4 py-2 text-[var(--text-primary)] rounded transition-colors"
+                  style={{ backgroundColor: 'var(--bg-surface)' }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-raised)'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-surface)'}
                 >
                   Cancel
                 </button>

@@ -302,10 +302,10 @@ const Teams = () => {
         <div className="p-4 sm:p-6 lg:p-8">
           <div className="flex justify-between items-center mb-8">
           <div>
-              <h1 className={`text-3xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+              <h1 className={`text-3xl font-bold text-[var(--text-primary)]`}>
                 {user?.role === 'team_lead' ? 'My Team' : 'Teams'}
               </h1>
-              <p className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} mt-2`}>
+              <p className={`text-[var(--text-muted)] mt-2`}>
                 {user?.role === 'team_lead' 
                   ? 'Manage your team and members' 
                   : 'Manage your teams and members'}
@@ -334,14 +334,12 @@ const Teams = () => {
           )}
 
         {teams.length === 0 ? (
-          <div className={`rounded-[0.125rem] shadow-md p-12 text-center border ${
-            theme === 'dark' ? 'bg-[#1c2027] border-[#282f39]' : 'bg-white border-gray-200'
-          }`}>
-            <Users className={`w-16 h-16 mx-auto mb-4 ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-400'}`} />
-            <h3 className={`text-xl font-semibold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+          <div className="rounded-[0.125rem] shadow-md p-12 text-center border bg-[var(--bg-raised)] border-[var(--border-soft)]">
+            <Users className={`w-16 h-16 mx-auto mb-4 text-[var(--text-muted)]`} />
+            <h3 className={`text-xl font-semibold mb-2 text-[var(--text-primary)]`}>
               {user?.role === 'team_lead' ? 'No Team Assigned' : 'No Teams Yet'}
             </h3>
-            <p className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`}>
+            <p className={`text-[var(--text-muted)]`}>
               {user?.role === 'team_lead' 
                 ? 'You are not currently assigned as a team lead. Please contact an administrator.'
                 : 'Get started by creating your first team.'}
@@ -373,21 +371,19 @@ const Teams = () => {
               {/* Drag Handle for Admin/HR/Community Admin */}
               {['admin', 'hr', 'community_admin'].includes(user?.role) && (
                 <div className="absolute top-2 right-2">
-                  <GripVertical className={`w-5 h-5 ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-400'}`} />
+                  <GripVertical className={`w-5 h-5 text-[var(--text-muted)]`} />
                 </div>
               )}
 
               <div className="flex items-center justify-between mb-4 mt-4">
-                <h3 className={`text-xl font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{team.name}</h3>
+                <h3 className={`text-xl font-semibold text-[var(--text-primary)]`}>{team.name}</h3>
                 <div className="flex items-center space-x-2">
                   <Users className="w-6 h-6 text-[#C4713A]" />
                   {['admin', 'hr', 'community_admin'].includes(user?.role) && (
                     <>
                       <button
                         onClick={() => handleTogglePin(team._id)}
-                        className={`hover:text-yellow-600 p-1 transition-colors ${
-                          team.pinned ? 'text-yellow-500' : theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-400'
-                        }`}
+                        className={`hover:text-yellow-600 p-1 transition-colors ${team.pinned ? 'text-yellow-500' : 'text-[var(--text-muted)]'}`}
                         title={team.pinned ? 'Unpin Team' : 'Pin Team'}
                         data-testid="pin-team-btn"
                       >
@@ -408,30 +404,30 @@ const Teams = () => {
 
               <div className="space-y-2 mb-4">
                 <div className="text-sm">
-                  <span className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>HR:</span>
-                  <span className={`ml-2 ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`}>{team.hr_id?.full_name}</span>
+                  <span className={`font-medium text-[var(--text-primary)]`}>HR:</span>
+                  <span className={`ml-2 text-[var(--text-muted)]`}>{team.hr_id?.full_name}</span>
                 </div>
                 <div className="text-sm">
-                  <span className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Team Lead:</span>
-                  <span className={`ml-2 ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`}>{team.lead_id?.full_name}</span>
+                  <span className={`font-medium text-[var(--text-primary)]`}>Team Lead:</span>
+                  <span className={`ml-2 text-[var(--text-muted)]`}>{team.lead_id?.full_name}</span>
                 </div>
                 <div className="text-sm">
-                  <span className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Members:</span>
-                  <span className={`ml-2 ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`}>{team.members?.length || 0}</span>
+                  <span className={`font-medium text-[var(--text-primary)]`}>Members:</span>
+                  <span className={`ml-2 text-[var(--text-muted)]`}>{team.members?.length || 0}</span>
                 </div>
               </div>
 
-              <div className={`border-t pt-4 ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'}`}>
+              <div className={`border-t pt-4 border-[var(--border-soft)]`}>
                 <h4 className="text-sm font-medium text-white mb-2">Team Members</h4>
                 <div className="space-y-2 max-h-40 overflow-y-auto">
                   {team.members && team.members.length > 0 ? (
                     team.members.map((member) => (
                       <div
                         key={member._id}
-                        className={`flex justify-between items-center rounded-[0.125rem] p-2 border ${theme === 'dark' ? 'bg-[#111418] border-[#282f39]' : 'bg-white border-gray-200'}`}
+                        className={`flex justify-between items-center rounded-[0.125rem] p-2 border bg-[var(--bg-base)] border-[var(--border-soft)]`}
                         data-testid="team-member"
                       >
-                        <span className={`text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{member.full_name}</span>
+                        <span className={`text-sm text-[var(--text-primary)]`}>{member.full_name}</span>
                         {['admin', 'hr', 'community_admin'].includes(user?.role) && (
                           <button
                             onClick={() => handleRemoveMember(team._id, member._id)}

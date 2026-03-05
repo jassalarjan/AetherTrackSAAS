@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+﻿import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import api from '../api/axios';
@@ -532,19 +532,19 @@ const Tasks = () => {
         <div className="mb-4 space-y-3">
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="relative flex-1">
-              <Search size={18} className={`absolute left-3 top-1/2 -translate-y-1/2 ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-400'}`} />
+              <Search size={18} className={`absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]`} />
               <input
                 ref={searchInputRef}
                 type="text"
                 value={filters.search}
                 onChange={(e) => setFilters({ ...filters, search: e.target.value })}
                 placeholder="Search tasks..."
-                className={`w-full pl-10 pr-4 py-2.5 ${theme === 'dark' ? 'bg-[#1c2027] border-[#282f39] text-white placeholder:text-[#58606e]' : 'bg-white border-gray-300 text-gray-900 placeholder:text-gray-400'} border rounded-lg focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
+                className={`w-full pl-10 pr-4 py-2.5 bg-[var(--bg-raised)] border-[var(--border-soft)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] border rounded-lg focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
               />
             </div>
             <button
               onClick={() => setShowFilterDrawer(true)}
-              className={`lg:hidden flex items-center justify-center gap-2 px-4 py-2.5 ${theme === 'dark' ? 'bg-[#1c2027] border-[#282f39] text-white' : 'bg-white border-gray-300 text-gray-900'} border rounded-lg hover:border-[#C4713A] transition-colors`}
+              className={`lg:hidden flex items-center justify-center gap-2 px-4 py-2.5 bg-[var(--bg-raised)] border-[var(--border-soft)] text-[var(--text-primary)] border rounded-lg hover:border-[#C4713A] transition-colors`}
             >
               <Filter size={18} />
               <span>Filters</span>
@@ -561,7 +561,7 @@ const Tasks = () => {
             <select
               value={filters.status}
               onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-              className={`px-3 py-1.5 ${theme === 'dark' ? 'bg-[#1c2027] border-[#282f39] text-white' : 'bg-white border-gray-300 text-gray-900'} border rounded-lg text-sm focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
+              className={`px-3 py-1.5 bg-[var(--bg-raised)] border-[var(--border-soft)] text-[var(--text-primary)] border rounded-lg text-sm focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
             >
               <option value="">All Status</option>
               <option value="todo">To Do</option>
@@ -574,7 +574,7 @@ const Tasks = () => {
             <select
               value={filters.priority}
               onChange={(e) => setFilters({ ...filters, priority: e.target.value })}
-              className={`px-3 py-1.5 ${theme === 'dark' ? 'bg-[#1c2027] border-[#282f39] text-white' : 'bg-white border-gray-300 text-gray-900'} border rounded-lg text-sm focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
+              className={`px-3 py-1.5 bg-[var(--bg-raised)] border-[var(--border-soft)] text-[var(--text-primary)] border rounded-lg text-sm focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
             >
               <option value="">All Priorities</option>
               <option value="low">Low</option>
@@ -606,7 +606,7 @@ const Tasks = () => {
               <select
                 value={filters.team}
                 onChange={(e) => setFilters({ ...filters, team: e.target.value })}
-                className={`px-3 py-1.5 ${theme === 'dark' ? 'bg-[#1c2027] border-[#282f39] text-white' : 'bg-white border-gray-300 text-gray-900'} border rounded-lg text-sm focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
+                className={`px-3 py-1.5 bg-[var(--bg-raised)] border-[var(--border-soft)] text-[var(--text-primary)] border rounded-lg text-sm focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
               >
                 <option value="">All Teams</option>
                 {teams.map((team) => (
@@ -618,7 +618,7 @@ const Tasks = () => {
             {(filters.status || filters.priority || filters.project || filters.team || filters.assigned_to) && (
               <button
                 onClick={() => setFilters({ ...filters, status: '', priority: '', project: '', team: '', assigned_to: '' })}
-                className={`px-3 py-1.5 text-sm ${theme === 'dark' ? 'text-[#9da8b9] hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}
+                className={`px-3 py-1.5 text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors`}
               >
                 Clear Filters
               </button>
@@ -630,7 +630,7 @@ const Tasks = () => {
         <div className="lg:hidden">
           {filteredTasks.length === 0 ? (
             <div className="text-center py-12">
-              <p className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} text-lg`}>No tasks found. Create your first task!</p>
+              <p className={`text-[var(--text-muted)] text-lg`}>No tasks found. Create your first task!</p>
             </div>
           ) : (
             <ResponsiveGrid cols={{ base: 1, sm: 1, md: 2 }} gap="md">
@@ -653,41 +653,41 @@ const Tasks = () => {
 
         {/* Desktop Table (>= 1024px) */}
         <div className="hidden lg:block">
-          <div className={`overflow-x-auto ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'} rounded-lg border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'}`}>
+          <div className={`overflow-x-auto bg-[var(--bg-base)] rounded-lg border border-[var(--border-soft)]`}>
             <table className="w-full text-left border-collapse">
-              <thead className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-gray-100'}`}>
+              <thead className={`bg-[var(--bg-raised)]`}>
                 <tr>
-                  <th className={`py-3 pl-6 pr-3 w-10 border-b ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'}`}>
+                  <th className={`py-3 pl-6 pr-3 w-10 border-b border-[var(--border-soft)]`}>
                     <input
                       type="checkbox"
                       className="size-4 rounded border-[#4b5563] bg-transparent text-[#C4713A] focus:ring-offset-0 focus:ring-0 cursor-pointer"
                     />
                   </th>
-                  <th className={`py-3 px-3 border-b ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} text-xs font-semibold ${theme === 'dark' ? 'text-[#9da8b9] hover:text-white' : 'text-gray-600 hover:text-gray-900'} uppercase tracking-wider cursor-pointer group`}>
+                  <th className={`py-3 px-3 border-b border-[var(--border-soft)] text-xs font-semibold text-[var(--text-muted)] hover:text-[var(--text-primary)] uppercase tracking-wider cursor-pointer group`}>
                     <div className="flex items-center gap-1">
                       Task
                       <ChevronDown size={14} className="opacity-0 group-hover:opacity-100 transition-opacity" />
                     </div>
                   </th>
-                  <th className={`py-3 px-3 border-b ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} text-xs font-semibold ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} uppercase tracking-wider w-28`}>Project</th>
-                  <th className={`py-3 px-3 border-b ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} text-xs font-semibold ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} uppercase tracking-wider w-28`}>Team</th>
-                  <th className={`py-3 px-3 border-b ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} text-xs font-semibold ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} uppercase tracking-wider w-28`}>Sprint</th>
-                  <th className={`py-3 px-3 border-b ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} text-xs font-semibold ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} uppercase tracking-wider w-24`}>Priority</th>
-                  <th className={`py-3 px-3 border-b ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} text-xs font-semibold ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} uppercase tracking-wider w-32`}>Status</th>
-                  <th className={`py-3 px-3 border-b ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} text-xs font-semibold ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} uppercase tracking-wider w-32`}>Progress</th>
-                  <th className={`py-3 px-3 border-b ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} text-xs font-semibold ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} uppercase tracking-wider w-36`}>Assignee</th>
-                  <th className={`py-3 px-3 border-b ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} text-xs font-semibold ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} uppercase tracking-wider w-28`}>Due Date</th>
-                  <th className={`py-3 px-3 border-b ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} text-xs font-semibold ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} uppercase tracking-wider w-16 text-center`}>
+                  <th className={`py-3 px-3 border-b border-[var(--border-soft)] text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider w-28`}>Project</th>
+                  <th className={`py-3 px-3 border-b border-[var(--border-soft)] text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider w-28`}>Team</th>
+                  <th className={`py-3 px-3 border-b border-[var(--border-soft)] text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider w-28`}>Sprint</th>
+                  <th className={`py-3 px-3 border-b border-[var(--border-soft)] text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider w-24`}>Priority</th>
+                  <th className={`py-3 px-3 border-b border-[var(--border-soft)] text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider w-32`}>Status</th>
+                  <th className={`py-3 px-3 border-b border-[var(--border-soft)] text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider w-32`}>Progress</th>
+                  <th className={`py-3 px-3 border-b border-[var(--border-soft)] text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider w-36`}>Assignee</th>
+                  <th className={`py-3 px-3 border-b border-[var(--border-soft)] text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider w-28`}>Due Date</th>
+                  <th className={`py-3 px-3 border-b border-[var(--border-soft)] text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider w-16 text-center`}>
                     <MessageSquare size={14} className="inline" />
                   </th>
-                  <th className={`py-3 px-3 border-b ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} w-16`}></th>
+                  <th className={`py-3 px-3 border-b border-[var(--border-soft)] w-16`}></th>
                 </tr>
               </thead>
-              <tbody className={`divide-y ${theme === 'dark' ? 'divide-[#282f39]' : 'divide-gray-200'}`}>
+              <tbody className={`divide-y divide-[var(--border-soft)]`}>
                 {filteredTasks.map((task, index) => (
                   <tr
                     key={task._id}
-                    className={`group transition-colors cursor-pointer ${theme === 'dark' ? 'hover:bg-[#161b22]' : 'hover:bg-gray-100'} ${index % 2 === 1 ? (theme === 'dark' ? 'bg-[#1c2027]/30' : 'bg-gray-50') : ''}`}
+                    className={`group transition-colors cursor-pointer hover:bg-[var(--bg-sunken)] ${index % 2 === 1 ? 'bg-[var(--bg-sunken)]/40' : ''}`}
                     onClick={() => viewTaskDetails(task)}
                   >
                     <td className="py-2.5 pl-6 pr-3" onClick={(e) => e.stopPropagation()}>
@@ -698,29 +698,29 @@ const Tasks = () => {
                     </td>
                     <td className="py-2.5 px-3">
                       <div className="flex flex-col gap-0.5">
-                        <span className={`text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                        <span className={`text-sm font-medium text-[var(--text-primary)]`}>
                           {task.title}
                         </span>
                         {task.description && (
-                          <span className={`text-xs ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-500'} line-clamp-1`}>
+                          <span className={`text-xs text-[var(--text-muted)] line-clamp-1`}>
                             {task.description}
                           </span>
                         )}
                       </div>
                     </td>
                     <td className="py-2.5 px-3">
-                      {task.project_id ? <ProjectLabel project={task.project_id} size="sm" showIcon={false} /> : <span className={`text-xs ${theme === 'dark' ? 'text-[#6b7280]' : 'text-gray-400'}`}>—</span>}
+                      {task.project_id ? <ProjectLabel project={task.project_id} size="sm" showIcon={false} /> : <span className={`text-xs text-[var(--text-muted)]`}>—</span>}
                     </td>
                     <td className="py-2.5 px-3">
-                      {task.team_id ? <TeamLabel team={task.team_id} size="sm" showIcon={false} /> : <span className={`text-xs ${theme === 'dark' ? 'text-[#6b7280]' : 'text-gray-400'}`}>—</span>}
+                      {task.team_id ? <TeamLabel team={task.team_id} size="sm" showIcon={false} /> : <span className={`text-xs text-[var(--text-muted)]`}>—</span>}
                     </td>
                     <td className="py-2.5 px-3">
-                      {task.sprint_id ? <SprintLabel sprint={task.sprint_id} size="sm" showIcon={false} /> : <span className={`text-xs ${theme === 'dark' ? 'text-[#6b7280]' : 'text-gray-400'}`}>—</span>}
+                      {task.sprint_id ? <SprintLabel sprint={task.sprint_id} size="sm" showIcon={false} /> : <span className={`text-xs text-[var(--text-muted)]`}>—</span>}
                     </td>
                     <td className="py-2.5 px-3">
                       <div className="flex items-center gap-2">
                         <div className={`size-2 rounded-full ${getPriorityDot(task.priority)}`}></div>
-                        <span className={`text-xs ${theme === 'dark' ? 'text-[#d1d5db]' : 'text-gray-700'}`}>{getPriorityLabel(task.priority)}</span>
+                        <span className={`text-xs text-[var(--text-secondary)]`}>{getPriorityLabel(task.priority)}</span>
                       </div>
                     </td>
                     <td className="py-2.5 px-3" onClick={(e) => e.stopPropagation()}>
@@ -747,17 +747,17 @@ const Tasks = () => {
                           <div className="size-6 rounded-full bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center text-[10px] text-white font-bold">
                             {getUserInitials(task.assigned_to[0].full_name)}
                           </div>
-                          <span className={`text-xs ${theme === 'dark' ? 'text-[#d1d5db]' : 'text-gray-700'} truncate`}>
+                          <span className={`text-xs text-[var(--text-secondary)] truncate`}>
                             {task.assigned_to[0].full_name}
                             {task.assigned_to.length > 1 && ` +${task.assigned_to.length - 1}`}
                           </span>
                         </div>
                       ) : (
-                        <span className={`text-xs ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-500'}`}>Unassigned</span>
+                        <span className={`text-xs text-[var(--text-muted)]`}>Unassigned</span>
                       )}
                     </td>
                     <td className="py-2.5 px-3">
-                      <span className={`text-xs ${task.due_date && new Date(task.due_date) < new Date() ? 'text-red-400' : (theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600')}`}>
+                      <span className={`text-xs ${task.due_date && new Date(task.due_date) < new Date() ? 'text-red-400' : 'text-[var(--text-muted)]'}`}>
                         {task.due_date ? new Date(task.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'No date'}
                       </span>
                     </td>
@@ -768,7 +768,7 @@ const Tasks = () => {
                           <span className="text-[10px] font-semibold">1</span>
                         </div>
                       ) : (
-                        <span className={`text-xs ${theme === 'dark' ? 'text-[#6b7280]' : 'text-gray-400'}`}>—</span>
+                        <span className={`text-xs text-[var(--text-muted)]`}>—</span>
                       )}
                     </td>
                     <td className="py-2.5 px-3 text-right" onClick={(e) => e.stopPropagation()}>
@@ -776,7 +776,7 @@ const Tasks = () => {
                         {canEditTask(task) && (
                           <button
                             onClick={() => openEditModal(task)}
-                            className={`${theme === 'dark' ? 'text-[#9da8b9] hover:text-white' : 'text-gray-500 hover:text-gray-900'} p-1`}
+                            className={`text-[var(--text-muted)] hover:text-[var(--text-primary)] p-1`}
                           >
                             <Edit2 size={16} />
                           </button>
@@ -784,12 +784,12 @@ const Tasks = () => {
                         {canDeleteTask(task) && (
                           <button
                             onClick={() => handleDeleteTask(task._id)}
-                            className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-500'} hover:text-red-400 p-1`}
+                            className={`text-[var(--text-muted)] hover:text-red-400 p-1`}
                           >
                             <Trash2 size={16} />
                           </button>
                         )}
-                        <button className={`${theme === 'dark' ? 'text-[#9da8b9] hover:text-white' : 'text-gray-500 hover:text-gray-900'} p-1`}>
+                        <button className={`text-[var(--text-muted)] hover:text-[var(--text-primary)] p-1`}>
                           <MoreHorizontal size={18} />
                         </button>
                       </div>
@@ -802,13 +802,13 @@ const Tasks = () => {
 
           {filteredTasks.length === 0 && (
             <div className="text-center py-12">
-              <p className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} text-lg`}>No tasks found. Create your first task!</p>
+              <p className={`text-[var(--text-muted)] text-lg`}>No tasks found. Create your first task!</p>
             </div>
           )}
         </div>
 
         {/* Pagination */}
-        <div className={`mt-4 flex items-center justify-between text-sm ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`}>
+        <div className={`mt-4 flex items-center justify-between text-sm text-[var(--text-muted)]`}>
           <span>{filteredTasks.length} of {tasks.length} tasks</span>
         </div>
       </ResponsivePageLayout>
@@ -820,13 +820,13 @@ const Tasks = () => {
             className="fixed inset-0 bg-black/70 z-40 lg:hidden"
             onClick={() => setShowFilterDrawer(false)}
           />
-          <div className={`fixed inset-y-0 right-0 w-80 max-w-[85vw] ${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} shadow-xl z-50 lg:hidden transform transition-transform duration-300 ease-out animate-slideInRight`}>
+          <div className={`fixed inset-y-0 right-0 w-80 max-w-[85vw] bg-[var(--bg-raised)] shadow-xl z-50 lg:hidden transform transition-transform duration-300 ease-out animate-slideInRight`}>
             <div className="flex flex-col h-full">
-              <div className={`flex items-center justify-between p-4 border-b ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'}`}>
-                <h3 className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Filters</h3>
+              <div className={`flex items-center justify-between p-4 border-b border-[var(--border-soft)]`}>
+                <h3 className={`text-lg font-semibold text-[var(--text-primary)]`}>Filters</h3>
                 <button
                   onClick={() => setShowFilterDrawer(false)}
-                  className={`${theme === 'dark' ? 'text-[#9da8b9] hover:text-white' : 'text-gray-500 hover:text-gray-900'}`}
+                  className={`text-[var(--text-muted)] hover:text-[var(--text-primary)]`}
                 >
                   <X size={24} />
                 </button>
@@ -834,11 +834,11 @@ const Tasks = () => {
 
               <div className="flex-1 overflow-y-auto p-4 space-y-4">
                 <div>
-                  <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2`}>Status</label>
+                  <label className={`block text-sm font-medium text-[var(--text-primary)] mb-2`}>Status</label>
                   <select
                     value={filters.status}
                     onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-                    className={`w-full px-3 py-2 ${theme === 'dark' ? 'bg-[#111418] border-[#282f39] text-white' : 'bg-gray-50 border-gray-300 text-gray-900'} border rounded-lg focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
+                    className={`w-full px-3 py-2 bg-[var(--bg-base)] border-[var(--border-soft)] text-[var(--text-primary)] border rounded-lg focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
                   >
                     <option value="">All Status</option>
                     <option value="todo">To Do</option>
@@ -850,11 +850,11 @@ const Tasks = () => {
                 </div>
 
                 <div>
-                  <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2`}>Priority</label>
+                  <label className={`block text-sm font-medium text-[var(--text-primary)] mb-2`}>Priority</label>
                   <select
                     value={filters.priority}
                     onChange={(e) => setFilters({ ...filters, priority: e.target.value })}
-                    className={`w-full px-3 py-2 ${theme === 'dark' ? 'bg-[#111418] border-[#282f39] text-white' : 'bg-gray-50 border-gray-300 text-gray-900'} border rounded-lg focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
+                    className={`w-full px-3 py-2 bg-[var(--bg-base)] border-[var(--border-soft)] text-[var(--text-primary)] border rounded-lg focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
                   >
                     <option value="">All Priorities</option>
                     <option value="low">Low</option>
@@ -866,11 +866,11 @@ const Tasks = () => {
 
                 {projects.length > 0 && (
                   <div>
-                    <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2`}>Project</label>
+                    <label className={`block text-sm font-medium text-[var(--text-primary)] mb-2`}>Project</label>
                     <select
                       value={filters.project}
                       onChange={(e) => setFilters({ ...filters, project: e.target.value })}
-                      className={`w-full px-3 py-2 ${theme === 'dark' ? 'bg-[#111418] border-[#282f39] text-white' : 'bg-gray-50 border-gray-300 text-gray-900'} border rounded-lg focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
+                      className={`w-full px-3 py-2 bg-[var(--bg-base)] border-[var(--border-soft)] text-[var(--text-primary)] border rounded-lg focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
                     >
                       <option value="">All Projects</option>
                       {projects.map((project) => (
@@ -882,11 +882,11 @@ const Tasks = () => {
 
                 {['admin', 'hr', 'team_lead'].includes(user?.role) && teams.length > 0 && (
                   <div>
-                    <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2`}>Team</label>
+                    <label className={`block text-sm font-medium text-[var(--text-primary)] mb-2`}>Team</label>
                     <select
                       value={filters.team}
                       onChange={(e) => setFilters({ ...filters, team: e.target.value })}
-                      className={`w-full px-3 py-2 ${theme === 'dark' ? 'bg-[#111418] border-[#282f39] text-white' : 'bg-gray-50 border-gray-300 text-gray-900'} border rounded-lg focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
+                      className={`w-full px-3 py-2 bg-[var(--bg-base)] border-[var(--border-soft)] text-[var(--text-primary)] border rounded-lg focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
                     >
                       <option value="">All Teams</option>
                       {teams.map((team) => (
@@ -898,11 +898,11 @@ const Tasks = () => {
 
                 {['admin', 'hr', 'team_lead'].includes(user?.role) && users.length > 0 && (
                   <div>
-                    <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2`}>Assigned To</label>
+                    <label className={`block text-sm font-medium text-[var(--text-primary)] mb-2`}>Assigned To</label>
                     <select
                       value={filters.assigned_to}
                       onChange={(e) => setFilters({ ...filters, assigned_to: e.target.value })}
-                      className={`w-full px-3 py-2 ${theme === 'dark' ? 'bg-[#111418] border-[#282f39] text-white' : 'bg-gray-50 border-gray-300 text-gray-900'} border rounded-lg focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
+                      className={`w-full px-3 py-2 bg-[var(--bg-base)] border-[var(--border-soft)] text-[var(--text-primary)] border rounded-lg focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
                     >
                       <option value="">All Users</option>
                       {users.map((user) => (
@@ -913,33 +913,33 @@ const Tasks = () => {
                 )}
 
                 <div>
-                  <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2`}>Due Date From</label>
+                  <label className={`block text-sm font-medium text-[var(--text-primary)] mb-2`}>Due Date From</label>
                   <input
                     type="date"
                     value={filters.dueDateFrom}
                     onChange={(e) => setFilters({ ...filters, dueDateFrom: e.target.value })}
-                    className={`w-full px-3 py-2 ${theme === 'dark' ? 'bg-[#111418] border-[#282f39] text-white' : 'bg-gray-50 border-gray-300 text-gray-900'} border rounded-lg focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
+                    className={`w-full px-3 py-2 bg-[var(--bg-base)] border-[var(--border-soft)] text-[var(--text-primary)] border rounded-lg focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
                   />
                 </div>
 
                 <div>
-                  <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2`}>Due Date To</label>
+                  <label className={`block text-sm font-medium text-[var(--text-primary)] mb-2`}>Due Date To</label>
                   <input
                     type="date"
                     value={filters.dueDateTo}
                     onChange={(e) => setFilters({ ...filters, dueDateTo: e.target.value })}
-                    className={`w-full px-3 py-2 ${theme === 'dark' ? 'bg-[#111418] border-[#282f39] text-white' : 'bg-gray-50 border-gray-300 text-gray-900'} border rounded-lg focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
+                    className={`w-full px-3 py-2 bg-[var(--bg-base)] border-[var(--border-soft)] text-[var(--text-primary)] border rounded-lg focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
                   />
                 </div>
               </div>
 
-              <div className={`p-4 border-t ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} space-y-2`}>
+              <div className={`p-4 border-t border-[var(--border-soft)] space-y-2`}>
                 <button
                   onClick={() => {
                     setFilters({ ...filters, status: '', priority: '', project: '', team: '', assigned_to: '', dueDateFrom: '', dueDateTo: '' });
                     setShowFilterDrawer(false);
                   }}
-                  className={`w-full px-4 py-2 ${theme === 'dark' ? 'bg-[#282f39] text-white hover:bg-[#3a4454]' : 'bg-gray-200 text-gray-900 hover:bg-gray-300'} rounded transition-colors`}
+                  className={`w-full px-4 py-2 bg-[var(--bg-surface)] text-[var(--text-primary)] hover:bg-[var(--bg-raised)] rounded transition-colors`}
                 >
                   Clear All
                 </button>
@@ -964,23 +964,23 @@ const Tasks = () => {
       >
         <form onSubmit={handleCreateTask} className="space-y-3 sm:space-y-4">
           <div>
-            <label className={`block text-xs sm:text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-1.5 sm:mb-2`}>Title *</label>
+            <label className={`block text-xs sm:text-sm font-medium text-[var(--text-primary)] mb-1.5 sm:mb-2`}>Title *</label>
             <input
               type="text"
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              className={`w-full px-3 sm:px-4 py-2.5 sm:py-2 ${theme === 'dark' ? 'bg-[#111418] border-[#282f39] text-white' : 'bg-white border-gray-300 text-gray-900'} border rounded-lg text-sm focus:ring-2 focus:ring-[#C4713A] focus:border-transparent transition-all`}
+              className={`w-full px-3 sm:px-4 py-2.5 sm:py-2 bg-[var(--bg-base)] border-[var(--border-soft)] text-[var(--text-primary)] border rounded-lg text-sm focus:ring-2 focus:ring-[#C4713A] focus:border-transparent transition-all`}
               required
               placeholder="Enter task title"
             />
           </div>
 
           <div>
-            <label className={`block text-xs sm:text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-1.5 sm:mb-2`}>Description</label>
+            <label className={`block text-xs sm:text-sm font-medium text-[var(--text-primary)] mb-1.5 sm:mb-2`}>Description</label>
             <textarea
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className={`w-full px-3 sm:px-4 py-2.5 sm:py-2 ${theme === 'dark' ? 'bg-[#111418] border-[#282f39] text-white' : 'bg-white border-gray-300 text-gray-900'} border rounded-lg text-sm focus:ring-2 focus:ring-[#C4713A] focus:border-transparent transition-all resize-none`}
+              className={`w-full px-3 sm:px-4 py-2.5 sm:py-2 bg-[var(--bg-base)] border-[var(--border-soft)] text-[var(--text-primary)] border rounded-lg text-sm focus:ring-2 focus:ring-[#C4713A] focus:border-transparent transition-all resize-none`}
               rows="3"
               placeholder="Add a description (optional)"
             />
@@ -988,11 +988,11 @@ const Tasks = () => {
 
           <div className="grid grid-cols-2 gap-3 sm:gap-4">
             <div>
-              <label className={`block text-xs sm:text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-1.5 sm:mb-2`}>Priority</label>
+              <label className={`block text-xs sm:text-sm font-medium text-[var(--text-primary)] mb-1.5 sm:mb-2`}>Priority</label>
               <select
                 value={formData.priority}
                 onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
-                className={`w-full px-3 sm:px-4 py-2.5 sm:py-2 ${theme === 'dark' ? 'bg-[#111418] border-[#282f39] text-white' : 'bg-white border-gray-300 text-gray-900'} border rounded-lg text-sm focus:ring-2 focus:ring-[#C4713A] focus:border-transparent transition-all`}
+                className={`w-full px-3 sm:px-4 py-2.5 sm:py-2 bg-[var(--bg-base)] border-[var(--border-soft)] text-[var(--text-primary)] border rounded-lg text-sm focus:ring-2 focus:ring-[#C4713A] focus:border-transparent transition-all`}
               >
                 <option value="low">Low</option>
                 <option value="medium">Medium</option>
@@ -1002,11 +1002,11 @@ const Tasks = () => {
             </div>
 
             <div>
-              <label className={`block text-xs sm:text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-1.5 sm:mb-2`}>Status</label>
+              <label className={`block text-xs sm:text-sm font-medium text-[var(--text-primary)] mb-1.5 sm:mb-2`}>Status</label>
               <select
                 value={formData.status}
                 onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                className={`w-full px-3 sm:px-4 py-2.5 sm:py-2 ${theme === 'dark' ? 'bg-[#111418] border-[#282f39] text-white' : 'bg-white border-gray-300 text-gray-900'} border rounded-lg text-sm focus:ring-2 focus:ring-[#C4713A] focus:border-transparent transition-all`}
+                className={`w-full px-3 sm:px-4 py-2.5 sm:py-2 bg-[var(--bg-base)] border-[var(--border-soft)] text-[var(--text-primary)] border rounded-lg text-sm focus:ring-2 focus:ring-[#C4713A] focus:border-transparent transition-all`}
               >
                 <option value="todo">To Do</option>
                 <option value="in_progress">In Progress</option>
@@ -1017,11 +1017,11 @@ const Tasks = () => {
           </div>
 
           <div>
-            <label className={`block text-xs sm:text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-1.5 sm:mb-2`}>Project *</label>
+            <label className={`block text-xs sm:text-sm font-medium text-[var(--text-primary)] mb-1.5 sm:mb-2`}>Project *</label>
             <select
               value={formData.project_id}
               onChange={(e) => setFormData({ ...formData, project_id: e.target.value })}
-              className={`w-full px-3 sm:px-4 py-2.5 sm:py-2 ${theme === 'dark' ? 'bg-[#111418] border-[#282f39] text-white' : 'bg-white border-gray-300 text-gray-900'} border rounded-lg text-sm focus:ring-2 focus:ring-[#C4713A] focus:border-transparent transition-all`}
+              className={`w-full px-3 sm:px-4 py-2.5 sm:py-2 bg-[var(--bg-base)] border-[var(--border-soft)] text-[var(--text-primary)] border rounded-lg text-sm focus:ring-2 focus:ring-[#C4713A] focus:border-transparent transition-all`}
               required
             >
               <option value="">Select a project</option>
@@ -1032,22 +1032,22 @@ const Tasks = () => {
           </div>
 
           <div>
-            <label className={`block text-xs sm:text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-1.5 sm:mb-2`}>Due Date *</label>
+            <label className={`block text-xs sm:text-sm font-medium text-[var(--text-primary)] mb-1.5 sm:mb-2`}>Due Date *</label>
             <input
               type="date"
               value={formData.due_date}
               onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
-              className={`w-full px-3 sm:px-4 py-2.5 sm:py-2 ${theme === 'dark' ? 'bg-[#111418] border-[#282f39] text-white' : 'bg-white border-gray-300 text-gray-900'} border rounded-lg text-sm focus:ring-2 focus:ring-[#C4713A] focus:border-transparent transition-all`}
+              className={`w-full px-3 sm:px-4 py-2.5 sm:py-2 bg-[var(--bg-base)] border-[var(--border-soft)] text-[var(--text-primary)] border rounded-lg text-sm focus:ring-2 focus:ring-[#C4713A] focus:border-transparent transition-all`}
               required
             />
           </div>
 
           <div>
-            <label className={`block text-xs sm:text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-1.5 sm:mb-2`}>Sprint (Optional)</label>
+            <label className={`block text-xs sm:text-sm font-medium text-[var(--text-primary)] mb-1.5 sm:mb-2`}>Sprint (Optional)</label>
             <select
               value={formData.sprint_id}
               onChange={(e) => setFormData({ ...formData, sprint_id: e.target.value })}
-              className={`w-full px-3 sm:px-4 py-2.5 sm:py-2 ${theme === 'dark' ? 'bg-[#111418] border-[#282f39] text-white' : 'bg-white border-gray-300 text-gray-900'} border rounded-lg text-sm focus:ring-2 focus:ring-[#C4713A] focus:border-transparent transition-all`}
+              className={`w-full px-3 sm:px-4 py-2.5 sm:py-2 bg-[var(--bg-base)] border-[var(--border-soft)] text-[var(--text-primary)] border rounded-lg text-sm focus:ring-2 focus:ring-[#C4713A] focus:border-transparent transition-all`}
             >
               <option value="">No Sprint</option>
               {sprints.map((sprint) => (
@@ -1059,7 +1059,7 @@ const Tasks = () => {
           </div>
 
           <div>
-            <label className={`block text-xs sm:text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-1.5 sm:mb-2`}>Progress: {formData.progress}%</label>
+            <label className={`block text-xs sm:text-sm font-medium text-[var(--text-primary)] mb-1.5 sm:mb-2`}>Progress: {formData.progress}%</label>
             <input
               type="range"
               min="0"
@@ -1074,7 +1074,7 @@ const Tasks = () => {
           {['admin', 'hr', 'team_lead'].includes(user?.role) && (
             <>
               <div>
-                <label className={`block text-xs sm:text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-1.5 sm:mb-2`}>Select Team</label>
+                <label className={`block text-xs sm:text-sm font-medium text-[var(--text-primary)] mb-1.5 sm:mb-2`}>Select Team</label>
                 <select
                   value={formData.team_id}
                   onChange={(e) => {
@@ -1100,7 +1100,7 @@ const Tasks = () => {
                     setSelectedTeamMembers(members);
                     setFormData({ ...formData, team_id: teamId, assigned_to: [] });
                   }}
-                  className={`w-full px-3 sm:px-4 py-2.5 sm:py-2 ${theme === 'dark' ? 'bg-[#111418] border-[#282f39] text-white' : 'bg-white border-gray-300 text-gray-900'} border rounded-lg text-sm focus:ring-2 focus:ring-[#C4713A] focus:border-transparent transition-all`}
+                  className={`w-full px-3 sm:px-4 py-2.5 sm:py-2 bg-[var(--bg-base)] border-[var(--border-soft)] text-[var(--text-primary)] border rounded-lg text-sm focus:ring-2 focus:ring-[#C4713A] focus:border-transparent transition-all`}
                 >
                   <option value="">No Team</option>
                   {teams.map((team) => (
@@ -1113,10 +1113,10 @@ const Tasks = () => {
 
               {formData.team_id && selectedTeamMembers.length > 0 && (
                 <div>
-                  <label className={`block text-xs sm:text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-1.5 sm:mb-2`}>Assign Team Members</label>
-                  <div className={`space-y-2 max-h-40 overflow-y-auto border ${theme === 'dark' ? 'border-[#282f39] bg-[#111418]' : 'border-gray-300 bg-gray-50'} rounded-lg p-2.5 sm:p-3`}>
+                  <label className={`block text-xs sm:text-sm font-medium text-[var(--text-primary)] mb-1.5 sm:mb-2`}>Assign Team Members</label>
+                  <div className={`space-y-2 max-h-40 overflow-y-auto border border-[var(--border-soft)] bg-[var(--bg-base)] rounded-lg p-2.5 sm:p-3`}>
                     {selectedTeamMembers.map((member) => (
-                      <label key={member._id} className={`flex items-center space-x-2.5 min-h-[44px] sm:min-h-0 cursor-pointer ${theme === 'dark' ? 'hover:bg-[#1c2027]' : 'hover:bg-gray-100'} rounded px-2 py-1 transition-colors`}>
+                      <label key={member._id} className={`flex items-center space-x-2.5 min-h-[44px] sm:min-h-0 cursor-pointer hover:bg-[var(--bg-raised)] rounded px-2 py-1 transition-colors`}>
                         <input
                           type="checkbox"
                           checked={formData.assigned_to.includes(member._id)}
@@ -1138,8 +1138,8 @@ const Tasks = () => {
                           }}
                           className="rounded border-[#4b5563] text-[#C4713A] focus:ring-[#C4713A] w-4 h-4"
                         />
-                        <span className={`text-xs sm:text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                          {member.full_name} <span className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`}>({member.role})</span>
+                        <span className={`text-xs sm:text-sm text-[var(--text-primary)]`}>
+                          {member.full_name} <span className={`text-[var(--text-muted)]`}>({member.role})</span>
                           {member._id === user?.id && <span className="text-[#C4713A] font-medium"> (You)</span>}
                         </span>
                       </label>
@@ -1151,11 +1151,11 @@ const Tasks = () => {
           )}
 
         </form>
-        <div className={`flex flex-col-reverse sm:flex-row justify-end gap-2 sm:gap-4 pt-4 mt-4 sm:mt-6 border-t ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'}`}>
+        <div className={`flex flex-col-reverse sm:flex-row justify-end gap-2 sm:gap-4 pt-4 mt-4 sm:mt-6 border-t border-[var(--border-soft)]`}>
           <button
             type="button"
             onClick={() => setShowCreateModal(false)}
-            className={`w-full sm:w-auto min-h-[44px] px-6 py-2.5 sm:py-2 ${theme === 'dark' ? 'bg-[#282f39] hover:bg-[#3a4454] text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-900'} text-sm font-medium rounded-lg transition-all active:scale-95`}
+            className={`w-full sm:w-auto min-h-[44px] px-6 py-2.5 sm:py-2 bg-[var(--bg-surface)] hover:bg-[var(--bg-raised)] text-[var(--text-primary)] text-sm font-medium rounded-lg transition-all active:scale-95`}
           >
             Cancel
           </button>
@@ -1182,68 +1182,68 @@ const Tasks = () => {
         {editingTask && (
           <form onSubmit={handleEditTask} className="space-y-4">
             <div>
-              <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2`}>Title *</label>
+              <label className={`block text-sm font-medium text-[var(--text-primary)] mb-2`}>Title *</label>
               <input
                 type="text"
                 value={editingTask.title}
                 onChange={(e) => setEditingTask({ ...editingTask, title: e.target.value })}
-                className={`w-full px-4 py-2 ${theme === 'dark' ? 'bg-[#111418] border-[#282f39] text-white' : 'bg-white border-gray-300 text-gray-900'} border rounded focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
+                className={`w-full px-4 py-2 bg-[var(--bg-base)] border-[var(--border-soft)] text-[var(--text-primary)] border rounded focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
                 required
               />
             </div>
 
             <div>
-              <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2`}>Description</label>
+              <label className={`block text-sm font-medium text-[var(--text-primary)] mb-2`}>Description</label>
               <textarea
                 value={editingTask.description}
                 onChange={(e) => setEditingTask({ ...editingTask, description: e.target.value })}
-                className={`w-full px-4 py-2 ${theme === 'dark' ? 'bg-[#111418] border-[#282f39] text-white' : 'bg-white border-gray-300 text-gray-900'} border rounded focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
+                className={`w-full px-4 py-2 bg-[var(--bg-base)] border-[var(--border-soft)] text-[var(--text-primary)] border rounded focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
                 rows="4"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2`}>Priority</label>
+                <label className={`block text-sm font-medium text-[var(--text-primary)] mb-2`}>Priority</label>
                 <select
                   value={editingTask.priority}
                   onChange={(e) => setEditingTask({ ...editingTask, priority: e.target.value })}
-                  className={`w-full px-4 py-2 ${theme === 'dark' ? 'bg-[#111418] border-[#282f39] text-white' : 'bg-white border-gray-300 text-gray-900'} border rounded focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
+                  className={`w-full px-4 py-2 bg-[var(--bg-base)] border-[var(--border-soft)] text-[var(--text-primary)] border rounded focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
                 >
-                  <option value="low" className={theme === 'dark' ? 'bg-[#111418] text-white' : 'bg-white text-gray-900'}>Low</option>
-                  <option value="medium" className={theme === 'dark' ? 'bg-[#111418] text-white' : 'bg-white text-gray-900'}>Medium</option>
-                  <option value="high" className={theme === 'dark' ? 'bg-[#111418] text-white' : 'bg-white text-gray-900'}>High</option>
-                  <option value="urgent" className={theme === 'dark' ? 'bg-[#111418] text-white' : 'bg-white text-gray-900'}>Urgent</option>
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                  <option value="urgent">Urgent</option>
                 </select>
               </div>
 
               <div>
-                <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2`}>Status</label>
+                <label className={`block text-sm font-medium text-[var(--text-primary)] mb-2`}>Status</label>
                 <select
                   value={editingTask.status}
                   onChange={(e) => setEditingTask({ ...editingTask, status: e.target.value })}
-                  className={`w-full px-4 py-2 ${theme === 'dark' ? 'bg-[#111418] border-[#282f39] text-white' : 'bg-white border-gray-300 text-gray-900'} border rounded focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
+                  className={`w-full px-4 py-2 bg-[var(--bg-base)] border-[var(--border-soft)] text-[var(--text-primary)] border rounded focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
                 >
-                  <option value="todo" className={theme === 'dark' ? 'bg-[#111418] text-white' : 'bg-white text-gray-900'}>To Do</option>
-                  <option value="in_progress" className={theme === 'dark' ? 'bg-[#111418] text-white' : 'bg-white text-gray-900'}>In Progress</option>
-                  <option value="review" className={theme === 'dark' ? 'bg-[#111418] text-white' : 'bg-white text-gray-900'}>Review</option>
-                  <option value="done" className={theme === 'dark' ? 'bg-[#111418] text-white' : 'bg-white text-gray-900'}>Done</option>
-                  <option value="archived" className={theme === 'dark' ? 'bg-[#111418] text-white' : 'bg-white text-gray-900'}>Archived</option>
+                  <option value="todo">To Do</option>
+                  <option value="in_progress">In Progress</option>
+                  <option value="review">Review</option>
+                  <option value="done">Done</option>
+                  <option value="archived">Archived</option>
                 </select>
               </div>
             </div>
 
             <div>
-              <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2`}>Project *</label>
+              <label className={`block text-sm font-medium text-[var(--text-primary)] mb-2`}>Project *</label>
               <select
                 value={editingTask.project_id?._id || editingTask.project_id || ''}
                 onChange={(e) => setEditingTask({ ...editingTask, project_id: e.target.value })}
-                className={`w-full px-4 py-2 ${theme === 'dark' ? 'bg-[#111418] border-[#282f39] text-white' : 'bg-white border-gray-300 text-gray-900'} border rounded focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
+                className={`w-full px-4 py-2 bg-[var(--bg-base)] border-[var(--border-soft)] text-[var(--text-primary)] border rounded focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
                 required
               >
                 <option value="">Select a project</option>
                 {projects.map((project) => (
-                  <option key={project._id} value={project._id} className={theme === 'dark' ? 'bg-[#111418] text-white' : 'bg-white text-gray-900'}>
+                  <option key={project._id} value={project._id}>
                     {project.name}
                   </option>
                 ))}
@@ -1251,12 +1251,12 @@ const Tasks = () => {
             </div>
 
             <div>
-              <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2`}>Due Date *</label>
+              <label className={`block text-sm font-medium text-[var(--text-primary)] mb-2`}>Due Date *</label>
               <input
                 type="date"
                 value={editingTask.due_date ? new Date(editingTask.due_date).toISOString().split('T')[0] : ''}
                 onChange={(e) => setEditingTask({ ...editingTask, due_date: e.target.value })}
-                className={`w-full px-4 py-2 ${theme === 'dark' ? 'bg-[#111418] border-[#282f39] text-white' : 'bg-white border-gray-300 text-gray-900'} border rounded focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
+                className={`w-full px-4 py-2 bg-[var(--bg-base)] border-[var(--border-soft)] text-[var(--text-primary)] border rounded focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
                 required
               />
             </div>
@@ -1264,15 +1264,15 @@ const Tasks = () => {
             {['admin', 'hr', 'team_lead'].includes(user?.role) && (
               <>
                 <div>
-                  <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2`}>Select Team</label>
+                  <label className={`block text-sm font-medium text-[var(--text-primary)] mb-2`}>Select Team</label>
                   <select
                     value={editingTask.team_id || ''}
                     onChange={(e) => handleTeamChange(e.target.value)}
-                    className={`w-full px-4 py-2 ${theme === 'dark' ? 'bg-[#111418] border-[#282f39] text-white' : 'bg-white border-gray-300 text-gray-900'} border rounded focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
+                    className={`w-full px-4 py-2 bg-[var(--bg-base)] border-[var(--border-soft)] text-[var(--text-primary)] border rounded focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
                   >
-                    <option value="" className={theme === 'dark' ? 'bg-[#111418] text-white' : 'bg-white text-gray-900'}>No Team</option>
+                    <option value="">No Team</option>
                     {teams.map((team) => (
-                      <option key={team._id} value={team._id} className={theme === 'dark' ? 'bg-[#111418] text-white' : 'bg-white text-gray-900'}>
+                      <option key={team._id} value={team._id}>
                         {team.name}
                       </option>
                     ))}
@@ -1281,8 +1281,8 @@ const Tasks = () => {
 
                 {editingTask.team_id && selectedTeamMembers.length > 0 && (
                   <div>
-                    <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2`}>Assign Team Members</label>
-                    <div className={`space-y-2 max-h-40 overflow-y-auto border ${theme === 'dark' ? 'border-[#282f39] bg-[#111418]' : 'border-gray-300 bg-gray-50'} rounded-lg p-3`}>
+                    <label className={`block text-sm font-medium text-[var(--text-primary)] mb-2`}>Assign Team Members</label>
+                    <div className={`space-y-2 max-h-40 overflow-y-auto border border-[var(--border-soft)] bg-[var(--bg-base)] rounded-lg p-3`}>
                       {selectedTeamMembers.map((member) => (
                         <label key={member._id} className="flex items-center space-x-2">
                           <input
@@ -1291,7 +1291,7 @@ const Tasks = () => {
                             onChange={() => handleMemberToggle(member._id)}
                             className="rounded border-[#4b5563] text-[#C4713A] focus:ring-[#C4713A]"
                           />
-                          <span className={`text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                          <span className={`text-sm text-[var(--text-primary)]`}>
                             {member.full_name} ({member.role})
                             {member._id === user?.id && <span className="text-[#C4713A] font-medium"> (You)</span>}
                           </span>
@@ -1305,14 +1305,14 @@ const Tasks = () => {
 
           </form>
         )}
-        <div className={`flex justify-end space-x-4 pt-4 mt-6 border-t ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'}`}>
+        <div className={`flex justify-end space-x-4 pt-4 mt-6 border-t border-[var(--border-soft)]`}>
           <button
             type="button"
             onClick={() => {
               setShowEditModal(false);
               setEditingTask(null);
             }}
-            className={`px-6 py-2 ${theme === 'dark' ? 'bg-[#282f39] hover:bg-[#3a4454] text-white' : 'bg-gray-200 hover:bg-gray-300 text-gray-900'} rounded transition-colors`}
+            className={`px-6 py-2 bg-[var(--bg-surface)] hover:bg-[var(--bg-raised)] text-[var(--text-primary)] rounded transition-colors`}
           >
             Cancel
           </button>
@@ -1341,17 +1341,17 @@ const Tasks = () => {
         {selectedTask && (
           <div className="space-y-6">
             <div>
-              <p className={`${theme === 'dark' ? 'text-[#d1d5db]' : 'text-gray-700'}`}>{selectedTask.description}</p>
+              <p className={`text-[var(--text-secondary)]`}>{selectedTask.description}</p>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2`}>Status</label>
+                <label className={`block text-sm font-medium text-[var(--text-primary)] mb-2`}>Status</label>
                 {canEditTask(selectedTask) ? (
                   <select
                     value={selectedTask.status}
                     onChange={(e) => handleUpdateTask(selectedTask._id, { status: e.target.value })}
-                    className={`w-full px-4 py-2 ${theme === 'dark' ? 'bg-[#111418] border-[#282f39] text-white' : 'bg-white border-gray-300 text-gray-900'} border rounded focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
+                    className={`w-full px-4 py-2 bg-[var(--bg-base)] border-[var(--border-soft)] text-[var(--text-primary)] border rounded focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
                   >
                     <option value="todo">To Do</option>
                     <option value="in_progress">In Progress</option>
@@ -1367,10 +1367,10 @@ const Tasks = () => {
               </div>
 
               <div>
-                <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2`}>Priority</label>
+                <label className={`block text-sm font-medium text-[var(--text-primary)] mb-2`}>Priority</label>
                 <div className="flex items-center gap-2">
                   <div className={`size-3 rounded-full ${getPriorityDot(selectedTask.priority)}`}></div>
-                  <span className={`${theme === 'dark' ? 'text-[#d1d5db]' : 'text-gray-700'}`}>{getPriorityLabel(selectedTask.priority)}</span>
+                  <span className={`text-[var(--text-secondary)]`}>{getPriorityLabel(selectedTask.priority)}</span>
                 </div>
               </div>
             </div>
@@ -1378,18 +1378,18 @@ const Tasks = () => {
             <div className="space-y-3">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <p className={`text-sm ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`}>
+                  <p className={`text-sm text-[var(--text-muted)]`}>
                     <span className="font-medium">Created by:</span> {selectedTask.created_by?.full_name || 'Unknown'}
                   </p>
                   {selectedTask.team_id && (
-                    <p className={`text-sm ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`}>
+                    <p className={`text-sm text-[var(--text-muted)]`}>
                       <span className="font-medium">Team:</span> {selectedTask.team_id.name}
                     </p>
                   )}
                 </div>
                 <div>
                   {selectedTask.assigned_to && selectedTask.assigned_to.length > 0 && (
-                    <div className={`text-sm ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`}>
+                    <div className={`text-sm text-[var(--text-muted)]`}>
                       <span className="font-medium">Assigned to:</span>
                       <div className="mt-1">
                         {selectedTask.assigned_to.map((user) => (
@@ -1405,13 +1405,13 @@ const Tasks = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <p className={`text-sm ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`}>
+                  <p className={`text-sm text-[var(--text-muted)]`}>
                     <span className="font-medium">Created:</span> {new Date(selectedTask.created_at).toLocaleString()}
                   </p>
                 </div>
                 <div>
                   {selectedTask.due_date && (
-                    <p className={`text-sm ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`}>
+                    <p className={`text-sm text-[var(--text-muted)]`}>
                       <span className="font-medium">Due:</span>
                       <span className={`font-medium ml-1 ${new Date(selectedTask.due_date) < new Date() ? 'text-red-400' : 'text-orange-400'}`}>
                         {new Date(selectedTask.due_date).toLocaleString()}
@@ -1423,33 +1423,33 @@ const Tasks = () => {
 
               {selectedTask.updated_at !== selectedTask.created_at && (
                 <div>
-                  <p className={`text-sm ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`}>
+                  <p className={`text-sm text-[var(--text-muted)]`}>
                     <span className="font-medium">Last updated:</span> {new Date(selectedTask.updated_at).toLocaleString()}
                   </p>
                 </div>
               )}
             </div>
 
-            <div className={`border-t ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} pt-6`}>
-              <h3 className={`text-lg font-semibold mb-4 flex items-center ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+            <div className={`border-t border-[var(--border-soft)] pt-6`}>
+              <h3 className={`text-lg font-semibold mb-4 flex items-center text-[var(--text-primary)]`}>
                 <MessageSquare className="w-5 h-5 mr-2" />
                 Comments
               </h3>
 
               <div className="space-y-4 mb-4 max-h-60 overflow-y-auto">
                 {comments.map((comment) => (
-                  <div key={comment._id} className={`rounded-lg p-4 border ${theme === 'dark' ? 'bg-[#111418] border-[#282f39]' : 'bg-gray-50 border-gray-200'}`}>
+                  <div key={comment._id} className={`rounded-lg p-4 border bg-[var(--bg-base)] border-[var(--border-soft)]`}>
                     <div className="flex justify-between items-start mb-2">
-                      <span className={`font-medium text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{comment.author_id?.full_name || 'Unknown'}</span>
-                      <span className={`text-xs ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-500'}`}>
+                      <span className={`font-medium text-sm text-[var(--text-primary)]`}>{comment.author_id?.full_name || 'Unknown'}</span>
+                      <span className={`text-xs text-[var(--text-muted)]`}>
                         {new Date(comment.created_at).toLocaleString()}
                       </span>
                     </div>
-                    <p className={`text-sm ${theme === 'dark' ? 'text-[#d1d5db]' : 'text-gray-700'}`}>{comment.content}</p>
+                    <p className={`text-sm text-[var(--text-secondary)]`}>{comment.content}</p>
                   </div>
                 ))}
                 {comments.length === 0 && (
-                  <p className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} text-sm`}>No comments yet</p>
+                  <p className={`text-[var(--text-muted)] text-sm`}>No comments yet</p>
                 )}
               </div>
 
@@ -1459,7 +1459,7 @@ const Tasks = () => {
                   value={newComment}
                   onChange={(e) => setNewComment(e.target.value)}
                   placeholder="Add a comment..."
-                  className={`flex-1 px-4 py-2 ${theme === 'dark' ? 'bg-[#111418] border-[#282f39] text-white' : 'bg-white border-gray-300 text-gray-900'} border rounded focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
+                  className={`flex-1 px-4 py-2 bg-[var(--bg-base)] border-[var(--border-soft)] text-[var(--text-primary)] border rounded focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
                 />
                 <button
                   type="submit"

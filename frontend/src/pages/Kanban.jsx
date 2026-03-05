@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+﻿import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useSearchParams, useNavigate } from 'react-router-dom';
@@ -401,25 +401,25 @@ const Kanban = () => {
     <>
       <ResponsivePageLayout title="Kanban Board" icon={MoreHorizontal} noPadding>
         {/* Header Section */}
-        <header className={`border-b ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'} shrink-0`}>
+        <header className={`border-b border-[var(--border-soft)] bg-[var(--bg-base)] shrink-0`}>
           {/* Top Row: Title and Actions */}
           <div className="flex items-center justify-between px-3 sm:px-6 py-3 sm:py-4">
             <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
               <div className="min-w-0">
-                <h2 className={`${theme === 'dark' ? 'text-white' : 'text-gray-900'} text-base sm:text-xl font-bold leading-tight truncate`}>Kanban Board</h2>
-                <p className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} text-xs mt-0.5 sm:mt-1 hidden sm:block`}>Visual task workflow with drag & drop</p>
+                <h2 className={`text-[var(--text-primary)] text-base sm:text-xl font-bold leading-tight truncate`}>Kanban Board</h2>
+                <p className={`text-[var(--text-muted)] text-xs mt-0.5 sm:mt-1 hidden sm:block`}>Visual task workflow with drag & drop</p>
               </div>
             </div>
             <div className="flex gap-2 sm:gap-3 flex-shrink-0">
               <button
                 onClick={() => navigate('/settings')}
-                className={`hidden sm:flex items-center justify-center rounded h-9 px-3 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-white'} ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} ${theme === 'dark' ? 'hover:text-white' : 'hover:text-gray-900'} border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} ${theme === 'dark' ? 'hover:border-[#5a6472]' : 'hover:border-gray-300'} transition-colors`}
+                className={`hidden sm:flex items-center justify-center rounded h-9 px-3 bg-[var(--bg-surface)] text-[var(--text-muted)] hover:text-[var(--text-primary)] border border-[var(--border-soft)] hover:border-[var(--border-mid)] transition-colors`}
               >
                 <Settings size={20} />
               </button>
               <button
                 onClick={() => navigate('/teams')}
-                className={`hidden lg:flex items-center justify-center rounded h-9 px-3 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-white'} ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} ${theme === 'dark' ? 'hover:text-white' : 'hover:text-gray-900'} border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} ${theme === 'dark' ? 'hover:border-[#5a6472]' : 'hover:border-gray-300'} transition-colors`}
+                className={`hidden lg:flex items-center justify-center rounded h-9 px-3 bg-[var(--bg-surface)] text-[var(--text-muted)] hover:text-[var(--text-primary)] border border-[var(--border-soft)] hover:border-[var(--border-mid)] transition-colors`}
               >
                 <UserPlus size={20} />
               </button>
@@ -457,13 +457,13 @@ const Kanban = () => {
               </select>
             )}
             
-            <div className={`relative flex items-center h-9 w-full sm:w-64 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-white'} rounded border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} focus-within:border-[#C4713A]/50 transition-colors flex-shrink-0`}>
-              <Search className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} ml-3 flex-shrink-0`} size={18} />
+            <div className={`relative flex items-center h-9 w-full sm:w-64 bg-[var(--bg-surface)] rounded border border-[var(--border-soft)] focus-within:border-[#C4713A]/50 transition-colors flex-shrink-0`}>
+              <Search className={`text-[var(--text-muted)] ml-3 flex-shrink-0`} size={18} />
               <input
                 ref={searchInputRef}
                 value={filters.search}
                 onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-                className={`w-full bg-transparent border-none text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'} placeholder-[#6b7280] focus:ring-0 px-2 h-full`}
+                className={`w-full bg-transparent border-none text-sm text-[var(--text-primary)] placeholder-[#6b7280] focus:ring-0 px-2 h-full`}
                 placeholder="Search tasks..."
               />
             </div>
@@ -491,7 +491,7 @@ const Kanban = () => {
               {!filters.showMyTasksOnly && (
                 <button
                   onClick={() => setFilters({ ...filters, showMyTasksOnly: true })}
-                  className={`flex h-7 items-center gap-1.5 sm:gap-2 rounded-full ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-white'} border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} px-2.5 sm:px-3 ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} ${theme === 'dark' ? 'hover:text-white' : 'hover:text-gray-900'} ${theme === 'dark' ? 'hover:border-[#5a6472]' : 'hover:border-gray-300'} transition-colors whitespace-nowrap flex-shrink-0`}
+                  className={`flex h-7 items-center gap-1.5 sm:gap-2 rounded-full bg-[var(--bg-surface)] border border-[var(--border-soft)] px-2.5 sm:px-3 text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-[var(--border-mid)] transition-colors whitespace-nowrap flex-shrink-0`}
                 >
                   <span className="text-xs font-medium">My Tasks</span>
                 </button>
@@ -524,18 +524,18 @@ const Kanban = () => {
               return (
                 <div
                   key={column.id}
-                  className={`flex flex-col w-[280px] sm:w-[320px] lg:w-1/4 lg:min-w-[280px] ${theme === 'dark' ? 'bg-[#1c2128]' : 'bg-white'} rounded-xl h-full border transition-all duration-200 ${isDragOver ? 'border-[#C4713A] bg-[#C4713A]/5 scale-[1.02]' : `${theme === 'dark' ? 'border-[#3e454f]/50' : 'border-gray-200'}`
+                  className={`flex flex-col w-[280px] sm:w-[320px] lg:w-1/4 lg:min-w-[280px] bg-[var(--bg-raised)] rounded-xl h-full border transition-all duration-200 ${isDragOver ? 'border-[#C4713A] bg-[#C4713A]/5 scale-[1.02]' : `border-[var(--border-hair)]`
                     }`}
                   onDragOver={handleDragOver}
                   onDragEnter={(e) => handleDragEnter(e, column.id)}
                   onDragLeave={handleDragLeave}
                   onDrop={(e) => handleDrop(e, column.id)}
                 >
-                  <div className={`flex items-center justify-between p-3 sm:p-4 border-b ${theme === 'dark' ? 'border-[#3e454f]/50' : 'border-gray-200'} relative overflow-hidden ${column.hasTopBorder ? 'border-t-2 border-t-[#C4713A]' : ''}`}>
+                  <div className={`flex items-center justify-between p-3 sm:p-4 border-b border-[var(--border-hair)] relative overflow-hidden ${column.hasTopBorder ? 'border-t-2 border-t-[#C4713A]' : ''}`}>
                     <div className="flex items-center gap-2 flex-1 min-w-0">
                       <div className={`w-2 h-2 rounded-full ${column.dotColor} flex-shrink-0`}></div>
-                      <h3 className={`text-sm font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} truncate`}>{column.title}</h3>
-                      <span className={`${theme === 'dark' ? 'bg-[#282f39]' : 'bg-gray-100'} ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} text-xs px-2 py-0.5 rounded-full border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} font-medium flex-shrink-0`}>
+                      <h3 className={`text-sm font-semibold text-[var(--text-primary)] truncate`}>{column.title}</h3>
+                      <span className={`bg-[var(--bg-surface)] text-[var(--text-muted)] text-xs px-2 py-0.5 rounded-full border border-[var(--border-soft)] font-medium flex-shrink-0`}>
                         {columnTasks.length}
                       </span>
                     </div>
@@ -553,7 +553,7 @@ const Kanban = () => {
                           draggable={canEditTask(task)}
                           onDragStart={(e) => handleDragStart(e, task)}
                           onDragEnd={handleDragEnd}
-                          className={`group ${theme === 'dark' ? 'bg-gradient-to-br from-[#282f39] to-[#242a35]' : 'bg-gradient-to-br from-gray-50 to-white'} p-3 sm:p-4 rounded-lg border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} hover:border-[#C4713A]/50 cursor-grab active:cursor-grabbing shadow-sm hover:shadow-lg transition-all duration-200 hover:-translate-y-0.5 ${isDone ? 'opacity-70 hover:opacity-100' : ''
+                          className={`group ${theme === 'dark' ? 'bg-gradient-to-br from-[#282f39] to-[#242a35]' : 'bg-gradient-to-br from-gray-50 to-white'} p-3 sm:p-4 rounded-lg border border-[var(--border-soft)] hover:border-[#C4713A]/50 cursor-grab active:cursor-grabbing shadow-sm hover:shadow-lg transition-all duration-200 hover:-translate-y-0.5 ${isDone ? 'opacity-70 hover:opacity-100' : ''
                             }`}
                           onClick={() => setSelectedTask(task)}
                         >
@@ -573,7 +573,7 @@ const Kanban = () => {
                             {task.sprint_id && <SprintLabel sprint={task.sprint_id} size="sm" />}
                           </div>
 
-                          <p className={`text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-3 leading-snug group-hover:text-[#C4713A] transition-colors ${isDone ? 'line-through decoration-slate-600' : ''
+                          <p className={`text-sm font-medium text-[var(--text-primary)] mb-3 leading-snug group-hover:text-[#C4713A] transition-colors ${isDone ? 'line-through decoration-slate-600' : ''
                             }`}>
                             {task.title}
                           </p>
@@ -592,7 +592,7 @@ const Kanban = () => {
                             </div>
                           )}
 
-                          <div className={`flex items-center justify-between border-t ${theme === 'dark' ? 'border-[#3e454f]/50' : 'border-gray-200'} pt-2 mt-auto`}>
+                          <div className={`flex items-center justify-between border-t border-[var(--border-hair)] pt-2 mt-auto`}>
                             <div className="flex -space-x-2">
                               {task.assigned_to && task.assigned_to.length > 0 ? (
                                 task.assigned_to.slice(0, 2).map((assignee, idx) => (
@@ -635,7 +635,7 @@ const Kanban = () => {
                       setFormData({ ...formData, status: column.id });
                       setShowCreateModal(true);
                     }}
-                    className={`p-2 mx-2 mb-2 flex items-center gap-2 text-[#6b7280] ${theme === 'dark' ? 'hover:text-white' : 'hover:text-gray-900'} ${theme === 'dark' ? 'hover:bg-[#282f39]' : 'hover:bg-gray-100'} rounded transition-colors text-sm font-medium`}
+                    className={`p-2 mx-2 mb-2 flex items-center gap-2 text-[#6b7280] hover:text-[var(--text-primary)] hover:bg-[var(--bg-surface)] rounded transition-colors text-sm font-medium`}
                   >
                     <Plus size={18} />
                     <span>Add Task</span>
@@ -649,12 +649,12 @@ const Kanban = () => {
       {/* Create Task Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-          <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded-lg p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'}`}>
+          <div className={`bg-[var(--bg-raised)] rounded-lg p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-[var(--border-soft)]`}>
             <div className="flex justify-between items-center mb-6">
-              <h2 className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Create New Task</h2>
+              <h2 className={`text-2xl font-bold text-[var(--text-primary)]`}>Create New Task</h2>
               <button
                 onClick={() => setShowCreateModal(false)}
-                className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} ${theme === 'dark' ? 'hover:text-white' : 'hover:text-gray-900'}`}
+                className={`text-[var(--text-muted)] hover:text-[var(--text-primary)]`}
               >
                 <X size={24} />
               </button>
@@ -662,33 +662,33 @@ const Kanban = () => {
 
             <form onSubmit={handleCreateTask} className="space-y-4">
               <div>
-                <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2`}>Title *</label>
+                <label className={`block text-sm font-medium text-[var(--text-primary)] mb-2`}>Title *</label>
                 <input
                   type="text"
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  className={`w-full px-4 py-2 ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'} border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} rounded ${theme === 'dark' ? 'text-white' : 'text-gray-900'} focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
+                  className={`w-full px-4 py-2 bg-[var(--bg-base)] border border-[var(--border-soft)] rounded text-[var(--text-primary)] focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
                   required
                 />
               </div>
 
               <div>
-                <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2`}>Description</label>
+                <label className={`block text-sm font-medium text-[var(--text-primary)] mb-2`}>Description</label>
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className={`w-full px-4 py-2 ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'} border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} rounded ${theme === 'dark' ? 'text-white' : 'text-gray-900'} focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
+                  className={`w-full px-4 py-2 bg-[var(--bg-base)] border border-[var(--border-soft)] rounded text-[var(--text-primary)] focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
                   rows="4"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2`}>Priority</label>
+                  <label className={`block text-sm font-medium text-[var(--text-primary)] mb-2`}>Priority</label>
                   <select
                     value={formData.priority}
                     onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
-                    className={`w-full px-4 py-2 ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'} border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} rounded ${theme === 'dark' ? 'text-white' : 'text-gray-900'} focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
+                    className={`w-full px-4 py-2 bg-[var(--bg-base)] border border-[var(--border-soft)] rounded text-[var(--text-primary)] focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
                   >
                     <option value="low">Low</option>
                     <option value="medium">Medium</option>
@@ -698,11 +698,11 @@ const Kanban = () => {
                 </div>
 
                 <div>
-                  <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2`}>Status</label>
+                  <label className={`block text-sm font-medium text-[var(--text-primary)] mb-2`}>Status</label>
                   <select
                     value={formData.status}
                     onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                    className={`w-full px-4 py-2 ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'} border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} rounded ${theme === 'dark' ? 'text-white' : 'text-gray-900'} focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
+                    className={`w-full px-4 py-2 bg-[var(--bg-base)] border border-[var(--border-soft)] rounded text-[var(--text-primary)] focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
                   >
                     <option value="todo">To Do</option>
                     <option value="in_progress">In Progress</option>
@@ -713,11 +713,11 @@ const Kanban = () => {
               </div>
 
               <div>
-                <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2`}>Project *</label>
+                <label className={`block text-sm font-medium text-[var(--text-primary)] mb-2`}>Project *</label>
                 <select
                   value={formData.project_id}
                   onChange={(e) => setFormData({ ...formData, project_id: e.target.value })}
-                  className={`w-full px-4 py-2 ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'} border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} rounded ${theme === 'dark' ? 'text-white' : 'text-gray-900'} focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
+                  className={`w-full px-4 py-2 bg-[var(--bg-base)] border border-[var(--border-soft)] rounded text-[var(--text-primary)] focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
                   required
                 >
                   <option value="">Select a project</option>
@@ -730,11 +730,11 @@ const Kanban = () => {
               </div>
 
               <div>
-                <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2`}>Sprint (Optional)</label>
+                <label className={`block text-sm font-medium text-[var(--text-primary)] mb-2`}>Sprint (Optional)</label>
                 <select
                   value={formData.sprint_id}
                   onChange={(e) => setFormData({ ...formData, sprint_id: e.target.value })}
-                  className={`w-full px-4 py-2 ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'} border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} rounded ${theme === 'dark' ? 'text-white' : 'text-gray-900'} focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
+                  className={`w-full px-4 py-2 bg-[var(--bg-base)] border border-[var(--border-soft)] rounded text-[var(--text-primary)] focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
                 >
                   <option value="">No Sprint</option>
                   {sprints.map((sprint) => (
@@ -746,7 +746,7 @@ const Kanban = () => {
               </div>
 
               <div>
-                <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2`}>Progress: {formData.progress}%</label>
+                <label className={`block text-sm font-medium text-[var(--text-primary)] mb-2`}>Progress: {formData.progress}%</label>
                 <input
                   type="range"
                   min="0"
@@ -759,12 +759,12 @@ const Kanban = () => {
               </div>
 
               <div>
-                <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2`}>Due Date *</label>
+                <label className={`block text-sm font-medium text-[var(--text-primary)] mb-2`}>Due Date *</label>
                 <input
                   type="date"
                   value={formData.due_date}
                   onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
-                  className={`w-full px-4 py-2 ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'} border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} rounded ${theme === 'dark' ? 'text-white' : 'text-gray-900'} focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
+                  className={`w-full px-4 py-2 bg-[var(--bg-base)] border border-[var(--border-soft)] rounded text-[var(--text-primary)] focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
                   required
                 />
               </div>
@@ -772,11 +772,11 @@ const Kanban = () => {
               {['admin', 'hr', 'team_lead', 'community_admin'].includes(user?.role) && (
                 <>
                   <div>
-                    <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2`}>Select Team</label>
+                    <label className={`block text-sm font-medium text-[var(--text-primary)] mb-2`}>Select Team</label>
                     <select
                       value={formData.team_id}
                       onChange={(e) => handleTeamChange(e.target.value)}
-                      className={`w-full px-4 py-2 ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'} border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} rounded ${theme === 'dark' ? 'text-white' : 'text-gray-900'} focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
+                      className={`w-full px-4 py-2 bg-[var(--bg-base)] border border-[var(--border-soft)] rounded text-[var(--text-primary)] focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
                     >
                       <option value="">No Team</option>
                       {teams.map((team) => (
@@ -789,8 +789,8 @@ const Kanban = () => {
 
                   {formData.team_id && selectedTeamMembers.length > 0 && (
                     <div>
-                      <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2`}>Assign Team Members</label>
-                      <div className={`space-y-2 max-h-40 overflow-y-auto border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} rounded-lg p-3 ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'}`}>
+                      <label className={`block text-sm font-medium text-[var(--text-primary)] mb-2`}>Assign Team Members</label>
+                      <div className={`space-y-2 max-h-40 overflow-y-auto border border-[var(--border-soft)] rounded-lg p-3 bg-[var(--bg-base)]`}>
                         {selectedTeamMembers.map((member) => (
                           <label key={member._id} className="flex items-center space-x-2">
                             <input
@@ -799,7 +799,7 @@ const Kanban = () => {
                               onChange={() => handleMemberToggle(member._id)}
                               className="rounded border-[#4b5563] text-[#C4713A] focus:ring-[#C4713A]"
                             />
-                            <span className={`text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                            <span className={`text-sm text-[var(--text-primary)]`}>
                               {member.full_name} ({member.role})
                               {member._id === user?.id && <span className="text-[#C4713A] font-medium"> (You)</span>}
                             </span>
@@ -818,7 +818,7 @@ const Kanban = () => {
                     setShowCreateModal(false);
                     setSelectedTeamMembers([]);
                   }}
-                  className={`px-6 py-2 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-gray-200'} ${theme === 'dark' ? 'text-white' : 'text-gray-900'} rounded ${theme === 'dark' ? 'hover:bg-[#3a4454]' : 'hover:bg-gray-300'} transition-colors`}
+                  className={`px-6 py-2 bg-[var(--bg-surface)] text-[var(--text-primary)] rounded hover:bg-[var(--bg-raised)] transition-colors`}
                 >
                   Cancel
                 </button>
@@ -837,12 +837,12 @@ const Kanban = () => {
       {/* Task Detail Modal */}
       {selectedTask && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-          <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded-lg p-8 max-w-3xl w-full max-h-[90vh] overflow-y-auto border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'}`}>
+          <div className={`bg-[var(--bg-raised)] rounded-lg p-8 max-w-3xl w-full max-h-[90vh] overflow-y-auto border border-[var(--border-soft)]`}>
             <div className="flex justify-between items-center mb-6">
-              <h2 className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{selectedTask.title}</h2>
+              <h2 className={`text-2xl font-bold text-[var(--text-primary)]`}>{selectedTask.title}</h2>
               <button
                 onClick={() => setSelectedTask(null)}
-                className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} ${theme === 'dark' ? 'hover:text-white' : 'hover:text-gray-900'}`}
+                className={`text-[var(--text-muted)] hover:text-[var(--text-primary)]`}
               >
                 <X size={24} />
               </button>
@@ -850,19 +850,19 @@ const Kanban = () => {
 
             <div className="space-y-6">
               <div>
-                <p className={`${theme === 'dark' ? 'text-[#d1d5db]' : 'text-gray-700'}`}>{selectedTask.description || 'No description'}</p>
+                <p className={`text-[var(--text-secondary)]`}>{selectedTask.description || 'No description'}</p>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2`}>Status</label>
+                  <label className={`block text-sm font-medium text-[var(--text-primary)] mb-2`}>Status</label>
                   <select
                     value={selectedTask.status}
                     onChange={(e) => {
                       handleUpdateTask(selectedTask._id, { status: e.target.value });
                       setSelectedTask({ ...selectedTask, status: e.target.value });
                     }}
-                    className={`w-full px-4 py-2 ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'} border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} rounded ${theme === 'dark' ? 'text-white' : 'text-gray-900'} focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
+                    className={`w-full px-4 py-2 bg-[var(--bg-base)] border border-[var(--border-soft)] rounded text-[var(--text-primary)] focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
                   >
                     <option value="todo">To Do</option>
                     <option value="in_progress">In Progress</option>
@@ -872,7 +872,7 @@ const Kanban = () => {
                 </div>
 
                 <div>
-                  <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2`}>Priority</label>
+                  <label className={`block text-sm font-medium text-[var(--text-primary)] mb-2`}>Priority</label>
                   <div className="flex items-center gap-2">
                     {(() => {
                       const badge = getPriorityBadge(selectedTask.priority);
@@ -889,18 +889,18 @@ const Kanban = () => {
               <div className="space-y-3">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <p className={`text-sm ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`}>
+                    <p className={`text-sm text-[var(--text-muted)]`}>
                       <span className="font-medium">Created by:</span> {selectedTask.created_by?.full_name || 'Unknown'}
                     </p>
                     {selectedTask.team_id && (
-                      <p className={`text-sm ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`}>
+                      <p className={`text-sm text-[var(--text-muted)]`}>
                         <span className="font-medium">Team:</span> {selectedTask.team_id.name}
                       </p>
                     )}
                   </div>
                   <div>
                     {selectedTask.assigned_to && selectedTask.assigned_to.length > 0 && (
-                      <div className={`text-sm ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`}>
+                      <div className={`text-sm text-[var(--text-muted)]`}>
                         <span className="font-medium">Assigned to:</span>
                         <div className="mt-1 flex flex-wrap gap-1">
                           {selectedTask.assigned_to.map((user) => (
@@ -916,13 +916,13 @@ const Kanban = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <p className={`text-sm ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`}>
+                    <p className={`text-sm text-[var(--text-muted)]`}>
                       <span className="font-medium">Created:</span> {new Date(selectedTask.created_at).toLocaleString()}
                     </p>
                   </div>
                   <div>
                     {selectedTask.due_date && (
-                      <p className={`text-sm ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`}>
+                      <p className={`text-sm text-[var(--text-muted)]`}>
                         <span className="font-medium">Due:</span>
                         <span className={`font-medium ml-1 ${new Date(selectedTask.due_date) < new Date() ? 'text-red-400' : 'text-orange-400'}`}>
                           {new Date(selectedTask.due_date).toLocaleString()}
@@ -934,7 +934,7 @@ const Kanban = () => {
               </div>
 
               {canDeleteTask(selectedTask) && (
-                <div className={`pt-4 border-t ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'}`}>
+                <div className={`pt-4 border-t border-[var(--border-soft)]`}>
                   <button
                     onClick={() => {
                       handleDeleteTask(selectedTask._id);

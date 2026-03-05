@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { Calendar as BigCalendar, momentLocalizer } from 'react-big-calendar';
 import moment from 'moment';
 import { useAuth } from '../context/AuthContext';
@@ -143,16 +143,16 @@ const Calendar = () => {
   return (
     <ResponsivePageLayout title="Calendar" icon={CalendarIcon} noPadding>
         {/* Header Section */}
-        <header className={`border-b ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'} shrink-0`}>
+        <header className={`border-b border-[var(--border-soft)] bg-[var(--bg-base)] shrink-0`}>
           <div className="flex items-center justify-between px-6 py-4">
             <div>
-              <h2 className={`${theme === 'dark' ? 'text-white' : 'text-gray-900'} text-xl font-bold leading-tight`}>Calendar View</h2>
-              <p className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} text-xs mt-1`}>Visualize tasks by due date</p>
+              <h2 className={`text-[var(--text-primary)] text-xl font-bold leading-tight`}>Calendar View</h2>
+              <p className={`text-[var(--text-muted)] text-xs mt-1`}>Visualize tasks by due date</p>
             </div>
             <div className="flex gap-3">
               <button
                 onClick={() => setShowLegend(!showLegend)}
-                className={`flex items-center justify-center rounded h-9 px-3 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-white'} ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} ${theme === 'dark' ? 'hover:text-white' : 'hover:text-gray-900'} border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} ${theme === 'dark' ? 'hover:border-[#5a6472]' : 'hover:border-gray-300'} transition-colors`}
+                className={`flex items-center justify-center rounded h-9 px-3 bg-[var(--bg-surface)] text-[var(--text-muted)] hover:text-[var(--text-primary)] border border-[var(--border-soft)] hover:border-[var(--border-mid)] transition-colors`}
                 title="Toggle Legend"
               >
                 <Settings size={20} />
@@ -170,14 +170,14 @@ const Calendar = () => {
           {/* Filters Row */}
           <div className="flex items-center gap-4 px-6 pb-4 overflow-x-auto">
             <div className="flex items-center gap-2 min-w-fit">
-              <Filter size={16} className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`} />
-              <span className={`text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'} font-medium`}>Filters:</span>
+              <Filter size={16} className={`text-[var(--text-muted)]`} />
+              <span className={`text-sm text-[var(--text-primary)] font-medium`}>Filters:</span>
             </div>
 
             <select
               value={filters.status}
               onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-              className={`h-9 px-3 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-white'} border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} rounded text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'} focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
+              className={`h-9 px-3 bg-[var(--bg-surface)] border border-[var(--border-soft)] rounded text-sm text-[var(--text-primary)] focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
             >
               <option value="">All Statuses</option>
               <option value="todo">To Do</option>
@@ -189,7 +189,7 @@ const Calendar = () => {
             <select
               value={filters.priority}
               onChange={(e) => setFilters({ ...filters, priority: e.target.value })}
-              className={`h-9 px-3 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-white'} border ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} rounded text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'} focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
+              className={`h-9 px-3 bg-[var(--bg-surface)] border border-[var(--border-soft)] rounded text-sm text-[var(--text-primary)] focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
             >
               <option value="">All Priorities</option>
               <option value="low">Low</option>
@@ -203,14 +203,14 @@ const Calendar = () => {
               className={`h-9 px-4 rounded text-sm font-medium transition-colors ${
                 filters.showMyTasksOnly
                   ? 'bg-[#C4713A] text-white border-[#C4713A]'
-                  : `${theme === 'dark' ? 'bg-[#282f39]' : 'bg-white'} ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} ${theme === 'dark' ? 'border-[#3e454f]' : 'border-gray-200'} ${theme === 'dark' ? 'hover:text-white' : 'hover:text-gray-900'}`
+                  : `bg-[var(--bg-surface)] text-[var(--text-muted)] border-[var(--border-soft)] hover:text-[var(--text-primary)]`
               } border`}
             >
               {filters.showMyTasksOnly ? 'My Tasks Only' : 'All Tasks'}
             </button>
 
-            <div className={`ml-auto text-sm ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`}>
-              <span className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{events.length}</span> task{events.length !== 1 ? 's' : ''} with due dates
+            <div className={`ml-auto text-sm text-[var(--text-muted)]`}>
+              <span className={`font-medium text-[var(--text-primary)]`}>{events.length}</span> task{events.length !== 1 ? 's' : ''} with due dates
             </div>
           </div>
         </header>
@@ -218,56 +218,56 @@ const Calendar = () => {
         {/* Calendar Area */}
         <div className="flex-1 overflow-auto p-6">
           {showLegend && (
-            <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-4 mb-6`}>
+            <div className={`bg-[var(--bg-raised)] rounded border border-[var(--border-soft)] p-4 mb-6`}>
               <div className="flex items-center justify-between mb-3">
-                <h3 className={`text-sm font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} uppercase tracking-wider`}>Legend</h3>
+                <h3 className={`text-sm font-bold text-[var(--text-primary)] uppercase tracking-wider`}>Legend</h3>
                 <button
                   onClick={() => setShowLegend(false)}
-                  className={`${theme === 'dark' ? 'text-[#6b7280]' : 'text-gray-600'} ${theme === 'dark' ? 'hover:text-white' : 'hover:text-gray-900'}`}
+                  className={`text-[var(--text-muted)] hover:text-[var(--text-primary)]`}
                 >
                   <X size={18} />
                 </button>
               </div>
               <div className="grid grid-cols-2 gap-6">
                 <div>
-                  <p className={`text-[10px] font-bold ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} uppercase tracking-wider mb-2`}>Status (Background)</p>
+                  <p className={`text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2`}>Status (Background)</p>
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
                       <div className="w-4 h-4 bg-[#6b7280] rounded"></div>
-                      <span className={`text-sm ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`}>To Do</span>
+                      <span className={`text-sm text-[var(--text-muted)]`}>To Do</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="w-4 h-4 bg-[#C4713A] rounded"></div>
-                      <span className={`text-sm ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`}>In Progress</span>
+                      <span className={`text-sm text-[var(--text-muted)]`}>In Progress</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="w-4 h-4 bg-[#eab308] rounded"></div>
-                      <span className={`text-sm ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`}>Review</span>
+                      <span className={`text-sm text-[var(--text-muted)]`}>Review</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="w-4 h-4 bg-[#22c55e] rounded"></div>
-                      <span className={`text-sm ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`}>Done</span>
+                      <span className={`text-sm text-[var(--text-muted)]`}>Done</span>
                     </div>
                   </div>
                 </div>
                 <div>
-                  <p className={`text-[10px] font-bold ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} uppercase tracking-wider mb-2`}>Priority (Border)</p>
+                  <p className={`text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider mb-2`}>Priority (Border)</p>
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
-                      <div className={`w-4 h-4 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-gray-100'} rounded border-2 border-[#10b981]`}></div>
-                      <span className={`text-sm ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`}>Low</span>
+                      <div className={`w-4 h-4 bg-[var(--bg-surface)] rounded border-2 border-[#10b981]`}></div>
+                      <span className={`text-sm text-[var(--text-muted)]`}>Low</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className={`w-4 h-4 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-gray-100'} rounded border-2 border-[#f59e0b]`}></div>
-                      <span className={`text-sm ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`}>Medium</span>
+                      <div className={`w-4 h-4 bg-[var(--bg-surface)] rounded border-2 border-[#f59e0b]`}></div>
+                      <span className={`text-sm text-[var(--text-muted)]`}>Medium</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className={`w-4 h-4 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-gray-100'} rounded border-2 border-[#f97316]`}></div>
-                      <span className={`text-sm ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`}>High</span>
+                      <div className={`w-4 h-4 bg-[var(--bg-surface)] rounded border-2 border-[#f97316]`}></div>
+                      <span className={`text-sm text-[var(--text-muted)]`}>High</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className={`w-4 h-4 ${theme === 'dark' ? 'bg-[#282f39]' : 'bg-gray-100'} rounded border-2 border-[#dc2626]`}></div>
-                      <span className={`text-sm ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`}>Urgent</span>
+                      <div className={`w-4 h-4 bg-[var(--bg-surface)] rounded border-2 border-[#dc2626]`}></div>
+                      <span className={`text-sm text-[var(--text-muted)]`}>Urgent</span>
                     </div>
                   </div>
                 </div>
@@ -275,7 +275,7 @@ const Calendar = () => {
             </div>
           )}
 
-          <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} p-4 calendar-container`}>
+          <div className={`bg-[var(--bg-raised)] rounded border border-[var(--border-soft)] p-4 calendar-container`}>
             <BigCalendar
               localizer={localizer}
               events={events}
@@ -299,12 +299,12 @@ const Calendar = () => {
       {/* Task Detail Modal */}
       {showDetailModal && selectedTask && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-          <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded-lg p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto border ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'}`}>
+          <div className={`bg-[var(--bg-raised)] rounded-lg p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-[var(--border-soft)]`}>
             <div className="flex justify-between items-center mb-6">
-              <h2 className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{selectedTask.title}</h2>
+              <h2 className={`text-2xl font-bold text-[var(--text-primary)]`}>{selectedTask.title}</h2>
               <button
                 onClick={() => setShowDetailModal(false)}
-                className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} ${theme === 'dark' ? 'hover:text-white' : 'hover:text-gray-900'}`}
+                className={`text-[var(--text-muted)] hover:text-[var(--text-primary)]`}
               >
                 <X size={24} />
               </button>
@@ -312,7 +312,7 @@ const Calendar = () => {
 
             <div className="space-y-6">
               <div>
-                <p className={`${theme === 'dark' ? 'text-[#d1d5db]' : 'text-gray-700'}`}>{selectedTask.description || 'No description'}</p>
+                <p className={`text-[var(--text-secondary)]`}>{selectedTask.description || 'No description'}</p>
               </div>
 
               <div className="flex gap-3">
@@ -334,13 +334,13 @@ const Calendar = () => {
                 </span>
               </div>
 
-              <div className={`space-y-3 border-t ${theme === 'dark' ? 'border-[#282f39]' : 'border-gray-200'} pt-4`}>
+              <div className={`space-y-3 border-t border-[var(--border-soft)] pt-4`}>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className={`text-sm ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} mb-1`}>
+                    <p className={`text-sm text-[var(--text-muted)] mb-1`}>
                       <span className="font-medium">Due Date:</span>
                     </p>
-                    <p className={`text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'} flex items-center gap-2`}>
+                    <p className={`text-sm text-[var(--text-primary)] flex items-center gap-2`}>
                       <CalendarIcon size={14} />
                       {new Date(selectedTask.due_date).toLocaleDateString('en-US', {
                         weekday: 'short',
@@ -352,17 +352,17 @@ const Calendar = () => {
                   </div>
                   {selectedTask.created_by && (
                     <div>
-                      <p className={`text-sm ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} mb-1`}>
+                      <p className={`text-sm text-[var(--text-muted)] mb-1`}>
                         <span className="font-medium">Created by:</span>
                       </p>
-                      <p className={`text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{selectedTask.created_by.full_name || 'Unknown'}</p>
+                      <p className={`text-sm text-[var(--text-primary)]`}>{selectedTask.created_by.full_name || 'Unknown'}</p>
                     </div>
                   )}
                 </div>
 
                 {selectedTask.assigned_to && selectedTask.assigned_to.length > 0 && (
                   <div>
-                    <p className={`text-sm ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} mb-2`}>
+                    <p className={`text-sm text-[var(--text-muted)] mb-2`}>
                       <span className="font-medium">Assigned to:</span>
                     </p>
                     <div className="flex flex-wrap gap-2">
@@ -377,10 +377,10 @@ const Calendar = () => {
 
                 {selectedTask.team_id && (
                   <div>
-                    <p className={`text-sm ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} mb-1`}>
+                    <p className={`text-sm text-[var(--text-muted)] mb-1`}>
                       <span className="font-medium">Team:</span>
                     </p>
-                    <p className={`text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{selectedTask.team_id.name}</p>
+                    <p className={`text-sm text-[var(--text-primary)]`}>{selectedTask.team_id.name}</p>
                   </div>
                 )}
               </div>

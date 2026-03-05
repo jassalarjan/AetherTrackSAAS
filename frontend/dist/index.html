@@ -10,7 +10,7 @@
   <!-- PWA Meta Tags -->
   <meta name="description"
     content="A comprehensive, role-based task management system for teams. Manage tasks, collaborate, and boost productivity." />
-  <meta name="theme-color" content="#667eea" />
+  <meta name="theme-color" content="#C4713A" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -25,7 +25,7 @@
   <link rel="manifest" href="/manifest.json" />
 
   <!-- Microsoft -->
-  <meta name="msapplication-TileColor" content="#667eea" />
+  <meta name="msapplication-TileColor" content="#C4713A" />
   <meta name="msapplication-TileImage" content="/icons/pwa-192x192.png" />
   <meta name="msapplication-config" content="/browserconfig.xml" />
 
@@ -53,10 +53,10 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,100..900;1,9..144,100..900&family=Instrument+Sans:ital,wght@0,400..700;1,400..700&display=swap"
     rel="stylesheet">
-  <script type="module" crossorigin src="/assets/index-YEazOrzK.js"></script>
-  <link rel="modulepreload" crossorigin href="/assets/react-vendor-BylpMJQo.js">
-  <link rel="modulepreload" crossorigin href="/assets/chart-vendor-DEwDuVIv.js">
-  <link rel="stylesheet" crossorigin href="/assets/index-CZv-lJs1.css">
+  <script type="module" crossorigin src="/assets/index-CuU55Fmt.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/react-vendor-Dj1yLZYD.js">
+  <link rel="modulepreload" crossorigin href="/assets/chart-vendor-DbX0pE9l.js">
+  <link rel="stylesheet" crossorigin href="/assets/index-D445PqjF.css">
 <link rel="manifest" href="/manifest.webmanifest"></head>
 
 <body>
@@ -64,15 +64,25 @@
   <script>
     (function () {
       try {
-        var stored = localStorage.getItem('aethertrack-theme');
-        var isDark = stored === 'dark' ||
-          (!stored && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        var storedTheme = localStorage.getItem('theme');
+        var storedScheme = localStorage.getItem('colorScheme') || 'warm';
+        var isDark = storedTheme === 'dark' ||
+          (!storedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches);
         document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+        document.documentElement.setAttribute('data-scheme', storedScheme);
+        // Apply terracotta brand colour immediately to prevent colour flash
+        var warmBrand = storedScheme === 'warm' || storedScheme === 'orange'
+          ? '#C4713A'
+          : (storedScheme === 'blue' ? '#2563eb'
+            : storedScheme === 'purple' ? '#9333ea'
+              : storedScheme === 'green' ? '#16a34a'
+                : storedScheme === 'pink' ? '#db2777'
+                  : '#C4713A');
+        document.documentElement.style.setProperty('--brand', warmBrand);
+        document.documentElement.style.setProperty('--color-primary', warmBrand);
       } catch (e) { }
     })();
   </script>
-  <!-- Skip navigation -->
-  <a href="#main-content" class="skip-link">Skip to main content</a>
   <div id="root"></div>
 </body>
 

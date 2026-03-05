@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import { Mail, ArrowLeft, CheckCircle, Lock, Eye, EyeOff } from 'lucide-react';
@@ -115,30 +115,30 @@ const ForgotPassword = () => {
   };
 
   return (
-    <div className={`min-h-screen flex items-center justify-center p-4 ${theme === 'dark' ? 'bg-[#111418]' : 'bg-gray-50'}`}>
+    <div className={`min-h-screen flex items-center justify-center p-4 bg-[var(--bg-base)]`}>
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-3 mb-4">
             <img src="/logo.png" alt="AetherTrack" className="w-12 h-12" />
-            <h1 className={`text-3xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+            <h1 className={`text-3xl font-bold text-[var(--text-primary)]`}>
               AetherTrack
             </h1>
           </div>
         </div>
 
         {/* Card */}
-        <div className={`${theme === 'dark' ? 'bg-[#1c2027]' : 'bg-white'} rounded-lg shadow-xl p-8`}>
+        <div className={`bg-[var(--bg-raised)] rounded-lg shadow-xl p-8`}>
           {step === 1 && (
             <>
               <div className="text-center mb-6">
-                <div className={`inline-flex items-center justify-center w-16 h-16 rounded-full mb-4 ${theme === 'dark' ? 'bg-[#C4713A]/10' : 'bg-blue-50'}`}>
+                <div className={`inline-flex items-center justify-center w-16 h-16 rounded-full mb-4 bg-[var(--brand)]/10`}>
                   <Mail size={32} className="text-[#C4713A]" />
                 </div>
-                <h2 className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2`}>
+                <h2 className={`text-2xl font-bold text-[var(--text-primary)] mb-2`}>
                   Forgot Password?
                 </h2>
-                <p className={`text-sm ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`}>
+                <p className={`text-sm text-[var(--text-muted)]`}>
                   Enter your email address and we'll send you a reset code.
                 </p>
               </div>
@@ -151,7 +151,7 @@ const ForgotPassword = () => {
 
               <form onSubmit={handleEmailSubmit}>
                 <div className="mb-6">
-                  <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2`}>
+                  <label className={`block text-sm font-medium text-[var(--text-primary)] mb-2`}>
                     Email Address
                   </label>
                   <input
@@ -159,7 +159,7 @@ const ForgotPassword = () => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="Enter your email"
-                    className={`w-full p-3 ${theme === 'dark' ? 'bg-[#111418] border-[#282f39] text-white placeholder:text-[#58606e]' : 'bg-white border-gray-300 text-gray-900'} border rounded-lg focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
+                    className={`w-full p-3 bg-[var(--bg-base)] border-[var(--border-soft)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] border rounded-lg focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
                     required
                     autoFocus
                   />
@@ -177,7 +177,7 @@ const ForgotPassword = () => {
               <div className="mt-6 text-center">
                 <Link
                   to="/login"
-                  className={`inline-flex items-center gap-2 text-sm ${theme === 'dark' ? 'text-[#9da8b9] hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}
+                  className={`inline-flex items-center gap-2 text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors`}
                 >
                   <ArrowLeft size={16} />
                   Back to Login
@@ -189,13 +189,13 @@ const ForgotPassword = () => {
           {step === 2 && (
             <>
               <div className="text-center mb-6">
-                <div className={`inline-flex items-center justify-center w-16 h-16 rounded-full mb-4 ${theme === 'dark' ? 'bg-[#C4713A]/10' : 'bg-blue-50'}`}>
+                <div className={`inline-flex items-center justify-center w-16 h-16 rounded-full mb-4 bg-[var(--brand)]/10`}>
                   <Lock size={32} className="text-[#C4713A]" />
                 </div>
-                <h2 className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2`}>
+                <h2 className={`text-2xl font-bold text-[var(--text-primary)] mb-2`}>
                   Enter Reset Code
                 </h2>
-                <p className={`text-sm ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`}>
+                <p className={`text-sm text-[var(--text-muted)]`}>
                   We sent a 6-digit code to <span className="font-semibold">{email}</span>
                 </p>
               </div>
@@ -208,7 +208,7 @@ const ForgotPassword = () => {
 
               <form onSubmit={handleResetSubmit}>
                 <div className="mb-4">
-                  <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2`}>
+                  <label className={`block text-sm font-medium text-[var(--text-primary)] mb-2`}>
                     Reset Code
                   </label>
                   <input
@@ -216,7 +216,7 @@ const ForgotPassword = () => {
                     value={token}
                     onChange={(e) => setToken(e.target.value.replace(/\D/g, '').slice(0, 6))}
                     placeholder="Enter 6-digit code"
-                    className={`w-full p-3 text-center text-2xl tracking-widest font-mono ${theme === 'dark' ? 'bg-[#111418] border-[#282f39] text-white placeholder:text-[#58606e]' : 'bg-white border-gray-300 text-gray-900'} border rounded-lg focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
+                    className={`w-full p-3 text-center text-2xl tracking-widest font-mono bg-[var(--bg-base)] border-[var(--border-soft)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] border rounded-lg focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
                     required
                     maxLength={6}
                     autoFocus
@@ -224,7 +224,7 @@ const ForgotPassword = () => {
                 </div>
 
                 <div className="mb-4">
-                  <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2`}>
+                  <label className={`block text-sm font-medium text-[var(--text-primary)] mb-2`}>
                     New Password
                   </label>
                   <div className="relative">
@@ -233,13 +233,13 @@ const ForgotPassword = () => {
                       value={newPassword}
                       onChange={(e) => handlePasswordChange(e.target.value)}
                       placeholder="Enter new password"
-                      className={`w-full p-3 pr-10 ${theme === 'dark' ? 'bg-[#111418] border-[#282f39] text-white placeholder:text-[#58606e]' : 'bg-white border-gray-300 text-gray-900'} border rounded-lg focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
+                      className={`w-full p-3 pr-10 bg-[var(--bg-base)] border-[var(--border-soft)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] border rounded-lg focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
                       required
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className={`absolute right-3 top-1/2 -translate-y-1/2 ${theme === 'dark' ? 'text-[#9da8b9] hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}
+                      className={`absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-primary)]`}
                     >
                       {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                     </button>
@@ -277,7 +277,7 @@ const ForgotPassword = () => {
                 </div>
 
                 <div className="mb-6">
-                  <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2`}>
+                  <label className={`block text-sm font-medium text-[var(--text-primary)] mb-2`}>
                     Confirm Password
                   </label>
                   <div className="relative">
@@ -286,13 +286,13 @@ const ForgotPassword = () => {
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       placeholder="Confirm new password"
-                      className={`w-full p-3 pr-10 ${theme === 'dark' ? 'bg-[#111418] border-[#282f39] text-white placeholder:text-[#58606e]' : 'bg-white border-gray-300 text-gray-900'} border rounded-lg focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
+                      className={`w-full p-3 pr-10 bg-[var(--bg-base)] border-[var(--border-soft)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] border rounded-lg focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
                       required
                     />
                     <button
                       type="button"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className={`absolute right-3 top-1/2 -translate-y-1/2 ${theme === 'dark' ? 'text-[#9da8b9] hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}
+                      className={`absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-primary)]`}
                     >
                       {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                     </button>
@@ -311,7 +311,7 @@ const ForgotPassword = () => {
                   type="button"
                   onClick={handleResendCode}
                   disabled={loading}
-                  className={`w-full py-2 text-sm ${theme === 'dark' ? 'text-[#9da8b9] hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors disabled:opacity-50`}
+                  className={`w-full py-2 text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors disabled:opacity-50`}
                 >
                   Didn't receive code? Resend
                 </button>
@@ -320,7 +320,7 @@ const ForgotPassword = () => {
               <div className="mt-6 text-center">
                 <button
                   onClick={() => { setStep(1); setToken(''); setNewPassword(''); setConfirmPassword(''); setError(''); }}
-                  className={`inline-flex items-center gap-2 text-sm ${theme === 'dark' ? 'text-[#9da8b9] hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}
+                  className={`inline-flex items-center gap-2 text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors`}
                 >
                   <ArrowLeft size={16} />
                   Change Email
@@ -334,10 +334,10 @@ const ForgotPassword = () => {
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full mb-4 bg-green-500/10">
                 <CheckCircle size={32} className="text-green-500" />
               </div>
-              <h2 className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2`}>
+              <h2 className={`text-2xl font-bold text-[var(--text-primary)] mb-2`}>
                 Password Reset Successful!
               </h2>
-              <p className={`${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'} mb-6`}>
+              <p className={`text-[var(--text-muted)] mb-6`}>
                 Your password has been successfully reset. Redirecting to login...
               </p>
               <div className="flex items-center justify-center gap-2">
@@ -351,7 +351,7 @@ const ForgotPassword = () => {
 
         {/* Footer */}
         <div className="text-center mt-6">
-          <p className={`text-xs ${theme === 'dark' ? 'text-[#9da8b9]' : 'text-gray-600'}`}>
+          <p className={`text-xs text-[var(--text-muted)]`}>
             © 2026 AetherTrack. All rights reserved.
           </p>
         </div>

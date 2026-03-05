@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+﻿import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useConfirmModal } from '../hooks/useConfirmModal';
@@ -216,15 +216,15 @@ export default function CommunityUserManagement() {
 
   return (
     <ResponsivePageLayout title="Community" icon={UsersIcon}>
-      <div className={`flex-1 overflow-auto ${isDark ? 'bg-[#0f1419]' : 'bg-gray-50'}`}>
+      <div className={`flex-1 overflow-auto bg-[var(--bg-canvas)]`}>
         <div className="p-8">
           {/* Header */}
           <div className="mb-6">
             <div>
-              <h1 className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+              <h1 className={`text-3xl font-bold text-[var(--text-primary)]`}>
                 Community User Management
               </h1>
-                <p className={`mt-2 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                <p className={`mt-2 text-[var(--text-muted)]`}>
                   Manage users in your community workspace
                 </p>
               </div>
@@ -243,7 +243,7 @@ export default function CommunityUserManagement() {
           )}
 
           {/* Controls */}
-          <div className={`${isDark ? 'bg-[#111418]' : 'bg-white'} rounded-lg shadow-sm p-6 mb-6`}>
+          <div className={`bg-[var(--bg-base)] rounded-lg shadow-sm p-6 mb-6`}>
             <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
               <div className="flex flex-col sm:flex-row gap-4 flex-1">
                 {/* Search */}
@@ -309,42 +309,42 @@ export default function CommunityUserManagement() {
 
           {/* Users Stats */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-            <div className={`${isDark ? 'bg-[#111418]' : 'bg-white'} rounded-lg shadow-sm p-6`}>
+            <div className={`bg-[var(--bg-base)] rounded-lg shadow-sm p-6`}>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Total Users</p>
-                  <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{users.length}</p>
+                  <p className={`text-sm text-[var(--text-muted)]`}>Total Users</p>
+                  <p className={`text-2xl font-bold text-[var(--text-primary)]`}>{users.length}</p>
                 </div>
                 <UsersIcon className="text-blue-500" size={40} />
               </div>
             </div>
-            <div className={`${isDark ? 'bg-[#111418]' : 'bg-white'} rounded-lg shadow-sm p-6`}>
+            <div className={`bg-[var(--bg-base)] rounded-lg shadow-sm p-6`}>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Members</p>
-                  <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                  <p className={`text-sm text-[var(--text-muted)]`}>Members</p>
+                  <p className={`text-2xl font-bold text-[var(--text-primary)]`}>
                     {users.filter(u => u.role === 'member').length}
                   </p>
                 </div>
                 <User className="text-green-500" size={40} />
               </div>
             </div>
-            <div className={`${isDark ? 'bg-[#111418]' : 'bg-white'} rounded-lg shadow-sm p-6`}>
+            <div className={`bg-[var(--bg-base)] rounded-lg shadow-sm p-6`}>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Team Leads</p>
-                  <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                  <p className={`text-sm text-[var(--text-muted)]`}>Team Leads</p>
+                  <p className={`text-2xl font-bold text-[var(--text-primary)]`}>
                     {users.filter(u => u.role === 'team_lead').length}
                   </p>
                 </div>
                 <User className="text-blue-500" size={40} />
               </div>
             </div>
-            <div className={`${isDark ? 'bg-[#111418]' : 'bg-white'} rounded-lg shadow-sm p-6`}>
+            <div className={`bg-[var(--bg-base)] rounded-lg shadow-sm p-6`}>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Filtered</p>
-                  <p className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-gray-900'}`}>{filteredUsers.length}</p>
+                  <p className={`text-sm text-[var(--text-muted)]`}>Filtered</p>
+                  <p className={`text-2xl font-bold text-[var(--text-primary)]`}>{filteredUsers.length}</p>
                 </div>
                 <Search className="text-purple-500" size={40} />
               </div>
@@ -352,10 +352,10 @@ export default function CommunityUserManagement() {
           </div>
 
           {/* Users Table */}
-          <div className={`${isDark ? 'bg-[#111418]' : 'bg-white'} rounded-lg shadow-sm overflow-hidden`}>
+          <div className={`bg-[var(--bg-base)] rounded-lg shadow-sm overflow-hidden`}>
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className={isDark ? 'bg-[#1a1f2e]' : 'bg-gray-50'}>
+                <thead className="bg-[var(--bg-sunken)]">
                   <tr>
                     <th className={`px-6 py-3 text-left text-xs font-medium ${isDark ? 'text-gray-400' : 'text-gray-500'} uppercase tracking-wider`}>
                       User
@@ -379,15 +379,15 @@ export default function CommunityUserManagement() {
                     <tr>
                       <td colSpan="5" className="px-6 py-8 text-center">
                         <UsersIcon className={`mx-auto ${isDark ? 'text-gray-600' : 'text-gray-400'}`} size={48} />
-                        <p className={`mt-2 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                        <p className={`mt-2 text-[var(--text-muted)]`}>
                           No users found
                         </p>
                       </td>
                     </tr>
                   ) : (
                     filteredUsers.map((usr) => (
-                      <tr key={usr._id} className={isDark ? 'hover:bg-[#1a1f2e]' : 'hover:bg-gray-50'}>
-                        <td className={`px-6 py-4 whitespace-nowrap ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                      <tr key={usr._id} className="hover:bg-[var(--bg-surface)]">
+                        <td className={`px-6 py-4 whitespace-nowrap text-[var(--text-primary)]`}>
                           <div className="flex items-center">
                             <div className="h-10 w-10 flex-shrink-0">
                               <div className={`h-10 w-10 rounded-full ${getRoleBadgeColor(usr.role)} flex items-center justify-center text-white font-semibold`}>
@@ -417,14 +417,14 @@ export default function CommunityUserManagement() {
                           <div className="flex items-center justify-end gap-2">
                             <button
                               onClick={() => openEditModal(usr)}
-                              className={`p-2 rounded ${isDark ? 'hover:bg-[#1a1f2e] text-blue-400' : 'hover:bg-gray-100 text-blue-600'} transition-colors`}
+                              className={`p-2 rounded hover:bg-[var(--bg-sunken)] text-blue-500 transition-colors`}
                               title="Edit User"
                             >
                               <Edit2 size={18} />
                             </button>
                             <button
                               onClick={() => handleResetPassword(usr._id, usr.email)}
-                              className={`p-2 rounded ${isDark ? 'hover:bg-[#1a1f2e] text-yellow-400' : 'hover:bg-gray-100 text-yellow-600'} transition-colors`}
+                              className={`p-2 rounded hover:bg-[var(--bg-sunken)] text-yellow-500 transition-colors`}
                               title="Reset Password"
                             >
                               <Key size={18} />
@@ -432,7 +432,7 @@ export default function CommunityUserManagement() {
                             {usr._id !== user.id && (
                               <button
                                 onClick={() => handleDelete(usr._id, usr.email)}
-                                className={`p-2 rounded ${isDark ? 'hover:bg-[#1a1f2e] text-red-400' : 'hover:bg-gray-100 text-red-600'} transition-colors`}
+                                className={`p-2 rounded hover:bg-[var(--bg-sunken)] text-red-500 transition-colors`}
                                 title="Delete User"
                               >
                                 <Trash2 size={18} />
@@ -453,9 +453,9 @@ export default function CommunityUserManagement() {
       {/* Create/Edit User Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className={`${isDark ? 'bg-[#111418]' : 'bg-white'} rounded-lg shadow-xl max-w-md w-full`}>
+          <div className={`bg-[var(--bg-base)] rounded-lg shadow-xl max-w-md w-full`}>
             <div className={`flex items-center justify-between p-6 border-b ${isDark ? 'border-gray-700' : 'border-gray-200'}`}>
-              <h3 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
+              <h3 className={`text-xl font-semibold text-[var(--text-primary)]`}>
                 {modalMode === 'create' ? 'Add New User' : 'Edit User'}
               </h3>
               <button

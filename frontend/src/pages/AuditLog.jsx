@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useSidebar } from '../context/SidebarContext';
@@ -166,7 +166,7 @@ export default function AuditLog() {
     return (
       <ResponsivePageLayout>
         <div className={`flex items-center justify-center h-64 ${
-          isDark ? 'text-[#9da8b9]' : 'text-gray-500'
+          'text-[var(--text-muted)]'
         }`}>
           <div className="text-center">
             <AlertCircle className="w-12 h-12 mx-auto mb-4 text-yellow-500" />
@@ -187,7 +187,7 @@ export default function AuditLog() {
             <button
               onClick={toggleMobileSidebar}
               className={`lg:hidden p-2 rounded-lg ${
-                isDark ? 'hover:bg-[#282f39]' : 'hover:bg-gray-100'
+                'hover:bg-[var(--bg-surface)]'
               }`}
             >
               <FileText className="w-5 h-5" />
@@ -199,7 +199,7 @@ export default function AuditLog() {
                 Audit Log
               </h1>
               <p className={`text-sm ${
-                isDark ? 'text-[#9da8b9]' : 'text-gray-500'
+                'text-[var(--text-muted)]'
               }`}>
                 View attendance activity and changes
               </p>
@@ -253,7 +253,7 @@ export default function AuditLog() {
         {/* Filters Panel */}
         {showFilters && (
           <div className={`mb-4 p-4 rounded-lg border ${
-            isDark ? 'bg-[#1c2027] border-[#333a47]' : 'bg-white border-gray-200'
+            'bg-[var(--bg-raised)] border-[var(--border-soft)]'
           }`}>
             <div className="flex items-center justify-between mb-4">
               <h3 className={`font-medium ${
@@ -274,7 +274,7 @@ export default function AuditLog() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
               <div>
                 <label className={`block text-sm mb-1 ${
-                  isDark ? 'text-[#9da8b9]' : 'text-gray-600'
+                  'text-[var(--text-muted)]'
                 }`}>
                   Start Date
                 </label>
@@ -292,7 +292,7 @@ export default function AuditLog() {
 
               <div>
                 <label className={`block text-sm mb-1 ${
-                  isDark ? 'text-[#9da8b9]' : 'text-gray-600'
+                  'text-[var(--text-muted)]'
                 }`}>
                   End Date
                 </label>
@@ -310,7 +310,7 @@ export default function AuditLog() {
 
               <div>
                 <label className={`block text-sm mb-1 ${
-                  isDark ? 'text-[#9da8b9]' : 'text-gray-600'
+                  'text-[var(--text-muted)]'
                 }`}>
                   User ID
                 </label>
@@ -329,7 +329,7 @@ export default function AuditLog() {
 
               <div>
                 <label className={`block text-sm mb-1 ${
-                  isDark ? 'text-[#9da8b9]' : 'text-gray-600'
+                  'text-[var(--text-muted)]'
                 }`}>
                   Action Type
                 </label>
@@ -352,7 +352,7 @@ export default function AuditLog() {
 
               <div>
                 <label className={`block text-sm mb-1 ${
-                  isDark ? 'text-[#9da8b9]' : 'text-gray-600'
+                  'text-[var(--text-muted)]'
                 }`}>
                   Attendance ID
                 </label>
@@ -374,7 +374,7 @@ export default function AuditLog() {
 
         {/* Results Count */}
         <div className={`mb-4 text-sm ${
-          isDark ? 'text-[#9da8b9]' : 'text-gray-500'
+          'text-[var(--text-muted)]'
         }`}>
           Showing {logs.length} of {total} results
           {page > 1 && ` (Page ${page} of ${totalPages})`}
@@ -382,44 +382,42 @@ export default function AuditLog() {
 
         {/* Table */}
         <div className={`rounded-lg border overflow-hidden ${
-          isDark ? 'border-[#333a47]' : 'border-gray-200'
+          'border-[var(--border-soft)]'
         }`}>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className={`${
-                isDark ? 'bg-[#282f39]' : 'bg-gray-50'
+                'bg-[var(--bg-surface)]'
               }`}>
                 <tr>
                   <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-                    isDark ? 'text-[#9da8b9]' : 'text-gray-500'
+                    'text-[var(--text-muted)]'
                   }`}>
                     Date & Time
                   </th>
                   <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-                    isDark ? 'text-[#9da8b9]' : 'text-gray-500'
+                    'text-[var(--text-muted)]'
                   }`}>
                     User
                   </th>
                   <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-                    isDark ? 'text-[#9da8b9]' : 'text-gray-500'
+                    'text-[var(--text-muted)]'
                   }`}>
                     Action
                   </th>
                   <th className={`px-4 py-3 text-left text-xs font-medium uppercase tracking-wider ${
-                    isDark ? 'text-[#9da8b9]' : 'text-gray-500'
+                    'text-[var(--text-muted)]'
                   }`}>
                     Attendance ID
                   </th>
                   <th className={`px-4 py-3 text-right text-xs font-medium uppercase tracking-wider ${
-                    isDark ? 'text-[#9da8b9]' : 'text-gray-500'
+                    'text-[var(--text-muted)]'
                   }`}>
                     Details
                   </th>
                 </tr>
               </thead>
-              <tbody className={`divide-y ${
-                isDark ? 'divide-[#333a47]' : 'divide-gray-200'
-              }`}>
+              <tbody className="divide-y divide-[var(--border-soft)]">
                 {loading ? (
                   <tr>
                     <td colSpan={5} className="px-4 py-8 text-center">
@@ -429,7 +427,7 @@ export default function AuditLog() {
                 ) : logs.length === 0 ? (
                   <tr>
                     <td colSpan={5} className={`px-4 py-8 text-center ${
-                      isDark ? 'text-[#9da8b9]' : 'text-gray-500'
+                      'text-[var(--text-muted)]'
                     }`}>
                       No audit logs found
                     </td>
@@ -439,9 +437,7 @@ export default function AuditLog() {
                     <>
                       <tr 
                         key={log._id || log.id || index}
-                        className={`${
-                          isDark ? 'hover:bg-[#282f39]' : 'hover:bg-gray-50'
-                        } cursor-pointer`}
+                        className={`hover:bg-[var(--bg-surface)] cursor-pointer`}
                         onClick={() => setExpandedRow(expandedRow === index ? null : index)}
                       >
                         <td className={`px-4 py-3 text-sm ${
@@ -454,7 +450,7 @@ export default function AuditLog() {
                         }`}>
                           <div className="flex items-center gap-2">
                             <User className={`w-4 h-4 ${
-                              isDark ? 'text-[#9da8b9]' : 'text-gray-400'
+                              'text-[var(--text-muted)]'
                             }`} />
                             {log.userId?.name || log.user?.name || 'System'}
                           </div>
@@ -467,7 +463,7 @@ export default function AuditLog() {
                         }`}>
                           {log.attendanceId ? (
                             <span className={`font-mono text-xs px-2 py-1 rounded ${
-                              isDark ? 'bg-[#282f39]' : 'bg-gray-100'
+                              'bg-[var(--bg-surface)]'
                             }`}>
                               {typeof log.attendanceId === 'object' 
                                 ? log.attendanceId._id?.slice(-8) 
@@ -478,11 +474,11 @@ export default function AuditLog() {
                         <td className="px-4 py-3 text-right">
                           {expandedRow === index ? (
                             <ChevronUp className={`w-4 h-4 inline ${
-                              isDark ? 'text-[#9da8b9]' : 'text-gray-400'
+                              'text-[var(--text-muted)]'
                             }`} />
                           ) : (
                             <ChevronDown className={`w-4 h-4 inline ${
-                              isDark ? 'text-[#9da8b9]' : 'text-gray-400'
+                              'text-[var(--text-muted)]'
                             }`} />
                           )}
                         </td>
@@ -490,7 +486,7 @@ export default function AuditLog() {
                       {expandedRow === index && (
                         <tr>
                           <td colSpan={5} className={`px-4 py-4 ${
-                            isDark ? 'bg-[#282f39]' : 'bg-gray-50'
+                            'bg-[var(--bg-surface)]'
                           }`}>
                             <div className="grid md:grid-cols-2 gap-4">
                               <div>
@@ -500,7 +496,7 @@ export default function AuditLog() {
                                   Event Details
                                 </h4>
                                 <div className={`space-y-2 text-sm ${
-                                  isDark ? 'text-[#9da8b9]' : 'text-gray-600'
+                                  'text-[var(--text-muted)]'
                                 }`}>
                                   <p><span className="font-medium">Event ID:</span> {log._id || log.id}</p>
                                   <p><span className="font-medium">IP Address:</span> {log.ip || log.ipAddress || '-'}</p>
@@ -514,7 +510,7 @@ export default function AuditLog() {
                                   Changes / Notes
                                 </h4>
                                 <pre className={`text-xs p-3 rounded overflow-auto max-h-32 ${
-                                  isDark ? 'bg-[#1c2027]' : 'bg-white'
+                                  'bg-[var(--bg-raised)]'
                                 }`}>
                                   {JSON.stringify(log.details || log.changes || {}, null, 2)}
                                 </pre>
@@ -546,7 +542,7 @@ export default function AuditLog() {
               Previous
             </button>
             <span className={`text-sm ${
-              isDark ? 'text-[#9da8b9]' : 'text-gray-600'
+              'text-[var(--text-muted)]'
             }`}>
               Page {page} of {totalPages}
             </span>

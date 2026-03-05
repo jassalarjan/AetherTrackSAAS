@@ -1,4 +1,4 @@
-import { SectionLoader } from '../components/Spinner';
+﻿import { SectionLoader } from '../components/Spinner';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useSidebar } from '../context/SidebarContext';
@@ -222,7 +222,7 @@ export default function GeofenceManagement() {
     return (
       <ResponsivePageLayout>
         <div className={`flex items-center justify-center h-64 ${
-          isDark ? 'text-[#9da8b9]' : 'text-gray-500'
+          'text-[var(--text-muted)]'
         }`}>
           <div className="text-center">
             <AlertCircle className="w-12 h-12 mx-auto mb-4 text-yellow-500" />
@@ -243,7 +243,7 @@ export default function GeofenceManagement() {
             <button
               onClick={toggleMobileSidebar}
               className={`lg:hidden p-2 rounded-lg ${
-                isDark ? 'hover:bg-[#282f39]' : 'hover:bg-gray-100'
+                'hover:bg-[var(--bg-surface)]'
               }`}
             >
               <MapPin className="w-5 h-5" />
@@ -255,7 +255,7 @@ export default function GeofenceManagement() {
                 Geofence Management
               </h1>
               <p className={`text-sm ${
-                isDark ? 'text-[#9da8b9]' : 'text-gray-500'
+                'text-[var(--text-muted)]'
               }`}>
                 Manage locations for attendance verification
               </p>
@@ -265,7 +265,7 @@ export default function GeofenceManagement() {
           <div className="flex flex-wrap items-center gap-2">
             {/* View Toggle */}
             <div className={`flex rounded-lg p-1 ${
-              isDark ? 'bg-[#282f39]' : 'bg-gray-100'
+              'bg-[var(--bg-surface)]'
             }`}>
               <button
                 onClick={() => setViewMode('list')}
@@ -340,7 +340,7 @@ export default function GeofenceManagement() {
               ? 'bg-[#1c2027] border-[#333a47]' 
               : 'bg-white border-gray-200'
           }`}>
-            <Search className={`w-4 h-4 ${isDark ? 'text-[#9da8b9]' : 'text-gray-400'}`} />
+            <Search className={`w-4 h-4 text-[var(--text-muted)]`} />
             <input
               type="text"
               placeholder="Search geofences..."
@@ -364,7 +364,7 @@ export default function GeofenceManagement() {
           </div>
         ) : viewMode === 'map' ? (
           <div className={`rounded-lg border overflow-hidden ${
-            isDark ? 'border-[#333a47]' : 'border-gray-200'
+            'border-[var(--border-soft)]'
           }`}>
             <MapView
               geofences={filteredGeofences}
@@ -379,7 +379,7 @@ export default function GeofenceManagement() {
             {activeGeofences.length > 0 && (
               <div>
                 <h3 className={`text-sm font-medium mb-2 ${
-                  isDark ? 'text-[#9da8b9]' : 'text-gray-500'
+                  'text-[var(--text-muted)]'
                 }`}>
                   Active Geofences ({activeGeofences.length})
                 </h3>
@@ -405,7 +405,7 @@ export default function GeofenceManagement() {
             {inactiveGeofences.length > 0 && (
               <div>
                 <h3 className={`text-sm font-medium mb-2 ${
-                  isDark ? 'text-[#9da8b9]' : 'text-gray-500'
+                  'text-[var(--text-muted)]'
                 }`}>
                   Inactive Geofences ({inactiveGeofences.length})
                 </h3>
@@ -429,7 +429,7 @@ export default function GeofenceManagement() {
 
             {filteredGeofences.length === 0 && (
               <div className={`text-center py-12 ${
-                isDark ? 'text-[#9da8b9]' : 'text-gray-500'
+                'text-[var(--text-muted)]'
               }`}>
                 <MapPin className="w-12 h-12 mx-auto mb-4 opacity-50" />
                 <p className="text-lg font-medium">No geofences found</p>
@@ -443,10 +443,10 @@ export default function GeofenceManagement() {
         {showForm && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
             <div className={`relative w-full max-w-lg rounded-lg shadow-xl ${
-              isDark ? 'bg-[#1c2027]' : 'bg-white'
+              'bg-[var(--bg-raised)]'
             }`}>
               <div className="flex items-center justify-between p-4 border-b ${
-                isDark ? 'border-[#333a47]' : 'border-gray-200'
+                'border-[var(--border-soft)]'
               }">
                 <h2 className={`text-lg font-semibold ${
                   isDark ? 'text-white' : 'text-gray-900'
@@ -456,7 +456,7 @@ export default function GeofenceManagement() {
                 <button
                   onClick={resetForm}
                   className={`p-1 rounded ${
-                    isDark ? 'hover:bg-[#282f39]' : 'hover:bg-gray-100'
+                    'hover:bg-[var(--bg-surface)]'
                   }`}
                 >
                   <X className="w-5 h-5" />
@@ -566,7 +566,7 @@ export default function GeofenceManagement() {
                     className="w-full"
                   />
                   <div className={`flex justify-between text-xs ${
-                    isDark ? 'text-[#9da8b9]' : 'text-gray-500'
+                    'text-[var(--text-muted)]'
                   }`}>
                     <span>10m</span>
                     <span>1000m</span>
@@ -654,7 +654,7 @@ function GeofenceCard({ geofence, isDark, onEdit, onDelete, onToggle }) {
           </h3>
           {geofence.description && (
             <p className={`text-sm ${
-              isDark ? 'text-[#9da8b9]' : 'text-gray-500'
+              'text-[var(--text-muted)]'
             }`}>
               {geofence.description}
             </p>
@@ -679,7 +679,7 @@ function GeofenceCard({ geofence, isDark, onEdit, onDelete, onToggle }) {
       </div>
 
       <div className={`text-sm space-y-1 mb-3 ${
-        isDark ? 'text-[#9da8b9]' : 'text-gray-500'
+        'text-[var(--text-muted)]'
       }`}>
         <p>📍 {geofence.latitude?.toFixed(6)}, {geofence.longitude?.toFixed(6)}</p>
         <p>⭕ Radius: {geofence.radiusMeters || geofence.radius || 100}m</p>
@@ -702,7 +702,7 @@ function GeofenceCard({ geofence, isDark, onEdit, onDelete, onToggle }) {
         <button
           onClick={() => setShowMap(!showMap)}
           className={`flex items-center gap-1 px-2 py-1 text-xs rounded ${
-            isDark ? 'hover:bg-[#282f39]' : 'hover:bg-gray-100'
+            'hover:bg-[var(--bg-surface)]'
           }`}
         >
           <Map className="w-3 h-3" />
@@ -712,7 +712,7 @@ function GeofenceCard({ geofence, isDark, onEdit, onDelete, onToggle }) {
         <button
           onClick={() => onEdit(geofence)}
           className={`flex items-center gap-1 px-2 py-1 text-xs rounded ${
-            isDark ? 'hover:bg-[#282f39]' : 'hover:bg-gray-100'
+            'hover:bg-[var(--bg-surface)]'
           }`}
         >
           <Edit2 className="w-3 h-3" />
