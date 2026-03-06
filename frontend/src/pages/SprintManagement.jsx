@@ -147,7 +147,7 @@ const SprintManagement = () => {
   return (
     <ResponsivePageLayout title="Sprint Management" icon={Target} noPadding>
         {/* Top Navigation */}
-        <header className="h-16 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1a2234] flex items-center justify-between px-8 shrink-0">
+        <header className="h-14 sm:h-16 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1a2234] flex items-center justify-between px-4 sm:px-8 shrink-0">
           <div className="flex items-center gap-8">
             <h2 className="text-xl font-bold tracking-tight">Sprint Management</h2>
             <nav className="hidden md:flex items-center gap-6">
@@ -192,7 +192,7 @@ const SprintManagement = () => {
         </div>
 
         {/* Main Content Area */}
-        <div className="flex-1 flex overflow-hidden">
+        <div className="flex-1 flex flex-col lg:flex-row overflow-auto lg:overflow-hidden">
           {/* Left Pane: Backlog/Tasks */}
           <section className="flex-1 overflow-y-auto p-6 border-r border-gray-200 dark:border-gray-800">
             <div className="max-w-4xl mx-auto">
@@ -226,7 +226,8 @@ const SprintManagement = () => {
                     </button>
                   </div>
                 ) : (
-                  <table className="w-full text-left text-sm">
+                  <div className="overflow-x-auto">
+                  <table className="w-full text-left text-sm min-w-[560px]">
                     <thead className="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-800">
                       <tr>
                         <th className="px-6 py-4 font-semibold text-gray-600 dark:text-gray-400">Task Title</th>
@@ -272,13 +273,14 @@ const SprintManagement = () => {
                     ))}
                   </tbody>
                 </table>
+                </div>
                 )}
               </div>
             </div>
           </section>
 
           {/* Right Pane: Analytics & Info */}
-          <aside className="w-[420px] overflow-y-auto p-6 bg-gray-50 dark:bg-[#0d1117] flex flex-col gap-6">
+          <aside className="w-full lg:w-[380px] xl:w-[420px] shrink-0 overflow-y-auto p-4 lg:p-6 bg-gray-50 dark:bg-[#0d1117] flex flex-col gap-4 lg:gap-6 border-t lg:border-t-0 lg:border-l border-gray-200 dark:border-gray-800">
             {/* Burndown Chart */}
             <div className="bg-white dark:bg-[#1a2234] rounded-xl border border-gray-200 dark:border-gray-800 p-5 shadow-sm">
               <div className="flex items-center justify-between mb-6">

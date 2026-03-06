@@ -1,17 +1,123 @@
-/**
- * GlobalSidebar — dual-pane nav used across the whole app.
- * Icon rail (52 px) + Label panel (196 px).
- * CSS lives in aethertrack-reference.css (.sidebar, .nav-rail, .nav-panel …).
- * Sections auto-detect from current URL; role-based links for HR / System.
+﻿/**
+ * GlobalSidebar - intelligent dual-pane navigation.
+ * Hovering any left-rail icon immediately updates the right panel with that
+ * section's links and contextual content. Clicking commits navigation.
+ * z-index: 9999 - always renders above page content.
+ * Mobile: renders as a slide-in drawer overlay activated by the hamburger menu.
  */
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useSidebar } from '../context/SidebarContext';
 import '../aethertrack-reference.css';
 
-/* ─── Section detection ───────────────────────────────────────────────────── */
+/* --- Section definitions -------------------------------------------------- */
+const SECTION_META = {
+  overview: {
+    icon: String.fromCodePoint(0x2B21),  // hexagonal
+    label: 'Overview',
+    tagline: 'Your workspace at a glance',
+    accent: 'var(--sidebar-accent)',
+    groups: [
+      {
+        label: 'Workspace',
+        items: [
+          { icon: String.fromCodePoint(0x2B21),  label: 'Dashboard',    path: '/dashboard',           desc: 'Activity summary'     },
+          { icon: String.fromCodePoint(0x2726),  label: 'Tasks',        path: '/tasks',               desc: 'All work items'       },
+          { icon: String.fromCodePoint(0x2594),  label: 'Kanban',       path: '/kanban',              desc: 'Visual board'         },
+          { icon: String.fromCodePoint(0x25AB),  label: 'Calendar',     path: '/calendar',            desc: 'Scheduled events'     },
+        ],
+      },
+      {
+        label: 'Personal',
+        items: [
+          { icon: String.fromCodePoint(0x2299),  label: 'Check In',     path: '/self-attendance',     desc: 'Log attendance'       },
+          { icon: String.fromCodePoint(0x25CC),  label: 'Notifications',path: '/notifications',       desc: 'Alerts & updates'     },
+        ],
+      },
+    ],
+  },
+
+  projects: {
+    icon: String.fromCodePoint(0x25C8),  // dotted diamond
+    label: 'Projects',
+    tagline: 'Plans & deliverables',
+    accent: '#5A8ACC',
+    groups: [
+      {
+        label: 'Views',
+        items: [
+          { icon: String.fromCodePoint(0x25C8),  label: 'All Projects', path: '/projects',            desc: 'Browse all projects'  },
+          { icon: String.fromCodePoint(0x25C7),  label: 'My Projects',  path: '/my-projects',         desc: 'Assigned to you'      },
+          { icon: String.fromCodePoint(0x2261),  label: 'Gantt',        path: '/projects/gantt',      desc: 'Timeline view'        },
+          { icon: String.fromCodePoint(0x21BB),  label: 'Sprints',      path: '/sprints',             desc: 'Iteration planning'   },
+        ],
+      },
+      {
+        label: 'Insights',
+        items: [
+          { icon: String.fromCodePoint(0x25B3),  label: 'Resources',    path: '/resources',           desc: 'Workload & capacity', hrOnly: true },
+          { icon: String.fromCodePoint(0x223E),  label: 'Analytics',    path: '/analytics',           desc: 'Charts & reports'     },
+        ],
+      },
+    ],
+  },
+
+  hr: {
+    icon: String.fromCodePoint(0x25C9),  // fisheye
+    label: 'People',
+    tagline: 'HR & workforce ops',
+    accent: '#5A8A5A',
+    groups: [
+      {
+        label: 'HR Operations',
+        items: [
+          { icon: String.fromCodePoint(0x229F),  label: 'HR Dashboard', path: '/hr/dashboard',        desc: 'People overview',     adminOnly: true },
+          { icon: String.fromCodePoint(0x25D1),  label: 'Attendance',   path: '/hr/attendance',       desc: 'Track & verify'       },
+          { icon: String.fromCodePoint(0x25CA),  label: 'Leaves',       path: '/hr/leaves',           desc: 'Requests & approvals' },
+          { icon: String.fromCodePoint(0x25A3),  label: 'HR Calendar',  path: '/hr/calendar',         desc: 'Events & meetings'    },
+          { icon: String.fromCodePoint(0x21C4),  label: 'Reallocation', path: '/hr/reallocation',     desc: 'Task handoffs'        },
+          { icon: String.fromCodePoint(0x2709),  label: 'Email Center', path: '/hr/email-center',     desc: 'HR communications',   adminOnly: true },
+        ],
+      },
+      {
+        label: 'Organisation',
+        items: [
+          { icon: String.fromCodePoint(0x229E),  label: 'Teams',        path: '/teams',               desc: 'Manage groups'        },
+          { icon: String.fromCodePoint(0x2295),  label: 'Users',        path: '/users',               desc: 'Accounts & roles',    adminOnly: true },
+        ],
+      },
+    ],
+  },
+
+  system: {
+    icon: String.fromCodePoint(0x2699),  // gear
+    label: 'System',
+    tagline: 'Admin & configuration',
+    accent: '#8A6ACC',
+    groups: [
+      {
+        label: 'Configuration',
+        items: [
+          { icon: String.fromCodePoint(0x2699),  label: 'Settings',     path: '/settings',            desc: 'App preferences'      },
+          { icon: String.fromCodePoint(0x25E7),  label: 'Audit Log',    path: '/audit-log',           desc: 'Action history'       },
+          { icon: String.fromCodePoint(0x25D4),  label: 'Changelog',    path: '/changelog',           desc: 'Release notes'        },
+        ],
+      },
+      {
+        label: 'Security',
+        items: [
+          { icon: String.fromCodePoint(0x229B),  label: 'Geofencing',   path: '/geofence-management', desc: 'Location rules',      adminOnly: true },
+          { icon: String.fromCodePoint(0x25CE),  label: 'Verification', path: '/verification-settings',desc: 'Auth & 2FA',         adminOnly: true },
+          { icon: String.fromCodePoint(0x25A7),  label: 'Features',     path: '/feature-matrix',      desc: 'Module access',       adminOnly: true },
+        ],
+      },
+    ],
+  },
+};
+
+/* --- Section detection ---------------------------------------------------- */
 function detectSection(pathname) {
   if (
     pathname.startsWith('/hr') ||
@@ -20,7 +126,6 @@ function detectSection(pathname) {
     pathname === '/geofence-management' ||
     pathname === '/verification-settings'
   ) return 'hr';
-
   if (
     pathname.startsWith('/projects') ||
     pathname.startsWith('/my-projects') ||
@@ -28,368 +133,212 @@ function detectSection(pathname) {
     pathname.startsWith('/resources') ||
     pathname.startsWith('/analytics')
   ) return 'projects';
-
   if (
     pathname.startsWith('/settings') ||
     pathname.startsWith('/audit-log') ||
     pathname.startsWith('/changelog') ||
-    pathname.startsWith('/community-users') ||
     pathname.startsWith('/feature-matrix')
   ) return 'system';
-
   return 'overview';
 }
 
-/* ─── Component ───────────────────────────────────────────────────────────── */
+/* --- Component ------------------------------------------------------------ */
 const GlobalSidebar = () => {
   const navigate  = useNavigate();
   const location  = useLocation();
   const { user }  = useAuth();
   const { theme, toggleTheme } = useTheme();
-  const { isCollapsed, toggleCollapse } = useSidebar();
+  const { isCollapsed, toggleCollapse, isMobile, isMobileOpen, closeMobileSidebar } = useSidebar();
 
-  const [activeSection, setActiveSection] = useState(() => detectSection(location.pathname));
-  // Hover state: when collapsed, hovering over the rail temporarily reveals the label panel
-  const [isHovered, setIsHovered] = useState(false);
+  const [activeSection, setActiveSection]   = useState(() => detectSection(location.pathname));
+  const [hoveredSection, setHoveredSection] = useState(null);
+  const [sidebarHovered, setSidebarHovered] = useState(false);
+  const [panelKey, setPanelKey]             = useState(0);
+  const [prevPanel, setPrevPanel]           = useState(null);
 
-  /* Sync active section when navigating */
+  const panelSection = hoveredSection || activeSection;
+
+  useEffect(() => {
+    if (panelSection !== prevPanel) {
+      setPanelKey(k => k + 1);
+      setPrevPanel(panelSection);
+    }
+  }, [panelSection, prevPanel]);
+
   useEffect(() => {
     setActiveSection(detectSection(location.pathname));
   }, [location.pathname]);
 
-  /* Derived user info */
   const role         = user?.role || 'member';
   const displayName  = user?.full_name || user?.name || 'User';
-  const userInitials = displayName
-    .split(' ')
-    .map(n => n[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase();
+  const userInitials = displayName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
 
-  /* Role flags */
-  const isAdmin       = ['admin', 'super_admin'].includes(role);
-  const isHROrAbove   = ['admin', 'super_admin', 'hr', 'team_lead'].includes(role);
-  const showSystem    = ['admin', 'super_admin', 'community_admin'].includes(role);
-  const isCommunity   = role === 'community_admin';
+  const isAdmin     = ['admin', 'super_admin'].includes(role);
+  const isHROrAbove = ['admin', 'super_admin', 'hr', 'team_lead'].includes(role);
+  const showSystem  = ['admin', 'super_admin'].includes(role);
 
-  /* Active-link helper */
-  const isActive = (path) => {
+  const visibleRail = ['overview', 'projects'];
+  if (isHROrAbove) visibleRail.push('hr');
+  if (showSystem)  visibleRail.push('system');
+
+  const isActive = useCallback((path) => {
     if (path === '/dashboard') return location.pathname === '/dashboard';
-    if (path === '/projects')  return location.pathname.startsWith('/projects') && !location.pathname.startsWith('/projects/gantt') && !location.pathname.startsWith('/my-projects');
+    if (path === '/projects')  return location.pathname.startsWith('/projects') &&
+      !location.pathname.startsWith('/projects/gantt') && !location.pathname.startsWith('/my-projects');
     return location.pathname.startsWith(path);
+  }, [location.pathname]);
+
+  const handleRailClick = (key) => {
+    const meta = SECTION_META[key];
+    setActiveSection(key);
+    setHoveredSection(null);
+    const first = meta.groups.flatMap(g => g.items).find(item => {
+      if (item.adminOnly && !isAdmin)    return false;
+      if (item.hrOnly   && !isHROrAbove) return false;
+      return true;
+    });
+    if (first) {
+      navigate(first.path.split('?')[0]);
+      if (isMobile) closeMobileSidebar();
+    }
   };
 
-  const nav = (path) => () => navigate(path);
-
-  // Compute sidebar class: hover-expanded overlays the panel without shifting layout
   const sidebarClass = [
     'sidebar',
-    isCollapsed && !isHovered ? 'sidebar--collapsed' : '',
-    isCollapsed && isHovered ? 'sidebar--collapsed sidebar--hover-expanded' : '',
+    isMobile ? 'sidebar--mobile-drawer' : '',
+    isMobile && isMobileOpen ? 'sidebar--mobile-open' : '',
+    !isMobile && isCollapsed && !sidebarHovered ? 'sidebar--collapsed' : '',
+    !isMobile && isCollapsed && sidebarHovered  ? 'sidebar--collapsed sidebar--hover-expanded' : '',
   ].filter(Boolean).join(' ');
 
+  const sectionMeta = SECTION_META[panelSection];
+  const accentColor = sectionMeta?.accent || 'var(--sidebar-accent)';
+
   return (
+    <>
+      {/* Mobile backdrop overlay */}
+      {isMobile && isMobileOpen && (
+        <div
+          className="sidebar-backdrop"
+          aria-hidden="true"
+          onClick={closeMobileSidebar}
+        />
+      )}
+
     <aside
       className={sidebarClass}
       aria-label="Main navigation"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      onMouseEnter={() => !isMobile && setSidebarHovered(true)}
+      onMouseLeave={() => { if (!isMobile) { setSidebarHovered(false); setHoveredSection(null); } }}
     >
 
-      {/* ── Icon Rail (52 px) ── */}
+      {/* == LEFT RAIL (64px) == */}
       <div className="nav-rail">
-        <div className="rail-brand" onClick={nav('/dashboard')} title="AetherTrack — home">
-          <div className="brand-mark" aria-hidden="true">Æ</div>
+        <div className="rail-brand" onClick={() => navigate('/dashboard')} title="AetherTrack">
+          <div className="brand-mark" aria-hidden="true">A</div>
         </div>
 
         <nav className="rail-sections" aria-label="Section switcher">
-          {/* Overview — everyone */}
-          <button
-            className={`rail-item${activeSection === 'overview' ? ' active' : ''}`}
-            onClick={() => { setActiveSection('overview'); navigate('/dashboard'); }}
-            title="Overview"
-            aria-label="Overview"
-          >
-            <span className="rail-icon" aria-hidden="true">⬡</span>
-            <span className="rail-item-label">Home</span>
-          </button>
-
-          {/* Projects — everyone */}
-          <button
-            className={`rail-item${activeSection === 'projects' ? ' active' : ''}`}
-            onClick={() => { setActiveSection('projects'); navigate('/projects'); }}
-            title="Projects"
-            aria-label="Projects"
-          >
-            <span className="rail-icon" aria-hidden="true">◈</span>
-            <span className="rail-item-label">Work</span>
-          </button>
-
-          {/* HR — admin / hr / team_lead */}
-          {isHROrAbove && (
-            <button
-              className={`rail-item${activeSection === 'hr' ? ' active' : ''}`}
-              onClick={() => { setActiveSection('hr'); navigate(isAdmin ? '/hr/dashboard' : '/hr/attendance'); }}
-              title="People & HR"
-              aria-label="People & HR"
-            >
-              <span className="rail-icon" aria-hidden="true">◉</span>
-              <span className="rail-item-label">People</span>
-            </button>
-          )}
-
-          {/* System — admin / community_admin */}
-          {showSystem && (
-            <button
-              className={`rail-item${activeSection === 'system' ? ' active' : ''}`}
-              onClick={() => { setActiveSection('system'); navigate('/settings'); }}
-              title="System"
-              aria-label="System"
-            >
-              <span className="rail-icon" aria-hidden="true">⚙</span>
-              <span className="rail-item-label">System</span>
-            </button>
-          )}
+          {visibleRail.map((key) => {
+            const meta        = SECTION_META[key];
+            const isActiveSec  = activeSection === key;
+            const isPreviewing = hoveredSection === key && !isActiveSec;
+            return (
+              <button
+                key={key}
+                className={`rail-item${isActiveSec ? ' active' : ''}${isPreviewing ? ' previewing' : ''}`}
+                onMouseEnter={() => setHoveredSection(key)}
+                onClick={() => handleRailClick(key)}
+                title={`${meta.label} - ${meta.tagline}`}
+                aria-label={meta.label}
+                aria-current={isActiveSec ? 'true' : undefined}
+                style={isPreviewing ? { color: meta.accent } : undefined}
+              >
+                <span className="rail-icon" aria-hidden="true">{meta.icon}</span>
+                <span className="rail-item-label">{meta.label}</span>
+                {isPreviewing && (
+                  <span className="rail-preview-bar" style={{ background: meta.accent }} aria-hidden="true" />
+                )}
+              </button>
+            );
+          })}
         </nav>
 
         <div className="rail-foot">
-          <button className="theme-btn" onClick={toggleTheme} aria-label="Toggle theme">
-            {theme === 'dark' ? '☀' : '☽'}
+          <button className="theme-btn" onClick={toggleTheme}
+            title={theme === 'dark' ? 'Light mode' : 'Dark mode'}
+            aria-label="Toggle theme">
+            {theme === 'dark' ? '\u2600' : '\u263D'}
           </button>
-          <button
-            className="rail-collapse-btn"
-            onClick={toggleCollapse}
+          <button className="rail-collapse-btn" onClick={toggleCollapse}
             aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          >
-            {isCollapsed ? '›' : '‹'}
+            title={isCollapsed ? 'Expand' : 'Collapse'}>
+            {isCollapsed ? '\u203A' : '\u2039'}
           </button>
         </div>
       </div>
 
-      {/* ── Label Panel (196 px) ── */}
-      <div className="nav-panel">
-        <div className="panel-brand">
-          <div className="brand-name">AetherTrack</div>
-          <div className="brand-tag">2030</div>
+      {/* == RIGHT PANEL (220px) == */}
+      <div className="nav-panel" aria-label={`${sectionMeta?.label} navigation`}>
+
+        <div className="panel-section-header" style={{ '--section-accent': accentColor }}>
+          <div className="panel-section-header-inner">
+            <span className="panel-section-icon" aria-hidden="true">{sectionMeta?.icon}</span>
+            <div>
+              <div className="panel-section-title">{sectionMeta?.label}</div>
+              <div className="panel-section-tagline">{sectionMeta?.tagline}</div>
+            </div>
+          </div>
+          <span className="panel-section-accent-bar" style={{ background: accentColor }} aria-hidden="true" />
         </div>
 
-        <nav className="panel-scroll" aria-label="Primary navigation">
-
-          {/* ── OVERVIEW ── */}
-          {activeSection === 'overview' && (
-            <div className="nav-group">
-              <div className="nav-group-label">Overview</div>
-
-              <button className={`nav-link${isActive('/dashboard') ? ' active' : ''}`}
-                aria-current={isActive('/dashboard') ? 'page' : undefined}
-                onClick={nav('/dashboard')}>
-                <span className="nav-icon" aria-hidden="true">⬡</span>
-                <span className="nav-label">Dashboard</span>
-              </button>
-
-              <button className={`nav-link${isActive('/tasks') ? ' active' : ''}`}
-                onClick={nav('/tasks')}>
-                <span className="nav-icon" aria-hidden="true">✦</span>
-                <span className="nav-label">Tasks</span>
-              </button>
-
-              <button className={`nav-link${isActive('/kanban') ? ' active' : ''}`}
-                onClick={nav('/kanban')}>
-                <span className="nav-icon" aria-hidden="true">▤</span>
-                <span className="nav-label">Kanban</span>
-              </button>
-
-              <button className={`nav-link${isActive('/calendar') ? ' active' : ''}`}
-                onClick={nav('/calendar')}>
-                <span className="nav-icon" aria-hidden="true">▫</span>
-                <span className="nav-label">Calendar</span>
-              </button>
-
-              <button className={`nav-link${isActive('/self-attendance') ? ' active' : ''}`}
-                onClick={nav('/self-attendance?tab=checkin')}>
-                <span className="nav-icon" aria-hidden="true">⊙</span>
-                <span className="nav-label">Check In</span>
-              </button>
-
-              <button className={`nav-link${isActive('/notifications') ? ' active' : ''}`}
-                onClick={nav('/notifications')}>
-                <span className="nav-icon" aria-hidden="true">◌</span>
-                <span className="nav-label">Notifications</span>
-              </button>
-            </div>
-          )}
-
-          {/* ── PROJECTS ── */}
-          {activeSection === 'projects' && (
-            <div className="nav-group">
-              <div className="nav-group-label">Projects</div>
-
-              <button className={`nav-link${isActive('/projects') ? ' active' : ''}`}
-                onClick={nav('/projects')}>
-                <span className="nav-icon" aria-hidden="true">◈</span>
-                <span className="nav-label">All Projects</span>
-              </button>
-
-              <button className={`nav-link${isActive('/my-projects') ? ' active' : ''}`}
-                onClick={nav('/my-projects')}>
-                <span className="nav-icon" aria-hidden="true">◇</span>
-                <span className="nav-label">My Projects</span>
-              </button>
-
-              <button className={`nav-link${isActive('/projects/gantt') ? ' active' : ''}`}
-                onClick={nav('/projects/gantt')}>
-                <span className="nav-icon" aria-hidden="true">≣</span>
-                <span className="nav-label">Gantt</span>
-              </button>
-
-              <button className={`nav-link${isActive('/sprints') ? ' active' : ''}`}
-                onClick={nav('/sprints')}>
-                <span className="nav-icon" aria-hidden="true">↻</span>
-                <span className="nav-label">Sprints</span>
-              </button>
-
-              {isHROrAbove && (
-                <button className={`nav-link${isActive('/resources') ? ' active' : ''}`}
-                  onClick={nav('/resources')}>
-                  <span className="nav-icon" aria-hidden="true">△</span>
-                  <span className="nav-label">Resources</span>
-                </button>
-              )}
-
-              <button className={`nav-link${isActive('/analytics') ? ' active' : ''}`}
-                onClick={nav('/analytics')}>
-                <span className="nav-icon" aria-hidden="true">∾</span>
-                <span className="nav-label">Analytics</span>
-              </button>
-            </div>
-          )}
-
-          {/* ── HR ── admin / hr / team_lead */}
-          {activeSection === 'hr' && isHROrAbove && (
-            <div className="nav-group">
-              <div className="nav-group-label">People & HR</div>
-
-              {isAdmin && (
-                <button className={`nav-link${isActive('/hr/dashboard') ? ' active' : ''}`}
-                  onClick={nav('/hr/dashboard')}>
-                  <span className="nav-icon" aria-hidden="true">⊟</span>
-                  <span className="nav-label">HR Dashboard</span>
-                </button>
-              )}
-
-              <button className={`nav-link${isActive('/hr/attendance') ? ' active' : ''}`}
-                onClick={nav('/hr/attendance')}>
-                <span className="nav-icon" aria-hidden="true">◑</span>
-                <span className="nav-label">Attendance</span>
-              </button>
-
-              <button className={`nav-link${isActive('/hr/leaves') ? ' active' : ''}`}
-                onClick={nav('/hr/leaves')}>
-                <span className="nav-icon" aria-hidden="true">◊</span>
-                <span className="nav-label">Leaves</span>
-              </button>
-
-              <button className={`nav-link${isActive('/hr/calendar') ? ' active' : ''}`}
-                onClick={nav('/hr/calendar')}>
-                <span className="nav-icon" aria-hidden="true">▣</span>
-                <span className="nav-label">HR Calendar</span>
-              </button>
-
-              <button className={`nav-link${isActive('/hr/reallocation') ? ' active' : ''}`}
-                onClick={nav('/hr/reallocation')}>
-                <span className="nav-icon" aria-hidden="true">⇄</span>
-                <span className="nav-label">Reallocation</span>
-              </button>
-
-              {isAdmin && (
-                <button className={`nav-link${isActive('/hr/email-center') ? ' active' : ''}`}
-                  onClick={nav('/hr/email-center')}>
-                  <span className="nav-icon" aria-hidden="true">✉</span>
-                  <span className="nav-label">Email Center</span>
-                </button>
-              )}
-
-              <button className={`nav-link${isActive('/teams') ? ' active' : ''}`}
-                onClick={nav('/teams')}>
-                <span className="nav-icon" aria-hidden="true">⊞</span>
-                <span className="nav-label">Teams</span>
-              </button>
-
-              {isAdmin && (
-                <button className={`nav-link${isActive('/users') ? ' active' : ''}`}
-                  onClick={nav('/users')}>
-                  <span className="nav-icon" aria-hidden="true">⊕</span>
-                  <span className="nav-label">Users</span>
-                </button>
-              )}
-            </div>
-          )}
-
-          {/* ── SYSTEM ── admin / community_admin */}
-          {activeSection === 'system' && showSystem && (
-            <div className="nav-group">
-              <div className="nav-group-label">System</div>
-
-              <button className={`nav-link${isActive('/settings') ? ' active' : ''}`}
-                onClick={nav('/settings')}>
-                <span className="nav-icon" aria-hidden="true">⚙</span>
-                <span className="nav-label">Settings</span>
-              </button>
-
-              <button className={`nav-link${isActive('/audit-log') ? ' active' : ''}`}
-                onClick={nav('/audit-log')}>
-                <span className="nav-icon" aria-hidden="true">◧</span>
-                <span className="nav-label">Audit Log</span>
-              </button>
-
-              <button className={`nav-link${isActive('/changelog') ? ' active' : ''}`}
-                onClick={nav('/changelog')}>
-                <span className="nav-icon" aria-hidden="true">◔</span>
-                <span className="nav-label">Changelog</span>
-              </button>
-
-              {isAdmin && (
-                <button className={`nav-link${isActive('/geofence-management') ? ' active' : ''}`}
-                  onClick={nav('/geofence-management')}>
-                  <span className="nav-icon" aria-hidden="true">⊛</span>
-                  <span className="nav-label">Geofencing</span>
-                </button>
-              )}
-
-              {isAdmin && (
-                <button className={`nav-link${isActive('/verification-settings') ? ' active' : ''}`}
-                  onClick={nav('/verification-settings')}>
-                  <span className="nav-icon" aria-hidden="true">◎</span>
-                  <span className="nav-label">Verification</span>
-                </button>
-              )}
-
-              {(isAdmin || isCommunity) && (
-                <button className={`nav-link${isActive('/community-users') ? ' active' : ''}`}
-                  onClick={nav('/community-users')}>
-                  <span className="nav-icon" aria-hidden="true">≹</span>
-                  <span className="nav-label">Community</span>
-                </button>
-              )}
-
-              {isAdmin && (
-                <button className={`nav-link${isActive('/feature-matrix') ? ' active' : ''}`}
-                  onClick={nav('/feature-matrix')}>
-                  <span className="nav-icon" aria-hidden="true">▧</span>
-                  <span className="nav-label">Feature Matrix</span>
-                </button>
-              )}
-            </div>
-          )}
-
+        <nav key={panelKey} className="panel-scroll panel-content-enter"
+          aria-label={`${sectionMeta?.label} links`}>
+          {sectionMeta?.groups.map((group) => {
+            const visibleItems = group.items.filter(item => {
+              if (item.adminOnly && !isAdmin)    return false;
+              if (item.hrOnly   && !isHROrAbove) return false;
+              return true;
+            });
+            if (!visibleItems.length) return null;
+            return (
+              <div key={group.label} className="nav-group">
+                <div className="nav-group-label">{group.label}</div>
+                {visibleItems.map((item) => {
+                  const active = isActive(item.path);
+                  return (
+                    <button
+                      key={item.path}
+                      className={`nav-link nav-link--rich${active ? ' active' : ''}`}
+                      aria-current={active ? 'page' : undefined}
+                      style={active ? { '--link-accent': accentColor } : undefined}
+                      onClick={() => {
+                        navigate(item.path.split('?')[0]);
+                        setHoveredSection(null);
+                        if (isMobile) closeMobileSidebar();
+                      }}
+                    >
+                      <span className="nav-icon" aria-hidden="true">{item.icon}</span>
+                      <span className="nav-link-text">
+                        <span className="nav-label">{item.label}</span>
+                        <span className="nav-desc">{item.desc}</span>
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            );
+          })}
         </nav>
 
-        {/* User footer */}
-        <div className="panel-user" onClick={nav('/settings')} style={{ cursor: 'pointer' }}
-          title="Account settings" role="button" tabIndex={0}
-          onKeyDown={(e) => e.key === 'Enter' && navigate('/settings')}>
+        <div className="panel-user"
+          onClick={() => { navigate('/settings'); if (isMobile) closeMobileSidebar(); }}
+          style={{ cursor: 'pointer' }}
+          title="Account settings"
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => { if (e.key === 'Enter') { navigate('/settings'); if (isMobile) closeMobileSidebar(); } }}
+        >
           <div className="user-avatar" aria-hidden="true">{userInitials}</div>
           <div className="user-info">
             <div className="user-name">{displayName}</div>
@@ -399,6 +348,7 @@ const GlobalSidebar = () => {
       </div>
 
     </aside>
+    </>
   );
 };
 

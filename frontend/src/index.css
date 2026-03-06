@@ -16,6 +16,9 @@
 /* Import warm paper design tokens */
 @import './design-tokens.css';
 
+/* Import UI system — spacing, form controls, dropdowns, components */
+@import './ui-system.css';
+
 /* Tailwind imports */
 @tailwind base;
 @tailwind components;
@@ -559,17 +562,31 @@ body {
   -webkit-overflow-scrolling: touch;
 }
 
-/* PWA Splash Screen Prevention for Black Flash */
+/* PWA Splash Screen Prevention for Black Flash
+   Only applies when data-theme is NOT explicitly set (auto mode).
+   When data-theme="dark" or data-theme="light" is set by ThemeContext,
+   the token system's body background takes precedence. */
 @media (prefers-color-scheme: dark) {
-  body {
+  html:not([data-theme="light"]):not([data-theme="dark"]) body {
     background-color: #151008;
   }
 }
 
 @media (prefers-color-scheme: light) {
-  body {
+  html:not([data-theme="dark"]):not([data-theme="light"]) body {
     background-color: #F7F3EE;
   }
+}
+
+/* Ensure body always follows the active data-theme token */
+[data-theme="dark"] body {
+  background-color: var(--bg-canvas);
+  color: var(--text-primary);
+}
+
+[data-theme="light"] body {
+  background-color: var(--bg-canvas);
+  color: var(--text-primary);
 }
 
 /* ==========================================================================

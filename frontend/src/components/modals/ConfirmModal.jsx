@@ -43,25 +43,25 @@ const ConfirmModal = ({
       icon: Trash2,
       iconBg: isDark ? 'bg-red-500/10' : 'bg-red-50',
       iconColor: 'text-red-500',
-      buttonBg: isDark ? 'bg-red-600 hover:bg-red-700' : 'bg-red-600 hover:bg-red-700',
+      buttonBg: 'aether-btn-danger',
     },
     warning: {
       icon: AlertTriangle,
       iconBg: isDark ? 'bg-yellow-500/10' : 'bg-yellow-50',
       iconColor: 'text-yellow-500',
-      buttonBg: isDark ? 'bg-yellow-600 hover:bg-yellow-700' : 'bg-yellow-600 hover:bg-yellow-700',
+      buttonBg: 'aether-btn-warning',
     },
     logout: {
       icon: LogOut,
       iconBg: isDark ? 'bg-orange-500/10' : 'bg-orange-50',
       iconColor: 'text-orange-500',
-      buttonBg: isDark ? 'bg-orange-600 hover:bg-orange-700' : 'bg-orange-600 hover:bg-orange-700',
+      buttonBg: 'aether-btn-danger',
     },
     info: {
       icon: Info,
       iconBg: isDark ? 'bg-blue-500/10' : 'bg-blue-50',
       iconColor: 'text-blue-500',
-      buttonBg: isDark ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-600 hover:bg-blue-700',
+      buttonBg: 'aether-btn-primary',
     },
   };
 
@@ -127,9 +127,7 @@ const ConfirmModal = ({
             <button
               onClick={onConfirm}
               disabled={isLoading}
-              className={`px-4 py-2 rounded font-medium text-sm text-white transition-colors ${
-                currentVariant.buttonBg
-              } disabled:opacity-50 disabled:cursor-not-allowed`}
+              className={`aether-btn ${currentVariant.buttonBg}`}
             >
               {isLoading ? (
                 <span className="flex items-center gap-2">

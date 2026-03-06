@@ -571,7 +571,7 @@ export default function MeetingFormModal({ isOpen, onClose, onSave, initialData,
             <button
               type="submit"
               disabled={saving}
-              className="flex-1 py-2.5 rounded-lg text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="aether-btn aether-btn-primary flex-1"
             >
               {saving ? (
                 <>

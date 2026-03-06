@@ -17,7 +17,7 @@ import mongoose from 'mongoose';
 const router = express.Router();
 
 // ─── Role sets ──────────────────────────────────────────────────────────────
-const ADMIN_ROLES = ['admin', 'hr', 'community_admin'];
+const ADMIN_ROLES = ['admin', 'hr'];
 
 /**
  * Build a visibility filter for the requesting user.

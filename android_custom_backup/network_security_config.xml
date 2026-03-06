@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Network Security Config
+  - Enforces TLS for all traffic
+  - Allows cleartext only on localhost (dev builds)
+  - Certificate pinning block ready (add your server cert SHA-256 below)
+-->
+<network-security-config>
+
+    <!-- Production: strict HTTPS only -->
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">aethertrack.app</domain>
+
+        <!-- Certificate pinning (uncomment & fill after obtaining cert fingerprint)
+        <pin-set expiration="2027-01-01">
+            <pin digest="SHA-256">REPLACE_WITH_BASE64_SHA256_OF_YOUR_CERT</pin>
+            <pin digest="SHA-256">REPLACE_WITH_BACKUP_CERT_PIN</pin>
+        </pin-set>
+        -->
+
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </domain-config>
+
+    <!-- Development: allow localhost -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">localhost</domain>
+        <domain includeSubdomains="true">10.0.2.2</domain>
+        <domain includeSubdomains="true">192.168.0.0/16</domain>
+    </domain-config>
+
+    <!-- Default: trust system CAs -->
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+
+</network-security-config>

@@ -33,8 +33,8 @@ const Teams = () => {
   useEffect(() => {
     if (user?.id) {
       fetchTeams();
-      // Only fetch users for admin, HR and community_admin (team leads don't need all users)
-      if (['admin', 'hr', 'community_admin'].includes(user?.role)) {
+      // Only fetch users for admin and HR (team leads don't need all users)
+      if (['admin', 'hr'].includes(user?.role)) {
         fetchUsers();
       }
     }
@@ -52,8 +52,8 @@ const Teams = () => {
       if (user?.id) fetchTeams();
     },
     onUserUpdated: () => {
-      if (['admin', 'hr', 'community_admin'].includes(user?.role)) fetchUsers();
-    },
+      if (['admin', 'hr'].includes(user?.role)) fetchUsers();
+    }
   });
 
   const fetchTeams = async () => {
@@ -289,7 +289,7 @@ const Teams = () => {
     );
   }
 
-  if (!['admin', 'hr', 'team_lead', 'community_admin'].includes(user?.role)) {
+  if (!['admin', 'hr', 'team_lead'].includes(user?.role)) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg-canvas)' }}>
         <p className="text-xl" style={{ color: 'var(--text-secondary)' }}>You don't have permission to access this page.</p>
@@ -312,11 +312,11 @@ const Teams = () => {
               </p>
             </div>
           </div>
-          {['admin', 'hr', 'community_admin'].includes(user?.role) && (
+          {['admin', 'hr'].includes(user?.role) && (
             <div className="flex items-center gap-3">
               <button
                 onClick={handleDeleteAllTeams}
-                className="px-4 py-2 bg-red-600 text-white rounded-[0.125rem] hover:bg-red-700 transition-colors flex items-center space-x-2"
+                className="aether-btn aether-btn-danger"
                 title="Delete all teams"
               >
                 <Trash2 className="w-5 h-5" />
@@ -350,7 +350,7 @@ const Teams = () => {
             {teams.map((team) => (
             <div
               key={team._id}
-              draggable={['admin', 'hr', 'community_admin'].includes(user?.role)}
+              draggable={['admin', 'hr'].includes(user?.role)}
               onDragStart={(e) => handleDragStart(e, team)}
               onDragOver={handleDragOver}
               onDrop={(e) => handleDrop(e, team)}
@@ -358,7 +358,7 @@ const Teams = () => {
                 theme === 'dark' 
                   ? 'bg-[#1c2027] border-[#282f39] hover:border-[#3e454f]' 
                   : 'bg-white border-gray-200 hover:border-gray-300'
-              } ${draggedTeam?._id === team._id ? 'opacity-50' : ''} ${['admin', 'hr', 'community_admin'].includes(user?.role) ? 'cursor-move' : ''}`}
+              } ${draggedTeam?._id === team._id ? 'opacity-50' : ''} ${['admin', 'hr'].includes(user?.role) ? 'cursor-move' : ''}`}
               data-testid="team-card"
             >
               {/* Pin Indicator */}
@@ -368,8 +368,8 @@ const Teams = () => {
                 </div>
               )}
 
-              {/* Drag Handle for Admin/HR/Community Admin */}
-              {['admin', 'hr', 'community_admin'].includes(user?.role) && (
+              {/* Drag Handle for Admin/HR only */}
+              {['admin', 'hr'].includes(user?.role) && (
                 <div className="absolute top-2 right-2">
                   <GripVertical className={`w-5 h-5 text-[var(--text-muted)]`} />
                 </div>
@@ -379,7 +379,7 @@ const Teams = () => {
                 <h3 className={`text-xl font-semibold text-[var(--text-primary)]`}>{team.name}</h3>
                 <div className="flex items-center space-x-2">
                   <Users className="w-6 h-6 text-[#C4713A]" />
-                  {['admin', 'hr', 'community_admin'].includes(user?.role) && (
+                  {['admin', 'hr'].includes(user?.role) && (
                     <>
                       <button
                         onClick={() => handleTogglePin(team._id)}
@@ -428,7 +428,7 @@ const Teams = () => {
                         data-testid="team-member"
                       >
                         <span className={`text-sm text-[var(--text-primary)]`}>{member.full_name}</span>
-                        {['admin', 'hr', 'community_admin'].includes(user?.role) && (
+                        {['admin', 'hr'].includes(user?.role) && (
                           <button
                             onClick={() => handleRemoveMember(team._id, member._id)}
                             className="text-red-600 hover:text-red-800"
@@ -445,13 +445,13 @@ const Teams = () => {
                 </div>
               </div>
 
-              {['admin', 'hr', 'community_admin'].includes(user?.role) && (
+              {['admin', 'hr'].includes(user?.role) && (
                 <button
                   onClick={() => {
                     setSelectedTeam(team);
                     setShowAddMemberModal(true);
                   }}
-                  className="w-full mt-4 px-4 py-2 bg-green-600 text-white rounded-[0.125rem] hover:bg-green-700 transition-colors flex items-center justify-center space-x-2"
+                  className="aether-btn aether-btn-success w-full mt-4"
                   data-testid="add-member-btn"
                 >
                   <UserPlus className="w-4 h-4" />

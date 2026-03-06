@@ -1915,16 +1915,16 @@ export default function HRDashboard() {
                           {user.employmentStatus !== 'ACTIVE' && (
                             <button
                               onClick={() => handleEmployeeAction(user, 'activate')}
-                              className="flex-1 px-3 py-2 bg-green-600 text-white text-xs rounded hover:bg-green-700 transition-colors"
+                              className="aether-btn aether-btn-success aether-btn-sm flex-1"
                             >
                               Activate
                             </button>
                           )}
                           {user.employmentStatus === 'ACTIVE' && (
-                            user.role !== 'admin' || (user.role === 'admin' && currentUser.role === 'community_admin') ? (
+                            user.role !== 'admin' ? (
                               <button
                                 onClick={() => handleEmployeeAction(user, 'deactivate')}
-                                className="flex-1 px-3 py-2 bg-red-600 text-white text-xs rounded hover:bg-red-700 transition-colors"
+                                className="aether-btn aether-btn-danger aether-btn-sm flex-1"
                               >
                                 Deactivate
                               </button>
@@ -1935,7 +1935,7 @@ export default function HRDashboard() {
                             ) : (
                               <button
                                 onClick={() => handleEmployeeAction(user, 'deactivate')}
-                                className="flex-1 px-3 py-2 bg-red-600 text-white text-xs rounded hover:bg-red-700 transition-colors"
+                                className="aether-btn aether-btn-danger aether-btn-sm flex-1"
                               >
                                 Deactivate
                               </button>
@@ -1990,7 +1990,7 @@ export default function HRDashboard() {
                 </button>
                 <button
                   onClick={confirmEmployeeAction}
-                  className={`px-4 py-2 ${employeeAction === 'activate' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'} text-white rounded-lg`}
+                  className={`aether-btn ${employeeAction === 'activate' ? 'aether-btn-success' : 'aether-btn-danger'}`}
                 >
                   {employeeAction === 'activate' ? 'Activate' : 'Deactivate'}
                 </button>

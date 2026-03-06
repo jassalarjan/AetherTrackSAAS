@@ -4,7 +4,7 @@
  * through password guessing or brute force attacks.
  */
 
-const PASSWORD_MIN_LENGTH = 12;
+const PASSWORD_MIN_LENGTH = 8;
 
 const passwordRequirements = {
   minLength: PASSWORD_MIN_LENGTH,

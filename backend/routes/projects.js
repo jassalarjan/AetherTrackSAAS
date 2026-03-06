@@ -37,7 +37,7 @@ async function checkProjectAccess(req, res, projectId) {
     const hasAccess = project.team_members.some(m => teamMemberIds.includes(m.user?.toString()));
     if (!hasAccess) { res.status(403).json({ message: 'Access denied' }); return null; }
   }
-  // admin / hr / community_admin see all projects
+  // admin / hr see all projects
 
   return project;
 }

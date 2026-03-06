@@ -57,7 +57,6 @@ const Navbar = () => {
     const isDark = theme === 'dark';
     const badges = {
       admin: isDark ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30' : 'bg-purple-100 text-purple-800',
-      community_admin: isDark ? 'bg-teal-500/20 text-teal-300 border border-teal-500/30' : 'bg-teal-100 text-teal-800',
       hr: isDark ? 'bg-green-500/20 text-green-300 border border-green-500/30' : 'bg-green-100 text-green-800',
       team_lead: isDark ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' : 'bg-blue-100 text-blue-800',
       member: isDark ? 'bg-gray-500/20 text-gray-300 border border-gray-500/30' : 'bg-gray-100 text-gray-800',
@@ -70,49 +69,43 @@ const Navbar = () => {
       name: 'Dashboard',
       href: '/dashboard',
       icon: LayoutDashboard,
-      roles: ['admin', 'community_admin', 'hr', 'team_lead', 'member'],
+      roles: ['admin', 'hr', 'team_lead', 'member'],
     },
     {
       name: 'Tasks',
       href: '/tasks',
       icon: CheckSquare,
-      roles: ['admin', 'community_admin', 'hr', 'team_lead', 'member'],
+      roles: ['admin', 'hr', 'team_lead', 'member'],
     },
     {
       name: 'Kanban',
       href: '/kanban',
       icon: Kanban,
-      roles: ['admin', 'community_admin', 'hr', 'team_lead', 'member'],
+      roles: ['admin', 'hr', 'team_lead', 'member'],
     },
     {
       name: 'Calendar',
       href: '/calendar',
       icon: CalendarIcon,
-      roles: ['admin', 'community_admin', 'hr', 'team_lead', 'member'],
+      roles: ['admin', 'hr', 'team_lead', 'member'],
     },
     {
       name: 'Analytics',
       href: '/analytics',
       icon: BarChart3,
-      roles: ['admin', 'community_admin', 'hr', 'team_lead', 'member'],
+      roles: ['admin', 'hr', 'team_lead', 'member'],
     },
     {
       name: 'Teams',
       href: '/teams',
       icon: Users,
-      roles: ['admin', 'community_admin', 'hr', 'team_lead'],
+      roles: ['admin', 'hr', 'team_lead'],
     },
     {
       name: 'User Management',
       href: '/users',
       icon: UserCog,
       roles: ['admin', 'hr'],
-    },
-    {
-      name: 'Community Users',
-      href: '/community-users',
-      icon: UserCog,
-      roles: ['community_admin'],
     },
     {
       name: 'Workspaces',
@@ -131,7 +124,7 @@ const Navbar = () => {
       name: 'Settings',
       href: '/settings',
       icon: Settings,
-      roles: ['admin', 'community_admin', 'hr', 'team_lead', 'member'],
+      roles: ['admin', 'hr', 'team_lead', 'member'],
     },
     
   ];

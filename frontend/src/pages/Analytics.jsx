@@ -15,6 +15,7 @@ import { generateComprehensivePDFReport } from '../utils/comprehensiveReportGene
 const Analytics = () => {
   const { user } = useAuth();
   const { theme, effectiveTheme } = useTheme();
+  const isDark = effectiveTheme === 'dark';
   const [tasks, setTasks] = useState([]);
   const [projects, setProjects] = useState([]);
   const [filteredTasks, setFilteredTasks] = useState([]);
@@ -348,7 +349,7 @@ const Analytics = () => {
     const projectStatusDistribution = Object.entries(projectStatusCounts).map(([status, count]) => ({
       name: status.replace('_', ' ').toUpperCase(),
       value: count,
-      color: status === 'active' ? '#C4713A' : status === 'completed' ? '#22c55e' : status === 'on_hold' ? '#f59e0b' : '#6b7280',
+      color: getStatusChartColor(status === 'active' ? 'in_progress' : status === 'completed' ? 'done' : status === 'on_hold' ? 'review' : 'todo'),
     }));
 
     const projectPriorityCounts = projects.reduce((acc, project) => {
@@ -364,10 +365,10 @@ const Analytics = () => {
 
     // Project Progress Distribution
     const projectProgressDistribution = [
-      { range: '0-25%', count: 0, color: '#ef4444' },
-      { range: '25-50%', count: 0, color: '#f59e0b' },
-      { range: '50-75%', count: 0, color: '#C4713A' },
-      { range: '75-100%', count: 0, color: '#22c55e' },
+      { range: '0-25%',   count: 0, color: getPriorityColor('urgent') },
+      { range: '25-50%',  count: 0, color: getPriorityColor('medium') },
+      { range: '50-75%',  count: 0, color: getPriorityColor('high')   },
+      { range: '75-100%', count: 0, color: getPriorityColor('low')    },
     ];
 
     projects.forEach(project => {
@@ -523,22 +524,34 @@ const Analytics = () => {
   };
 
   const getStatusChartColor = (status) => {
-    const colors = {
-      todo: '#6b7280',
+    // Theme-aware resolved colors matching design tokens
+    const colors = isDark ? {
+      todo:        '#8A7A6A',
+      in_progress: '#D4824A',
+      review:      '#D4A843',
+      done:        '#4CAF78',
+      archived:    '#D45858',
+    } : {
+      todo:        '#9A8A7A',
       in_progress: '#C4713A',
-      review: '#eab308',
-      done: '#22c55e',
-      archived: '#ef4444',
+      review:      '#CA9020',
+      done:        '#2E9E5B',
+      archived:    '#C84040',
     };
     return colors[status] || colors.todo;
   };
 
   const getPriorityColor = (priority) => {
-    const colors = {
-      low: '#10b981',
-      medium: '#f59e0b',
-      high: '#f97316',
-      urgent: '#ef4444',
+    const colors = isDark ? {
+      low:    '#4AB87A',
+      medium: '#D4A843',
+      high:   '#D48043',
+      urgent: '#D45858',
+    } : {
+      low:    '#2E9E5B',
+      medium: '#CA9020',
+      high:   '#C46820',
+      urgent: '#C84040',
     };
     return colors[priority] || colors.medium;
   };
@@ -574,21 +587,47 @@ const Analytics = () => {
     : 0;
 
   // ── Theme-aware chart colors (SVG doesn't support CSS vars, so we compute) ──
-  const isDark = effectiveTheme === 'dark';
   const chartColors = {
     grid:          isDark ? 'rgba(240,232,220,0.08)' : 'rgba(42,30,22,0.09)',
     axis:          isDark ? '#A89880' : '#7A6A58',
     tooltipBg:     isDark ? '#2A1E14' : '#FFFFFF',
     tooltipBorder: isDark ? 'rgba(240,232,220,0.12)' : 'rgba(42,30,22,0.12)',
     tooltipText:   isDark ? '#F0E8DC' : '#2A1E16',
+    // Semantic palette (matches tokens)
+    brand:   isDark ? '#D4905A' : '#C4713A',
+    success: isDark ? '#6AA06A' : '#5A8A5A',
+    warning: isDark ? '#D4AA4A' : '#C49A3A',
+    danger:  isDark ? '#C06060' : '#B05050',
+    ai:      isDark ? '#9A8ACC' : '#7A6AAA',
+    // Extra chart palette (theme-aware, no harsh primaries)
+    chart1: isDark ? '#D4905A' : '#C4713A',
+    chart2: isDark ? '#6AA06A' : '#5A8A5A',
+    chart3: isDark ? '#9A8ACC' : '#7A6AAA',
+    chart4: isDark ? '#D4AA4A' : '#C49A3A',
+    chart5: isDark ? '#C06060' : '#B05050',
+    chart6: isDark ? '#5AACBF' : '#4A8FA0',
+    chart7: isDark ? '#A07ABF' : '#8A6AAA',
+    chart8: isDark ? '#8AB05A' : '#7A9A4A',
   };
   const tooltipStyle = {
     backgroundColor: chartColors.tooltipBg,
     border: `1px solid ${chartColors.tooltipBorder}`,
-    borderRadius: '8px',
+    borderRadius: '10px',
     color: chartColors.tooltipText,
-    boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
+    boxShadow: '0 4px 20px rgba(0,0,0,0.18)',
     fontSize: '12px',
+    fontFamily: 'var(--font-body)',
+    padding: '8px 12px',
+  };
+
+  // Chart team palette generator (theme-aware)
+  const teamColor = (index) => {
+    const palette = [
+      chartColors.chart1, chartColors.chart2, chartColors.chart3,
+      chartColors.chart4, chartColors.chart5, chartColors.chart6,
+      chartColors.chart7, chartColors.chart8,
+    ];
+    return palette[index % palette.length];
   };
 
   if (loading) {
@@ -621,51 +660,30 @@ const Analytics = () => {
               <div className="flex gap-2 sm:gap-3 flex-shrink-0">
                 <button
                   onClick={handleExportExcel}
-                  className="flex items-center justify-center rounded h-9 px-3 sm:px-4 bg-green-600 text-white gap-2 text-sm font-bold hover:bg-green-700 transition-colors"
+                  className="aether-btn aether-btn-success flex items-center gap-2 text-sm font-semibold"
                   title="Export comprehensive Excel report"
                 >
-                  <FileSpreadsheet size={18} />
+                  <FileSpreadsheet size={16} />
                   <span className="hidden sm:inline">Excel</span>
                 </button>
                 <div className="relative">
                   <button
                     onClick={() => setShowReportOptions(!showReportOptions)}
-                    className="flex items-center justify-center rounded h-9 px-3 sm:px-4 bg-red-600 text-white gap-2 text-sm font-bold hover:bg-red-700 transition-colors"
+                    className="aether-btn aether-btn-danger flex items-center gap-2 text-sm font-semibold"
                     title="Export PDF report"
                   >
-                    <FileText size={18} />
+                    <FileText size={16} />
                     <span className="hidden sm:inline">PDF</span>
-                    <ChevronDown size={16} className="hidden sm:block" />
+                    <ChevronDown size={14} className={`hidden sm:block transition-transform duration-200 ${showReportOptions ? 'rotate-180' : ''}`} />
                   </button>
                   {showReportOptions && (
-                    <div className="absolute right-0 mt-2 w-56 rounded-lg bg-[var(--bg-raised)] border border-[var(--border-soft)] shadow-[var(--shadow-lg)] z-10">
-                      <div className="py-1">
-                        <div className="px-4 py-2 text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">Report Period</div>
-                        <button
-                          onClick={() => { setReportPeriod('daily'); handleExportPDF(); }}
-                          className="block w-full text-left px-4 py-2 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-surface)] transition-colors"
-                        >
-                          Daily Report (Today)
-                        </button>
-                        <button
-                          onClick={() => { setReportPeriod('weekly'); handleExportPDF(); }}
-                          className="block w-full text-left px-4 py-2 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-surface)] transition-colors"
-                        >
-                          Weekly Report (Last 7 Days)
-                        </button>
-                        <button
-                          onClick={() => { setReportPeriod('monthly'); handleExportPDF(); }}
-                          className="block w-full text-left px-4 py-2 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-surface)] transition-colors"
-                        >
-                          Monthly Report (This Month)
-                        </button>
-                        <button
-                          onClick={() => { setReportPeriod('all'); handleExportPDF(); }}
-                          className="block w-full text-left px-4 py-2 text-sm text-[var(--text-primary)] hover:bg-[var(--bg-surface)] transition-colors"
-                        >
-                          Complete Report (All Time)
-                        </button>
-                      </div>
+                    <div className="aether-dropdown w-56 scale-in">
+                      <div className="aether-dropdown-header">Report Period</div>
+                      <button onClick={() => { setReportPeriod('daily'); handleExportPDF(); }} className="aether-dropdown-item">Daily Report (Today)</button>
+                      <button onClick={() => { setReportPeriod('weekly'); handleExportPDF(); }} className="aether-dropdown-item">Weekly Report (Last 7 Days)</button>
+                      <button onClick={() => { setReportPeriod('monthly'); handleExportPDF(); }} className="aether-dropdown-item">Monthly Report (This Month)</button>
+                      <div className="aether-dropdown-divider" />
+                      <button onClick={() => { setReportPeriod('all'); handleExportPDF(); }} className="aether-dropdown-item">Complete Report (All Time)</button>
                     </div>
                   )}
                 </div>
@@ -700,7 +718,7 @@ const Analytics = () => {
               <select
                 value={filters.status}
                 onChange={(e) => setFilters({...filters, status: e.target.value})}
-                className="h-9 px-2 sm:px-3 bg-[var(--bg-surface)] border border-[var(--border-mid)] rounded-md text-xs sm:text-sm text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--brand)] focus:border-transparent transition-colors"
+                className="filter-select w-full"
               >
                 <option value="">All Status</option>
                 <option value="todo">To Do</option>
@@ -713,7 +731,7 @@ const Analytics = () => {
               <select
                 value={filters.priority}
                 onChange={(e) => setFilters({...filters, priority: e.target.value})}
-                className="h-9 px-2 sm:px-3 bg-[var(--bg-surface)] border border-[var(--border-mid)] rounded-md text-xs sm:text-sm text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--brand)] focus:border-transparent transition-colors"
+                className="filter-select w-full"
               >
                 <option value="">All Priority</option>
                 <option value="low">Low</option>
@@ -727,7 +745,7 @@ const Analytics = () => {
                   <select
                     value={filters.dateRange}
                     onChange={(e) => setFilters({...filters, dateRange: e.target.value})}
-                    className="h-9 px-2 sm:px-3 bg-[var(--bg-surface)] border border-[var(--border-mid)] rounded-md text-xs sm:text-sm text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--brand)] focus:border-transparent transition-colors"
+                    className="filter-select w-full"
                   >
                     <option value="all">All Time</option>
                     <option value="today">Today</option>
@@ -739,7 +757,7 @@ const Analytics = () => {
                   <select
                     value={filters.project}
                     onChange={(e) => setFilters({...filters, project: e.target.value})}
-                    className="h-9 px-2 sm:px-3 bg-[var(--bg-surface)] border border-[var(--border-mid)] rounded-md text-xs sm:text-sm text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--brand)] focus:border-transparent transition-colors"
+                    className="filter-select w-full"
                   >
                     <option value="">All Projects</option>
                     {projects.map(project => (
@@ -750,7 +768,7 @@ const Analytics = () => {
                   <select
                     value={filters.team}
                     onChange={(e) => setFilters({...filters, team: e.target.value})}
-                    className="h-9 px-2 sm:px-3 bg-[var(--bg-surface)] border border-[var(--border-mid)] rounded-md text-xs sm:text-sm text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--brand)] focus:border-transparent transition-colors"
+                    className="filter-select w-full"
                   >
                     <option value="">All Teams</option>
                     {teams.map(team => (
@@ -761,7 +779,7 @@ const Analytics = () => {
                   <select
                     value={filters.user}
                     onChange={(e) => setFilters({...filters, user: e.target.value})}
-                    className="h-9 px-2 sm:px-3 bg-[var(--bg-surface)] border border-[var(--border-mid)] rounded-md text-xs sm:text-sm text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--brand)] focus:border-transparent transition-colors"
+                    className="filter-select w-full"
                   >
                     <option value="">All Users</option>
                     <option value="unassigned">Unassigned</option>
@@ -774,18 +792,18 @@ const Analytics = () => {
             </div>
 
             {filters.dateRange === 'custom' && showFilters && (
-              <div className="grid grid-cols-2 gap-2 sm:gap-3 mt-2 sm:mt-3 lg:block lg:grid">
+              <div className="grid grid-cols-2 gap-2 sm:gap-3 mt-2 sm:mt-3">
                 <input
                   type="date"
                   value={filters.customStartDate}
                   onChange={(e) => setFilters({...filters, customStartDate: e.target.value})}
-                  className="h-9 px-2 sm:px-3 bg-[var(--bg-surface)] border border-[var(--border-mid)] rounded-md text-xs sm:text-sm text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--brand)] focus:border-transparent"
+                  className="filter-select w-full"
                 />
                 <input
                   type="date"
                   value={filters.customEndDate}
                   onChange={(e) => setFilters({...filters, customEndDate: e.target.value})}
-                  className="h-9 px-2 sm:px-3 bg-[var(--bg-surface)] border border-[var(--border-mid)] rounded-md text-xs sm:text-sm text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--brand)] focus:border-transparent"
+                  className="filter-select w-full"
                 />
               </div>
             )}
@@ -795,131 +813,127 @@ const Analytics = () => {
         {/* Main Content Area */}
         <div className="flex-1 overflow-auto p-3 sm:p-6">
           {/* Key Metrics */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-6">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8 animate-stagger">
             {/* Total Tasks */}
-            <div className="bg-[var(--bg-raised)] rounded-xl border border-[var(--border-soft)] p-4 sm:p-5 shadow-[var(--shadow-xs)] hover:shadow-[var(--shadow-sm)] transition-all duration-200 group">
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex-1 min-w-0">
-                  <p className="text-[var(--text-muted)] text-[10px] sm:text-xs uppercase tracking-wider font-semibold">Total Tasks</p>
-                  <p className="text-2xl sm:text-3xl font-black text-[var(--text-primary)] mt-1 tabular-nums leading-none">{analyticsData.totalTasks}</p>
-                  <p className="text-xs text-[var(--text-muted)] mt-2 flex items-center gap-1">
-                    <TrendingUp size={11} className="text-[var(--success)] flex-shrink-0" />
-                    <span className="text-[var(--success)] font-semibold">{completionRate}%</span>&nbsp;completion
-                  </p>
-                </div>
-                <div className="w-9 h-9 rounded-lg bg-[var(--brand-dim)] grid place-items-center flex-shrink-0 group-hover:scale-110 transition-transform duration-200">
-                  <BarChart3 size={17} className="text-[var(--brand)]" />
+            <div className="kpi-metric-card group">
+              <div className="flex items-start justify-between gap-2 mb-3">
+                <p className="text-[var(--text-muted)] text-[10px] uppercase tracking-[0.08em] font-bold">Total Tasks</p>
+                <div className="kpi-metric-icon bg-[var(--brand-dim)] fade-up" style={{ '--kpi-card-accent': 'linear-gradient(160deg, var(--brand-dim) 0%, transparent 60%)' }}>
+                  <BarChart3 size={18} style={{ color: 'var(--brand)' }} />
                 </div>
               </div>
-              <div className="mt-3 h-1.5 rounded-full bg-[var(--bg-surface)] overflow-hidden">
-                <div className="h-full rounded-full bg-[var(--brand)] transition-all duration-700" style={{ width: `${completionRate}%` }} />
+              <p className="text-3xl sm:text-4xl font-black text-[var(--text-primary)] tabular-nums leading-none mb-2" style={{ fontFamily: 'var(--font-heading)', letterSpacing: '-0.04em' }}>{analyticsData.totalTasks}</p>
+              <div className="flex items-center gap-2 mb-3">
+                <span className="kpi-trend-up">
+                  <TrendingUp size={10} />
+                  {completionRate}%
+                </span>
+                <span className="text-xs text-[var(--text-muted)]">completion rate</span>
+              </div>
+              <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--bg-surface)' }}>
+                <div className="h-full rounded-full transition-all duration-700" style={{ width: `${completionRate}%`, background: 'var(--brand)' }} />
               </div>
             </div>
 
             {/* Overdue */}
-            <div className="bg-[var(--bg-raised)] rounded-xl border border-[var(--border-soft)] p-4 sm:p-5 shadow-[var(--shadow-xs)] hover:shadow-[var(--shadow-sm)] transition-all duration-200 group">
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex-1 min-w-0">
-                  <p className="text-[var(--text-muted)] text-[10px] sm:text-xs uppercase tracking-wider font-semibold">Overdue</p>
-                  <p className="text-2xl sm:text-3xl font-black text-[var(--danger)] mt-1 tabular-nums leading-none">{analyticsData.overdueTasks}</p>
-                  <p className="text-xs text-[var(--text-muted)] mt-2 flex items-center gap-1">
-                    <AlertTriangle size={11} className="text-[var(--danger)] flex-shrink-0" />
-                    <span className="text-[var(--danger)] font-semibold">{overdueRate}%</span>&nbsp;of all tasks
-                  </p>
-                </div>
-                <div className="w-9 h-9 rounded-lg bg-[var(--danger-dim)] grid place-items-center flex-shrink-0 group-hover:scale-110 transition-transform duration-200">
-                  <AlertTriangle size={17} className="text-[var(--danger)]" />
+            <div className="kpi-metric-card group">
+              <div className="flex items-start justify-between gap-2 mb-3">
+                <p className="text-[var(--text-muted)] text-[10px] uppercase tracking-[0.08em] font-bold">Overdue</p>
+                <div className="kpi-metric-icon bg-[var(--danger-dim)]">
+                  <AlertTriangle size={18} style={{ color: 'var(--danger)' }} />
                 </div>
               </div>
-              <div className="mt-3 h-1.5 rounded-full bg-[var(--bg-surface)] overflow-hidden">
-                <div className="h-full rounded-full bg-[var(--danger)] transition-all duration-700" style={{ width: `${overdueRate}%` }} />
+              <p className="text-3xl sm:text-4xl font-black tabular-nums leading-none mb-2" style={{ fontFamily: 'var(--font-heading)', letterSpacing: '-0.04em', color: 'var(--danger)' }}>{analyticsData.overdueTasks}</p>
+              <div className="flex items-center gap-2 mb-3">
+                {overdueRate > 20 ? (
+                  <span className="kpi-trend-down"><AlertTriangle size={10} />{overdueRate}%</span>
+                ) : (
+                  <span className="kpi-trend-neutral">{overdueRate}%</span>
+                )}
+                <span className="text-xs text-[var(--text-muted)]">of all tasks</span>
+              </div>
+              <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--bg-surface)' }}>
+                <div className="h-full rounded-full transition-all duration-700" style={{ width: `${overdueRate}%`, background: 'var(--danger)' }} />
               </div>
             </div>
 
             {/* Completed */}
-            <div className="bg-[var(--bg-raised)] rounded-xl border border-[var(--border-soft)] p-4 sm:p-5 shadow-[var(--shadow-xs)] hover:shadow-[var(--shadow-sm)] transition-all duration-200 group">
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex-1 min-w-0">
-                  <p className="text-[var(--text-muted)] text-[10px] sm:text-xs uppercase tracking-wider font-semibold">Completed</p>
-                  <p className="text-2xl sm:text-3xl font-black text-[var(--success)] mt-1 tabular-nums leading-none">{analyticsData.completedTasks}</p>
-                  <p className="text-xs text-[var(--text-muted)] mt-2 flex items-center gap-1">
-                    <TrendingUp size={11} className="text-[var(--success)] flex-shrink-0" />
-                    <span className="text-[var(--success)] font-semibold">{completionRate}%</span>&nbsp;rate
-                  </p>
-                </div>
-                <div className="w-9 h-9 rounded-lg bg-[var(--success-dim)] grid place-items-center flex-shrink-0 group-hover:scale-110 transition-transform duration-200">
-                  <TrendingUp size={17} className="text-[var(--success)]" />
+            <div className="kpi-metric-card group">
+              <div className="flex items-start justify-between gap-2 mb-3">
+                <p className="text-[var(--text-muted)] text-[10px] uppercase tracking-[0.08em] font-bold">Completed</p>
+                <div className="kpi-metric-icon bg-[var(--success-dim)]">
+                  <TrendingUp size={18} style={{ color: 'var(--success)' }} />
                 </div>
               </div>
-              <div className="mt-3 h-1.5 rounded-full bg-[var(--bg-surface)] overflow-hidden">
-                <div className="h-full rounded-full bg-[var(--success)] transition-all duration-700" style={{ width: `${completionRate}%` }} />
+              <p className="text-3xl sm:text-4xl font-black tabular-nums leading-none mb-2" style={{ fontFamily: 'var(--font-heading)', letterSpacing: '-0.04em', color: 'var(--success)' }}>{analyticsData.completedTasks}</p>
+              <div className="flex items-center gap-2 mb-3">
+                <span className="kpi-trend-up"><TrendingUp size={10} />{completionRate}%</span>
+                <span className="text-xs text-[var(--text-muted)]">target rate</span>
+              </div>
+              <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--bg-surface)' }}>
+                <div className="h-full rounded-full transition-all duration-700" style={{ width: `${completionRate}%`, background: 'var(--success)' }} />
               </div>
             </div>
 
             {/* In Progress */}
-            <div className="bg-[var(--bg-raised)] rounded-xl border border-[var(--border-soft)] p-4 sm:p-5 shadow-[var(--shadow-xs)] hover:shadow-[var(--shadow-sm)] transition-all duration-200 group">
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex-1 min-w-0">
-                  <p className="text-[var(--text-muted)] text-[10px] sm:text-xs uppercase tracking-wider font-semibold">In Progress</p>
-                  <p className="text-2xl sm:text-3xl font-black text-[var(--warning)] mt-1 tabular-nums leading-none">{analyticsData.inProgressTasks}</p>
-                  <p className="text-xs text-[var(--text-muted)] mt-2 flex items-center gap-1">
-                    <Clock size={11} className="text-[var(--warning)] flex-shrink-0" />
-                    <span className="text-[var(--warning)] font-semibold">{inProgressRate}%</span>&nbsp;active
-                  </p>
-                </div>
-                <div className="w-9 h-9 rounded-lg bg-[var(--warning-dim)] grid place-items-center flex-shrink-0 group-hover:scale-110 transition-transform duration-200">
-                  <Clock size={17} className="text-[var(--warning)]" />
+            <div className="kpi-metric-card group">
+              <div className="flex items-start justify-between gap-2 mb-3">
+                <p className="text-[var(--text-muted)] text-[10px] uppercase tracking-[0.08em] font-bold">In Progress</p>
+                <div className="kpi-metric-icon bg-[var(--warning-dim)]">
+                  <Clock size={18} style={{ color: 'var(--warning)' }} />
                 </div>
               </div>
-              <div className="mt-3 h-1.5 rounded-full bg-[var(--bg-surface)] overflow-hidden">
-                <div className="h-full rounded-full bg-[var(--warning)] transition-all duration-700" style={{ width: `${inProgressRate}%` }} />
+              <p className="text-3xl sm:text-4xl font-black tabular-nums leading-none mb-2" style={{ fontFamily: 'var(--font-heading)', letterSpacing: '-0.04em', color: 'var(--warning)' }}>{analyticsData.inProgressTasks}</p>
+              <div className="flex items-center gap-2 mb-3">
+                <span className="kpi-trend-neutral"><Clock size={10} />{inProgressRate}%</span>
+                <span className="text-xs text-[var(--text-muted)]">active work</span>
+              </div>
+              <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'var(--bg-surface)' }}>
+                <div className="h-full rounded-full transition-all duration-700" style={{ width: `${inProgressRate}%`, background: 'var(--warning)' }} />
               </div>
             </div>
           </div>
 
           {/* Charts Grid */}
           {user?.role !== 'member' && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
               {/* Status Distribution */}
-              <div className="bg-[var(--bg-raised)] rounded-xl border border-[var(--border-soft)] p-3 sm:p-6 shadow-[var(--shadow-xs)] hover:shadow-[var(--shadow-sm)] transition-shadow duration-200">
-                <h3 className="text-xs sm:text-sm font-bold text-[var(--text-primary)] uppercase tracking-wider mb-3 sm:mb-4">Task Status Distribution</h3>
+              <div className="chart-card">
+                <div className="chart-card-title"><span className="chart-card-title-accent" />Task Status Distribution</div>
                 <div style={{ width: '100%', minWidth: '200px' }}>
                   <ResponsiveContainer width="100%" aspect={1.8} minWidth={200}>
                     <RechartsPieChart>
-                      <Pie
-                        data={analyticsData.statusDistribution}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
+                      <Pie data={analyticsData.statusDistribution} cx="50%" cy="50%" labelLine={false}
                         label={({ name, percent }) => window.innerWidth < 640 ? `${(percent * 100).toFixed(0)}%` : `${name} ${(percent * 100).toFixed(0)}%`}
-                        outerRadius="55%"
-                        fill="#8884d8"
-                        dataKey="value"
-                      >
-                      {analyticsData.statusDistribution.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip contentStyle={tooltipStyle} />
-                    <Legend wrapperStyle={{ fontSize: '11px', color: chartColors.axis }} />
-                  </RechartsPieChart>
-                </ResponsiveContainer>
+                        outerRadius="55%" fill="#8884d8" dataKey="value" strokeWidth={0}>
+                        {analyticsData.statusDistribution.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip contentStyle={tooltipStyle} />
+                      <Legend wrapperStyle={{ fontSize: '11px', color: chartColors.axis, fontFamily: 'var(--font-body)' }} />
+                    </RechartsPieChart>
+                  </ResponsiveContainer>
                 </div>
               </div>
 
               {/* Priority Distribution */}
-              <div className="bg-[var(--bg-raised)] rounded-xl border border-[var(--border-soft)] p-3 sm:p-6 shadow-[var(--shadow-xs)] hover:shadow-[var(--shadow-sm)] transition-shadow duration-200">
-                <h3 className="text-xs sm:text-sm font-bold text-[var(--text-primary)] uppercase tracking-wider mb-3 sm:mb-4">Task Priority Distribution</h3>
+              <div className="chart-card">
+                <div className="chart-card-title"><span className="chart-card-title-accent" />Task Priority Distribution</div>
                 <div style={{ width: '100%', minWidth: '200px' }}>
                   <ResponsiveContainer width="100%" aspect={1.8} minWidth={200}>
-                    <BarChart data={analyticsData.priorityDistribution}>
-                    <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} />
-                    <XAxis dataKey="name" stroke={chartColors.axis} tick={{ fontSize: 10, fill: chartColors.axis }} />
-                    <YAxis stroke={chartColors.axis} tick={{ fontSize: 10, fill: chartColors.axis }} />
-                    <Tooltip contentStyle={tooltipStyle} />
-                    <Bar dataKey="value" fill="var(--brand)" radius={[3, 3, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
+                    <BarChart data={analyticsData.priorityDistribution} barSize={28}>
+                      <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} vertical={false} />
+                      <XAxis dataKey="name" stroke="none" tick={{ fontSize: 11, fill: chartColors.axis, fontFamily: 'var(--font-body)' }} />
+                      <YAxis stroke="none" tick={{ fontSize: 10, fill: chartColors.axis }} axisLine={false} tickLine={false} />
+                      <Tooltip contentStyle={tooltipStyle} cursor={{ fill: chartColors.grid }} />
+                      <Bar dataKey="value" fill={chartColors.brand} radius={[4, 4, 0, 0]}>
+                        {analyticsData.priorityDistribution.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color || chartColors.brand} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
                 </div>
               </div>
             </div>
@@ -928,188 +942,193 @@ const Analytics = () => {
           {/* Advanced Charts - Admin/HR Only */}
           {['admin', 'hr'].includes(user?.role) && (
             <>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
-              {/* Overdue by Priority */}
-                <div className="bg-[var(--bg-raised)] rounded-xl border border-[var(--border-soft)] p-3 sm:p-6 shadow-[var(--shadow-xs)] hover:shadow-[var(--shadow-sm)] transition-shadow duration-200">
-                  <h3 className="text-xs sm:text-sm font-bold text-[var(--danger)] uppercase tracking-wider mb-3 sm:mb-4">Overdue Tasks by Priority</h3>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
+                {/* Overdue by Priority */}
+                <div className="chart-card">
+                  <div className="chart-card-title" style={{ color: 'var(--danger)' }}><span className="chart-card-title-accent" style={{ background: 'var(--danger)' }} />Overdue Tasks by Priority</div>
                   <div style={{ width: '100%', minWidth: '200px' }}>
                     <ResponsiveContainer width="100%" aspect={1.8} minWidth={200}>
-                      <BarChart data={analyticsData.overdueByPriority}>
-                      <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} />
-                      <XAxis dataKey="name" stroke={chartColors.axis} tick={{ fontSize: 10, fill: chartColors.axis }} />
-                      <YAxis stroke={chartColors.axis} tick={{ fontSize: 10, fill: chartColors.axis }} />
-                      <Tooltip contentStyle={tooltipStyle} />
-                      <Bar dataKey="value" fill="var(--danger)" radius={[3, 3, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
+                      <BarChart data={analyticsData.overdueByPriority} barSize={28}>
+                        <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} vertical={false} />
+                        <XAxis dataKey="name" stroke="none" tick={{ fontSize: 10, fill: chartColors.axis }} />
+                        <YAxis stroke="none" tick={{ fontSize: 10, fill: chartColors.axis }} axisLine={false} tickLine={false} />
+                        <Tooltip contentStyle={tooltipStyle} />
+                        <Bar dataKey="value" fill={chartColors.danger} radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
                   </div>
                 </div>
 
                 {/* Completion Trend */}
-                <div className="bg-[var(--bg-raised)] rounded-xl border border-[var(--border-soft)] p-3 sm:p-6 shadow-[var(--shadow-xs)] hover:shadow-[var(--shadow-sm)] transition-shadow duration-200">
-                  <h3 className="text-xs sm:text-sm font-bold text-[var(--text-primary)] uppercase tracking-wider mb-3 sm:mb-4">Completion Trend (30 Days)</h3>
+                <div className="chart-card">
+                  <div className="chart-card-title"><span className="chart-card-title-accent" />Completion Trend (30 Days)</div>
                   <div style={{ width: '100%', minWidth: '200px' }}>
                     <ResponsiveContainer width="100%" aspect={1.8} minWidth={200}>
                       <AreaChart data={analyticsData.completionTrend}>
-                        <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} />
-                        <XAxis dataKey="date" stroke={chartColors.axis} tick={{ fontSize: 7, fill: chartColors.axis }} angle={-60} textAnchor="end" height={50} />
-                        <YAxis stroke={chartColors.axis} tick={{ fontSize: 9, fill: chartColors.axis }} />
-                      <Tooltip contentStyle={tooltipStyle} />
-                      <defs>
-                        <linearGradient id="createdGrad" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="var(--brand)" stopOpacity={0.3}/>
-                          <stop offset="95%" stopColor="var(--brand)" stopOpacity={0}/>
-                        </linearGradient>
-                        <linearGradient id="completedGrad" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="var(--success)" stopOpacity={0.3}/>
-                          <stop offset="95%" stopColor="var(--success)" stopOpacity={0}/>
-                        </linearGradient>
-                      </defs>
-                      <Area type="monotone" dataKey="created" stackId="1" stroke="var(--brand)" fill="url(#createdGrad)" name="Created" />
-                      <Area type="monotone" dataKey="completed" stackId="2" stroke="var(--success)" fill="url(#completedGrad)" name="Completed" />
-                      <Legend wrapperStyle={{ fontSize: '11px', color: chartColors.axis }} />
-                    </AreaChart>
-                  </ResponsiveContainer>
+                        <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} vertical={false} />
+                        <XAxis dataKey="date" stroke="none" tick={{ fontSize: 7, fill: chartColors.axis }} angle={-45} textAnchor="end" height={45} />
+                        <YAxis stroke="none" tick={{ fontSize: 9, fill: chartColors.axis }} axisLine={false} tickLine={false} />
+                        <Tooltip contentStyle={tooltipStyle} />
+                        <defs>
+                          <linearGradient id="createdGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor={chartColors.brand} stopOpacity={0.3}/>
+                            <stop offset="95%" stopColor={chartColors.brand} stopOpacity={0}/>
+                          </linearGradient>
+                          <linearGradient id="completedGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor={chartColors.success} stopOpacity={0.3}/>
+                            <stop offset="95%" stopColor={chartColors.success} stopOpacity={0}/>
+                          </linearGradient>
+                        </defs>
+                        <Area type="monotone" dataKey="created" stackId="1" stroke={chartColors.brand} fill="url(#createdGrad)" strokeWidth={2} name="Created" />
+                        <Area type="monotone" dataKey="completed" stackId="2" stroke={chartColors.success} fill="url(#completedGrad)" strokeWidth={2} name="Completed" />
+                        <Legend wrapperStyle={{ fontSize: '11px', color: chartColors.axis, fontFamily: 'var(--font-body)' }} />
+                      </AreaChart>
+                    </ResponsiveContainer>
                   </div>
                 </div>
               </div>
 
               {/* User Performance */}
-              <div className="bg-[var(--bg-raised)] rounded-xl border border-[var(--border-soft)] p-3 sm:p-6 mb-4 sm:mb-6 shadow-[var(--shadow-xs)] hover:shadow-[var(--shadow-sm)] transition-shadow duration-200">
-                <h3 className="text-xs sm:text-sm font-bold text-[var(--text-primary)] uppercase tracking-wider mb-3 sm:mb-4">User Performance</h3>
+              <div className="chart-card mb-6 sm:mb-8">
+                <div className="chart-card-title"><span className="chart-card-title-accent" />User Performance</div>
                 <div style={{ width: '100%', minWidth: '200px' }}>
                   <ResponsiveContainer width="100%" aspect={1.5} minWidth={200}>
-                  <BarChart data={analyticsData.assigneePerformance}>
-                    <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} />
-                    <XAxis dataKey="name" stroke={chartColors.axis} tick={{ fontSize: 7, fill: chartColors.axis }} angle={-60} textAnchor="end" height={70} />
-                    <YAxis stroke={chartColors.axis} tick={{ fontSize: 10, fill: chartColors.axis }} />
-                    <Tooltip contentStyle={tooltipStyle} />
-                    <Legend wrapperStyle={{ fontSize: '11px', color: chartColors.axis }} />
-                    <Bar dataKey="total" fill="var(--brand)" name="Total Tasks" radius={[2, 2, 0, 0]} />
-                    <Bar dataKey="completed" fill="var(--success)" name="Completed" radius={[2, 2, 0, 0]} />
-                    <Bar dataKey="overdue" fill="var(--danger)" name="Overdue" radius={[2, 2, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
+                    <BarChart data={analyticsData.assigneePerformance} barGap={2}>
+                      <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} vertical={false} />
+                      <XAxis dataKey="name" stroke="none" tick={{ fontSize: 7, fill: chartColors.axis }} angle={-45} textAnchor="end" height={65} />
+                      <YAxis stroke="none" tick={{ fontSize: 10, fill: chartColors.axis }} axisLine={false} tickLine={false} />
+                      <Tooltip contentStyle={tooltipStyle} />
+                      <Legend wrapperStyle={{ fontSize: '11px', color: chartColors.axis, fontFamily: 'var(--font-body)' }} />
+                      <Bar dataKey="total" fill={chartColors.brand} name="Total Tasks" radius={[3, 3, 0, 0]} barSize={10} />
+                      <Bar dataKey="completed" fill={chartColors.success} name="Completed" radius={[3, 3, 0, 0]} barSize={10} />
+                      <Bar dataKey="overdue" fill={chartColors.danger} name="Overdue" radius={[3, 3, 0, 0]} barSize={10} />
+                    </BarChart>
+                  </ResponsiveContainer>
                 </div>
               </div>
 
               {/* Team Distribution */}
-              <div className="bg-[var(--bg-raised)] rounded-xl border border-[var(--border-soft)] p-3 sm:p-6 mb-4 sm:mb-6 shadow-[var(--shadow-xs)] hover:shadow-[var(--shadow-sm)] transition-shadow duration-200">
-                <h3 className="text-xs sm:text-sm font-bold text-[var(--text-primary)] uppercase tracking-wider mb-3 sm:mb-4">Tasks by Team</h3>
+              <div className="chart-card mb-6 sm:mb-8">
+                <div className="chart-card-title"><span className="chart-card-title-accent" />Tasks by Team</div>
                 {analyticsData.teamDistribution && analyticsData.teamDistribution.length > 0 ? (
                   <div style={{ width: '100%', minWidth: '200px' }}>
                     <ResponsiveContainer width="100%" aspect={1.5} minWidth={200}>
-                    <BarChart data={analyticsData.teamDistribution}>
-                      <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} />
-                      <XAxis dataKey="name" stroke={chartColors.axis} tick={{ fontSize: 7, fill: chartColors.axis }} angle={-60} textAnchor="end" height={80} interval={0} />
-                      <YAxis stroke={chartColors.axis} tick={{ fontSize: 10, fill: chartColors.axis }} />
-                      <Tooltip contentStyle={tooltipStyle} />
-                      <Bar dataKey="value" name="Tasks" radius={[2, 2, 0, 0]}>
-                        {analyticsData.teamDistribution.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={`hsl(${index * 40}, 70%, 50%)`} />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
+                      <BarChart data={analyticsData.teamDistribution} barSize={28}>
+                        <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} vertical={false} />
+                        <XAxis dataKey="name" stroke="none" tick={{ fontSize: 7, fill: chartColors.axis }} angle={-45} textAnchor="end" height={75} interval={0} />
+                        <YAxis stroke="none" tick={{ fontSize: 10, fill: chartColors.axis }} axisLine={false} tickLine={false} />
+                        <Tooltip contentStyle={tooltipStyle} />
+                        <Bar dataKey="value" name="Tasks" radius={[4, 4, 0, 0]}>
+                          {analyticsData.teamDistribution.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={teamColor(index)} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
                   </div>
                 ) : (
                   <p className="text-center py-8 text-[var(--text-muted)] text-sm">No team data available</p>
                 )}
               </div>
 
-              {/* NEW CHARTS START HERE */}
-              
-              {/* Weekly Progress Chart */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
-                <div className="bg-[var(--bg-raised)] rounded-xl border border-[var(--border-soft)] p-3 sm:p-6 shadow-[var(--shadow-xs)] hover:shadow-[var(--shadow-sm)] transition-shadow duration-200">
-                  <h3 className="text-xs sm:text-sm font-bold text-[var(--text-primary)] uppercase tracking-wider mb-3 sm:mb-4">Weekly Progress (Last 8 Weeks)</h3>
+              {/* Weekly Progress & Hourly Distribution */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
+                <div className="chart-card">
+                  <div className="chart-card-title"><span className="chart-card-title-accent" />Weekly Progress (Last 8 Weeks)</div>
                   <div style={{ width: '100%', minWidth: '200px' }}>
                     <ResponsiveContainer width="100%" aspect={1.8} minWidth={200}>
-                    <LineChart data={analyticsData.weeklyProgress}>
-                      <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} />
-                      <XAxis dataKey="week" stroke={chartColors.axis} tick={{ fontSize: 9, fill: chartColors.axis }} />
-                      <YAxis stroke={chartColors.axis} tick={{ fontSize: 10, fill: chartColors.axis }} />
-                      <Tooltip contentStyle={tooltipStyle} />
-                      <Legend wrapperStyle={{ fontSize: '11px', color: chartColors.axis }} />
-                      <Line type="monotone" dataKey="completed" stroke="var(--success)" strokeWidth={2} dot={{ r: 3 }} name="Completed" />
-                      <Line type="monotone" dataKey="inProgress" stroke="var(--brand)" strokeWidth={2} dot={{ r: 3 }} name="In Progress" />
-                      <Line type="monotone" dataKey="todo" stroke={chartColors.axis} strokeWidth={2} dot={{ r: 3 }} name="To Do" />
-                    </LineChart>
-                  </ResponsiveContainer>
+                      <LineChart data={analyticsData.weeklyProgress}>
+                        <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} vertical={false} />
+                        <XAxis dataKey="week" stroke="none" tick={{ fontSize: 9, fill: chartColors.axis }} />
+                        <YAxis stroke="none" tick={{ fontSize: 10, fill: chartColors.axis }} axisLine={false} tickLine={false} />
+                        <Tooltip contentStyle={tooltipStyle} />
+                        <Legend wrapperStyle={{ fontSize: '11px', color: chartColors.axis, fontFamily: 'var(--font-body)' }} />
+                        <Line type="monotone" dataKey="completed" stroke={chartColors.success} strokeWidth={2.5} dot={{ r: 3, fill: chartColors.success }} name="Completed" />
+                        <Line type="monotone" dataKey="inProgress" stroke={chartColors.brand} strokeWidth={2.5} dot={{ r: 3, fill: chartColors.brand }} name="In Progress" />
+                        <Line type="monotone" dataKey="todo" stroke={chartColors.axis} strokeWidth={1.5} dot={{ r: 2, fill: chartColors.axis }} name="To Do" />
+                      </LineChart>
+                    </ResponsiveContainer>
                   </div>
                 </div>
 
-                {/* Hourly Distribution */}
-                <div className="bg-[var(--bg-raised)] rounded-xl border border-[var(--border-soft)] p-3 sm:p-6 shadow-[var(--shadow-xs)] hover:shadow-[var(--shadow-sm)] transition-shadow duration-200">
-                  <h3 className="text-xs sm:text-sm font-bold text-[var(--text-primary)] uppercase tracking-wider mb-3 sm:mb-4">Task Creation by Hour</h3>
+                <div className="chart-card">
+                  <div className="chart-card-title"><span className="chart-card-title-accent" />Task Creation by Hour</div>
                   <div style={{ width: '100%', minWidth: '200px' }}>
                     <ResponsiveContainer width="100%" aspect={1.8} minWidth={200}>
-                    <BarChart data={analyticsData.hourlyDistribution}>
-                      <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} />
-                      <XAxis dataKey="hour" stroke={chartColors.axis} tick={{ fontSize: 6, fill: chartColors.axis }} angle={-60} textAnchor="end" height={55} />
-                      <YAxis stroke={chartColors.axis} tick={{ fontSize: 10, fill: chartColors.axis }} />
-                      <Tooltip contentStyle={tooltipStyle} />
-                      <Bar dataKey="count" fill="var(--warning)" name="Tasks Created" radius={[2, 2, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
+                      <BarChart data={analyticsData.hourlyDistribution} barSize={16}>
+                        <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} vertical={false} />
+                        <XAxis dataKey="hour" stroke="none" tick={{ fontSize: 6, fill: chartColors.axis }} angle={-60} textAnchor="end" height={50} />
+                        <YAxis stroke="none" tick={{ fontSize: 10, fill: chartColors.axis }} axisLine={false} tickLine={false} />
+                        <Tooltip contentStyle={tooltipStyle} />
+                        <Bar dataKey="count" fill={chartColors.warning} name="Tasks Created" radius={[3, 3, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
                   </div>
                 </div>
               </div>
 
               {/* Task Age Distribution & Priority Trend */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-4 sm:mb-6">
-                <div className="bg-[var(--bg-raised)] rounded-xl border border-[var(--border-soft)] p-3 sm:p-6 shadow-[var(--shadow-xs)] hover:shadow-[var(--shadow-sm)] transition-shadow duration-200">
-                  <h3 className="text-xs sm:text-sm font-bold text-[var(--text-primary)] uppercase tracking-wider mb-3 sm:mb-4">Open Task Age Distribution</h3>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
+                <div className="chart-card">
+                  <div className="chart-card-title"><span className="chart-card-title-accent" />Open Task Age Distribution</div>
                   <div style={{ width: '100%', minWidth: '200px' }}>
                     <ResponsiveContainer width="100%" aspect={1.8} minWidth={200}>
-                    <BarChart data={analyticsData.taskAgeDistribution} layout="vertical">
-                      <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} />
-                      <XAxis type="number" stroke={chartColors.axis} tick={{ fontSize: 9, fill: chartColors.axis }} />
-                      <YAxis dataKey="range" type="category" stroke={chartColors.axis} tick={{ fontSize: 8, fill: chartColors.axis }} width={60} />
-                      <Tooltip contentStyle={tooltipStyle} />
-                      <Bar dataKey="count" fill="#8b5cf6" name="Tasks" radius={[0, 2, 2, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
+                      <BarChart data={analyticsData.taskAgeDistribution} layout="vertical">
+                        <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} horizontal={false} />
+                        <XAxis type="number" stroke="none" tick={{ fontSize: 9, fill: chartColors.axis }} axisLine={false} tickLine={false} />
+                        <YAxis dataKey="range" type="category" stroke="none" tick={{ fontSize: 8, fill: chartColors.axis }} width={60} axisLine={false} tickLine={false} />
+                        <Tooltip contentStyle={tooltipStyle} />
+                        <Bar dataKey="count" fill={chartColors.ai} name="Tasks" radius={[0, 3, 3, 0]}>
+                          {analyticsData.taskAgeDistribution?.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={teamColor(index + 2)} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
                   </div>
                 </div>
 
-                <div className="bg-[var(--bg-raised)] rounded-xl border border-[var(--border-soft)] p-3 sm:p-6 shadow-[var(--shadow-xs)] hover:shadow-[var(--shadow-sm)] transition-shadow duration-200">
-                  <h3 className="text-xs sm:text-sm font-bold text-[var(--text-primary)] uppercase tracking-wider mb-3 sm:mb-4">Priority Trend (12 Weeks)</h3>
+                <div className="chart-card">
+                  <div className="chart-card-title"><span className="chart-card-title-accent" />Priority Trend (12 Weeks)</div>
                   <div style={{ width: '100%', minWidth: '200px' }}>
                     <ResponsiveContainer width="100%" aspect={1.8} minWidth={200}>
-                    <AreaChart data={analyticsData.priorityTrend}>
-                      <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} />
-                      <XAxis dataKey="week" stroke={chartColors.axis} tick={{ fontSize: 8, fill: chartColors.axis }} />
-                      <YAxis stroke={chartColors.axis} tick={{ fontSize: 9, fill: chartColors.axis }} />
-                      <Tooltip contentStyle={tooltipStyle} />
-                      <Legend wrapperStyle={{ fontSize: '9px', color: chartColors.axis }} />
-                      <Area type="monotone" dataKey="urgent" stackId="1" stroke="#ef4444" fill="#ef4444" name="Urgent" fillOpacity={0.7} />
-                      <Area type="monotone" dataKey="high" stackId="1" stroke="#f97316" fill="#f97316" name="High" fillOpacity={0.7} />
-                      <Area type="monotone" dataKey="medium" stackId="1" stroke="#f59e0b" fill="#f59e0b" name="Medium" fillOpacity={0.7} />
-                      <Area type="monotone" dataKey="low" stackId="1" stroke="#10b981" fill="#10b981" name="Low" fillOpacity={0.7} />
-                    </AreaChart>
-                  </ResponsiveContainer>
+                      <AreaChart data={analyticsData.priorityTrend}>
+                        <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} vertical={false} />
+                        <XAxis dataKey="week" stroke="none" tick={{ fontSize: 8, fill: chartColors.axis }} />
+                        <YAxis stroke="none" tick={{ fontSize: 9, fill: chartColors.axis }} axisLine={false} tickLine={false} />
+                        <Tooltip contentStyle={tooltipStyle} />
+                        <Legend wrapperStyle={{ fontSize: '10px', color: chartColors.axis, fontFamily: 'var(--font-body)' }} />
+                        <Area type="monotone" dataKey="urgent" stackId="1" stroke={chartColors.danger} fill={chartColors.danger} name="Urgent" fillOpacity={0.65} strokeWidth={1.5} />
+                        <Area type="monotone" dataKey="high" stackId="1" stroke={chartColors.brand} fill={chartColors.brand} name="High" fillOpacity={0.65} strokeWidth={1.5} />
+                        <Area type="monotone" dataKey="medium" stackId="1" stroke={chartColors.warning} fill={chartColors.warning} name="Medium" fillOpacity={0.65} strokeWidth={1.5} />
+                        <Area type="monotone" dataKey="low" stackId="1" stroke={chartColors.success} fill={chartColors.success} name="Low" fillOpacity={0.65} strokeWidth={1.5} />
+                      </AreaChart>
+                    </ResponsiveContainer>
                   </div>
                 </div>
               </div>
 
               {/* Team Completion Rate */}
-              <div className="bg-[var(--bg-raised)] rounded-xl border border-[var(--border-soft)] p-4 sm:p-6 mb-6 shadow-[var(--shadow-xs)] hover:shadow-[var(--shadow-sm)] transition-shadow duration-200">
-                <h3 className="text-sm font-bold text-[var(--text-primary)] uppercase tracking-wider mb-4">Team Completion Rate</h3>
+              <div className="chart-card mb-6 sm:mb-8">
+                <div className="chart-card-title"><span className="chart-card-title-accent" />Team Completion Rate</div>
                 <ResponsiveContainer width="100%" height={350} minWidth={200} minHeight={350}>
-                  <BarChart data={analyticsData.completionRateByTeam}>
-                    <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} />
-                    <XAxis dataKey="team" stroke={chartColors.axis} tick={{ fontSize: 10, fill: chartColors.axis }} angle={-45} textAnchor="end" height={100} />
-                    <YAxis stroke={chartColors.axis} tick={{ fontSize: 11, fill: chartColors.axis }} label={{ value: 'Completion Rate %', angle: -90, position: 'insideLeft', fill: chartColors.axis }} />
-                    <Tooltip 
-                      contentStyle={tooltipStyle}
+                  <BarChart data={analyticsData.completionRateByTeam} barSize={28}>
+                    <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} vertical={false} />
+                    <XAxis dataKey="team" stroke="none" tick={{ fontSize: 10, fill: chartColors.axis }} angle={-45} textAnchor="end" height={100} />
+                    <YAxis stroke="none" tick={{ fontSize: 11, fill: chartColors.axis }} axisLine={false} tickLine={false}
+                      label={{ value: 'Rate %', angle: -90, position: 'insideLeft', fill: chartColors.axis, fontSize: 10 }} />
+                    <Tooltip contentStyle={tooltipStyle}
                       formatter={(value, name) => {
                         if (name === 'rate') return [`${value}%`, 'Completion Rate'];
                         return [value, name];
                       }}
                     />
-                    <Legend wrapperStyle={{ fontSize: '11px', color: chartColors.axis }} />
-                    <Bar dataKey="rate" fill="#06b6d4" name="Completion Rate %" radius={[2, 2, 0, 0]} />
+                    <Legend wrapperStyle={{ fontSize: '11px', color: chartColors.axis, fontFamily: 'var(--font-body)' }} />
+                    <Bar dataKey="rate" fill={chartColors.chart6} name="Completion Rate %" radius={[4, 4, 0, 0]}>
+                      {analyticsData.completionRateByTeam?.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.rate >= 75 ? chartColors.success : entry.rate >= 50 ? chartColors.brand : chartColors.danger} />
+                      ))}
+                    </Bar>
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -1119,70 +1138,64 @@ const Analytics = () => {
           {/* PROJECT ANALYTICS SECTION */}
           {analyticsData.totalProjects > 0 && (
             <div className="mb-8">
-              <h2 className="text-lg font-bold text-[var(--text-primary)] mb-4 flex items-center gap-2">
-                <BarChart3 size={20} className="text-[var(--brand)]" />
+              <div className="analytics-section-head">
+                <BarChart3 size={18} />
                 Project Analytics
-              </h2>
-              
+              </div>
+
               {/* Project Summary Cards */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                <div className="bg-[var(--bg-raised)] rounded-xl border border-[var(--border-soft)] p-4 shadow-[var(--shadow-xs)] hover:shadow-[var(--shadow-sm)] transition-shadow duration-200">
-                  <p className="text-2xl font-black text-[var(--text-primary)]">
-                    {analyticsData.totalProjects}
-                  </p>
-                  <p className="text-xs text-[var(--text-muted)] mt-1">Total Projects</p>
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
+                <div className="kpi-metric-card group animate-stagger">
+                  <p className="kpi-metric-label">Total Projects</p>
+                  <p className="kpi-metric-value fade-up">{analyticsData.totalProjects}</p>
                 </div>
-                <div className="bg-[var(--bg-raised)] rounded-xl border border-[var(--border-soft)] p-4 shadow-[var(--shadow-xs)] hover:shadow-[var(--shadow-sm)] transition-shadow duration-200">
-                  <p className="text-2xl font-black text-[var(--brand)]">
-                    {analyticsData.activeProjects}
-                  </p>
-                  <p className="text-xs text-[var(--text-muted)] mt-1">Active</p>
+                <div className="kpi-metric-card group animate-stagger">
+                  <p className="kpi-metric-label">Active</p>
+                  <p className="kpi-metric-value fade-up" style={{ color: 'var(--brand)' }}>{analyticsData.activeProjects}</p>
                 </div>
-                <div className="bg-[var(--bg-raised)] rounded-xl border border-[var(--border-soft)] p-4 shadow-[var(--shadow-xs)] hover:shadow-[var(--shadow-sm)] transition-shadow duration-200">
-                  <p className="text-2xl font-black text-[var(--success)]">
-                    {analyticsData.completedProjects}
-                  </p>
-                  <p className="text-xs text-[var(--text-muted)] mt-1">Completed</p>
+                <div className="kpi-metric-card group animate-stagger">
+                  <p className="kpi-metric-label">Completed</p>
+                  <p className="kpi-metric-value fade-up" style={{ color: 'var(--success)' }}>{analyticsData.completedProjects}</p>
                 </div>
-                <div className="bg-[var(--bg-raised)] rounded-xl border border-[var(--border-soft)] p-4 shadow-[var(--shadow-xs)] hover:shadow-[var(--shadow-sm)] transition-shadow duration-200">
-                  <p className="text-2xl font-black text-[var(--warning)]">
-                    {analyticsData.onHoldProjects}
-                  </p>
-                  <p className="text-xs text-[var(--text-muted)] mt-1">On Hold</p>
+                <div className="kpi-metric-card group animate-stagger">
+                  <p className="kpi-metric-label">On Hold</p>
+                  <p className="kpi-metric-value fade-up" style={{ color: 'var(--warning)' }}>{analyticsData.onHoldProjects}</p>
                 </div>
               </div>
 
               {/* Project Charts */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-4">
                 {analyticsData.projectStatusDistribution.length > 0 && (
-                  <div className="bg-[var(--bg-raised)] rounded-xl border border-[var(--border-soft)] p-4 shadow-[var(--shadow-xs)] hover:shadow-[var(--shadow-sm)] transition-shadow duration-200">
-                    <h3 className="text-sm font-bold text-[var(--text-primary)] mb-4">Project Status</h3>
+                  <div className="chart-card">
+                    <div className="chart-card-title"><span className="chart-card-title-accent" />Project Status</div>
                     <ResponsiveContainer width="100%" height={250}>
                       <RechartsPieChart>
-                        <Pie data={analyticsData.projectStatusDistribution} cx="50%" cy="50%" labelLine={false} outerRadius={80} fill="#8884d8" dataKey="value" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
+                        <Pie data={analyticsData.projectStatusDistribution} cx="50%" cy="50%" labelLine={false} outerRadius={85} dataKey="value"
+                          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                          labelStyle={{ fontSize: '10px', fontFamily: 'var(--font-body)', fill: chartColors.axis }}>
                           {analyticsData.projectStatusDistribution.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
+                            <Cell key={`cell-${index}`} fill={entry.color || teamColor(index)} />
                           ))}
                         </Pie>
                         <Tooltip contentStyle={tooltipStyle} />
-                        <Legend wrapperStyle={{ fontSize: '11px', color: chartColors.axis }} />
+                        <Legend wrapperStyle={{ fontSize: '11px', color: chartColors.axis, fontFamily: 'var(--font-body)' }} />
                       </RechartsPieChart>
                     </ResponsiveContainer>
                   </div>
                 )}
 
                 {analyticsData.projectProgressDistribution.length > 0 && (
-                  <div className="bg-[var(--bg-raised)] rounded-xl border border-[var(--border-soft)] p-4 shadow-[var(--shadow-xs)] hover:shadow-[var(--shadow-sm)] transition-shadow duration-200">
-                    <h3 className="text-sm font-bold text-[var(--text-primary)] mb-4">Progress Distribution</h3>
+                  <div className="chart-card">
+                    <div className="chart-card-title"><span className="chart-card-title-accent" />Progress Distribution</div>
                     <ResponsiveContainer width="100%" height={250}>
-                      <BarChart data={analyticsData.projectProgressDistribution}>
-                        <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} />
-                        <XAxis dataKey="range" stroke={chartColors.axis} tick={{ fill: chartColors.axis }} />
-                        <YAxis stroke={chartColors.axis} tick={{ fill: chartColors.axis }} />
+                      <BarChart data={analyticsData.projectProgressDistribution} barSize={28}>
+                        <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} vertical={false} />
+                        <XAxis dataKey="range" stroke="none" tick={{ fontSize: 10, fill: chartColors.axis }} />
+                        <YAxis stroke="none" tick={{ fontSize: 10, fill: chartColors.axis }} axisLine={false} tickLine={false} />
                         <Tooltip contentStyle={tooltipStyle} />
-                        <Bar dataKey="count" name="Projects" radius={[3, 3, 0, 0]}>
+                        <Bar dataKey="count" name="Projects" radius={[4, 4, 0, 0]}>
                           {analyticsData.projectProgressDistribution.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
+                            <Cell key={`cell-${index}`} fill={entry.color || teamColor(index)} />
                           ))}
                         </Bar>
                       </BarChart>
@@ -1191,34 +1204,34 @@ const Analytics = () => {
                 )}
 
                 {analyticsData.tasksPerProject.length > 0 && (
-                  <div className="bg-[var(--bg-raised)] rounded-xl border border-[var(--border-soft)] p-4 shadow-[var(--shadow-xs)] hover:shadow-[var(--shadow-sm)] transition-shadow duration-200">
-                    <h3 className="text-sm font-bold text-[var(--text-primary)] mb-4">Tasks Per Project</h3>
+                  <div className="chart-card">
+                    <div className="chart-card-title"><span className="chart-card-title-accent" />Tasks Per Project</div>
                     <ResponsiveContainer width="100%" height={250}>
-                      <BarChart data={analyticsData.tasksPerProject} layout="horizontal">
-                        <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} />
-                        <XAxis type="number" stroke={chartColors.axis} tick={{ fill: chartColors.axis }} />
-                        <YAxis type="category" dataKey="name" stroke={chartColors.axis} tick={{ fill: chartColors.axis }} width={80} />
+                      <BarChart data={analyticsData.tasksPerProject} layout="vertical" barSize={14}>
+                        <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} horizontal={false} />
+                        <XAxis type="number" stroke="none" tick={{ fontSize: 10, fill: chartColors.axis }} axisLine={false} tickLine={false} />
+                        <YAxis type="category" dataKey="name" stroke="none" tick={{ fontSize: 9, fill: chartColors.axis }} width={84} axisLine={false} tickLine={false} />
                         <Tooltip contentStyle={tooltipStyle} />
-                        <Legend wrapperStyle={{ fontSize: '11px', color: chartColors.axis }} />
-                        <Bar dataKey="completed" stackId="a" fill="var(--success)" name="Done" />
-                        <Bar dataKey="pending" stackId="a" fill="var(--warning)" name="Pending" />
+                        <Legend wrapperStyle={{ fontSize: '11px', color: chartColors.axis, fontFamily: 'var(--font-body)' }} />
+                        <Bar dataKey="completed" stackId="a" fill={chartColors.success} name="Done" radius={[0, 0, 0, 0]} />
+                        <Bar dataKey="pending" stackId="a" fill={chartColors.warning} name="Pending" radius={[0, 3, 3, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
                 )}
 
                 {analyticsData.projectHealthScore.length > 0 && (
-                  <div className="bg-[var(--bg-raised)] rounded-xl border border-[var(--border-soft)] p-4 shadow-[var(--shadow-xs)] hover:shadow-[var(--shadow-sm)] transition-shadow duration-200">
-                    <h3 className="text-sm font-bold text-[var(--text-primary)] mb-4">Project Health Score</h3>
+                  <div className="chart-card">
+                    <div className="chart-card-title"><span className="chart-card-title-accent" />Project Health Score</div>
                     <ResponsiveContainer width="100%" height={250}>
-                      <BarChart data={analyticsData.projectHealthScore} layout="horizontal">
-                        <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} />
-                        <XAxis type="number" domain={[0, 100]} stroke={chartColors.axis} tick={{ fill: chartColors.axis }} />
-                        <YAxis type="category" dataKey="name" stroke={chartColors.axis} tick={{ fill: chartColors.axis }} width={80} />
+                      <BarChart data={analyticsData.projectHealthScore} layout="vertical" barSize={14}>
+                        <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} horizontal={false} />
+                        <XAxis type="number" domain={[0, 100]} stroke="none" tick={{ fontSize: 10, fill: chartColors.axis }} axisLine={false} tickLine={false} />
+                        <YAxis type="category" dataKey="name" stroke="none" tick={{ fontSize: 9, fill: chartColors.axis }} width={84} axisLine={false} tickLine={false} />
                         <Tooltip contentStyle={tooltipStyle} />
-                        <Bar dataKey="score" name="Health" radius={[0, 3, 3, 0]}>
+                        <Bar dataKey="score" name="Health Score" radius={[0, 4, 4, 0]}>
                           {analyticsData.projectHealthScore.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.score >= 70 ? 'var(--success)' : entry.score >= 40 ? 'var(--warning)' : 'var(--danger)'} />
+                            <Cell key={`cell-${index}`} fill={entry.score >= 70 ? chartColors.success : entry.score >= 40 ? chartColors.warning : chartColors.danger} />
                           ))}
                         </Bar>
                       </BarChart>
@@ -1230,29 +1243,29 @@ const Analytics = () => {
           )}
 
           {/* Tasks Table */}
-          <div className="bg-[var(--bg-raised)] rounded-xl border border-[var(--border-soft)] overflow-hidden shadow-[var(--shadow-xs)]">
-            <div className="p-4 border-b border-[var(--border-soft)]">
-              <h3 className="text-sm font-bold text-[var(--text-primary)] uppercase tracking-wider">
-                {filters.status || filters.priority || filters.team || filters.user || filters.dateRange !== 'all' 
-                  ? `Filtered Tasks (${filteredTasks.length})` 
+          <div className="data-table-wrap">
+            <div className="data-table-header">
+              <span>
+                {filters.status || filters.priority || filters.team || filters.user || filters.dateRange !== 'all'
+                  ? `Filtered Tasks (${filteredTasks.length})`
                   : `All Tasks (${filteredTasks.length})`}
-              </h3>
+              </span>
             </div>
             <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-[var(--bg-base)]">
+              <table className="data-table">
+                <thead>
                   <tr>
-                    <th className="px-4 py-3 text-left text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">Task</th>
-                    <th className="px-4 py-3 text-left text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">Status</th>
-                    <th className="px-4 py-3 text-left text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">Priority</th>
-                    <th className="px-4 py-3 text-left text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider hidden lg:table-cell">Assigned</th>
-                    <th className="px-4 py-3 text-left text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-wider">Due Date</th>
+                    <th>Task</th>
+                    <th>Status</th>
+                    <th>Priority</th>
+                    <th className="hidden lg:table-cell">Assigned</th>
+                    <th>Due Date</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[var(--border-hair)]">
+                <tbody>
                   {filteredTasks.length === 0 ? (
                     <tr>
-                      <td colSpan="5" className="px-4 py-8 text-center text-[var(--text-muted)]">
+                      <td colSpan={5} className="px-4 py-8 text-center text-[var(--text-muted)]">
                         No tasks found matching the selected filters
                       </td>
                     </tr>
@@ -1260,37 +1273,37 @@ const Analytics = () => {
                     filteredTasks.slice(0, 50).map((task) => {
                       const isOverdue = task.due_date && new Date(task.due_date) < new Date() && task.status !== 'done';
                       return (
-                        <tr key={task._id} className={`${isOverdue ? 'bg-[var(--danger-dim)]' : ''} hover:bg-[var(--bg-surface)] transition-colors duration-100`}>
-                          <td className="px-4 py-3">
+                        <tr key={task._id} className={isOverdue ? 'bg-[var(--danger-dim)]' : ''}>
+                          <td>
                             <div className="text-sm font-medium text-[var(--text-primary)]">{task.title}</div>
                             <div className="text-xs text-[var(--text-muted)] truncate max-w-xs">{task.description}</div>
                           </td>
-                          <td className="px-4 py-3 whitespace-nowrap">
-                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-md ${
-                              task.status === 'done' ? 'bg-[var(--success-dim)] text-[var(--success)]' :
-                              task.status === 'in_progress' ? 'bg-[var(--brand-dim)] text-[var(--brand)]' :
-                              task.status === 'review' ? 'bg-[var(--warning-dim)] text-[var(--warning)]' :
-                              'bg-[var(--bg-surface)] text-[var(--text-muted)]'
+                          <td>
+                            <span className={`badge ${
+                              task.status === 'done' ? 'badge-success' :
+                              task.status === 'in_progress' ? 'badge-brand' :
+                              task.status === 'review' ? 'badge-warning' :
+                              'badge-neutral'
                             }`}>
                               {task.status.replace('_', ' ')}
                             </span>
                           </td>
-                          <td className="px-4 py-3 whitespace-nowrap">
-                            <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-md" style={{ 
-                              backgroundColor: getPriorityColor(task.priority) + '20', 
-                              color: getPriorityColor(task.priority) 
+                          <td>
+                            <span className="badge" style={{
+                              backgroundColor: getPriorityColor(task.priority) + '22',
+                              color: getPriorityColor(task.priority),
                             }}>
                               {task.priority}
                             </span>
                           </td>
-                          <td className="px-4 py-3 text-sm text-[var(--text-muted)] hidden lg:table-cell">
+                          <td className="hidden lg:table-cell text-sm text-[var(--text-muted)]">
                             {task.assigned_to && task.assigned_to.length > 0
                               ? task.assigned_to.map(u => u.full_name).join(', ')
                               : 'Unassigned'}
                           </td>
-                          <td className="px-4 py-3 whitespace-nowrap">
-                            <div className={`text-sm flex items-center gap-2 ${isOverdue ? 'text-[var(--danger)]' : 'text-[var(--text-muted)]'}`}>
-                              {isOverdue && <AlertTriangle size={16} />}
+                          <td>
+                            <div className={`text-sm flex items-center gap-1.5 ${isOverdue ? 'text-[var(--danger)]' : 'text-[var(--text-muted)]'}`}>
+                              {isOverdue && <AlertTriangle size={14} />}
                               {task.due_date ? new Date(task.due_date).toLocaleDateString() : 'No date'}
                             </div>
                           </td>

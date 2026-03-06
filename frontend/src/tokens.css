@@ -415,3 +415,24 @@ html {
    classes mapped in tailwind.config.js)
    Already declared fully in the COLOUR ALIASES block above.
    ============================================================ */
+
+/* ============================================================
+   RESPONSIVE SPACING SCALE — shrink token values on mobile
+   Keeps design consistency without per-component overrides.
+   ============================================================ */
+@media (max-width: 767px) {
+  :root {
+    /* Moderately scale down spacing for denser mobile layouts */
+    --s8:  28px;  /* was 32px */
+    --s10: 36px;  /* was 40px */
+    --s12: 44px;  /* was 48px */
+    --s16: 56px;  /* was 64px */
+
+    /* Header shrinks slightly on mobile */
+    --header-h: 52px;
+
+    /* Font size scale — slightly tighter */
+    --text-xl:  1.25rem;   /* was 1.375rem */
+    --text-lg:  1rem;      /* was 1.125rem */
+  }
+}

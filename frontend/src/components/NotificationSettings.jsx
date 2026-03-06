@@ -115,7 +115,7 @@ const NotificationSettings = () => {
           {permission === 'granted' && (
             <button
               onClick={testNotification}
-              className="btn bg-green-600 text-white hover:bg-green-700 text-sm px-4 py-2 w-full sm:w-auto"
+              className="aether-btn aether-btn-success w-full sm:w-auto"
             >
               Test Notification
             </button>

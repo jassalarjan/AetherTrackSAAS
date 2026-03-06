@@ -17,12 +17,15 @@ export default defineConfig(({ mode }) => {
           name: 'AetherTrack - Task Management System',
           short_name: 'AetherTrack',
           description: 'A comprehensive, role-based task management system for teams',
-          theme_color: '#667eea',
-          background_color: '#ffffff',
+          theme_color: '#120E08',
+          background_color: '#120E08',
           display: 'standalone',
           orientation: 'portrait-primary',
           scope: '/',
           start_url: '/',
+          // Capacitor / Android adaptive icon
+          // Place ic_launcher_background.png and ic_launcher_foreground.png
+          // in android/app/src/main/res/mipmap-*
           icons: [
             {
               src: '/icons/icon-72x72.png',
@@ -139,12 +142,18 @@ export default defineConfig(({ mode }) => {
     build: {
       outDir: 'dist',
       sourcemap: isDevelopment,
-      minify: !isDevelopment,
+      minify: !isDevelopment ? 'esbuild' : false,
+      // Target modern Android WebView (Chrome 90+)
+      target: ['es2020', 'chrome90'],
+      // Reduce initial bundle size for faster mobile startup
+      chunkSizeWarningLimit: 800,
       rollupOptions: {
         output: {
           manualChunks: {
-            'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-            'chart-vendor': ['recharts'],
+            'react-vendor':   ['react', 'react-dom', 'react-router-dom'],
+            'chart-vendor':   ['recharts'],
+            'socket-vendor':  ['socket.io-client'],
+            'capacitor-core': ['@capacitor/core'],
           }
         }
       }

@@ -399,11 +399,7 @@ export default function VerificationSettings() {
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className={`flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-medium text-white transition-colors ${
-                  isDark 
-                    ? 'bg-blue-600 hover:bg-[#A35C28]' 
-                    : 'bg-blue-600 hover:bg-[#A35C28]'
-                } disabled:opacity-50 disabled:cursor-not-allowed`}
+                className={`aether-btn aether-btn-primary ${saving ? 'opacity-70' : ''}`}
               >
                 {saving ? (
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>

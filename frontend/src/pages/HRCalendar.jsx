@@ -32,7 +32,7 @@ const localizer   = momentLocalizer(moment);
 const DnDCalendar = withDragAndDrop(BigCalendar);
 
 // â”€â”€ Roles with write access â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-const MANAGER_ROLES = ['admin', 'hr', 'community_admin'];
+const MANAGER_ROLES = ['admin', 'hr'];
 
 // â”€â”€ Colour map for non-meeting events â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const ATTENDANCE_COLORS = {
@@ -247,7 +247,7 @@ export default function HRCalendar({ embedded = false }) {
         {canManage && (
           <button
             onClick={() => { setEditingMeeting(null); setFormDefaultStart(new Date()); setShowForm(true); }}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-blue-600 hover:bg-[#A35C28] text-white rounded-lg transition-colors shadow-sm"
+            className="aether-btn aether-btn-primary"
           >
             <Plus className="w-4 h-4" /> Schedule Meeting
           </button>

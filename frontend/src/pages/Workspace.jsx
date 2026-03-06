@@ -14,6 +14,7 @@ import { SectionLoader } from '../components/Spinner';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { useSidebar } from '../context/SidebarContext';
 import api from '../api/axios';
 import '../aethertrack-reference.css';
 import GlobalSidebar from '../components/GlobalSidebar';
@@ -1199,6 +1200,7 @@ const MobileNav = ({ activeTab, onNavigate }) => {
 const Workspace = () => {
   const { user } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const { isMobile, showBottomNav, toggleMobileSidebar } = useSidebar();
   const navigate = useNavigate();
   
   const [showAI, setShowAI] = useState(true);
@@ -1426,6 +1428,17 @@ const Workspace = () => {
 
         {/* Header */}
         <header className="header">
+          {/* Mobile hamburger */}
+          {isMobile && (
+            <button
+              className="hdr-btn"
+              onClick={toggleMobileSidebar}
+              aria-label="Open navigation menu"
+              style={{ flexShrink: 0 }}
+            >
+              ☰
+            </button>
+          )}
           <div className="breadcrumb">
             <div className="bc-page-icon" aria-hidden="true">⬡</div>
             <span className="bc-text">Dashboard</span>
@@ -1460,7 +1473,15 @@ const Workspace = () => {
         </header>
         
         {/* Main Content */}
-        <main className="main" id="main" style={{ flex: 1, overflowY: 'auto' }}>
+        <main
+          className="main"
+          id="main"
+          style={{
+            flex: 1,
+            overflowY: 'auto',
+            paddingBottom: showBottomNav ? 'calc(56px + env(safe-area-inset-bottom, 0px))' : undefined,
+          }}
+        >
           <div className="page">
             
             {/* Page Header */}
@@ -1583,11 +1604,13 @@ const Workspace = () => {
         ))}
       </div>
       
-      {/* Mobile Navigation */}
-      <MobileNav 
-        activeTab={mobileTab} 
-        onNavigate={handleMobileNav}
-      />
+      {/* Mobile Navigation — only shown on phones < 768px */}
+      {showBottomNav && (
+        <MobileNav 
+          activeTab={mobileTab} 
+          onNavigate={handleMobileNav}
+        />
+      )}
     </>
   );
 };

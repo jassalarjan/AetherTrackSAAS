@@ -292,7 +292,7 @@ router.patch('/:id', authenticate, validateIdParam(), sanitizeBody(['title', 'de
       isTeamLead = userTeams.includes(task.team_id.toString());
     }
     
-    const canEdit = ['admin', 'hr', 'community_admin'].includes(req.user.role) || isCreator || isAssigned || isTeamLead;
+    const canEdit = ['admin', 'hr', 'team_lead'].includes(req.user.role) || isCreator || isAssigned || isTeamLead;
 
     if (!canEdit) {
       return res.status(403).json({ message: 'Access denied' });
@@ -316,7 +316,7 @@ router.patch('/:id', authenticate, validateIdParam(), sanitizeBody(['title', 'de
     if (progress !== undefined) task.progress = progress;
 
     // Only certain roles can reassign
-    if (assigned_to !== undefined && ['admin', 'hr', 'team_lead', 'community_admin'].includes(req.user.role)) {
+    if (assigned_to !== undefined && ['admin', 'hr', 'team_lead'].includes(req.user.role)) {
       task.assigned_to = Array.isArray(assigned_to) ? assigned_to : [];
     }
 
@@ -399,7 +399,7 @@ router.patch('/:id', authenticate, validateIdParam(), sanitizeBody(['title', 'de
     }
 
     // Create notification for reassignment
-    if (assigned_to !== undefined && Array.isArray(assigned_to) && ['admin', 'hr', 'team_lead', 'community_admin'].includes(req.user.role)) {
+    if (assigned_to !== undefined && Array.isArray(assigned_to) && ['admin', 'hr', 'team_lead'].includes(req.user.role)) {
       // Find newly assigned users (not previously assigned)
       const newAssignedIds = assigned_to.map(id => id.toString());
       const newlyAssigned = newAssignedIds.filter(id => !oldAssignedTo.includes(id) && id !== req.user._id.toString());

@@ -30,7 +30,7 @@ class HrActionService {
    * Validate HR permissions
    */
   static async validateHrPermissions(user) {
-    if (!user || !['hr', 'admin', 'community_admin'].includes(user.role)) {
+    if (!user || !['hr', 'admin'].includes(user.role)) {
       throw new Error('Unauthorized: HR, Admin, or Community Admin role required');
     }
   }

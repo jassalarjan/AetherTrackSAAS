@@ -221,33 +221,6 @@ const getPanelContent = (role, signals) => {
         ]},
       ],
     },
-    community_admin: {
-      dashboard: [
-        { group: 'OVERVIEW', items: [
-          { path: '/community-users', icon: UserCog,   label: 'Community Members' },
-          { path: '/settings',        icon: Building2, label: 'Community Settings' },
-        ]},
-      ],
-      tasks: [
-        { group: 'QUICK ACTIONS', items: [
-          { path: '/self-attendance?tab=checkin', icon: AlarmCheck, label: 'Check In / Out' },
-          { path: '/calendar',                    icon: Calendar,   label: 'Calendar' },
-        ]},
-      ],
-      projects: [],
-      people: [
-        { group: 'COMMUNITY', items: [
-          { path: '/community-users', icon: UserCog,   label: 'Community Members' },
-          { path: '/settings',        icon: Building2, label: 'Community Settings' },
-          { path: '/teams',           icon: Users,     label: 'Teams' },
-        ]},
-      ],
-      calendar: [
-        { group: 'SCHEDULE', items: [
-          { path: '/calendar', icon: Calendar, label: 'Calendar' },
-        ]},
-      ],
-    },
   };
   return allPanels[role] || allPanels.member;
 };
@@ -257,7 +230,7 @@ const RAIL_ITEMS = [
   { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard',  roles: null },
   { id: 'tasks',     icon: CheckSquare,     label: 'Tasks',      roles: null },
   { id: 'projects',  icon: FolderKanban,    label: 'Projects',   roles: null },
-  { id: 'people',    icon: Users,           label: 'People',     roles: ['admin', 'hr', 'community_admin'] },
+  { id: 'people',    icon: Users,           label: 'People',     roles: ['admin', 'hr'] },
   { id: 'calendar',  icon: Calendar,        label: 'Calendar',   roles: null },
   { id: 'reports',   icon: BarChart3,       label: 'Reports',    roles: ['admin', 'hr', 'team_lead'] },
 ];

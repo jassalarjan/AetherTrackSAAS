@@ -1,0 +1,52 @@
+{
+  "name": "aethertrack-mobile",
+  "version": "1.0.0",
+  "description": "AetherTrack SaaS – Capacitor Android wrapper",
+  "scripts": {
+    "mobile:install":     "npm install && npx cap sync android",
+    "mobile:dev":         "vite build --mode development && npx cap sync android && npx cap run android",
+    "mobile:build":       "vite build --mode production && npx cap sync android",
+    "mobile:open":        "npx cap open android",
+    "mobile:sync":        "npx cap sync android",
+    "mobile:update-web":  "vite build --mode production && npx cap copy android",
+    "apk:debug":          "cd android && ./gradlew assembleDebug",
+    "apk:release":        "cd android && ./gradlew assembleRelease",
+    "apk:bundle":         "cd android && ./gradlew bundleRelease",
+    "apk:sign":           "node scripts/sign-apk.js",
+    "apk:install":        "adb install -r android/app/build/outputs/apk/debug/app-debug.apk",
+    "apk:install:release":"adb install -r android/app/build/outputs/apk/release/app-release-signed.apk",
+    "cap:doctor":         "npx cap doctor",
+    "cap:ls":             "npx cap ls"
+  },
+  "dependencies": {
+    "@capacitor/android":                   "^6.0.0",
+    "@capacitor/app":                       "^6.0.0",
+    "@capacitor/app-launcher":              "^6.0.0",
+    "@capacitor/browser":                   "^6.0.0",
+    "@capacitor/camera":                    "^6.0.0",
+    "@capacitor/clipboard":                 "^6.0.0",
+    "@capacitor/core":                      "^6.0.0",
+    "@capacitor/device":                    "^6.0.0",
+    "@capacitor/filesystem":                "^6.0.0",
+    "@capacitor/geolocation":               "^6.0.0",
+    "@capacitor/haptics":                   "^6.0.0",
+    "@capacitor/keyboard":                  "^6.0.0",
+    "@capacitor/local-notifications":       "^6.0.0",
+    "@capacitor/network":                   "^6.0.0",
+    "@capacitor/preferences":               "^6.0.0",
+    "@capacitor/push-notifications":        "^6.0.0",
+    "@capacitor/share":                     "^6.0.0",
+    "@capacitor/splash-screen":             "^6.0.0",
+    "@capacitor/status-bar":                "^6.0.0",
+    "@capacitor-community/http":            "^1.4.1",
+    "@capacitor-community/sqlite":          "^6.0.0",
+    "capacitor-secure-storage-plugin":      "^0.10.0",
+    "@capgo/capacitor-updater":             "^6.0.0",
+    "socket.io-client":                     "^4.7.4"
+  },
+  "devDependencies": {
+    "@capacitor/cli":       "^6.0.0",
+    "archiver":             "^7.0.1",
+    "dotenv":               "^16.4.5"
+  }
+}

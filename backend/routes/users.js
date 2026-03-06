@@ -62,7 +62,7 @@ const validateUserCreation = [
     }
     return true;
   }),
-  body('role').isIn(['admin', 'hr', 'team_lead', 'member', 'community_admin']).withMessage('Invalid role')
+  body('role').isIn(['admin', 'hr', 'team_lead', 'member']).withMessage('Invalid role')
 ];
 
 // Get current user
@@ -305,12 +305,15 @@ router.post('/', authenticate, checkRole(['admin', 'hr']), validateUserCreation,
     }
 
     // Create user
+    // Admin-created users are pre-verified — they receive credentials directly
+    // via email from the admin, so no separate email verification step is needed.
     const user = new User({
       full_name,
       email,
       password_hash: password,
       role: role || 'member',
-      team_id: (role === 'admin') ? null : (team_id || null)
+      team_id: (role === 'admin') ? null : (team_id || null),
+      isEmailVerified: true,
     });
 
     await user.save();

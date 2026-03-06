@@ -493,12 +493,12 @@ const Tasks = () => {
   };
 
   const canEditTask = (task) => {
-    if (['admin', 'hr', 'team_lead', 'community_admin'].includes(user?.role)) return true;
+    if (['admin', 'hr', 'team_lead'].includes(user?.role)) return true;
     return task.created_by._id === user?.id || task.assigned_to?._id === user?.id;
   };
 
   const canDeleteTask = (task) => {
-    if (['admin', 'hr', 'team_lead', 'community_admin'].includes(user?.role)) return true;
+    if (['admin', 'hr', 'team_lead'].includes(user?.role)) return true;
     return task.created_by._id === user?.id;
   };
 

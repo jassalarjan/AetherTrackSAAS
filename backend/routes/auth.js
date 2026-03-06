@@ -122,11 +122,19 @@ const resetPasswordLimiter = rateLimit({
 
 /** Cookie options for httpOnly auth tokens – sent alongside the JSON body
  *  so existing localStorage-based clients still work while the migration
- *  to cookie-only auth is being rolled out. */
+ *  to cookie-only auth is being rolled out.
+ *
+ *  sameSite notes:
+ *  - Production: frontend (arjansinghjassal.xyz) and backend (onrender.com) are on
+ *    different eTLD+1 domains, so we need sameSite:'none' + secure:true to allow
+ *    the refresh-token cookie to be sent on cross-site XHR/fetch requests.
+ *  - Development: both are on localhost (same site), so 'lax' is safe and avoids
+ *    the browser requirement that sameSite:'none' always needs secure:true. */
+const isProd = process.env.NODE_ENV === 'production';
 const COOKIE_OPTS = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === 'production',
-  sameSite: 'strict',
+  secure: isProd,          // HTTPS only in production
+  sameSite: isProd ? 'none' : 'lax',  // 'none' required for cross-domain prod cookies
   path: '/'
 };
 

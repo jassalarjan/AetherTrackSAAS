@@ -287,7 +287,7 @@ export default function MeetingDetailPanel({ meeting, isOpen, onClose, onEdit, o
                 <div className="flex gap-2">
                   <button
                     onClick={() => onEdit(meeting)}
-                    className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white transition-colors"
+                    className="aether-btn aether-btn-primary flex-1"
                   >
                     <Edit2 className="w-4 h-4" /> Edit
                   </button>
@@ -364,7 +364,7 @@ export default function MeetingDetailPanel({ meeting, isOpen, onClose, onEdit, o
                     <button
                       onClick={handleDelete}
                       disabled={saving}
-                      className="flex-1 py-2 rounded-lg text-sm font-semibold bg-red-500 hover:bg-red-600 text-white transition-colors disabled:opacity-50"
+                      className="aether-btn aether-btn-danger flex-1"
                     >
                       {saving ? 'Deleting…' : 'Delete'}
                     </button>

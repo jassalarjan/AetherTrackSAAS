@@ -63,8 +63,9 @@ export const SidebarProvider = ({ children }) => {
   useEffect(() => {
     const checkMobile = () => {
       const mobile = window.innerWidth < 1024;
+      const smallMobile = window.innerWidth < 768;
       setIsMobile(mobile);
-      setShowBottomNav(mobile);
+      setShowBottomNav(smallMobile);   // only show bottom nav on phones, not tablets
       
       // Close sidebar on desktop
       if (!mobile) {

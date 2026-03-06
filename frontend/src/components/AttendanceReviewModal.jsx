@@ -403,14 +403,14 @@ export default function AttendanceReviewModal({
                 }">
                   <button
                     onClick={() => setActionMode('approve')}
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700"
+                    className="aether-btn aether-btn-success"
                   >
                     <Check className="w-4 h-4" />
                     Approve
                   </button>
                   <button
                     onClick={() => setActionMode('reject')}
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700"
+                    className="aether-btn aether-btn-danger"
                   >
                     <XCircle className="w-4 h-4" />
                     Reject
@@ -457,7 +457,7 @@ export default function AttendanceReviewModal({
                     <button
                       onClick={handleApprove}
                       disabled={submitting}
-                      className="flex items-center gap-2 px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 disabled:opacity-50"
+                      className="aether-btn aether-btn-success"
                     >
                       {submitting ? <Loader className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
                       Confirm Approval
@@ -506,7 +506,7 @@ export default function AttendanceReviewModal({
                     <button
                       onClick={handleReject}
                       disabled={submitting || !rejectReason.trim()}
-                      className="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
+                      className="aether-btn aether-btn-danger"
                     >
                       {submitting ? <Loader className="w-4 h-4 animate-spin" /> : <XCircle className="w-4 h-4" />}
                       Confirm Rejection

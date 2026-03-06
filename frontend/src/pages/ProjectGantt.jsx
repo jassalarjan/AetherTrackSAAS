@@ -640,8 +640,8 @@ const ProjectGantt = () => {
           </div>
         </div>
 
-        {/* Main Gantt Content Area */}
-        <div className="flex-1 flex overflow-hidden">
+        {/* Main Gantt Content Area — horizontally scrollable on mobile */}
+        <div className="flex-1 flex overflow-x-auto overflow-y-hidden min-w-0">
           {scheduledTasks.length === 0 && unscheduledTasks.length === 0 ? (
             <div className="flex-1 flex items-center justify-center p-12">
               <div className="text-center">
@@ -680,7 +680,7 @@ const ProjectGantt = () => {
             </div>
           )}
           {/* Task List (Left Side) */}
-          <div className="w-[420px] shrink-0 border-r-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-[#1a2234] flex flex-col shadow-sm">
+          <div className="w-[240px] sm:w-[320px] lg:w-[420px] shrink-0 border-r-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-[#1a2234] flex flex-col shadow-sm">
             <div className="flex border-b-2 border-gray-300 dark:border-gray-700 bg-gradient-to-b from-gray-100 to-gray-50 dark:from-gray-800 dark:to-gray-800/50">
               <div className="w-64 px-4 py-2.5 text-[11px] font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Task Name</div>
               <div className="w-28 px-4 py-2.5 text-[11px] font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider border-l border-gray-300 dark:border-gray-600">Start</div>

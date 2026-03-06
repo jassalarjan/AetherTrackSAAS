@@ -159,8 +159,7 @@ function RedistributeModal({ log, theme, onClose, onSubmit, teamMembers }) {
             <button
               type="submit"
               disabled={submitting || !newAssigneeId}
-              className="flex-1 py-2 rounded-lg text-sm font-medium bg-purple-600 hover:bg-purple-700
-                text-white disabled:opacity-50 flex items-center justify-center gap-2"
+              className="aether-btn aether-btn-primary flex-1"
             >
               {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
               Redistribute
@@ -223,8 +222,7 @@ function RejectModal({ log, theme, onClose, onSubmit }) {
             <button
               type="submit"
               disabled={submitting || !reason.trim()}
-              className="flex-1 py-2 rounded-lg text-sm font-medium bg-red-600 hover:bg-red-700
-                text-white disabled:opacity-50 flex items-center justify-center gap-2"
+              className="aether-btn aether-btn-danger flex-1"
             >
               {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <XCircle className="w-4 h-4" />}
               Confirm Reject
@@ -354,8 +352,7 @@ function ReallocationCard({ log, theme, user, onAction, teamMembers }) {
                 <button
                   onClick={handleAccept}
                   disabled={accepting}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium
-                    bg-green-600 hover:bg-green-700 text-white disabled:opacity-50 transition-colors"
+                  className="aether-btn aether-btn-success aether-btn-sm"
                 >
                   {accepting
                     ? <Loader2 className="w-3 h-3 animate-spin" />
@@ -364,16 +361,14 @@ function ReallocationCard({ log, theme, user, onAction, teamMembers }) {
                 </button>
                 <button
                   onClick={() => setModal('redistribute')}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium
-                    bg-purple-600 hover:bg-purple-700 text-white transition-colors"
+                  className="aether-btn aether-btn-primary aether-btn-sm"
                 >
                   <ArrowLeftRight className="w-3 h-3" />
                   Redistribute
                 </button>
                 <button
                   onClick={() => setModal('reject')}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium
-                    bg-red-600/20 hover:bg-red-600/30 text-red-400 border border-red-500/30 transition-colors"
+                  className="aether-btn aether-btn-sm" style={{ color: 'var(--danger)', background: 'var(--danger-dim)', border: '1px solid var(--danger)' }}
                 >
                   <XCircle className="w-3 h-3" />
                   Reject

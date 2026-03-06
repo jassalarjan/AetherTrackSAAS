@@ -1,56 +1,74 @@
 ﻿import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
+import { lazy, Suspense } from 'react';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { SidebarProvider } from './context/SidebarContext';
 import { ToastProvider } from './components/Toast';
 import { ProtectedRoute } from './routes/ProtectedRoute';
 import useNotifications from './hooks/useNotifications';
+import { useMobileCapabilities } from './hooks/useMobileCapabilities';
+import { usePushNotifications } from './hooks/usePushNotifications';
+import { useAppAutoUpdate } from './hooks/useAppAutoUpdate';
+import { getAccessToken } from './api/tokenStore';
+import { PageLoader } from './components/Spinner';
+
+// Auth pages – loaded eagerly (tiny, always needed at first paint)
 import Login from './pages/Login';
-import CommunityRegister from './pages/CommunityRegister';
 import VerifyEmail from './pages/VerifyEmail';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
-import Tasks from './pages/Tasks';
-import Kanban from './pages/Kanban';
-import Teams from './pages/Teams';
-import UserManagement from './pages/UserManagement';
-import CommunityUserManagement from './pages/CommunityUserManagement';
-import Analytics from './pages/Analytics';
-import Settings from './pages/Settings';
-import Calendar from './pages/Calendar';
-import ChangeLog from './pages/ChangeLog';
-import Notifications from './pages/Notifications';
-import ScreenshotDemo from './pages/ScreenshotDemo';
-import AttendancePage from './pages/AttendancePage';
-import SelfAttendance from './pages/SelfAttendance';
-import HRCalendar from './pages/HRCalendar';
-import LeavesPage from './pages/LeavesPage';
-import HRDashboard from './pages/HRDashboard';
-import VerificationSettings from './pages/VerificationSettings';
-import GeofenceManagement from './pages/GeofenceManagement';
-import AuditLog from './pages/AuditLog';
-import EmailCenter from './pages/EmailCenter';
-import ProjectDashboard from './pages/ProjectDashboard';
-import MyProjects from './pages/MyProjects';
-import ProjectDetail from './pages/ProjectDetail';
-import ProjectGantt from './pages/ProjectGantt';
-import SprintManagement from './pages/SprintManagement';
-import ResourceWorkload from './pages/ResourceWorkload';
-import ReallocationDashboard from './pages/ReallocationDashboard';
-import FeatureMatrix from './pages/FeatureMatrix';
-import NotFound from './pages/NotFound';
-import Workspace from './pages/Workspace';
+
+// All other pages – lazy-loaded to keep initial bundle lean
+const Workspace            = lazy(() => import('./pages/Workspace'));
+const Tasks                = lazy(() => import('./pages/Tasks'));
+const Kanban               = lazy(() => import('./pages/Kanban'));
+const Teams                = lazy(() => import('./pages/Teams'));
+const UserManagement       = lazy(() => import('./pages/UserManagement'));
+const Analytics            = lazy(() => import('./pages/Analytics'));
+const Settings             = lazy(() => import('./pages/Settings'));
+const Calendar             = lazy(() => import('./pages/Calendar'));
+const ChangeLog            = lazy(() => import('./pages/ChangeLog'));
+const Notifications        = lazy(() => import('./pages/Notifications'));
+const ScreenshotDemo       = lazy(() => import('./pages/ScreenshotDemo'));
+const AttendancePage       = lazy(() => import('./pages/AttendancePage'));
+const SelfAttendance       = lazy(() => import('./pages/SelfAttendance'));
+const HRCalendar           = lazy(() => import('./pages/HRCalendar'));
+const LeavesPage           = lazy(() => import('./pages/LeavesPage'));
+const HRDashboard          = lazy(() => import('./pages/HRDashboard'));
+const VerificationSettings = lazy(() => import('./pages/VerificationSettings'));
+const GeofenceManagement   = lazy(() => import('./pages/GeofenceManagement'));
+const AuditLog             = lazy(() => import('./pages/AuditLog'));
+const EmailCenter          = lazy(() => import('./pages/EmailCenter'));
+const ProjectDashboard     = lazy(() => import('./pages/ProjectDashboard'));
+const MyProjects           = lazy(() => import('./pages/MyProjects'));
+const ProjectDetail        = lazy(() => import('./pages/ProjectDetail'));
+const ProjectGantt         = lazy(() => import('./pages/ProjectGantt'));
+const SprintManagement     = lazy(() => import('./pages/SprintManagement'));
+const ResourceWorkload     = lazy(() => import('./pages/ResourceWorkload'));
+const ReallocationDashboard = lazy(() => import('./pages/ReallocationDashboard'));
+const FeatureMatrix        = lazy(() => import('./pages/FeatureMatrix'));
+const NotFound             = lazy(() => import('./pages/NotFound'));
 
 function AppContent() {
   // Initialize notifications
   useNotifications();
 
+  // Initialize mobile capabilities (safe no-op on web)
+  useMobileCapabilities();
+  useAppAutoUpdate();
+
+  // Initialize push notifications once user is authenticated
+  const { user } = useAuth();
+  usePushNotifications({
+    userId: user?.id,
+    authToken: getAccessToken(),
+  });
+
   return (
+    <Suspense fallback={<PageLoader label="Loading page…" />}>
     <Routes>
       <Route path="/" element={<Login />} />
       <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<CommunityRegister />} />
-      <Route path="/register-community" element={<CommunityRegister />} />
       <Route path="/verify-email" element={<VerifyEmail />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
@@ -140,7 +158,7 @@ function AppContent() {
       <Route
         path="/teams"
         element={
-          <ProtectedRoute allowedRoles={['admin', 'hr', 'team_lead', 'community_admin']}>
+          <ProtectedRoute allowedRoles={['admin', 'hr', 'team_lead']}>
             <Teams />
           </ProtectedRoute>
         }
@@ -150,7 +168,7 @@ function AppContent() {
       <Route
         path="/hr/dashboard"
         element={
-          <ProtectedRoute allowedRoles={['admin', 'hr', 'community_admin']}>
+          <ProtectedRoute allowedRoles={['admin', 'hr']}>
             <HRDashboard />
           </ProtectedRoute>
         }
@@ -192,6 +210,7 @@ function AppContent() {
         }
       />
 
+      {/* User Management - Admin & HR only */}
       <Route
         path="/users"
         element={
@@ -201,15 +220,7 @@ function AppContent() {
         }
       />
 
-      <Route
-        path="/community-users"
-        element={
-          <ProtectedRoute allowedRoles={['community_admin']}>
-            <CommunityUserManagement />
-          </ProtectedRoute>
-        }
-      />
-
+      {/* Analytics */}
       <Route
         path="/analytics"
         element={
@@ -318,6 +329,7 @@ function AppContent() {
       {/* Catch-all: show 404 page with sidebar for logged-in users */}
       <Route path="*" element={<NotFound />} />
     </Routes>
+    </Suspense>
   );
 }
 

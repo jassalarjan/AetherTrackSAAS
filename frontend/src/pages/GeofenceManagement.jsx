@@ -1,4 +1,5 @@
-﻿import { SectionLoader } from '../components/Spinner';
+﻿import React, { useState, useEffect } from 'react';
+import { SectionLoader } from '../components/Spinner';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useSidebar } from '../context/SidebarContext';
@@ -49,11 +50,16 @@ export default function GeofenceManagement() {
   const fetchGeofences = async () => {
     try {
       setLoading(true);
-      const response = await geofenceApi.getGeofences();
-      setGeofences(response.data.geofences || response.data || []);
+      // geofenceApi.getGeofences() returns response.data directly
+      const data = await geofenceApi.getGeofences();
+      // Backend returns { success: true, geofences: [...] } or just the array
+      setGeofences(data?.geofences ?? data ?? []);
     } catch (error) {
       console.error('Error fetching geofences:', error);
-      setMessage({ type: 'error', text: 'Failed to load geofences' });
+      // Handle different error response formats
+      const errorMessage = error?.response?.data?.message || error?.message || 'Failed to load geofences';
+      setMessage({ type: 'error', text: errorMessage });
+      setGeofences([]); // Ensure geofences is always an array
     } finally {
       setLoading(false);
     }

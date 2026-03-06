@@ -122,6 +122,9 @@ const getAllowedOrigins = () => {
 
 const allowedOrigins = getAllowedOrigins();
 
+const APP_VERSION = process.env.APP_VERSION || '1.0.0';
+const BUILD_TIME = process.env.BUILD_TIME || new Date().toISOString();
+
 // Initialize Socket.IO with strict CORS configuration (FAIL CLOSED)
 const io = new Server(httpServer, {
   cors: {
@@ -457,6 +460,33 @@ app.use('/api/hr/email-templates', authenticate, emailTemplatesRoutes);
 app.use('/api/hr/meetings', authenticate, meetingRoutes);
 app.use('/api/hr/shifts', authenticate, shiftsRoutes);
 app.use('/api/hr/reallocation', authenticate, reallocationRoutes);
+
+// Mobile/Web wrapper version endpoint (polled by app for auto-refresh)
+app.get('/api/app-version', (req, res) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+  res.json({
+    version: APP_VERSION,
+    buildTime: BUILD_TIME,
+  });
+});
+
+// Deployment hook to broadcast a new app version event over Socket.IO
+app.post('/api/app-version/notify', (req, res) => {
+  const expected = process.env.APP_VERSION_NOTIFY_TOKEN;
+  const provided = req.header('x-app-version-token');
+
+  if (expected && provided !== expected) {
+    return res.status(401).json({ message: 'Unauthorized version notify token' });
+  }
+
+  const payload = {
+    version: req.body?.version || APP_VERSION,
+    buildTime: req.body?.buildTime || BUILD_TIME,
+  };
+
+  io.emit('new_app_version', payload);
+  return res.json({ ok: true, ...payload });
+});
 
 // Health check
 app.get('/api/health', (req, res) => {

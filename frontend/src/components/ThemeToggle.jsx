@@ -130,7 +130,7 @@ const ThemeToggle = ({ className = '' }) => {
       {showMenu && (
         <div 
           className={cn(
-            'absolute right-0 mt-2 z-50',
+            'absolute right-0 top-full mt-1.5 z-50',
             'w-64 bg-[var(--bg-raised)]',
             'rounded-lg shadow-[var(--shadow-lg)]',
             'border border-[var(--border-hair)]',

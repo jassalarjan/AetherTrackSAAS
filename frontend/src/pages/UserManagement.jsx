@@ -183,7 +183,12 @@ export default function UserManagement() {
       await fetchUsers();
       setTimeout(() => { setShowModal(false); setSuccess(''); }, 1500);
     } catch (err) {
-      setError(err.response?.data?.message || `Failed to ${modalMode} user`);
+      const data = err.response?.data;
+      // Backend may return { errors: [{msg: ...}] } from express-validator or { message: '...' }
+      const msg = data?.message
+        || (Array.isArray(data?.errors) && data.errors.map(e => e.msg).join('. '))
+        || `Failed to ${modalMode} user`;
+      setError(msg);
     }
   };
 
@@ -385,7 +390,7 @@ export default function UserManagement() {
             <div className="flex gap-1.5 sm:gap-2">
               <button
                 onClick={() => setShowBulkImportModal(true)}
-                className="flex items-center justify-center rounded h-7 sm:h-8 md:h-9 px-2 sm:px-3 md:px-4 bg-green-600 text-white gap-1 sm:gap-1.5 text-[10px] sm:text-xs md:text-sm font-bold hover:bg-green-700 transition-colors"
+                className="aether-btn aether-btn-success aether-btn-sm"
               >
                 <Upload size={14} className="sm:w-4 sm:h-4" />
                 <span className="hidden sm:inline">Bulk Import</span>
@@ -457,7 +462,7 @@ export default function UserManagement() {
                   </button>
                   <button
                     onClick={handleBulkDelete}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-red-600 text-white rounded text-xs font-medium hover:bg-red-700 transition-colors"
+                    className="aether-btn aether-btn-danger aether-btn-sm"
                   >
                     <Trash2 size={14} />
                     Delete Selected
@@ -691,8 +696,8 @@ export default function UserManagement() {
 
       {/* Create/Edit Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-          <div className={`${currentTheme.surface} rounded border ${currentTheme.border} p-5 sm:p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto`}>
+        <div style={{ position: 'fixed', inset: 0, zIndex: 9999, backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+          <div style={{ backgroundColor: 'var(--bg-surface)', borderRadius: '0.5rem', border: '1px solid var(--border-soft)', padding: '2rem', maxWidth: '42rem', width: '100%', maxHeight: '90vh', overflowY: 'auto' }}>
             <div className="flex justify-between items-center mb-4 sm:mb-6">
               <h2 className={`text-lg sm:text-2xl font-bold ${currentTheme.text}`}>
                 {modalMode === 'create' ? 'Create New User' : `Edit User: ${selectedUser?.full_name}`}
@@ -742,9 +747,11 @@ export default function UserManagement() {
                         onChange={handleInputChange}
                         className={`w-full px-4 py-2 ${currentTheme.surfaceSecondary} border ${currentTheme.border} rounded ${currentTheme.text} focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
                         required
-                        minLength={6}
+                        minLength={8}
                       />
-                      <p className={`text-xs ${currentTheme.textSecondary} mt-1`}>Minimum 6 characters</p>
+                      <p className={`text-xs ${currentTheme.textSecondary} mt-1`}>
+                        Min 8 characters with uppercase, lowercase, number &amp; special character (!@#$%^&amp;*)
+                      </p>
                     </div>
                   )}
                 </div>
@@ -966,7 +973,7 @@ export default function UserManagement() {
                 <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                   <button
                     onClick={() => downloadTemplate('excel')}
-                    className="flex items-center justify-center gap-2 px-4 py-2.5 bg-green-600 text-white rounded hover:bg-green-700 transition-colors text-sm font-medium"
+                    className="aether-btn aether-btn-success"
                   >
                     <FileSpreadsheet size={16} />
                     Excel Template (.xlsx)

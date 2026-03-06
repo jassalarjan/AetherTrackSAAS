@@ -385,33 +385,12 @@ const Login = () => {
           {/* Divider */}
           <div style={{ margin: '24px 0 20px', display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div style={{ flex: 1, height: '1px', background: 'var(--border-hair)' }} />
-            <span style={{ fontSize: '12px', color: 'var(--text-faint)' }}>New to AetherTrack?</span>
+            <span style={{ fontSize: '12px', color: 'var(--text-faint)' }}>Have an invitation?</span>
             <div style={{ flex: 1, height: '1px', background: 'var(--border-hair)' }} />
           </div>
 
-          <Link
-            to="/register-community"
-            style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
-              height: '44px', borderRadius: '10px',
-              border: '1px solid var(--border-mid)', background: 'var(--bg-base)',
-              color: 'var(--text-secondary)', fontSize: '14px', fontWeight: 500,
-              textDecoration: 'none', transition: 'border-color 0.15s, background 0.15s',
-            }}
-            onMouseEnter={e => {
-              e.currentTarget.style.borderColor = 'var(--brand)';
-              e.currentTarget.style.background = 'var(--bg-surface)';
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.borderColor = 'var(--border-mid)';
-              e.currentTarget.style.background = 'var(--bg-base)';
-            }}
-          >
-            Create a community workspace
-          </Link>
-
           <p style={{ textAlign: 'center', marginTop: '16px', fontSize: '12px', color: 'var(--text-faint)' }}>
-            Have an invitation? Contact your administrator.
+            Contact your administrator to get started.
           </p>
         </div>
       </div>
