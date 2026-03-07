@@ -34,6 +34,7 @@ import emailTemplatesRoutes from './routes/emailTemplates.js';
 import meetingRoutes from './routes/meetings.js';
 import shiftsRoutes from './routes/shifts.js';
 import reallocationRoutes from './routes/reallocation.js';
+import settingsRoutes from './routes/settings.js';
 
 // Import middleware
 import { authenticate } from './middleware/auth.js';
@@ -460,6 +461,7 @@ app.use('/api/hr/email-templates', authenticate, emailTemplatesRoutes);
 app.use('/api/hr/meetings', authenticate, meetingRoutes);
 app.use('/api/hr/shifts', authenticate, shiftsRoutes);
 app.use('/api/hr/reallocation', authenticate, reallocationRoutes);
+app.use('/api/settings', settingsRoutes);
 
 // Mobile/Web wrapper version endpoint (polled by app for auto-refresh)
 app.get('/api/app-version', (req, res) => {

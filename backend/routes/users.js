@@ -401,13 +401,24 @@ router.post('/bulk-delete', authenticate, checkRole(['admin', 'hr']), async (req
     }
 
     // Filter out the current user's ID to prevent self-deletion
-    const idsToDelete = userIds.filter(id => id !== req.user._id.toString());
+    const selfFiltered = userIds.filter(id => id !== req.user._id.toString());
 
-    if (idsToDelete.length === 0) {
+    if (selfFiltered.length === 0) {
       return res.status(400).json({ message: 'Cannot delete your own account' });
     }
 
-    const usersToDelete = await User.find({ _id: { $in: idsToDelete } });
+    // Protect admin (super admin) users — resolve targets and exclude admins
+    const candidates = await User.find({ _id: { $in: selfFiltered } });
+    const adminCandidates = candidates.filter(u => u.role === 'admin');
+    const idsToDelete = selfFiltered.filter(id =>
+      !adminCandidates.some(u => u._id.toString() === id)
+    );
+
+    if (idsToDelete.length === 0) {
+      return res.status(403).json({ message: 'Admin users are protected and cannot be deleted.' });
+    }
+
+    const usersToDelete = candidates.filter(u => idsToDelete.includes(u._id.toString()));
 
     for (const user of usersToDelete) {
       if (user.teams && user.teams.length > 0) {
@@ -539,6 +550,11 @@ router.delete('/:id', authenticate, checkRole(['admin', 'hr']), validateIdParam(
 
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Protect admin (super admin) users from deletion
+    if (user.role === 'admin') {
+      return res.status(403).json({ message: 'Admin users are protected and cannot be deleted.' });
     }
 
     if (user.teams && user.teams.length > 0) {

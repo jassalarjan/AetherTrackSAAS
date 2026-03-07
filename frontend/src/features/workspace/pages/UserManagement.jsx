@@ -192,16 +192,22 @@ export default function UserManagement() {
     }
   };
 
-  const handleDelete = (userId, userEmail) => {
+  const handleDelete = (usr) => {
+    // Super-admin (role === 'admin') can never be deleted
+    if (usr.role === 'admin') {
+      setError('Admin users are protected and cannot be deleted.');
+      setTimeout(() => setError(''), 4000);
+      return;
+    }
     confirmModal.show({
       title: 'Delete User',
-      message: `Are you sure you want to delete user: ${userEmail}? This will permanently remove their account and all associated data.`,
+      message: `Are you sure you want to delete user: ${usr.email}? This will permanently remove their account and all associated data.`,
       confirmText: 'Delete User',
       cancelText: 'Cancel',
       variant: 'danger',
       onConfirm: async () => {
         try {
-          await api.delete(`/users/${userId}`);
+          await api.delete(`/users/${usr._id}`);
           setSuccess('User deleted successfully');
           await fetchUsers();
           setTimeout(() => setSuccess(''), 3000);
@@ -219,15 +225,25 @@ export default function UserManagement() {
       setTimeout(() => setError(''), 3000);
       return;
     }
+    // Admins are protected — remove any admin IDs that may have slipped into selection
+    const safeIds = selectedUserIds.filter(id => {
+      const usr = users.find(u => u._id === id);
+      return usr && usr.role !== 'admin';
+    });
+    if (safeIds.length === 0) {
+      setError('Admin users are protected and cannot be deleted.');
+      setTimeout(() => setError(''), 4000);
+      return;
+    }
     confirmModal.show({
       title: 'Delete Multiple Users',
-      message: `Are you sure you want to delete ${selectedUserIds.length} user(s)? This will permanently remove their accounts and all associated data. This action cannot be undone.`,
-      confirmText: `Delete ${selectedUserIds.length} User${selectedUserIds.length !== 1 ? 's' : ''}`,
+      message: `Are you sure you want to delete ${safeIds.length} user(s)? This will permanently remove their accounts and all associated data. This action cannot be undone.`,
+      confirmText: `Delete ${safeIds.length} User${safeIds.length !== 1 ? 's' : ''}`,
       cancelText: 'Cancel',
       variant: 'danger',
       onConfirm: async () => {
         try {
-          const response = await api.post('/users/bulk-delete', { userIds: selectedUserIds });
+          const response = await api.post('/users/bulk-delete', { userIds: safeIds });
           setSuccess(response.data.message);
           setSelectedUserIds([]);
           await fetchUsers();
@@ -247,10 +263,12 @@ export default function UserManagement() {
   };
 
   const toggleSelectAll = () => {
-    if (selectedUserIds.length === users.filter(usr => usr._id !== user.id).length) {
+    // Exclude yourself and all admin users from bulk-select
+    const selectable = users.filter(usr => usr._id !== user.id && usr.role !== 'admin');
+    if (selectedUserIds.length === selectable.length) {
       setSelectedUserIds([]);
     } else {
-      setSelectedUserIds(users.filter(usr => usr._id !== user.id).map(usr => usr._id));
+      setSelectedUserIds(selectable.map(usr => usr._id));
     }
   };
 
@@ -502,7 +520,7 @@ export default function UserManagement() {
                     <th className="px-4 py-3 text-left">
                       <input
                         type="checkbox"
-                        checked={selectedUserIds.length === users.filter(usr => usr._id !== user.id).length && users.length > 1}
+                        checked={selectedUserIds.length > 0 && selectedUserIds.length === users.filter(usr => usr._id !== user.id && usr.role !== 'admin').length}
                         onChange={toggleSelectAll}
                         className="rounded border-[#4b5563] text-[#C4713A] focus:ring-[#C4713A]"
                       />
@@ -533,7 +551,8 @@ export default function UserManagement() {
                               type="checkbox"
                               checked={selectedUserIds.includes(usr._id)}
                               onChange={() => toggleSelectUser(usr._id)}
-                              disabled={usr._id === user.id}
+                              disabled={usr._id === user.id || usr.role === 'admin'}
+                              title={usr.role === 'admin' ? 'Admin users are protected and cannot be selected for deletion' : undefined}
                               className="rounded border-[#4b5563] text-[#C4713A] focus:ring-[#C4713A] disabled:opacity-50"
                             />
                           </td>
@@ -590,14 +609,24 @@ export default function UserManagement() {
                               >
                                 <Key size={16} />
                               </button>
-                              {usr._id !== user.id && (
+                              {/* Admin users are protected — never show delete button for them */}
+                              {usr._id !== user.id && usr.role !== 'admin' && (
                                 <button
-                                  onClick={() => handleDelete(usr._id, usr.email)}
+                                  onClick={() => handleDelete(usr)}
                                   className="p-1.5 text-[var(--text-muted)] hover:text-red-500 hover:bg-red-500/10 rounded transition-colors"
                                   title="Delete User"
                                 >
                                   <Trash2 size={16} />
                                 </button>
+                              )}
+                              {/* Protected badge for admin users */}
+                              {usr.role === 'admin' && (
+                                <span
+                                  className="p-1.5 text-xs text-[var(--text-muted)] cursor-default"
+                                  title="Admin users are protected and cannot be deleted"
+                                >
+                                  <Shield size={16} className="text-[var(--brand)] opacity-60" />
+                                </span>
                               )}
                             </div>
                           </td>
@@ -675,13 +704,24 @@ export default function UserManagement() {
                             <Key size={14} />
                             Reset
                           </button>
-                          {usr._id !== user.id && (
+                          {/* Admin users are protected — never show delete in mobile view */}
+                          {usr._id !== user.id && usr.role !== 'admin' && (
                             <button
-                              onClick={() => handleDelete(usr._id, usr.email)}
+                              onClick={() => handleDelete(usr)}
                               className="px-3 py-2 bg-red-500/10 text-red-500 rounded text-xs font-medium hover:bg-red-500/20 transition-colors"
+                              title="Delete User"
                             >
                               <Trash2 size={14} />
                             </button>
+                          )}
+                          {usr.role === 'admin' && (
+                            <span
+                              className="px-3 py-2 text-xs rounded text-center"
+                              style={{ background: 'var(--brand-dim, rgba(196,113,58,0.12))', color: 'var(--brand)' }}
+                              title="Admin users are protected"
+                            >
+                              <Shield size={14} className="inline" />
+                            </span>
                           )}
                         </div>
                       </div>
@@ -764,11 +804,14 @@ export default function UserManagement() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className={`block text-sm font-medium ${currentTheme.text} mb-2`}>Role *</label>
+                    {/* Lock the role dropdown when editing an admin — their role cannot be changed */}
                     <select
                       name="role"
                       value={formData.role}
                       onChange={handleInputChange}
-                      className={`w-full px-4 py-2 ${currentTheme.surfaceSecondary} border ${currentTheme.border} rounded ${currentTheme.text} focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
+                      disabled={modalMode === 'edit' && selectedUser?.role === 'admin'}
+                      title={modalMode === 'edit' && selectedUser?.role === 'admin' ? 'Admin role cannot be changed' : undefined}
+                      className={`w-full px-4 py-2 ${currentTheme.surfaceSecondary} border ${currentTheme.border} rounded ${currentTheme.text} focus:ring-2 focus:ring-[#C4713A] focus:border-transparent disabled:opacity-60 disabled:cursor-not-allowed`}
                       required
                     >
                       <option value="member">Member</option>
@@ -776,6 +819,12 @@ export default function UserManagement() {
                       <option value="hr">HR</option>
                       <option value="admin">Admin</option>
                     </select>
+                    {modalMode === 'edit' && selectedUser?.role === 'admin' && (
+                      <p className="text-xs mt-1" style={{ color: 'var(--brand)' }}>
+                        <Shield size={11} className="inline mr-1" />
+                        Admin role is protected and cannot be changed.
+                      </p>
+                    )}
                   </div>
 
                   {modalMode === 'edit' && (

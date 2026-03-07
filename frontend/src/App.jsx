@@ -249,6 +249,15 @@ function AppContent() {
       />
 
       <Route
+        path="/settings/:section"
+        element={
+          <ProtectedRoute>
+            <Settings />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
         path="/verification-settings"
         element={
           <ProtectedRoute allowedRoles={['admin', 'hr']}>
