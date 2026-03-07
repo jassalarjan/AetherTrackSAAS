@@ -1,9 +1,9 @@
 ﻿import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App.jsx';
-import './index.css';
-import './animations.css';
-import './mobile-responsive.css';
+import '@/styles/index.css';
+import '@/styles/animations.css';
+import '@/styles/mobile-responsive.css';
 import { registerSW } from 'virtual:pwa-register';
 
 // Register Service Worker

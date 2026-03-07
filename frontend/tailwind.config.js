@@ -502,6 +502,22 @@ export default {
       ringOffsetWidth: {
         'focus': 'var(--focus-ring-offset)',
       },
+
+      // ===========================================
+      // CUSTOM BREAKPOINTS — Mobile-first from 320px
+      // xs: 360px  → common Android baseline
+      // The default 'sm' stays at 640px.
+      // Usage: xs:flex, xs:hidden, xs:grid-cols-2, etc.
+      // ===========================================
+      screens: {
+        'xs': '360px',
+        // Keep Tailwind defaults:
+        'sm': '640px',
+        'md': '768px',
+        'lg': '1024px',
+        'xl': '1280px',
+        '2xl': '1536px',
+      },
     },
   },
   

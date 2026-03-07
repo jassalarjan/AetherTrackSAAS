@@ -1,2 +1,0 @@
-const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["assets/web-zn_dr1Oj.js","assets/capacitor-core-Dzn3_rKv.js"])))=>i.map(i=>d[i]);
-import{_ as e}from"./index-BL5fD_KA.js";import{r as o}from"./capacitor-core-Dzn3_rKv.js";import"./react-vendor-Dj1yLZYD.js";import"./socket-vendor-BlgWwLEk.js";import"./chart-vendor-DbX0pE9l.js";const _=o("SecureStoragePlugin",{web:()=>e(()=>import("./web-zn_dr1Oj.js"),__vite__mapDeps([0,1])).then(r=>new r.SecureStoragePluginWeb)});export{_ as SecureStoragePlugin};

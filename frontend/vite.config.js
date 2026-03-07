@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
+import { resolve } from 'path';
 
 export default defineConfig(({ mode }) => {
   const isDevelopment = mode === 'development';
@@ -138,6 +139,20 @@ export default defineConfig(({ mode }) => {
           secure: false,
         }
       } : undefined
+    },
+    resolve: {
+      alias: {
+        // Primary alias – mirrors tsconfig paths
+        '@': resolve(__dirname, 'src'),
+        // Convenience sub-aliases
+        '@features': resolve(__dirname, 'src/features'),
+        '@shared':   resolve(__dirname, 'src/shared'),
+        '@app':      resolve(__dirname, 'src/app'),
+        '@components': resolve(__dirname, 'src/shared/components'),
+        '@hooks':    resolve(__dirname, 'src/shared/hooks'),
+        '@utils':    resolve(__dirname, 'src/shared/utils'),
+        '@styles':   resolve(__dirname, 'src/styles'),
+      },
     },
     build: {
       outDir: 'dist',

@@ -1,55 +1,63 @@
 ﻿import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { lazy, Suspense } from 'react';
-import { AuthProvider, useAuth } from './context/AuthContext';
-import { ThemeProvider } from './context/ThemeContext';
-import { SidebarProvider } from './context/SidebarContext';
-import { ToastProvider } from './components/Toast';
-import { ProtectedRoute } from './routes/ProtectedRoute';
-import useNotifications from './hooks/useNotifications';
-import { useMobileCapabilities } from './hooks/useMobileCapabilities';
-import { usePushNotifications } from './hooks/usePushNotifications';
-import { useAppAutoUpdate } from './hooks/useAppAutoUpdate';
-import { getAccessToken } from './api/tokenStore';
-import { PageLoader } from './components/Spinner';
+import { lazy, Suspense, useEffect } from 'react';
+import { AppProviders } from '@/app/providers/AppProviders';
+import { useAuth } from '@/features/auth/context/AuthContext';
+import { ProtectedRoute } from '@/app/routes/ProtectedRoute';
+import useNotifications from '@/features/notifications/hooks/useNotifications';
+import { useMobileCapabilities } from '@/shared/hooks/useMobileCapabilities';
+import { usePushNotifications } from '@/features/notifications/hooks/usePushNotifications';
+import { useAppAutoUpdate } from '@/shared/hooks/useAppAutoUpdate';
+import { getAccessToken } from '@/features/auth/services/tokenStore';
+import { PageLoader } from '@/shared/components/ui/Spinner';
+import { AppVersionIndicator } from '@/shared/components/ui/AppVersionIndicator';
 
 // Auth pages – loaded eagerly (tiny, always needed at first paint)
-import Login from './pages/Login';
-import VerifyEmail from './pages/VerifyEmail';
-import ForgotPassword from './pages/ForgotPassword';
-import ResetPassword from './pages/ResetPassword';
+import Login from '@/features/auth/pages/Login';
+import VerifyEmail from '@/features/auth/pages/VerifyEmail';
+import ForgotPassword from '@/features/auth/pages/ForgotPassword';
+import ResetPassword from '@/features/auth/pages/ResetPassword';
 
 // All other pages – lazy-loaded to keep initial bundle lean
-const Workspace            = lazy(() => import('./pages/Workspace'));
-const Tasks                = lazy(() => import('./pages/Tasks'));
-const Kanban               = lazy(() => import('./pages/Kanban'));
-const Teams                = lazy(() => import('./pages/Teams'));
-const UserManagement       = lazy(() => import('./pages/UserManagement'));
-const Analytics            = lazy(() => import('./pages/Analytics'));
-const Settings             = lazy(() => import('./pages/Settings'));
-const Calendar             = lazy(() => import('./pages/Calendar'));
-const ChangeLog            = lazy(() => import('./pages/ChangeLog'));
-const Notifications        = lazy(() => import('./pages/Notifications'));
-const ScreenshotDemo       = lazy(() => import('./pages/ScreenshotDemo'));
-const AttendancePage       = lazy(() => import('./pages/AttendancePage'));
-const SelfAttendance       = lazy(() => import('./pages/SelfAttendance'));
-const HRCalendar           = lazy(() => import('./pages/HRCalendar'));
-const LeavesPage           = lazy(() => import('./pages/LeavesPage'));
-const HRDashboard          = lazy(() => import('./pages/HRDashboard'));
-const VerificationSettings = lazy(() => import('./pages/VerificationSettings'));
-const GeofenceManagement   = lazy(() => import('./pages/GeofenceManagement'));
-const AuditLog             = lazy(() => import('./pages/AuditLog'));
-const EmailCenter          = lazy(() => import('./pages/EmailCenter'));
-const ProjectDashboard     = lazy(() => import('./pages/ProjectDashboard'));
-const MyProjects           = lazy(() => import('./pages/MyProjects'));
-const ProjectDetail        = lazy(() => import('./pages/ProjectDetail'));
-const ProjectGantt         = lazy(() => import('./pages/ProjectGantt'));
-const SprintManagement     = lazy(() => import('./pages/SprintManagement'));
-const ResourceWorkload     = lazy(() => import('./pages/ResourceWorkload'));
-const ReallocationDashboard = lazy(() => import('./pages/ReallocationDashboard'));
-const FeatureMatrix        = lazy(() => import('./pages/FeatureMatrix'));
-const NotFound             = lazy(() => import('./pages/NotFound'));
+const Workspace            = lazy(() => import('@/features/dashboard/pages/Workspace'));
+const Tasks                = lazy(() => import('@/features/tasks/pages/Tasks'));
+const Kanban               = lazy(() => import('@/features/tasks/pages/Kanban'));
+const Teams                = lazy(() => import('@/features/workspace/pages/Teams'));
+const UserManagement       = lazy(() => import('@/features/workspace/pages/UserManagement'));
+const Analytics            = lazy(() => import('@/features/analytics/pages/Analytics'));
+const Settings             = lazy(() => import('@/features/settings/pages/Settings'));
+const Calendar             = lazy(() => import('@/features/calendar/pages/Calendar'));
+const ChangeLog            = lazy(() => import('@/features/admin/pages/ChangeLog'));
+const Notifications        = lazy(() => import('@/features/notifications/pages/Notifications'));
+const ScreenshotDemo       = lazy(() => import('@/features/admin/pages/ScreenshotDemo'));
+const AttendancePage       = lazy(() => import('@/features/hr/pages/AttendancePage'));
+const SelfAttendance       = lazy(() => import('@/features/hr/pages/SelfAttendance'));
+const HRCalendar           = lazy(() => import('@/features/hr/pages/HRCalendar'));
+const LeavesPage           = lazy(() => import('@/features/hr/pages/LeavesPage'));
+const HRDashboard          = lazy(() => import('@/features/hr/pages/HRDashboard'));
+const VerificationSettings = lazy(() => import('@/features/hr/pages/VerificationSettings'));
+const GeofenceManagement   = lazy(() => import('@/features/hr/pages/GeofenceManagement'));
+const AuditLog             = lazy(() => import('@/features/admin/pages/AuditLog'));
+const EmailCenter          = lazy(() => import('@/features/hr/pages/EmailCenter'));
+const ProjectDashboard     = lazy(() => import('@/features/projects/pages/ProjectDashboard'));
+const MyProjects           = lazy(() => import('@/features/projects/pages/MyProjects'));
+const ProjectDetail        = lazy(() => import('@/features/projects/pages/ProjectDetail'));
+const ProjectGantt         = lazy(() => import('@/features/projects/pages/ProjectGantt'));
+const SprintManagement     = lazy(() => import('@/features/projects/pages/SprintManagement'));
+const ResourceWorkload     = lazy(() => import('@/features/projects/pages/ResourceWorkload'));
+const ReallocationDashboard = lazy(() => import('@/features/projects/pages/ReallocationDashboard'));
+const FeatureMatrix        = lazy(() => import('@/features/admin/pages/FeatureMatrix'));
+const NotFound             = lazy(() => import('@/app/pages/NotFound'));
 
 function AppContent() {
+  // Remove the native HTML preloader once React has mounted
+  useEffect(() => {
+    const el = document.getElementById('app-preloader');
+    if (!el) return;
+    el.classList.add('apl-hide');
+    const timer = setTimeout(() => el.remove(), 420);
+    return () => clearTimeout(timer);
+  }, []);
+
   // Initialize notifications
   useNotifications();
 
@@ -65,6 +73,7 @@ function AppContent() {
   });
 
   return (
+    <>
     <Suspense fallback={<PageLoader label="Loading page…" />}>
     <Routes>
       <Route path="/" element={<Login />} />
@@ -330,32 +339,29 @@ function AppContent() {
       <Route path="*" element={<NotFound />} />
     </Routes>
     </Suspense>
+    {/* Global version / update indicator — fixed floating badge */}
+    <AppVersionIndicator />
+    </>
   );
 }
 
 function App() {
   return (
-    <ThemeProvider>
-      <ToastProvider>
-        <AuthProvider>
-          <SidebarProvider>
-            <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-              {/* Skip link - first focusable element per WCAG 2.2 */}
-              <a
-                href="#main-content"
-                className="skip-link"
-                style={{ position: 'fixed', opacity: 0, pointerEvents: 'none', transform: 'translateY(calc(-100% - 32px))' }}
-                onFocus={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.pointerEvents = 'auto'; e.currentTarget.style.transform = 'translateY(0)'; }}
-                onBlur={e => { e.currentTarget.style.opacity = '0'; e.currentTarget.style.pointerEvents = 'none'; e.currentTarget.style.transform = 'translateY(calc(-100% - 32px))'; }}
-              >
-                Skip to main content
-              </a>
-              <AppContent />
-            </BrowserRouter>
-          </SidebarProvider>
-        </AuthProvider>
-      </ToastProvider>
-    </ThemeProvider>
+    <AppProviders>
+      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        {/* Skip link - first focusable element per WCAG 2.2 */}
+        <a
+          href="#main-content"
+          className="skip-link"
+          style={{ position: 'fixed', opacity: 0, pointerEvents: 'none', transform: 'translateY(calc(-100% - 32px))' }}
+          onFocus={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.pointerEvents = 'auto'; e.currentTarget.style.transform = 'translateY(0)'; }}
+          onBlur={e => { e.currentTarget.style.opacity = '0'; e.currentTarget.style.pointerEvents = 'none'; e.currentTarget.style.transform = 'translateY(calc(-100% - 32px))'; }}
+        >
+          Skip to main content
+        </a>
+        <AppContent />
+      </BrowserRouter>
+    </AppProviders>
   );
 }
 

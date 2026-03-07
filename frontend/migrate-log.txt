@@ -1,0 +1,173 @@
+﻿MKDIR app\routes
+MKDIR app\providers
+MKDIR app\layouts
+MKDIR app\config
+MKDIR features\auth\pages
+MKDIR features\auth\context
+MKDIR features\auth\services
+MKDIR features\auth\components
+MKDIR features\dashboard\pages
+MKDIR features\dashboard\components
+MKDIR features\tasks\pages
+MKDIR features\tasks\components
+MKDIR features\tasks\hooks
+MKDIR features\projects\pages
+MKDIR features\projects\components
+MKDIR features\projects\services
+MKDIR features\projects\utils
+MKDIR features\hr\pages
+MKDIR features\hr\components
+MKDIR features\hr\services
+MKDIR features\hr\hooks
+MKDIR features\notifications\pages
+MKDIR features\notifications\components
+MKDIR features\notifications\hooks
+MKDIR features\notifications\services
+MKDIR features\workspace\pages
+MKDIR features\workspace\context
+MKDIR features\analytics\pages
+MKDIR features\analytics\services
+MKDIR features\analytics\utils
+MKDIR features\settings\pages
+MKDIR features\settings\components
+MKDIR features\admin\pages
+MKDIR features\calendar\pages
+MKDIR features\landing\components
+MKDIR features\landing\utils
+MKDIR shared\components\ui
+MKDIR shared\components\layout
+MKDIR shared\components\responsive
+MKDIR shared\hooks
+MKDIR shared\services
+MKDIR shared\utils
+MKDIR shared\constants
+MKDIR shared\types
+MKDIR styles
+MOVE  pages\Login.jsx â†’ features\auth\pages\Login.jsx
+MOVE  pages\VerifyEmail.jsx â†’ features\auth\pages\VerifyEmail.jsx
+MOVE  pages\ForgotPassword.jsx â†’ features\auth\pages\ForgotPassword.jsx
+MOVE  pages\ResetPassword.jsx â†’ features\auth\pages\ResetPassword.jsx
+MOVE  context\AuthContext.jsx â†’ features\auth\context\AuthContext.jsx
+MOVE  api\tokenStore.js â†’ features\auth\services\tokenStore.js
+MOVE  utils\secureTokenStorage.js â†’ features\auth\services\secureTokenStorage.js
+MOVE  routes\ProtectedRoute.jsx â†’ app\routes\ProtectedRoute.jsx
+MOVE  pages\Workspace.jsx â†’ features\dashboard\pages\Workspace.jsx
+MOVE  components\ActivityFeed.jsx â†’ features\dashboard\components\ActivityFeed.jsx
+MOVE  components\KPICard.jsx â†’ features\dashboard\components\KPICard.jsx
+MOVE  components\AIInsight.jsx â†’ features\dashboard\components\AIInsight.jsx
+MOVE  components\AISuggestion.jsx â†’ features\dashboard\components\AISuggestion.jsx
+MOVE  pages\Tasks.jsx â†’ features\tasks\pages\Tasks.jsx
+MOVE  pages\Kanban.jsx â†’ features\tasks\pages\Kanban.jsx
+MOVE  components\TaskCard.jsx â†’ features\tasks\components\TaskCard.jsx
+MOVE  components\CommandPalette.jsx â†’ features\tasks\components\CommandPalette.jsx
+MOVE  components\ShortcutsOverlay.jsx â†’ features\tasks\components\ShortcutsOverlay.jsx
+MOVE  hooks\useDragAndDrop.js â†’ features\tasks\hooks\useDragAndDrop.js
+MOVE  hooks\useInlineEdit.js â†’ features\tasks\hooks\useInlineEdit.js
+MOVE  pages\ProjectDashboard.jsx â†’ features\projects\pages\ProjectDashboard.jsx
+MOVE  pages\MyProjects.jsx â†’ features\projects\pages\MyProjects.jsx
+MOVE  pages\ProjectDetail.jsx â†’ features\projects\pages\ProjectDetail.jsx
+MOVE  pages\ProjectGantt.jsx â†’ features\projects\pages\ProjectGantt.jsx
+MOVE  pages\SprintManagement.jsx â†’ features\projects\pages\SprintManagement.jsx
+MOVE  pages\ResourceWorkload.jsx â†’ features\projects\pages\ResourceWorkload.jsx
+MOVE  pages\ReallocationDashboard.jsx â†’ features\projects\pages\ReallocationDashboard.jsx
+MOVE  components\ProjectLabel.jsx â†’ features\projects\components\ProjectLabel.jsx
+MOVE  components\SprintLabel.jsx â†’ features\projects\components\SprintLabel.jsx
+MOVE  api\projectsApi.js â†’ features\projects\services\projectsApi.js
+MOVE  utils\calendarEngine.js â†’ features\projects\utils\calendarEngine.js
+MOVE  utils\ganttNormalization.js â†’ features\projects\utils\ganttNormalization.js
+MOVE  utils\ganttDebugger.jsx â†’ features\projects\utils\ganttDebugger.jsx
+MOVE  pages\HRDashboard.jsx â†’ features\hr\pages\HRDashboard.jsx
+MOVE  pages\AttendancePage.jsx â†’ features\hr\pages\AttendancePage.jsx
+MOVE  pages\SelfAttendance.jsx â†’ features\hr\pages\SelfAttendance.jsx
+MOVE  pages\HRCalendar.jsx â†’ features\hr\pages\HRCalendar.jsx
+MOVE  pages\LeavesPage.jsx â†’ features\hr\pages\LeavesPage.jsx
+MOVE  pages\EmailCenter.jsx â†’ features\hr\pages\EmailCenter.jsx
+MOVE  pages\VerificationSettings.jsx â†’ features\hr\pages\VerificationSettings.jsx
+MOVE  pages\GeofenceManagement.jsx â†’ features\hr\pages\GeofenceManagement.jsx
+MOVE  components\AttendanceReviewModal.jsx â†’ features\hr\components\AttendanceReviewModal.jsx
+MOVE  components\LocationCapture.jsx â†’ features\hr\components\LocationCapture.jsx
+MOVE  components\PhotoCapture.jsx â†’ features\hr\components\PhotoCapture.jsx
+MOVE  components\MapView.jsx â†’ features\hr\components\MapView.jsx
+MOVE  api\attendanceApi.js â†’ features\hr\services\attendanceApi.js
+MOVE  api\geofenceApi.js â†’ features\hr\services\geofenceApi.js
+MOVE  hooks\useShifts.js â†’ features\hr\hooks\useShifts.js
+MOVE  hooks\useVerification.js â†’ features\hr\hooks\useVerification.js
+MOVE  pages\Notifications.jsx â†’ features\notifications\pages\Notifications.jsx
+MOVE  components\NotificationPrompt.jsx â†’ features\notifications\components\NotificationPrompt.jsx
+MOVE  components\NotificationSettings.jsx â†’ features\notifications\components\NotificationSettings.jsx
+MOVE  hooks\useNotifications.js â†’ features\notifications\hooks\useNotifications.js
+MOVE  hooks\usePushNotifications.js â†’ features\notifications\hooks\usePushNotifications.js
+MOVE  utils\notificationService.js â†’ features\notifications\services\notificationService.js
+MOVE  pages\Teams.jsx â†’ features\workspace\pages\Teams.jsx
+MOVE  pages\UserManagement.jsx â†’ features\workspace\pages\UserManagement.jsx
+MOVE  context\SidebarContext.jsx â†’ features\workspace\context\SidebarContext.jsx
+MOVE  pages\Analytics.jsx â†’ features\analytics\pages\Analytics.jsx
+MOVE  utils\reportGenerator.js â†’ features\analytics\services\reportGenerator.js
+MOVE  utils\comprehensiveReportGenerator.js â†’ features\analytics\services\comprehensiveReportGenerator.js
+MOVE  utils\mockDataGenerator.js â†’ features\analytics\utils\mockDataGenerator.js
+MOVE  pages\Settings.jsx â†’ features\settings\pages\Settings.jsx
+MOVE  components\SessionSettings.jsx â†’ features\settings\components\SessionSettings.jsx
+MOVE  pages\AuditLog.jsx â†’ features\admin\pages\AuditLog.jsx
+MOVE  pages\ChangeLog.jsx â†’ features\admin\pages\ChangeLog.jsx
+MOVE  pages\FeatureMatrix.jsx â†’ features\admin\pages\FeatureMatrix.jsx
+MOVE  pages\Calendar.jsx â†’ features\calendar\pages\Calendar.jsx
+MOVE  components\landing\ConversionFooter.jsx â†’ features\landing\components\ConversionFooter.jsx
+MOVE  components\landing\HeroSection.jsx â†’ features\landing\components\HeroSection.jsx
+MOVE  components\landing\LandingNav.jsx â†’ features\landing\components\LandingNav.jsx
+MOVE  components\landing\Philosophy.jsx â†’ features\landing\components\Philosophy.jsx
+MOVE  components\landing\PricingComparison.jsx â†’ features\landing\components\PricingComparison.jsx
+MOVE  components\landing\ProductExperience.jsx â†’ features\landing\components\ProductExperience.jsx
+MOVE  components\landing\TrustArchitecture.jsx â†’ features\landing\components\TrustArchitecture.jsx
+MOVE  utils\landingUtils.js â†’ features\landing\utils\landingUtils.js
+MOVE  components\Avatar.jsx â†’ shared\components\ui\Avatar.jsx
+MOVE  components\Button.jsx â†’ shared\components\ui\Button.jsx
+MOVE  components\Dialog.jsx â†’ shared\components\ui\Dialog.jsx
+MOVE  components\Drawer.jsx â†’ shared\components\ui\Drawer.jsx
+MOVE  components\Input.jsx â†’ shared\components\ui\Input.jsx
+MOVE  components\Popover.jsx â†’ shared\components\ui\Popover.jsx
+MOVE  components\ProgressBar.jsx â†’ shared\components\ui\ProgressBar.jsx
+MOVE  components\Spinner.jsx â†’ shared\components\ui\Spinner.jsx
+MOVE  components\Toast.jsx â†’ shared\components\ui\Toast.jsx
+MOVE  components\DataTable.jsx â†’ shared\components\ui\DataTable.jsx
+MOVE  components\InlineEdit.jsx â†’ shared\components\ui\InlineEdit.jsx
+MOVE  components\ThemeToggle.jsx â†’ shared\components\ui\ThemeToggle.jsx
+MOVE  components\modals\ConfirmModal.jsx â†’ shared\components\ui\ConfirmModal.jsx
+MOVE  components\modals\MeetingDetailPanel.jsx â†’ shared\components\ui\MeetingDetailPanel.jsx
+MOVE  components\modals\MeetingFormModal.jsx â†’ shared\components\ui\MeetingFormModal.jsx
+MOVE  components\Navbar.jsx â†’ shared\components\layout\Navbar.jsx
+MOVE  components\AppHeader.jsx â†’ shared\components\layout\AppHeader.jsx
+MOVE  components\GlobalSidebar.jsx â†’ shared\components\layout\GlobalSidebar.jsx
+MOVE  components\Sidebar.jsx â†’ shared\components\layout\Sidebar.jsx
+MOVE  components\TeamLabel.jsx â†’ shared\components\layout\TeamLabel.jsx
+MOVE  components\LatestCommentPreview.jsx â†’ shared\components\layout\LatestCommentPreview.jsx
+MOVE  components\layouts\ResponsiveCard.jsx â†’ shared\components\responsive\ResponsiveCard.jsx
+MOVE  components\layouts\ResponsiveGrid.jsx â†’ shared\components\responsive\ResponsiveGrid.jsx
+MOVE  components\layouts\ResponsiveModal.jsx â†’ shared\components\responsive\ResponsiveModal.jsx
+MOVE  components\layouts\ResponsivePageLayout.jsx â†’ shared\components\responsive\ResponsivePageLayout.jsx
+MOVE  hooks\useConfirmModal.js â†’ shared\hooks\useConfirmModal.js
+MOVE  hooks\useKeyboardShortcuts.js â†’ shared\hooks\useKeyboardShortcuts.js
+MOVE  hooks\useOptimisticUpdate.js â†’ shared\hooks\useOptimisticUpdate.js
+MOVE  hooks\usePageShortcuts.js â†’ shared\hooks\usePageShortcuts.js
+MOVE  hooks\useActivityTracker.js â†’ shared\hooks\useActivityTracker.js
+MOVE  hooks\useMobileCapabilities.js â†’ shared\hooks\useMobileCapabilities.js
+MOVE  hooks\useMobileFileUpload.js â†’ shared\hooks\useMobileFileUpload.js
+MOVE  hooks\useAppAutoUpdate.js â†’ shared\hooks\useAppAutoUpdate.js
+MOVE  hooks\useMeetings.js â†’ shared\hooks\useMeetings.js
+MOVE  hooks\useRealtimePresence.js â†’ shared\hooks\useRealtimePresence.js
+MOVE  hooks\useRealtimeSync.js â†’ shared\hooks\useRealtimeSync.js
+MOVE  utils\useClickOutside.js â†’ shared\hooks\useClickOutside.js
+MOVE  utils\useDebounce.js â†’ shared\hooks\useDebounce.js
+MOVE  api\axios.js â†’ shared\services\axios.js
+MOVE  utils\mobileSocketManager.js â†’ shared\services\mobileSocketManager.js
+MOVE  utils\autoUpdate.js â†’ shared\services\autoUpdate.js
+MOVE  utils\cn.js â†’ shared\utils\cn.js
+MOVE  utils\dateNormalization.js â†’ shared\utils\dateNormalization.js
+MOVE  data\pages.json â†’ shared\constants\pages.json
+MOVE  context\ThemeContext.jsx â†’ app\providers\ThemeProvider.jsx
+MOVE  index.css â†’ styles\index.css
+MOVE  animations.css â†’ styles\animations.css
+MOVE  mobile-responsive.css â†’ styles\mobile-responsive.css
+MOVE  design-tokens.css â†’ styles\design-tokens.css
+MOVE  tokens.css â†’ styles\tokens.css
+MOVE  ui-system.css â†’ styles\ui-system.css
+MOVE  aethertrack-reference.css â†’ styles\aethertrack-reference.css
