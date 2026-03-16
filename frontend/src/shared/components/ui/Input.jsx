@@ -109,9 +109,12 @@ const Input = forwardRef(({
   
   // Base input classes
   const inputClasses = [
-    'w-full px-4 pt-5 pb-2 bg-transparent border rounded-[var(--radius-input)]',
+    'w-full px-4 bg-transparent border rounded-[var(--radius-input)]',
+    // pt-6 pb-2 creates vertical room for the floated label above the text baseline
+    'pt-6 pb-2',
     'text-[var(--text-primary)] placeholder-transparent',
-    'transition-all duration-[var(--fast)]',
+    // Only transition border/background/box-shadow — never transition-all (avoids layout reflow)
+    'transition-[border-color,background-color,box-shadow] duration-[var(--fast)]',
     'focus:outline-none',
     hasError 
       ? 'border-[var(--danger)] focus:border-[var(--danger)]' 
@@ -122,19 +125,28 @@ const Input = forwardRef(({
     inputClassName,
   ].filter(Boolean).join(' ');
   
-  // Label classes (floating)
-  const labelClasses = [
-    'absolute left-4 transition-all duration-[var(--fast)] pointer-events-none',
-    'origin-left',
-    isLabelFloating 
-      ? 'top-2 text-xs' 
-      : 'top-1/2 -translate-y-1/2 text-sm',
-    hasError 
-      ? 'text-[var(--danger)]' 
-      : isFocused 
-        ? 'text-[var(--brand)]' 
-        : 'text-[var(--text-muted)]',
-  ].filter(Boolean).join(' ');
+  // Label: always anchored at top:0 + uses transform to animate — no layout reflow.
+  // At rest:    translateY(calc(50% + 4px)) centres label on visible input text area
+  // Floating:   translateY(8px) + scale(0.78) parks label at the top
+  const labelStyle = {
+    position: 'absolute',
+    left: prefix ? '40px' : 'var(--s4)',
+    top: 0,
+    transformOrigin: 'left center',
+    transform: isLabelFloating
+      ? 'translateY(8px) scale(0.78)'
+      : 'translateY(calc(var(--input-h, 36px) * 0.5 + 4px)) scale(1)',
+    fontSize: '14px',
+    lineHeight: 1.4,
+    pointerEvents: 'none',
+    // Only animate transform and color — compositor-only, zero layout cost
+    transition: 'transform var(--fast, 100ms) var(--ease, cubic-bezier(0.2,0,0,1)), color var(--fast, 100ms) var(--ease, cubic-bezier(0.2,0,0,1))',
+    color: hasError ? 'var(--danger)' : isFocused ? 'var(--brand)' : 'var(--text-muted)',
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    maxWidth: 'calc(100% - var(--s8))',
+    textOverflow: 'ellipsis',
+  };
   
   // Container classes
   const containerClasses = [
@@ -169,11 +181,11 @@ const Input = forwardRef(({
         {...props}
       />
       
-      {/* Floating Label */}
+      {/* Floating Label — positioned via inline style to use transform-only animation */}
       {label && (
         <label
           htmlFor={id}
-          className={labelClasses}
+          style={labelStyle}
         >
           {label}
           {required && <span className="text-[var(--danger)] ml-1" aria-hidden="true">*</span>}
@@ -262,9 +274,11 @@ const Textarea = forwardRef(({
   const hasError = error && showError;
   
   const inputClasses = [
-    'w-full px-4 pt-5 pb-2 bg-transparent border rounded-[var(--radius-input)]',
+    'w-full px-4 bg-transparent border rounded-[var(--radius-input)]',
+    'pt-6 pb-2',
     'text-[var(--text-primary)] placeholder-transparent',
-    'transition-all duration-[var(--fast)]',
+    // Only animate compositor properties — avoid transition-all on textareas
+    'transition-[border-color,background-color,box-shadow] duration-[var(--fast)]',
     'focus:outline-none resize-none',
     hasError 
       ? 'border-[var(--danger)] focus:border-[var(--danger)]' 
@@ -273,18 +287,22 @@ const Textarea = forwardRef(({
     inputClassName,
   ].filter(Boolean).join(' ');
   
-  const labelClasses = [
-    'absolute left-4 transition-all duration-[var(--fast)] pointer-events-none',
-    'origin-left',
-    isLabelFloating 
-      ? 'top-2 text-xs' 
-      : 'top-5 text-sm',
-    hasError 
-      ? 'text-[var(--danger)]' 
-      : isFocused 
-        ? 'text-[var(--brand)]' 
-        : 'text-[var(--text-muted)]',
-  ].filter(Boolean).join(' ');
+  // Use transform-only floating label (identical to Input), no top animation
+  const labelStyle = {
+    position: 'absolute',
+    left: 'var(--s4)',
+    top: 0,
+    transformOrigin: 'left center',
+    transform: isLabelFloating
+      ? 'translateY(8px) scale(0.78)'
+      : 'translateY(20px) scale(1)',
+    fontSize: '14px',
+    lineHeight: 1.4,
+    pointerEvents: 'none',
+    transition: 'transform var(--fast, 100ms) var(--ease, cubic-bezier(0.2,0,0,1)), color var(--fast, 100ms) var(--ease, cubic-bezier(0.2,0,0,1))',
+    color: hasError ? 'var(--danger)' : isFocused ? 'var(--brand)' : 'var(--text-muted)',
+    whiteSpace: 'nowrap',
+  };
   
   return (
     <div className={`relative ${containerClassName}`}>
@@ -304,10 +322,11 @@ const Textarea = forwardRef(({
         {...props}
       />
       
+      {/* Textarea floating label — transform-only animation, no layout reflow */}
       {label && (
         <label
           htmlFor={id}
-          className={labelClasses}
+          style={labelStyle}
         >
           {label}
           {required && <span className="text-[var(--danger)] ml-1">*</span>}
@@ -360,7 +379,7 @@ const Select = forwardRef(({
   const selectClasses = [
     'w-full px-4 py-3 bg-transparent border rounded-[var(--radius-input)]',
     'text-[var(--text-primary)]',
-    'transition-all duration-[var(--fast)]',
+    'transition-[border-color,background-color,box-shadow] duration-[var(--fast)]',
     'focus:outline-none appearance-none cursor-pointer',
     hasError 
       ? 'border-[var(--danger)] focus:border-[var(--danger)]' 

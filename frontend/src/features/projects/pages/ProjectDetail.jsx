@@ -382,6 +382,38 @@ const ProjectDetail = () => {
     { id: 'activity', label: 'Activity', icon: Clock }
   ];
 
+  const sortedMilestones = [...milestones].sort((a, b) => a.order - b.order);
+  const doneMilestonesCount = sortedMilestones.filter((m) => m.status === 'done').length;
+  const currentMilestonesCount = sortedMilestones.filter((m) => m.status === 'in_progress').length;
+  const pendingMilestonesCount = sortedMilestones.filter((m) => m.status === 'pending').length;
+  const milestoneProgressPct = sortedMilestones.length > 0
+    ? Math.round((doneMilestonesCount / sortedMilestones.length) * 100)
+    : 0;
+
+  const milestoneStatusMeta = {
+    done: {
+      label: 'Done',
+      chipClass: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
+      titleClass: 'text-emerald-700 dark:text-emerald-300',
+      ringClass: 'ring-emerald-200 dark:ring-emerald-900/40',
+      nodeBg: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
+    },
+    in_progress: {
+      label: 'Current',
+      chipClass: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
+      titleClass: 'text-[#C4713A]',
+      ringClass: 'ring-amber-200 dark:ring-amber-900/40',
+      nodeBg: 'linear-gradient(135deg, #C4713A 0%, #A35C28 100%)',
+    },
+    pending: {
+      label: 'Pending',
+      chipClass: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300',
+      titleClass: 'text-gray-500 dark:text-gray-400',
+      ringClass: 'ring-slate-200 dark:ring-slate-700',
+      nodeBg: 'linear-gradient(135deg, #cbd5e1 0%, #94a3b8 100%)',
+    },
+  };
+
   return (
     <ResponsivePageLayout title={project.name} icon={GitBranch} noPadding>
       <main className="flex-1 flex flex-col overflow-y-auto">
@@ -619,7 +651,10 @@ const ProjectDetail = () => {
                   {/* Milestone Path */}
                   <section className="bg-white dark:bg-gray-900 p-6 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm">
                     <div className="flex items-center justify-between mb-8">
-                      <h3 className="font-bold text-lg">Project Milestones</h3>
+                      <div>
+                        <h3 className="font-bold text-lg">Project Milestones</h3>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Track delivery flow from planning to deployment</p>
+                      </div>
                       <button 
                         onClick={() => { setMilestoneForm({ name: '', status: 'pending' }); setEditingMilestone(null); setShowMilestoneModal(true); }}
                         className="flex items-center gap-2 px-3 py-1.5 bg-[#C4713A] text-white rounded-lg text-sm font-semibold hover:bg-[#A35C28]"
@@ -628,35 +663,72 @@ const ProjectDetail = () => {
                         Add Milestone
                       </button>
                     </div>
-                    <div className="relative px-4 pb-4 overflow-x-auto">
-                      <div className="flex items-center justify-between min-w-[600px] relative py-10">
-                        {/* Connection Line */}
-                        <div className="absolute h-0.5 bg-gray-200 dark:bg-gray-700 top-1/2 left-0 right-0" style={{ zIndex: 1 }}></div>
-                        <div className="absolute h-0.5 bg-[#C4713A] top-1/2 left-0" style={{ 
-                          width: `${milestones.filter(m => m.status === 'done').length / milestones.length * 100}%`, 
-                          zIndex: 2 
-                        }}></div>
+                    <div className="mb-6 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div className="rounded-lg border border-emerald-200/70 dark:border-emerald-900/40 bg-emerald-50/60 dark:bg-emerald-900/10 px-3 py-2">
+                        <p className="text-[10px] uppercase tracking-wider font-bold text-emerald-600 dark:text-emerald-300">Done</p>
+                        <p className="text-lg font-black text-emerald-700 dark:text-emerald-200">{doneMilestonesCount}</p>
+                      </div>
+                      <div className="rounded-lg border border-amber-200/70 dark:border-amber-900/40 bg-amber-50/60 dark:bg-amber-900/10 px-3 py-2">
+                        <p className="text-[10px] uppercase tracking-wider font-bold text-amber-600 dark:text-amber-300">Current</p>
+                        <p className="text-lg font-black text-amber-700 dark:text-amber-200">{currentMilestonesCount}</p>
+                      </div>
+                      <div className="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/40 px-3 py-2">
+                        <p className="text-[10px] uppercase tracking-wider font-bold text-slate-500 dark:text-slate-300">Pending</p>
+                        <p className="text-lg font-black text-slate-700 dark:text-slate-100">{pendingMilestonesCount}</p>
+                      </div>
+                    </div>
 
-                        {/* Milestone Nodes */}
-                        {milestones.sort((a, b) => a.order - b.order).map((milestone, idx) => (
-                          <div key={idx} className={`relative z-10 flex flex-col items-center gap-3 w-32 ${milestone.status === 'pending' ? 'opacity-50' : ''}`}>
-                            <div className={`size-10 rounded-full ${getMilestoneBgColor(milestone.status)} ${getMilestoneBorderColor(milestone.status)} text-white flex items-center justify-center ring-4 ring-white dark:ring-gray-900 cursor-pointer group`}
-                              onClick={() => handleEditMilestone(idx)}
-                            >
-                              {getMilestoneIcon(milestone.status)}
+                    <div className="mb-6">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <p className="text-xs font-semibold text-gray-600 dark:text-gray-300">Milestone Completion</p>
+                        <p className="text-xs font-bold text-[#C4713A]">{milestoneProgressPct}%</p>
+                      </div>
+                      <div className="h-2.5 rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden">
+                        <div
+                          className="h-full rounded-full transition-all duration-500"
+                          style={{
+                            width: `${milestoneProgressPct}%`,
+                            background: 'linear-gradient(90deg, #22c55e 0%, #C4713A 100%)',
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="relative px-2 pb-2 overflow-x-auto">
+                      <div className="flex items-start justify-between min-w-[760px] relative py-8">
+                        <div className="absolute h-[3px] bg-gray-200 dark:bg-gray-700 top-[38px] left-10 right-10 rounded-full" style={{ zIndex: 1 }}></div>
+                        <div
+                          className="absolute h-[3px] top-[38px] left-10 rounded-full"
+                          style={{
+                            width: `calc((100% - 5rem) * ${milestoneProgressPct / 100})`,
+                            zIndex: 2,
+                            background: 'linear-gradient(90deg, #22c55e 0%, #C4713A 100%)',
+                          }}
+                        ></div>
+
+                        {sortedMilestones.map((milestone, idx) => {
+                          const statusMeta = milestoneStatusMeta[milestone.status] || milestoneStatusMeta.pending;
+                          return (
+                            <div key={`${milestone.name}-${milestone.order}-${idx}`} className="relative z-10 flex flex-col items-center gap-3 w-40 px-2">
+                              <button
+                                type="button"
+                                className={`size-14 rounded-full text-white flex items-center justify-center ring-4 ${statusMeta.ringClass} shadow-md hover:scale-105 transition-transform`}
+                                style={{ background: statusMeta.nodeBg }}
+                                onClick={() => handleEditMilestone(idx)}
+                                title={`Edit ${milestone.name}`}
+                              >
+                                {getMilestoneIcon(milestone.status)}
+                              </button>
+
+                              <div className="text-center w-full rounded-xl border border-gray-200/80 dark:border-gray-700 px-3 py-2.5 bg-white/90 dark:bg-gray-900/80 shadow-sm">
+                                <p className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${statusMeta.chipClass}`}>
+                                  {statusMeta.label}
+                                </p>
+                                <p className={`text-sm font-bold mt-1.5 ${statusMeta.titleClass}`}>{milestone.name}</p>
+                              </div>
                             </div>
-                            <div className="text-center">
-                              <p className={`text-[11px] font-bold uppercase tracking-tighter ${
-                                milestone.status === 'done' ? 'text-[#C4713A]' :
-                                milestone.status === 'in_progress' ? 'text-[#C4713A]' :
-                                'text-gray-400'
-                              }`}>
-                                {milestone.status === 'done' ? 'Done' : milestone.status === 'in_progress' ? 'Current' : 'Pending'}
-                              </p>
-                              <p className="text-xs font-bold">{milestone.name}</p>
-                            </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     </div>
                   </section>

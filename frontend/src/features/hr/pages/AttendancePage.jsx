@@ -306,7 +306,7 @@ export default function AttendancePage() {
           checkedIn ? (
             <button
               onClick={handleCheckOut}
-              className={`px-4 py-2 ${currentTheme.primary} text-white ${currentTheme.primaryHover} flex items-center gap-2`}
+              className={`px-4 py-2 rounded-lg ${currentTheme.primary} text-white ${currentTheme.primaryHover} flex items-center gap-2`}
             >
               <XCircle className="w-5 h-5" />
               Check Out
@@ -314,7 +314,7 @@ export default function AttendancePage() {
           ) : (
             <button
               onClick={handleCheckIn}
-              className={`px-4 py-2 ${currentTheme.primary} text-white ${currentTheme.primaryHover} flex items-center gap-2`}
+              className={`px-4 py-2 rounded-lg ${currentTheme.primary} text-white ${currentTheme.primaryHover} flex items-center gap-2`}
             >
               <CheckCircle className="w-5 h-5" />
               Check In

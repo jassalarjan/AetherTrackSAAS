@@ -1,4 +1,5 @@
 ﻿import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { SectionLoader } from '@/shared/components/ui/Spinner';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { useTheme } from '@/app/providers/ThemeProvider';
@@ -9,8 +10,8 @@ import MapView from '@/features/hr/components/MapView';
 import ConfirmModal from '@/shared/components/ui/ConfirmModal';
 import { 
   MapPin, Plus, Edit2, Trash2, ToggleLeft, ToggleRight, 
-  AlertCircle, Check, X, Upload, Download, Map, List,
-  Search, RefreshCw
+  AlertCircle, Check, X, Upload, Map, List,
+  Search
 } from 'lucide-react';
 
 export default function GeofenceManagement() {
@@ -28,6 +29,25 @@ export default function GeofenceManagement() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
   const [message, setMessage] = useState({ type: '', text: '' });
+
+  // Auto-dismiss messages after 4 seconds
+  useEffect(() => {
+    if (!message.text) return;
+    const timer = setTimeout(() => setMessage({ type: '', text: '' }), 4000);
+    return () => clearTimeout(timer);
+  }, [message]);
+
+  // Prevent body scroll when modal is open
+  useEffect(() => {
+    if (showForm) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [showForm]);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -82,13 +102,25 @@ export default function GeofenceManagement() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
+    const lat = parseFloat(formData.latitude);
+    const lng = parseFloat(formData.longitude);
+
+    if (isNaN(lat) || lat < -90 || lat > 90) {
+      setMessage({ type: 'error', text: 'Latitude must be a number between -90 and 90' });
+      return;
+    }
+    if (isNaN(lng) || lng < -180 || lng > 180) {
+      setMessage({ type: 'error', text: 'Longitude must be a number between -180 and 180' });
+      return;
+    }
+
     try {
       const data = {
         name: formData.name,
         description: formData.description,
-        latitude: parseFloat(formData.latitude),
-        longitude: parseFloat(formData.longitude),
+        latitude: lat,
+        longitude: lng,
         radiusMeters: formData.radiusMeters,
         isActive: formData.isActive
       };
@@ -445,31 +477,33 @@ export default function GeofenceManagement() {
           </div>
         )}
 
-        {/* Add/Edit Form Modal */}
-        {showForm && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-            <div className={`relative w-full max-w-lg rounded-lg shadow-xl ${
-              'bg-[var(--bg-raised)]'
-            }`}>
-              <div className="flex items-center justify-between p-4 border-b ${
-                'border-[var(--border-soft)]'
-              }">
-                <h2 className={`text-lg font-semibold ${
-                  isDark ? 'text-white' : 'text-gray-900'
-                }`}>
+        {/* Add/Edit Form Modal rendered via portal to document.body */}
+        {showForm && createPortal(
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in"
+            onClick={resetForm}
+          >
+            <div
+              className="relative w-full max-w-2xl max-h-[90vh] overflow-hidden rounded-xl shadow-xl animate-scale-in"
+              style={{ background: 'var(--bg-raised)', border: '1px solid var(--border-soft)', boxShadow: 'var(--shadow-xl)' }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between p-4 border-b" style={{ borderColor: 'var(--border-soft)' }}>
+                <h2 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
                   {editingGeofence ? 'Edit Geofence' : 'Add New Geofence'}
                 </h2>
                 <button
+                  type="button"
                   onClick={resetForm}
-                  className={`p-1 rounded ${
-                    'hover:bg-[var(--bg-surface)]'
-                  }`}
+                  className="p-2 rounded-lg transition-colors"
+                  style={{ color: 'var(--text-muted)' }}
+                  aria-label="Close modal"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
-              <form onSubmit={handleSubmit} className="p-4 space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-4 max-h-[calc(90vh-73px)] overflow-y-auto p-4 pr-3">
                 <div>
                   <label className={`block text-sm font-medium mb-1 ${
                     isDark ? 'text-white' : 'text-gray-700'
@@ -483,8 +517,8 @@ export default function GeofenceManagement() {
                     onChange={handleInputChange}
                     required
                     className={`w-full px-3 py-2 rounded-lg border ${
-                      isDark 
-                        ? 'bg-[#282f39] border-[#333a47] text-white' 
+                      isDark
+                        ? 'bg-[#282f39] border-[#333a47] text-white'
                         : 'bg-white border-gray-300 text-gray-900'
                     }`}
                     placeholder="Office Building"
@@ -503,8 +537,8 @@ export default function GeofenceManagement() {
                     onChange={handleInputChange}
                     rows={2}
                     className={`w-full px-3 py-2 rounded-lg border ${
-                      isDark 
-                        ? 'bg-[#282f39] border-[#333a47] text-white' 
+                      isDark
+                        ? 'bg-[#282f39] border-[#333a47] text-white'
                         : 'bg-white border-gray-300 text-gray-900'
                     }`}
                     placeholder="Optional description"
@@ -526,8 +560,8 @@ export default function GeofenceManagement() {
                       onChange={handleInputChange}
                       required
                       className={`w-full px-3 py-2 rounded-lg border ${
-                        isDark 
-                          ? 'bg-[#282f39] border-[#333a47] text-white' 
+                        isDark
+                          ? 'bg-[#282f39] border-[#333a47] text-white'
                           : 'bg-white border-gray-300 text-gray-900'
                       }`}
                       placeholder="28.6139"
@@ -547,8 +581,8 @@ export default function GeofenceManagement() {
                       onChange={handleInputChange}
                       required
                       className={`w-full px-3 py-2 rounded-lg border ${
-                        isDark 
-                          ? 'bg-[#282f39] border-[#333a47] text-white' 
+                        isDark
+                          ? 'bg-[#282f39] border-[#333a47] text-white'
                           : 'bg-white border-gray-300 text-gray-900'
                       }`}
                       placeholder="77.2090"
@@ -600,8 +634,8 @@ export default function GeofenceManagement() {
                     type="button"
                     onClick={resetForm}
                     className={`px-4 py-2 rounded-lg ${
-                      isDark 
-                        ? 'bg-[#282f39] text-white hover:bg-[#333a47]' 
+                      isDark
+                        ? 'bg-[#282f39] text-white hover:bg-[#333a47]'
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
                   >
@@ -617,6 +651,7 @@ export default function GeofenceManagement() {
               </form>
             </div>
           </div>
+        , document.body
         )}
 
         {/* Delete Confirmation Modal */}

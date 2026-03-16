@@ -17,7 +17,7 @@ import { useTheme } from '@/app/providers/ThemeProvider';
 import { useSidebar } from '@/features/workspace/context/SidebarContext';
 import api from '@/shared/services/axios';
 import '@/styles/aethertrack-reference.css';
-import GlobalSidebar from '@/shared/components/layout/GlobalSidebar';
+import ResponsivePageLayout from '@/shared/components/responsive/ResponsivePageLayout';
 import ALL_PAGES from '@/shared/constants/pages.json';
 
 // Sparkline SVG component
@@ -295,37 +295,48 @@ const TasksPanel = ({ tasks, loading, onTaskComplete, onNavigate }) => {
       </div>
       
       <div className="tab-row" role="tablist">
-        <div 
-          className={`tab ${activeTab === 'inprogress' ? 'on' : ''}`} 
-          role="tab" 
+        <button
+          className={`tab ${activeTab === 'inprogress' ? 'on' : ''}`}
+          role="tab"
           aria-selected={activeTab === 'inprogress'}
+          tabIndex={activeTab === 'inprogress' ? 0 : -1}
           onClick={() => setActiveTab('inprogress')}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setActiveTab('inprogress'); } }}
         >
           In Progress <span className="tab-count">{inProgressTasks.length}</span>
-        </div>
-        <div 
-          className={`tab ${activeTab === 'todo' ? 'on' : ''}`} 
-          role="tab" 
+        </button>
+        <button
+          className={`tab ${activeTab === 'todo' ? 'on' : ''}`}
+          role="tab"
           aria-selected={activeTab === 'todo'}
+          tabIndex={activeTab === 'todo' ? 0 : -1}
           onClick={() => setActiveTab('todo')}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setActiveTab('todo'); } }}
         >
           Todo <span className="tab-count">{todoTasks.length}</span>
-        </div>
-        <div 
-          className={`tab ${activeTab === 'done' ? 'on' : ''}`} 
-          role="tab" 
+        </button>
+        <button
+          className={`tab ${activeTab === 'done' ? 'on' : ''}`}
+          role="tab"
           aria-selected={activeTab === 'done'}
+          tabIndex={activeTab === 'done' ? 0 : -1}
           onClick={() => setActiveTab('done')}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setActiveTab('done'); } }}
         >
           Done <span className="tab-count">{doneTasks.length}</span>
-        </div>
+        </button>
       </div>
       
       <div className="task-list" role="list">
         {loading ? (
           <SectionLoader label="Loading tasks…" minHeight="80px" />
         ) : filteredTasks.length === 0 ? (
-          <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-secondary)' }}>No tasks found</div>
+          <div className="empty-state-inline">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true" style={{ color: 'var(--text-faint)', margin: '0 auto var(--s2)' }}>
+              <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+            <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>No tasks match this filter</p>
+          </div>
         ) : (
           filteredTasks.slice(0, 5).map((task, i) => (
             <TaskCard 
@@ -416,7 +427,11 @@ const KanbanPanel = ({ tasks, sprint, onNavigate }) => {
               due={formatTaskDue(task.due_date)}
             />
           ))}
-          {todoTasks.length === 0 && <div style={{ padding: '12px', fontSize: '12px', color: 'var(--text-secondary)' }}>No tasks</div>}
+          {todoTasks.length === 0 && (
+            <div className="empty-state-inline">
+              <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Nothing to do — add a task to get started</p>
+            </div>
+          )}
         </div>
         <div className="kb-col">
           <div className="kb-col-hd">
@@ -436,7 +451,11 @@ const KanbanPanel = ({ tasks, sprint, onNavigate }) => {
               borderColor={getTaskBorderColor(task.due_date, task.status)}
             />
           ))}
-          {inProgressTasks.length === 0 && <div style={{ padding: '12px', fontSize: '12px', color: 'var(--text-secondary)' }}>No tasks</div>}
+          {inProgressTasks.length === 0 && (
+            <div className="empty-state-inline">
+              <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>No tasks in progress</p>
+            </div>
+          )}
         </div>
         <div className="kb-col">
           <div className="kb-col-hd">
@@ -456,7 +475,11 @@ const KanbanPanel = ({ tasks, sprint, onNavigate }) => {
               opacity={0.55}
             />
           ))}
-          {doneTasks.length === 0 && <div style={{ padding: '12px', fontSize: '12px', color: 'var(--text-secondary)' }}>No tasks</div>}
+          {doneTasks.length === 0 && (
+            <div className="empty-state-inline">
+              <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>No completed tasks yet</p>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -529,9 +552,7 @@ const ActivityFeed = ({ activities, loading }) => {
   // Transform changelog data to activity format
   const getActivities = () => {
     if (!Array.isArray(activities) || activities.length === 0) {
-      return [
-        { initials: '—', color: 'var(--text-faint)', name: 'No activity', action: 'yet', time: '', isLive: false }
-      ];
+      return null; // signals empty state below
     }
     
     const colors = ['var(--brand)', '#5A8A6A', '#7A6AAA', '#C49A3A', '#7A9ABB', '#8B5E3C'];
@@ -587,6 +608,10 @@ const ActivityFeed = ({ activities, loading }) => {
       </div>
       {loading ? (
         <SectionLoader label="Loading activity…" minHeight="80px" />
+      ) : displayActivities === null ? (
+        <div className="empty-state-inline">
+          <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>No recent activity — actions you and your team take will appear here.</p>
+        </div>
       ) : (
         <div role="log" aria-live="polite" aria-label="Activity feed">
           {displayActivities.map((a, i) => (
@@ -749,9 +774,7 @@ const TeamGrid = ({ teamMembers, loading }) => {
   // Transform team members to UI format
   const getMembers = () => {
     if (!teamMembers || teamMembers.length === 0) {
-      return [
-        { initials: '?', color: 'var(--text-faint)', name: 'No team members', status: 'offline' }
-      ];
+      return null; // signals empty state below
     }
     
     return teamMembers.slice(0, 6).map((member, i) => {
@@ -766,7 +789,7 @@ const TeamGrid = ({ teamMembers, loading }) => {
   };
 
   const members = getMembers();
-  const onlineCount = members.filter(m => m.status === 'online').length;
+  const onlineCount = members ? members.filter(m => m.status === 'online').length : 0;
 
   return (
     <div className="panel" style={{ marginBottom: 'var(--s6)' }}>
@@ -776,6 +799,10 @@ const TeamGrid = ({ teamMembers, loading }) => {
       </div>
       {loading ? (
         <SectionLoader label="Loading team…" minHeight="80px" />
+      ) : members === null ? (
+        <div className="empty-state-inline">
+          <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>No team members yet — invite colleagues to see them here.</p>
+        </div>
       ) : (
         <div className="team-grid" role="list">
           {members.map((m, i) => (
@@ -790,7 +817,14 @@ const TeamGrid = ({ teamMembers, loading }) => {
 // Project Card component
 const ProjectCard = ({ name, meta, progress, color, onClick }) => {
   return (
-    <div className="proj-card" style={{ cursor: 'pointer' }} onClick={onClick} role="button" tabIndex={0} onKeyDown={e => e.key === 'Enter' && onClick && onClick()}>
+    <div
+      className="proj-card"
+      style={{ cursor: 'pointer' }}
+      onClick={onClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick && onClick(); } }}
+    >
       <div className="proj-color" style={{ background: color }}></div>
       <div className="proj-info">
         <div className="proj-name">{name}</div>
@@ -806,9 +840,7 @@ const ProjectsList = ({ projects, loading, onNavigate }) => {
   // Transform projects to UI format
   const getProjects = () => {
     if (!projects || projects.length === 0) {
-      return [
-        { name: 'No active projects', meta: '', progress: 0, color: 'var(--text-faint)' }
-      ];
+      return null; // signals empty state below
     }
     
     return projects.slice(0, 3).map((p, i) => {
@@ -837,6 +869,10 @@ const ProjectsList = ({ projects, loading, onNavigate }) => {
       </div>
       {loading ? (
         <SectionLoader label="Loading projects…" minHeight="80px" />
+      ) : projectList === null ? (
+        <div className="empty-state-inline">
+          <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>No active projects — create one to start tracking progress.</p>
+        </div>
       ) : (
         <div>
           {projectList.map((p, i) => (
@@ -1421,86 +1457,34 @@ const Workspace = () => {
 
   return (
     <>
-      {/* Shell Layout */}
-      <div className="flex h-screen overflow-hidden" style={{ background: 'var(--bg-canvas)' }}>
-        <GlobalSidebar />
-        <div className="flex-1 flex flex-col overflow-hidden min-w-0">
-
-        {/* Header */}
-        <header className="header">
-          {/* Mobile hamburger */}
-          {isMobile && (
+      <ResponsivePageLayout
+        title="Dashboard"
+        subtitle={`${getGreeting()}, ${userName} · ${formattedDate}`}
+        actions={
+          <div className="flex items-center gap-2">
             <button
-              className="hdr-btn"
-              onClick={toggleMobileSidebar}
-              aria-label="Open navigation menu"
-              style={{ flexShrink: 0 }}
+              className="flex items-center gap-1.5 h-8 px-3 rounded-lg text-[13px] font-medium transition-colors bg-[var(--bg-base)] border border-[var(--border-soft)] text-[var(--text-secondary)] hover:bg-[var(--border-hair)] hover:text-[var(--text-primary)]"
+              style={{ fontFamily: 'var(--font-body)' }}
+              onClick={() => toast('Report exported ✓')}
             >
-              ☰
+              ↗ Export
             </button>
-          )}
-          <div className="breadcrumb">
-            <div className="bc-page-icon" aria-hidden="true">⬡</div>
-            <span className="bc-text">Dashboard</span>
-            <span className="bc-sep" aria-hidden="true">/</span>
-            <span className="bc-sub">Overview</span>
-          </div>
-          
-          <button 
-            className="search-trigger" 
-            onClick={() => setCmdOpen(true)}
-            aria-label="Search (Ctrl+K)"
-          >
-            <span className="search-icon" aria-hidden="true">⌕</span>
-            <span className="search-label">Search everything…</span>
-            <span className="kbd-combo" aria-hidden="true">
-              <span className="kbd">⌘</span>
-              <span className="kbd">K</span>
-            </span>
-          </button>
-          
-          <div className="hdr-actions">
-            <div className="presence-badge" aria-label={`${teamMembers.length} online`}>
-              <span className="presence-dot" aria-hidden="true"></span>
-              {teamMembers.length || 0} online
-            </div>
-            <button className="hdr-btn" aria-label="Notifications" onClick={() => toast('No new notifications')}>
-              🔔{tasks.filter(t => t.priority === 'critical').length > 0 && <span className="notif-pip" aria-hidden="true"></span>}
+            <button
+              className="flex items-center gap-1.5 h-8 px-3 rounded-lg text-[13px] font-semibold bg-[#C4713A] text-white hover:bg-[#A35C28] transition-colors"
+              style={{ fontFamily: 'var(--font-body)' }}
+              onClick={() => navigate('/tasks')}
+            >
+              + New Task
             </button>
-            <button className="hdr-btn" aria-label="AI Assistant" onClick={() => setShowAI(v => !v)}>✦</button>
-            <button className="avatar-hdr" aria-label="Account menu" onClick={() => navigate('/settings')}>{userInitials}</button>
           </div>
-        </header>
-        
-        {/* Main Content */}
-        <main
-          className="main"
-          id="main"
+        }
+      >
+        <div
           style={{
-            flex: 1,
-            overflowY: 'auto',
             paddingBottom: showBottomNav ? 'calc(56px + env(safe-area-inset-bottom, 0px))' : undefined,
           }}
         >
           <div className="page">
-            
-            {/* Page Header */}
-            <div className="page-head">
-              <div>
-                <h1 className="page-title">{getGreeting()}, <em>{userName}</em></h1>
-                <p className="page-subtitle">
-                  {formattedDate}{activeSprint ? ` · ${activeSprint.name} ends ${new Date(activeSprint.end_date).toLocaleDateString('en-US', { weekday: 'long' })}` : ''} · {tasks.filter(t => t.priority === 'critical' && t.status !== 'done').length || 0} items need your attention
-                </p>
-              </div>
-              <div className="page-actions">
-                <button className="btn btn-secondary btn-sm" onClick={() => toast('Report exported ✓')}>
-                  ↗ Export
-                </button>
-                <button className="btn btn-primary btn-sm" onClick={() => navigate('/tasks')}>
-                  + New Task
-                </button>
-              </div>
-            </div>
             
             {/* AI Insight */}
             {showAI && <AIInsight onDismiss={() => setShowAI(false)} />}
@@ -1570,11 +1554,9 @@ const Workspace = () => {
               
             </div>
             
-          </div>
-        </main>
-
-        </div>{/* end inner flex-col */}
-      </div>{/* end outer flex */}
+          </div>{/* .page */}
+        </div>{/* scroll wrapper */}
+      </ResponsivePageLayout>
 
       {/* Command Palette */}
       <CommandPalette 

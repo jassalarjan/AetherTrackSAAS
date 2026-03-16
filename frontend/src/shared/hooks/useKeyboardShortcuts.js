@@ -161,7 +161,9 @@ const buildKeyCombo = (e) => {
   if (e.shiftKey) key += 'shift+';
   
   // Normalize key names
-  let keyName = e.key.toLowerCase();
+  const rawKey = typeof e.key === 'string' ? e.key : '';
+  if (!rawKey) return key;
+  let keyName = rawKey.toLowerCase();
   if (keyName === ' ') keyName = 'space';
   if (keyName === 'backslash') keyName = '\\';
   
@@ -257,21 +259,38 @@ export const useKeyboardShortcuts = ({
     
     // Handle CMD+K - Command Palette
     if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
-      e.preventDefault();
       if (onCommandPalette) {
+        e.preventDefault();
         onCommandPalette();
+        setLastShortcut({ key: 'cmd+k', timestamp: Date.now() });
       }
-      setLastShortcut({ key: 'cmd+k', timestamp: Date.now() });
+      // Always skip further processing in this hook so other listeners (AppHeader) can fire
+      return;
+    }
+
+    // Handle CMD+/ - Show keyboard shortcuts overlay
+    if ((e.metaKey || e.ctrlKey) && e.key === '/') {
+      e.preventDefault();
+      window.dispatchEvent(new CustomEvent('show-shortcuts-help'));
+      setLastShortcut({ key: 'cmd+/', timestamp: Date.now() });
+      return;
+    }
+
+    // Handle CMD+\ - Toggle sidebar
+    if ((e.metaKey || e.ctrlKey) && (e.key === '\\' || e.key === '|')) {
+      e.preventDefault();
+      window.dispatchEvent(new CustomEvent('toggle-sidebar'));
+      setLastShortcut({ key: 'cmd+\\', timestamp: Date.now() });
       return;
     }
     
     // Handle Escape - Close modals
     if (e.key === 'Escape') {
-      e.preventDefault();
       if (onEscape) {
+        e.preventDefault();
         onEscape();
+        setLastShortcut({ key: 'escape', timestamp: Date.now() });
       }
-      setLastShortcut({ key: 'escape', timestamp: Date.now() });
       return;
     }
     
@@ -295,17 +314,19 @@ export const useKeyboardShortcuts = ({
       }
     }
     
-    // Handle G→X navigation pattern
-    if (gPressedRef.current && keyCombo.startsWith('g+')) {
-      gPressedRef.current = false;
-      
+    // Handle G→X navigation pattern (e.g. g then d = go to dashboard)
+    // keyCombo for the second key is just 'd', NOT 'g+d', so we check gPressedRef only
+    if (gPressedRef.current && !isInput) {
+      gPressedRef.current = false; // reset regardless of match
+
       const navKey = `g ${e.key.toLowerCase()}`;
       const shortcut = shortcutMapRef.current.get(navKey);
-      
-      if (shortcut?.handler || getNavHandler(navKey)) {
+      const navHandler = getNavHandler(navKey);
+
+      if (shortcut?.handler || navHandler) {
         e.preventDefault();
-        const handler = shortcut?.handler || getNavHandler(navKey);
-        if (handler) handler();
+        const handler = shortcut?.handler || navHandler;
+        handler();
         setLastShortcut({ key: navKey, timestamp: Date.now() });
         return;
       }

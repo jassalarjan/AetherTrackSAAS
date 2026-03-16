@@ -296,41 +296,33 @@ const ProjectDashboard = () => {
   }
 
   return (
-    <ResponsivePageLayout title="Projects" icon={FolderOpen}>
-      <div className="p-8 space-y-8 scroll-smooth">
-      {/* Welcome Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div>
-          <h2 className="text-3xl font-black tracking-tight text-[#0d121b] dark:text-white">
-            Project Dashboard
-          </h2>
-          <p className="text-[#4c669a] dark:text-gray-400 mt-1">
-            Real-time overview of enterprise initiatives and resource velocity.
-          </p>
-        </div>
-        <div className="flex gap-3">
-          <button 
+    <ResponsivePageLayout
+      title="Projects"
+      icon={FolderOpen}
+      actions={
+        <div className="flex items-center gap-2">
+          <button
             onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all shadow-sm"
+            className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm font-semibold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all"
           >
-            <Filter size={20} />
+            <Filter size={16} />
             <span>Filters</span>
             {(filters.status || filters.priority || filters.search) && (
-              <span className="ml-1 px-2 py-0.5 bg-[#C4713A] text-white text-xs rounded-full">
+              <span className="px-1.5 py-0.5 bg-[#C4713A] text-white text-xs rounded-full">
                 Active
               </span>
             )}
           </button>
           <div className="relative">
-            <button 
+            <button
               onClick={() => setShowExportMenu(!showExportMenu)}
-              className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all shadow-sm"
+              className="flex items-center gap-2 px-3 py-1.5 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm font-semibold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all"
             >
-              <Share2 size={20} />
+              <Share2 size={16} />
               <span>Export</span>
             </button>
             {showExportMenu && (
-              <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50">
+              <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-[500]">
                 <button
                   onClick={handleExportExcel}
                   className="flex items-center gap-2 w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors rounded-t-lg"
@@ -349,17 +341,18 @@ const ProjectDashboard = () => {
             )}
           </div>
           {canManageProjects && (
-            <button 
+            <button
               onClick={handleCreateProject}
-              className="flex items-center gap-2 px-4 py-2 bg-[#C4713A] text-white rounded-lg text-sm font-bold hover:bg-[#A35C28] transition-all shadow-sm"
+              className="flex items-center gap-2 px-3 py-1.5 bg-[#C4713A] text-white rounded-lg text-sm font-semibold hover:bg-[#A35C28] transition-all"
             >
-              <Plus size={20} />
+              <Plus size={16} />
               <span>New Project</span>
             </button>
           )}
         </div>
-      </div>
-
+      }
+    >
+      <div className="space-y-6">
       {/* Filter Section */}
       {showFilters && (
         <div className="bg-white dark:bg-[#1a2234] rounded-xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm">

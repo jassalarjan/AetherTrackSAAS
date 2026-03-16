@@ -3,11 +3,42 @@ import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 import { resolve } from 'path';
 
+function normalizeTimestampQueryPlugin() {
+  return {
+    name: 'normalize-timestamp-query',
+    enforce: 'pre',
+    configureServer(server) {
+      server.middlewares.use((req, _res, next) => {
+        if (!req.url || !req.url.includes('?')) {
+          next();
+          return;
+        }
+
+        try {
+          const parsed = new URL(req.url, 'http://localhost');
+          const t = parsed.searchParams.get('t');
+
+          // Guard against malformed decimal values like 1773668332.12949.
+          if (t && /^\d+\.\d+$/.test(t)) {
+            parsed.searchParams.set('t', String(Math.trunc(Number(t))));
+            req.url = `${parsed.pathname}${parsed.search}`;
+          }
+        } catch {
+          // Keep original URL if parsing fails.
+        }
+
+        next();
+      });
+    }
+  };
+}
+
 export default defineConfig(({ mode }) => {
   const isDevelopment = mode === 'development';
   
   return {
     plugins: [
+      normalizeTimestampQueryPlugin(),
       react(),
       VitePWA({
         registerType: 'autoUpdate',

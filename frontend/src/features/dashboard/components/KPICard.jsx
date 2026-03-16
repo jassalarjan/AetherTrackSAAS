@@ -4,23 +4,45 @@ import { TrendingUp, TrendingDown, ArrowRight } from 'lucide-react';
 /**
  * KPI Card Component - Displays key performance indicators with sparklines and deltas
  * Matches the warm paper design system from ui_inspire.html
- * 
- * @param {string} title - KPI title
- * @param {string|number} value - Main KPI value
- * @param {string} unit - Optional unit (%, tasks, etc.)
- * @param {object} delta - Change indicator: { value: number, trend: 'up'|'down'|'neutral', label: string }
- * @param {array} sparklineData - Array of values for sparkline chart (optional)
- * @param {string} accentColor - CSS color variable for accent (default: --brand)
+ *
+ * @param {string}  title        - KPI title
+ * @param {string|number} value  - Main KPI value
+ * @param {string}  unit         - Optional unit (%, tasks, etc.)
+ * @param {object}  delta        - Change indicator: { value, trend: 'up'|'down'|'neutral', label }
+ * @param {array}   sparklineData - Array of values for sparkline chart (optional)
+ * @param {string}  accentColor  - CSS color variable for accent (default: --brand)
+ * @param {boolean} isLoading    - Show skeleton placeholder while data is loading
  */
-const KPICard = ({ 
-  title, 
-  value, 
-  unit = '', 
-  delta = null, 
-  sparklineData = [], 
+const KPICard = ({
+  title,
+  value,
+  unit = '',
+  delta = null,
+  sparklineData = [],
   accentColor = 'var(--brand)',
-  onClick = null 
+  onClick = null,
+  isLoading = false,
 }) => {
+  /* ── Skeleton state ── */
+  if (isLoading) {
+    return (
+      <div
+        className="kpi-card"
+        aria-busy="true"
+        aria-label="Loading metric"
+        style={{ '--kpi-accent': accentColor }}
+      >
+        <div className="animate-pulse" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--s2)' }}>
+          {/* label skeleton */}
+          <div style={{ height: '10px', width: '50%', borderRadius: 'var(--r-sm)', background: 'var(--bg-surface)' }} />
+          {/* value skeleton */}
+          <div style={{ height: '28px', width: '65%', borderRadius: 'var(--r-sm)', background: 'var(--bg-surface)', marginTop: 'var(--s1)' }} />
+          {/* delta skeleton */}
+          <div style={{ height: '16px', width: '40%', borderRadius: 'var(--r-full)', background: 'var(--bg-surface)' }} />
+        </div>
+      </div>
+    );
+  }
   // Generate sparkline path from data
   const generateSparklinePath = () => {
     if (!sparklineData || sparklineData.length === 0) return '';
@@ -66,12 +88,16 @@ const KPICard = ({
   };
 
   return (
-    <div 
-      className="kpi-card" 
+    <div
+      className="kpi-card"
       style={{ '--kpi-accent': accentColor }}
       onClick={onClick}
       role={onClick ? 'button' : undefined}
       tabIndex={onClick ? 0 : undefined}
+      /* Keyboard: Enter/Space activates the card when it has an onClick handler */
+      onKeyDown={onClick ? (e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(e); }
+      } : undefined}
     >
       {/* Header */}
       <div className="kpi-label">{title}</div>

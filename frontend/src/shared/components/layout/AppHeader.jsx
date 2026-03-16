@@ -28,8 +28,31 @@ const timeAgo = (iso) => {
   return `${Math.floor(h / 24)}d ago`;
 };
 
+// -- Compute fixed-position coordinates for a dropdown anchored to btnEl -----
+// Returns { top, right } in pixels (viewport-relative), suitable for position:fixed.
+const computeDropdownPos = (btnEl, dropdownWidth = 208, dropdownHeight = 320) => {
+  const rect = btnEl.getBoundingClientRect();
+  const vw   = window.innerWidth;
+  const vh   = window.innerHeight;
+
+  // Vertical: open below the button; flip above when insufficient space below
+  const spaceBelow = vh - rect.bottom;
+  const top = (spaceBelow >= dropdownHeight || spaceBelow >= rect.top)
+    ? rect.bottom + 8
+    : Math.max(8, rect.top - dropdownHeight - 8);
+
+  // Horizontal: right-align the dropdown with the button's right edge.
+  // If that would push the dropdown off the left edge, left-align it instead.
+  let right = vw - rect.right;
+  if (rect.right - dropdownWidth < 8) {
+    right = Math.max(8, vw - Math.min(rect.left + dropdownWidth, vw - 8));
+  }
+
+  return { top: Math.max(8, top), right: Math.max(8, right) };
+};
+
 // -- Notification panel ------------------------------------------------------
-const NotifPanel = ({ open, onClose, panelRef }) => {
+const NotifPanel = ({ open, onClose, panelRef, pos }) => {
   const [items, setItems]     = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -54,12 +77,17 @@ const NotifPanel = ({ open, onClose, panelRef }) => {
   return (
     <div
       ref={panelRef}
-      className="notif-panel-dropdown absolute right-0 top-full mt-2 w-[340px] z-[400] rounded-xl overflow-hidden"
-      style={{ maxWidth: 'calc(100vw - 16px)' }}
+      className="notif-panel-dropdown rounded-xl overflow-hidden"
       style={{
-        background:  'var(--bg-raised)',
-        border:      '1px solid var(--border-soft)',
-        boxShadow:   'var(--shadow-xl)',
+        position:   'fixed',
+        top:        `${pos?.top ?? 72}px`,
+        right:      `${pos?.right ?? 8}px`,
+        width:      '340px',
+        maxWidth:   'calc(100vw - 16px)',
+        zIndex:     9999,
+        background: 'var(--bg-raised)',
+        border:     '1px solid var(--border-soft)',
+        boxShadow:  'var(--shadow-xl)',
       }}
     >
       {/* Header */}
@@ -160,11 +188,11 @@ const NotifPanel = ({ open, onClose, panelRef }) => {
 
 // -- Breadcrumb segment -----------------------------------------------------
 const Breadcrumb = ({ segments }) => (
-  <nav aria-label="Breadcrumb" className="flex items-center gap-1">
+  <nav aria-label="Breadcrumb" className="flex items-center gap-1 min-w-0">
     {segments.map((seg, i) => {
       const isLast = i === segments.length - 1;
       return (
-        <span key={i} className="flex items-center gap-1">
+        <span key={i} className={`flex items-center gap-1 ${!isLast && i === 0 ? 'hidden sm:flex' : ''} min-w-0`}>
           {i > 0 && (
             <ChevronRight size={13} style={{ color: 'var(--text-faint)', flexShrink: 0 }} />
           )}
@@ -176,6 +204,9 @@ const Breadcrumb = ({ segments }) => (
               letterSpacing: isLast ? '-0.025em'         : 0,
               color:      isLast ? 'var(--text-primary)' : 'var(--text-muted)',
               whiteSpace: 'nowrap',
+              overflow: isLast ? 'hidden' : undefined,
+              textOverflow: isLast ? 'ellipsis' : undefined,
+              maxWidth: isLast ? '180px' : undefined,
             }}
           >
             {seg}
@@ -197,7 +228,7 @@ const AppHeader = ({
 }) => {
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
-  const { toggleMobileSidebar, isMobile } = useSidebar();
+  const { toggleMobileSidebar, isMobile, toggleCollapse } = useSidebar();
   const location = useLocation();
   const navigate = useNavigate();
   const isDark   = theme === 'dark';
@@ -212,6 +243,10 @@ const AppHeader = ({
   const [cmdOpen, setCmdOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const userMenuRef = useRef(null);
+
+  // Fixed-position coordinates for dropdowns
+  const [userMenuPos, setUserMenuPos] = useState({ top: 72, right: 8 });
+  const [notifPos,    setNotifPos]    = useState({ top: 72, right: 8 });
 
   // Derive user initials
   const userInitials = (
@@ -235,7 +270,7 @@ const AppHeader = ({
     return () => { cancelled = true; clearInterval(id); };
   }, []);
 
-  // ?K / Ctrl+K ? open command palette
+  // ⌘K / Ctrl+K → open command palette
   useEffect(() => {
     const handler = (e) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
@@ -246,6 +281,21 @@ const AppHeader = ({
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
   }, []);
+
+  // Custom events from global shortcut hook
+  useEffect(() => {
+    const openPalette  = () => setCmdOpen(true);
+    const toggleSidebar = () => {
+      if (isMobile) toggleMobileSidebar();
+      else toggleCollapse?.();
+    };
+    window.addEventListener('open-command-palette', openPalette);
+    window.addEventListener('toggle-sidebar', toggleSidebar);
+    return () => {
+      window.removeEventListener('open-command-palette', openPalette);
+      window.removeEventListener('toggle-sidebar', toggleSidebar);
+    };
+  }, [isMobile, toggleMobileSidebar, toggleCollapse]);
 
   // Close bell on outside click
   useEffect(() => {
@@ -264,13 +314,21 @@ const AppHeader = ({
   useEffect(() => {
     if (!userMenuOpen) return;
     const handler = (e) => {
-      if (userMenuRef.current && !userMenuRef.current.contains(e.target)) {
-        setUserMenuOpen(false);
-      }
+      if (
+        userMenuRef.current && !userMenuRef.current.contains(e.target)
+      ) setUserMenuOpen(false);
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, [userMenuOpen]);
+
+  // Close dropdowns on window resize to avoid stale fixed coordinates
+  useEffect(() => {
+    if (!bellOpen && !userMenuOpen) return;
+    const handler = () => { setBellOpen(false); setUserMenuOpen(false); };
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
+  }, [bellOpen, userMenuOpen]);
 
   // Build breadcrumb segments
   const segments = breadcrumbs
@@ -337,45 +395,86 @@ const AppHeader = ({
         </div>
 
         {/* -- RIGHT: search + bell + theme + actions + user -------- */}
-        <div className="flex items-center gap-1 sm:gap-1.5 flex-none">
+        <div className="flex items-center gap-2 sm:gap-2.5 flex-none">
 
-          {/* Search trigger ?K */}
+          {/* Search — icon-only on mobile */}
           <button
-            className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-colors focus-visible:outline-none"
+            className="flex sm:hidden w-9 h-9 items-center justify-center rounded-xl border transition-colors focus-visible:outline-none"
             style={{
+              background:  'var(--bg-base)',
+              borderColor: 'var(--border-soft)',
+              color:       'var(--text-muted)',
+            }}
+            aria-label="Quick search"
+            onClick={() => setCmdOpen(true)}
+            onMouseOver={(e) => { e.currentTarget.style.borderColor = 'var(--border-mid)'; e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.background = 'var(--bg-surface)'; }}
+            onMouseOut={(e)  => { e.currentTarget.style.borderColor = 'var(--border-soft)'; e.currentTarget.style.color = 'var(--text-muted)'; e.currentTarget.style.background = 'var(--bg-base)'; }}
+            onFocus={(e) => { e.currentTarget.style.boxShadow = 'var(--focus-ring)'; e.currentTarget.style.borderColor = 'var(--brand)'; }}
+            onBlur={(e)  => { e.currentTarget.style.boxShadow = ''; e.currentTarget.style.borderColor = 'var(--border-soft)'; }}
+          >
+            <Search size={15} />
+          </button>
+
+          {/* Search — full pill on sm+ */}
+          <button
+            className="hidden sm:flex items-center gap-2.5 rounded-xl border transition-all focus-visible:outline-none"
+            style={{
+              minWidth:     '180px',
+              width:        'clamp(180px, 18vw, 280px)',
+              padding:      '7px 14px',
               background:   'var(--bg-base)',
               borderColor:  'var(--border-soft)',
               color:        'var(--text-muted)',
               fontFamily:   'var(--font-body)',
               fontSize:     '13px',
+              lineHeight:   '1',
             }}
             aria-label="Quick search (?K)"
             onClick={() => setCmdOpen(true)}
-            onMouseOver={(e) => { e.currentTarget.style.borderColor = 'var(--border-mid)'; e.currentTarget.style.color = 'var(--text-secondary)'; }}
-            onMouseOut={(e)  => { e.currentTarget.style.borderColor = 'var(--border-soft)'; e.currentTarget.style.color = 'var(--text-muted)'; }}
-            onFocus={(e) => { e.currentTarget.style.boxShadow = 'var(--focus-ring)'; e.currentTarget.style.borderColor = 'var(--brand)'; }}
-            onBlur={(e)  => { e.currentTarget.style.boxShadow = ''; e.currentTarget.style.borderColor = 'var(--border-soft)'; }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.borderColor = 'var(--border-mid)';
+              e.currentTarget.style.color = 'var(--text-secondary)';
+              e.currentTarget.style.background = 'var(--bg-surface)';
+              e.currentTarget.style.boxShadow = '0 1px 4px rgba(0,0,0,.06)';
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.borderColor = 'var(--border-soft)';
+              e.currentTarget.style.color = 'var(--text-muted)';
+              e.currentTarget.style.background = 'var(--bg-base)';
+              e.currentTarget.style.boxShadow = '';
+            }}
+            onFocus={(e) => {
+              e.currentTarget.style.boxShadow = 'var(--focus-ring), 0 1px 4px rgba(0,0,0,.06)';
+              e.currentTarget.style.borderColor = 'var(--brand)';
+              e.currentTarget.style.color = 'var(--text-secondary)';
+            }}
+            onBlur={(e) => {
+              e.currentTarget.style.boxShadow = '';
+              e.currentTarget.style.borderColor = 'var(--border-soft)';
+              e.currentTarget.style.color = 'var(--text-muted)';
+            }}
           >
-            <Search size={13} />
-            <span>Search�</span>
+            <Search size={14} style={{ flexShrink: 0 }} />
+            <span className="flex-1 text-left truncate">Search...</span>
             <kbd
-              className="ml-2 px-1.5 py-px rounded border"
+              className="px-1.5 py-0.5 rounded-md border flex-none"
               style={{
                 fontFamily:  'var(--font-mono)',
-                fontSize:    '11px',
+                fontSize:    '10px',
                 color:       'var(--text-faint)',
-                background:  'var(--bg-surface)',
+                background:  'var(--bg-canvas)',
                 borderColor: 'var(--border-mid)',
-                lineHeight:  '1.5',
+                lineHeight:  '1.6',
+                letterSpacing: '0.02em',
               }}
             >
-              ?K
+              ⌘K
             </kbd>
           </button>
 
-          {/* Keyboard shortcuts help '?' — hidden on tiny screens */}
+          {/* Keyboard shortcuts help '?' — hidden on mobile */}
           <button
-            className="header-shortcuts-btn w-8 h-8 flex items-center justify-center rounded-lg transition-colors focus-visible:outline-none"
+            className="header-shortcuts-btn hidden sm:flex w-8 h-8 items-center justify-center rounded-lg transition-colors focus-visible:outline-none"
             style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', fontSize: '14px', fontWeight: 700 }}
             aria-label="Keyboard shortcuts (?)"
             onClick={() => window.dispatchEvent(new CustomEvent('show-shortcuts-help'))}
@@ -388,7 +487,12 @@ const AppHeader = ({
           {/* Notifications bell */}
           <div className="relative" ref={bellRef}>
             <button
-              onClick={() => setBellOpen((v) => !v)}
+              onClick={() => {
+                if (!bellOpen && bellRef.current) {
+                  setNotifPos(computeDropdownPos(bellRef.current, 340, 420));
+                }
+                setBellOpen((v) => !v);
+              }}
               className="relative w-9 h-9 flex items-center justify-center rounded-lg transition-colors focus-visible:outline-none"
               style={{ color: bellOpen ? 'var(--brand)' : 'var(--text-secondary)' }}
               aria-label="Notifications"
@@ -420,6 +524,7 @@ const AppHeader = ({
               open={bellOpen}
               onClose={() => setBellOpen(false)}
               panelRef={panelRef}
+              pos={notifPos}
             />
           </div>
 
@@ -438,21 +543,26 @@ const AppHeader = ({
             {isDark ? <Sun size={17} /> : <Moon size={17} />}
           </button>
 
-          {/* Divider + custom actions */}
+          {/* Divider + custom actions — hidden on mobile (too cramped) */}
           {actions && (
             <>
-              <div className="w-px h-5 mx-1" style={{ background: 'var(--border-soft)' }} />
-              <div className="flex items-center gap-1.5">{actions}</div>
+              <div className="hidden sm:block w-px h-5 mx-2" style={{ background: 'var(--border-soft)' }} />
+              <div className="hidden sm:flex items-center gap-2">{actions}</div>
             </>
           )}
 
           {/* Divider before avatar */}
-          <div className="w-px h-5 mx-1" style={{ background: 'var(--border-soft)' }} />
+          <div className="w-px h-5 mx-1.5" style={{ background: 'var(--border-soft)' }} />
 
           {/* User avatar � rightmost */}
           <div className="relative" ref={userMenuRef}>
             <button
-              onClick={() => setUserMenuOpen((v) => !v)}
+              onClick={() => {
+                if (!userMenuOpen && userMenuRef.current) {
+                  setUserMenuPos(computeDropdownPos(userMenuRef.current, 208, 200));
+                }
+                setUserMenuOpen((v) => !v);
+              }}
               className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold focus-visible:outline-none transition-all"
               style={{
                 background: user?.profile_picture ? 'transparent' : 'linear-gradient(135deg, var(--brand-light), #8B5E3C)',
@@ -475,18 +585,25 @@ const AppHeader = ({
             {/* User dropdown */}
             {userMenuOpen && (
               <div
-                className="absolute right-0 top-full mt-2 w-52 z-[500] rounded-xl overflow-hidden"
                 style={{
+                  position:   'fixed',
+                  top:        `${userMenuPos.top}px`,
+                  right:      `${userMenuPos.right}px`,
+                width:      '232px',
+                  maxWidth:   'calc(100vw - 16px)',
+                  zIndex:     9999,
                   background: 'var(--bg-raised)',
                   border:     '1px solid var(--card-border, var(--border-soft))',
                   boxShadow:  'var(--shadow-xl)',
+                  borderRadius: '12px',
+                  overflow:   'hidden',
                 }}
               >
                 {/* User info header */}
-                <div className="px-4 py-3 border-b" style={{ borderColor: 'var(--border-soft)' }}>
+                <div className="px-4 py-4 border-b" style={{ borderColor: 'var(--border-soft)' }}>
                   <div className="flex items-center gap-3">
                     <div
-                      className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
+                      className="w-10 h-10 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
                       style={{ background: user?.profile_picture ? 'transparent' : 'linear-gradient(135deg, var(--brand-light), #8B5E3C)', overflow: 'hidden' }}
                     >
                       {user?.profile_picture
@@ -495,10 +612,10 @@ const AppHeader = ({
                       }
                     </div>
                     <div className="min-w-0">
-                      <p style={{ fontFamily: 'var(--font-body)', fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.3 }}>
+                      <p style={{ fontFamily: 'var(--font-body)', fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.4 }}>
                         {user?.full_name || user?.name || 'User'}
                       </p>
-                      <p style={{ fontFamily: 'var(--font-body)', fontSize: '11px', color: 'var(--text-muted)', lineHeight: 1.3 }} className="truncate">
+                      <p style={{ fontFamily: 'var(--font-body)', fontSize: '11px', color: 'var(--text-muted)', lineHeight: 1.5, marginTop: '2px' }} className="truncate">
                         {user?.email || ''}
                       </p>
                     </div>
@@ -506,26 +623,26 @@ const AppHeader = ({
                 </div>
 
                 {/* Menu items */}
-                <div className="py-1">
+                <div className="py-1.5">
                   <button
-                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-left transition-colors focus-visible:outline-none"
+                    className="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors focus-visible:outline-none"
                     style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-body)', fontSize: '13px', background: 'transparent', border: 'none', cursor: 'pointer' }}
                     onClick={() => { navigate('/settings'); setUserMenuOpen(false); }}
                     onMouseOver={(e) => { e.currentTarget.style.background = 'var(--bg-base)'; e.currentTarget.style.color = 'var(--text-primary)'; }}
                     onMouseOut={(e)  => { e.currentTarget.style.background = ''; e.currentTarget.style.color = 'var(--text-secondary)'; }}
                   >
-                    <SettingsIcon size={14} style={{ color: 'var(--brand)', flexShrink: 0 }} />
+                    <SettingsIcon size={15} style={{ color: 'var(--brand)', flexShrink: 0 }} />
                     Profile &amp; Settings
                   </button>
-                  <div className="mx-4 my-0.5" style={{ height: '1px', background: 'var(--border-hair)' }} />
+                  <div className="mx-4 my-1" style={{ height: '1px', background: 'var(--border-hair)' }} />
                   <button
-                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-left transition-colors focus-visible:outline-none"
+                    className="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors focus-visible:outline-none"
                     style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-body)', fontSize: '13px', background: 'transparent', border: 'none', cursor: 'pointer' }}
                     onClick={() => { logout(); setUserMenuOpen(false); }}
                     onMouseOver={(e) => { e.currentTarget.style.background = 'var(--danger-dim)'; e.currentTarget.style.color = 'var(--danger)'; }}
                     onMouseOut={(e)  => { e.currentTarget.style.background = ''; e.currentTarget.style.color = 'var(--text-secondary)'; }}
                   >
-                    <LogOut size={14} style={{ flexShrink: 0 }} />
+                    <LogOut size={15} style={{ flexShrink: 0 }} />
                     Sign Out
                   </button>
                 </div>

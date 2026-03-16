@@ -898,7 +898,7 @@ const Analytics = () => {
                   <ResponsiveContainer width="100%" aspect={1.8} minWidth={200}>
                     <RechartsPieChart>
                       <Pie data={analyticsData.statusDistribution} cx="50%" cy="50%" labelLine={false}
-                        label={({ name, percent }) => window.innerWidth < 640 ? `${(percent * 100).toFixed(0)}%` : `${name} ${(percent * 100).toFixed(0)}%`}
+                        label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
                         outerRadius="55%" fill="#8884d8" dataKey="value" strokeWidth={0}>
                         {analyticsData.statusDistribution.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={entry.color} />
@@ -1165,7 +1165,7 @@ const Analytics = () => {
                     <ResponsiveContainer width="100%" height={250}>
                       <RechartsPieChart>
                         <Pie data={analyticsData.projectStatusDistribution} cx="50%" cy="50%" labelLine={false} outerRadius={85} dataKey="value"
-                          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                          label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
                           labelStyle={{ fontSize: '10px', fontFamily: 'var(--font-body)', fill: chartColors.axis }}>
                           {analyticsData.projectStatusDistribution.map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={entry.color || teamColor(index)} />

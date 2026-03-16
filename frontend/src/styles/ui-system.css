@@ -20,7 +20,7 @@ textarea {
   border: 1px solid var(--border-mid);
   border-radius: var(--r-md);
   padding: 0 var(--s3);
-  height: 36px;
+  height: var(--input-h, 36px);   /* single token — matches --btn-h-md */
   line-height: 1.5;
   outline: none;
   transition:
@@ -37,7 +37,7 @@ textarea {
   height: auto;
   padding: var(--s2) var(--s3);
   resize: vertical;
-  min-height: 80px;
+  min-height: var(--s12, 48px);   /* use spacing token */
 }
 
 input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):hover,
@@ -102,7 +102,7 @@ button {
   align-items: center;
   justify-content: center;
   gap: var(--s2);
-  height: 36px;
+  height: var(--btn-h-md, 36px);  /* use token — keeps grid consistent */
   padding: 0 var(--s4);
   font-family: var(--font-body);
   font-size: 13px;
@@ -138,7 +138,7 @@ button {
 
 /* Size variants */
 .aether-btn-sm {
-  height: 28px;
+  height: var(--btn-h-sm, 28px);
   padding: 0 var(--s3);
   font-size: 12px;
   border-radius: var(--r-sm);
@@ -146,7 +146,7 @@ button {
 }
 
 .aether-btn-lg {
-  height: 44px;
+  height: var(--btn-h-lg, 44px);
   padding: 0 var(--s6);
   font-size: 15px;
 }
@@ -373,8 +373,8 @@ button {
 }
 
 .kpi-metric-icon {
-  width: 40px;
-  height: 40px;
+  width: var(--icon-container-lg, 40px);   /* token-driven */
+  height: var(--icon-container-lg, 40px);
   border-radius: var(--r-lg);
   display: grid;
   place-items: center;

@@ -82,13 +82,30 @@
 }
 
 /* ==========================================================================
+   SLIDE IN FROM RIGHT - Filter drawer entrance animation
+   ========================================================================== */
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ==========================================================================
    REDUCED MOTION - Respect user preference
    ========================================================================== */
 @media (prefers-reduced-motion: reduce) {
   .animate-slide-up,
   .animate-shimmer,
   .animate-fadeUp,
-  .animate-pulse-ring {
+  .animate-pulse-ring,
+  .animate-slide-in-right {
     animation: none;
   }
   

@@ -6,6 +6,31 @@ import notificationService from '@/features/notifications/services/notificationS
 
 const AuthContext = createContext(null);
 
+let refreshBootstrapPromise = null;
+let refreshBlockedUntil = 0;
+
+const requestBootstrapRefresh = async () => {
+  if (Date.now() < refreshBlockedUntil) {
+    const error = new Error('Refresh temporarily rate limited');
+    error.isRateLimit = true;
+    throw error;
+  }
+
+  if (!refreshBootstrapPromise) {
+    refreshBootstrapPromise = api.post('/auth/refresh', {}).catch((error) => {
+      if (error?.isRateLimit || error?.response?.status === 429) {
+        const retryAfter = Number(error?.retryAfter || error?.response?.headers?.['retry-after'] || 60);
+        refreshBlockedUntil = Date.now() + (Number.isFinite(retryAfter) ? retryAfter : 60) * 1000;
+      }
+      throw error;
+    }).finally(() => {
+      refreshBootstrapPromise = null;
+    });
+  }
+
+  return refreshBootstrapPromise;
+};
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -18,7 +43,7 @@ export const AuthProvider = ({ children }) => {
     // call will 401 and we stay logged-out.
     const initAuth = async () => {
       try {
-        const response = await api.post('/auth/refresh', {});
+        const response = await requestBootstrapRefresh();
         const { accessToken, user: refreshedUser } = response.data;
 
         setAccessToken(accessToken);
@@ -44,7 +69,13 @@ export const AuthProvider = ({ children }) => {
             initializeSocket(baseUser.id);
           }
         }
-      } catch {
+      } catch (error) {
+        if (error?.isRateLimit || error?.response?.status === 429) {
+          // Avoid clearing local auth state on temporary server throttling.
+          setLoading(false);
+          return;
+        }
+
         // No valid refresh-token cookie — user is not logged in.
         clearAccessToken();
         localStorage.removeItem('user');

@@ -76,7 +76,7 @@ const Settings = () => {
   return (
     <ResponsivePageLayout title="Settings" icon={SettingsIcon} noPadding>
       {/* Mobile header bar */}
-      <header className="flex items-center gap-3 px-4 py-3 border-b lg:hidden flex-shrink-0"
+      <header className="flex items-center gap-3 px-4 sm:px-5 py-3.5 border-b lg:hidden flex-shrink-0"
         style={{ background: 'var(--bg-canvas)', borderColor: 'var(--border-soft)' }}>
         <button onClick={() => setMobileNavOpen(true)} className="p-1.5 rounded" aria-label="Open settings menu"
           style={{ color: 'var(--text-muted)' }}>
@@ -88,7 +88,7 @@ const Settings = () => {
       </header>
 
       {/* Body: SettingsNav handles its own desktop sidebar + mobile drawer */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 h-full min-h-0 overflow-hidden">
         <SettingsNav
           sections={visibleSections}
           active={activeSection}
@@ -98,8 +98,8 @@ const Settings = () => {
         />
 
         {/* Panel content */}
-        <main className="flex-1 overflow-y-auto p-6">
-          <div className="max-w-3xl mx-auto">
+        <main className="flex-1 min-h-0 overflow-y-auto px-4 py-5 sm:px-6 sm:py-6 lg:px-10 lg:py-8">
+          <div className="max-w-4xl mx-auto">
             <Suspense fallback={<PanelLoader />}>
               <ActivePanel />
             </Suspense>

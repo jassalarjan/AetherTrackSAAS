@@ -8,6 +8,56 @@ import { validateIdParam, sanitizeBody } from '../utils/validation.js';
 
 const router = express.Router();
 
+async function attachTaskStatsToProjects(projects) {
+  if (!Array.isArray(projects) || projects.length === 0) {
+    return [];
+  }
+
+  const projectIds = projects.map((p) => p._id);
+  const taskStats = await Task.aggregate([
+    { $match: { project_id: { $in: projectIds } } },
+    {
+      $group: {
+        _id: '$project_id',
+        total_tasks: { $sum: 1 },
+        completed_tasks: {
+          $sum: {
+            $cond: [{ $eq: ['$status', 'done'] }, 1, 0],
+          },
+        },
+      },
+    },
+  ]);
+
+  const statsByProjectId = new Map(
+    taskStats.map((s) => [s._id.toString(), s])
+  );
+
+  return projects.map((projectDoc) => {
+    const project = typeof projectDoc.toObject === 'function'
+      ? projectDoc.toObject()
+      : { ...projectDoc };
+
+    const stats = statsByProjectId.get(project._id.toString()) || {
+      total_tasks: 0,
+      completed_tasks: 0,
+    };
+
+    const computed_progress = stats.total_tasks > 0
+      ? Math.round((stats.completed_tasks / stats.total_tasks) * 100)
+      : 0;
+
+    return {
+      ...project,
+      total_tasks: stats.total_tasks,
+      completed_tasks: stats.completed_tasks,
+      computed_progress,
+      // Keep legacy field in sync so existing UIs that read project.progress work.
+      progress: computed_progress,
+    };
+  });
+}
+
 // WORKSPACE SUPPORT: All project routes are scoped by workspace
 // authenticate middleware is applied in server.js
 
@@ -96,7 +146,8 @@ router.get('/', async (req, res) => {
       .skip(skip)
       .limit(limitNum);
 
-    res.json(projects);
+    const projectsWithStats = await attachTaskStatsToProjects(projects);
+    res.json(projectsWithStats);
   } catch (error) {
     console.error('Error fetching projects:', error);
     res.status(500).json({ message: 'Error fetching projects' });
@@ -148,7 +199,8 @@ router.get('/my-projects', async (req, res) => {
       .skip(skip)
       .limit(limitNum);
 
-    res.json(projects);
+    const projectsWithStats = await attachTaskStatsToProjects(projects);
+    res.json(projectsWithStats);
   } catch (error) {
     console.error('Error fetching user projects:', error);
     res.status(500).json({ message: 'Error fetching projects' });
@@ -279,7 +331,20 @@ router.get('/:id', validateIdParam(), async (req, res) => {
       .populate('assigned_to', 'full_name email')
       .sort({ created_at: -1 });
 
-    res.json({ ...project.toObject(), tasks });
+    const total_tasks = tasks.length;
+    const completed_tasks = tasks.filter((t) => t.status === 'done').length;
+    const computed_progress = total_tasks > 0
+      ? Math.round((completed_tasks / total_tasks) * 100)
+      : 0;
+
+    res.json({
+      ...project.toObject(),
+      tasks,
+      total_tasks,
+      completed_tasks,
+      computed_progress,
+      progress: computed_progress,
+    });
   } catch (error) {
     console.error('Error fetching project:', error);
     res.status(500).json({ message: 'Error fetching project' });

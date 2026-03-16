@@ -20,40 +20,60 @@ const Notifications = () => {
     try {
       setLoading(true);
       const response = await api.get('/notifications');
-      console.log('Notifications received:', response.data.notifications);
       setNotifications(response.data.notifications || []);
       setUnreadCount(response.data.unreadCount || 0);
       setLoading(false);
-    } catch (error) {
-      console.error('Error fetching notifications:', error);
+    } catch {
       setLoading(false);
     }
   };
 
   const markAsRead = async (notificationIds) => {
+    const ids = Array.isArray(notificationIds) ? notificationIds : [notificationIds];
+    const unreadToMark = notifications.filter(n => ids.includes(n._id) && !n.read_at).length;
+
+    setNotifications(prev =>
+      prev.map(n => (ids.includes(n._id) ? { ...n, read_at: n.read_at || new Date().toISOString() } : n))
+    );
+    setUnreadCount(prev => Math.max(0, prev - unreadToMark));
+
     try {
-      await api.patch('/notifications/mark-read', { notificationIds });
+      await api.patch('/notifications/mark-read', { notificationIds: ids });
+    } catch {
       await fetchNotifications();
-    } catch (error) {
-      console.error('Error marking notifications as read:', error);
     }
   };
 
   const markAllAsRead = async () => {
+    const nowIso = new Date().toISOString();
+    const previous = notifications;
+
+    setNotifications(prev => prev.map(n => ({ ...n, read_at: n.read_at || nowIso })));
+    setUnreadCount(0);
+
     try {
       await api.patch('/notifications/mark-read', {});
-      await fetchNotifications();
-    } catch (error) {
-      console.error('Error marking all as read:', error);
+    } catch {
+      setNotifications(previous);
+      setUnreadCount(previous.filter(n => !n.read_at).length);
     }
   };
 
   const deleteNotification = async (id) => {
+    const previous = notifications;
+    const removed = notifications.find(n => n._id === id);
+
+    setNotifications(prev => prev.filter(n => n._id !== id));
+    if (removed && !removed.read_at) {
+      setUnreadCount(prev => Math.max(0, prev - 1));
+    }
+
     try {
       // For now, just mark as read. You can add a delete endpoint if needed
       await markAsRead([id]);
-    } catch (error) {
-      console.error('Error deleting notification:', error);
+    } catch {
+      setNotifications(previous);
+      setUnreadCount(previous.filter(n => !n.read_at).length);
     }
   };
 

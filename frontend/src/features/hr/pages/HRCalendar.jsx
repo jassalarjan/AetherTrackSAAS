@@ -272,7 +272,9 @@ export default function HRCalendar({ embedded = false }) {
       {/* Calendar */}
       {loading ? (
         <div className={`rounded-xl border ${currentTheme.surface} ${currentTheme.border} py-4`}>
-          <SectionLoader label="Loading calendar…" minHeight="180px" />
+          <div className="flex min-h-[180px] items-center justify-center">
+            <p className={`text-sm ${currentTheme.textSecondary}`}>Loading calendar...</p>
+          </div>
         </div>
       ) : (
         <div className={`calendar-container ${currentTheme.surface} rounded-xl border ${currentTheme.border} p-4`}>

@@ -10,6 +10,7 @@ import { useAppAutoUpdate } from '@/shared/hooks/useAppAutoUpdate';
 import { getAccessToken } from '@/features/auth/services/tokenStore';
 import { PageLoader } from '@/shared/components/ui/Spinner';
 import { AppVersionIndicator } from '@/shared/components/ui/AppVersionIndicator';
+import { useKeyboardShortcuts } from '@/shared/hooks/useKeyboardShortcuts';
 
 // Auth pages – loaded eagerly (tiny, always needed at first paint)
 import Login from '@/features/auth/pages/Login';
@@ -70,6 +71,12 @@ function AppContent() {
   usePushNotifications({
     userId: user?.id,
     authToken: getAccessToken(),
+  });
+
+  // Global keyboard shortcuts: G→D/T/P/H/C/S navigation, ⌘/, ⌘\
+  // ⌘K is handled separately in AppHeader to control the command palette state
+  useKeyboardShortcuts({
+    onCommandPalette: () => window.dispatchEvent(new CustomEvent('open-command-palette')),
   });
 
   return (
@@ -356,8 +363,8 @@ function AppContent() {
 
 function App() {
   return (
-    <AppProviders>
-      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+    <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+      <AppProviders>
         {/* Skip link - first focusable element per WCAG 2.2 */}
         <a
           href="#main-content"
@@ -369,8 +376,8 @@ function App() {
           Skip to main content
         </a>
         <AppContent />
-      </BrowserRouter>
-    </AppProviders>
+      </AppProviders>
+    </BrowserRouter>
   );
 }
 

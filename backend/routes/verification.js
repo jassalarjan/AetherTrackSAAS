@@ -88,11 +88,17 @@ router.post('/', authenticate, checkRole(['admin']), async (req, res) => {
  * @access Private (Admin/HR only)
  */
 router.get('/:id', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
+  // Guard: only match valid MongoDB ObjectIds — static paths (validate, status, nearby)
+  // must be declared after this catch-all but registered before it in Express order.
+  // This prevents routing conflicts when static paths are requested.
+  if (!/^[0-9a-fA-F]{24}$/.test(req.params.id)) {
+    return res.status(404).json({ message: 'Not found' });
+  }
   try {
     const geofence = await GeofenceService.getGeofenceById(req.params.id);
     
     // Verify workspace access
-    if (geofence.workspaceId !== req.user.workspaceId) {
+    if (geofence.workspaceId.toString() !== req.user.workspaceId.toString()) {
       return res.status(403).json({ message: 'Access denied' });
     }
     
@@ -116,7 +122,7 @@ router.put('/:id', authenticate, checkRole(['admin']), async (req, res) => {
     
     // First check if geofence exists and belongs to workspace
     const existingGeofence = await GeofenceService.getGeofenceById(req.params.id);
-    if (existingGeofence.workspaceId !== workspaceId) {
+    if (existingGeofence.workspaceId.toString() !== workspaceId.toString()) {
       return res.status(403).json({ message: 'Access denied' });
     }
     
@@ -154,7 +160,7 @@ router.delete('/:id', authenticate, checkRole(['admin']), async (req, res) => {
     
     // First check if geofence exists and belongs to workspace
     const existingGeofence = await GeofenceService.getGeofenceById(req.params.id);
-    if (existingGeofence.workspaceId !== workspaceId) {
+    if (existingGeofence.workspaceId.toString() !== workspaceId.toString()) {
       return res.status(403).json({ message: 'Access denied' });
     }
     
@@ -340,7 +346,7 @@ router.post('/:id/toggle', authenticate, checkRole(['admin']), async (req, res) 
     
     // First check if geofence exists and belongs to workspace
     const existingGeofence = await GeofenceService.getGeofenceById(req.params.id);
-    if (existingGeofence.workspaceId !== workspaceId) {
+    if (existingGeofence.workspaceId.toString() !== workspaceId.toString()) {
       return res.status(403).json({ message: 'Access denied' });
     }
     

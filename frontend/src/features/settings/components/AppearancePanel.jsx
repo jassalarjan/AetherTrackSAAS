@@ -1,3 +1,4 @@
+import { Fragment } from 'react';
 import { Palette, Monitor, Sun, Moon } from 'lucide-react';
 import ThemeToggle from '@/shared/components/ui/ThemeToggle';
 import { useTheme } from '@/app/providers/ThemeProvider';
@@ -66,10 +67,10 @@ const AppearancePanel = () => {
               ['SW Controller', navigator.serviceWorker?.controller ? '✅ Active' : '⚠️ None'],
               ['Current Theme', theme],
             ].map(([k, v]) => (
-              <>
-                <span key={`k-${k}`} style={{ color: 'var(--text-muted)' }}>{k}:</span>
-                <span key={`v-${k}`} style={{ color: 'var(--text-primary)' }}>{v}</span>
-              </>
+              <Fragment key={k}>
+                <span style={{ color: 'var(--text-muted)' }}>{k}:</span>
+                <span style={{ color: 'var(--text-primary)' }}>{v}</span>
+              </Fragment>
             ))}
           </div>
         </div>

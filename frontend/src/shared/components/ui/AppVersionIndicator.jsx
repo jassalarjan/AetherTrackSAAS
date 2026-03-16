@@ -73,7 +73,7 @@ export function AppVersionIndicator() {
           style={{
             position:     'fixed',
             bottom:       isMobile ? 'calc(64px + env(safe-area-inset-bottom, 0px))' : '56px',
-            left:         '12px',
+            right:        '12px',
             zIndex:       1000,
             width:        '260px',
             background:   'var(--bg-raised)',
@@ -252,7 +252,7 @@ export function AppVersionIndicator() {
         style={{
           position:      'fixed',
           bottom:        isMobile ? 'calc(60px + env(safe-area-inset-bottom, 0px))' : '14px',
-          left:          '12px',
+          right:         '12px',
           zIndex:        999,
           display:       'flex',
           alignItems:    'center',

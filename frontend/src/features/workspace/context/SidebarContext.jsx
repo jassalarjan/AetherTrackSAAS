@@ -10,6 +10,7 @@
  */
 
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { useLocation } from 'react-router-dom';
 
 const SidebarContext = createContext(undefined);
 
@@ -85,29 +86,18 @@ export const SidebarProvider = ({ children }) => {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Determine shell mode based on route
+  // Determine shell mode based on route — keep sidebar visible for all normal
+  // product routes, and only hide chrome on explicit command routes.
+  const location = useLocation();
   useEffect(() => {
-    const handleRouteChange = () => {
-      const path = window.location.pathname;
-      
-      // Focus mode for Kanban, Gantt, Calendar
-      if (path.includes('/kanban') || path.includes('/gantt') || path.includes('/calendar')) {
-        setShellMode(SHELL_MODES.FOCUS);
-      }
-      // Command mode for specific power-user routes
-      else if (path.includes('/command')) {
-        setShellMode(SHELL_MODES.COMMAND);
-      }
-      // Default to Operational
-      else {
-        setShellMode(SHELL_MODES.OPERATIONAL);
-      }
-    };
+    const path = location.pathname;
 
-    handleRouteChange();
-    window.addEventListener('popstate', handleRouteChange);
-    return () => window.removeEventListener('popstate', handleRouteChange);
-  }, []);
+    if (/^\/command(?:\/|$)/.test(path)) {
+      setShellMode(SHELL_MODES.COMMAND);
+    } else {
+      setShellMode(SHELL_MODES.OPERATIONAL);
+    }
+  }, [location.pathname]);
 
   // Toggle mobile sidebar
   const toggleMobileSidebar = useCallback(() => {
@@ -177,7 +167,7 @@ export const SidebarProvider = ({ children }) => {
     
     // Sizes (per spec)
     sidebarWidthCollapsed: '64px',
-    sidebarWidthExpanded: '240px',
+    sidebarWidthExpanded: '284px',
     sidebarActiveBarWidth: '3px',
     bottomNavHeight: '64px',
   };

@@ -32,6 +32,11 @@ const userSchema = new mongoose.Schema({
     enum: ['ACTIVE', 'INACTIVE', 'ON_NOTICE', 'EXITED'],
     default: 'ACTIVE'
   },
+  workspaceId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Workspace',
+    default: null
+  },
   team_id: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Team',
@@ -76,6 +81,7 @@ const userSchema = new mongoose.Schema({
 // Indexes for queries
 userSchema.index({ email: 1 }, { unique: true });
 userSchema.index({ role: 1 });
+userSchema.index({ workspaceId: 1 });
 
 // Hash password before saving
 userSchema.pre('save', async function(next) {

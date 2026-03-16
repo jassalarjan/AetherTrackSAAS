@@ -1,0 +1,1 @@
+import './scripts/seedAdmin.js';

@@ -53,11 +53,11 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,100..900;1,9..144,100..900&family=Instrument+Sans:ital,wght@0,400..700;1,400..700&display=swap"
     rel="stylesheet">
-  <script type="module" crossorigin src="/assets/index-Ck7Afdj0.js"></script>
-  <link rel="modulepreload" crossorigin href="/assets/react-vendor-DiHo6jH6.js">
+  <script type="module" crossorigin src="/assets/index-Bfbbncvg.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/react-vendor-BqltbSgn.js">
   <link rel="modulepreload" crossorigin href="/assets/socket-vendor-BlgWwLEk.js">
   <link rel="modulepreload" crossorigin href="/assets/capacitor-core-Dzn3_rKv.js">
-  <link rel="stylesheet" crossorigin href="/assets/index-CsQu6HFw.css">
+  <link rel="stylesheet" crossorigin href="/assets/index-DsC7bf3a.css">
 <link rel="manifest" href="/manifest.webmanifest"></head>
 
 <body>
@@ -84,6 +84,90 @@
       } catch (e) { }
     })();
   </script>
+
+  <!-- =====================================================================
+       Native HTML Preloader
+       Visible immediately — before JS parses, before React mounts.
+       apl-hide class (opacity:0 + visibility:hidden) is added by App.jsx
+       on first useEffect after React mount.
+       ===================================================================== -->
+  <div id="app-preloader" aria-hidden="true">
+    <style>
+      #app-preloader {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+        background: #F7F3EE;
+        transition: opacity 0.38s ease, visibility 0.38s ease;
+      }
+
+      [data-theme="dark"] #app-preloader {
+        background: #1c1917;
+      }
+
+      #app-preloader.apl-hide {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+      }
+
+      /* Ring wrapper rotates — color inherits from .apl-ring via currentColor */
+      .apl-ring {
+        width: 60px;
+        height: 60px;
+        /* Use the brand CSS var set by the inline theme script */
+        color: var(--brand, #C4713A);
+        animation: apl-spin 0.9s linear infinite;
+        will-change: transform;
+        flex-shrink: 0;
+      }
+
+      @keyframes apl-spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* Brand wordmark */
+      .apl-wordmark {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--brand, #C4713A);
+        opacity: 0.55;
+        -webkit-user-select: none;
+           -moz-user-select: none;
+                user-select: none;
+      }
+    </style>
+
+    <!-- SVG arc ring
+         viewBox 60×60, cx=cy=30, r=24
+         circumference = 2π×24 ≈ 150.8
+         75% arc ≈ 113px, gap ≈ 38px
+         dashoffset=38 shifts arc start to 12 o'clock (top of circle)
+         stroke="currentColor" picks up .apl-ring color = var(--brand)
+    -->
+    <div class="apl-ring">
+      <svg width="60" height="60" viewBox="0 0 60 60" fill="none" aria-hidden="true">
+        <!-- track ring -->
+        <circle cx="30" cy="30" r="24" stroke="currentColor" stroke-width="4.5" stroke-opacity="0.18" />
+        <!-- arc -->
+        <circle cx="30" cy="30" r="24" stroke="currentColor" stroke-width="4.5" stroke-linecap="round"
+          stroke-dasharray="113 38" stroke-dashoffset="38" />
+      </svg>
+    </div>
+
+    <span class="apl-wordmark">AetherTrack</span>
+  </div>
+
   <div id="root"></div>
 </body>
 

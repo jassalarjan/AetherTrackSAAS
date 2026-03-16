@@ -7,6 +7,8 @@
  * Also serves as a read-only history view for HR/Admin.
  */
 
+import { useEffect, useState } from 'react';
+
 import { SectionLoader } from '@/shared/components/ui/Spinner';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { useTheme } from '@/app/providers/ThemeProvider';
@@ -428,7 +430,7 @@ export default function ReallocationDashboard() {
   const isTeamLead  = user?.role === 'team_lead';
 
   // ── Fetch data ──────────────────────────────────────────────────────────────
-  const fetchData = useCallback(async () => {
+  const fetchData = async () => {
     setLoading(true);
     setError(null);
     try {
@@ -436,9 +438,19 @@ export default function ReallocationDashboard() {
 
       // Pending queue
       if (isTeamLead || isAdminOrHr) {
-        promises.push(
-          api.get('/hr/reallocation/pending').then(r => setPending(r.data.pending || []))
-        );
+        const pendingRequest = isTeamLead
+          ? api.get('/hr/reallocation/pending')
+          : (user?._id
+              ? api.get('/hr/reallocation/pending', { params: { userId: user._id } })
+              : null);
+
+        if (pendingRequest) {
+          promises.push(
+            pendingRequest.then(r => setPending(r.data.pending || []))
+          );
+        } else {
+          setPending([]);
+        }
       }
 
       // History
@@ -476,9 +488,11 @@ export default function ReallocationDashboard() {
     } finally {
       setLoading(false);
     }
-  }, [statusFilter, page, isAdminOrHr, isTeamLead, user?._id]);
+  };
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => {
+    fetchData();
+  }, [statusFilter, page, isAdminOrHr, isTeamLead, user?._id]);
 
   // ── Action handler ──────────────────────────────────────────────────────────
   const handleAction = async (logId, action, payload) => {

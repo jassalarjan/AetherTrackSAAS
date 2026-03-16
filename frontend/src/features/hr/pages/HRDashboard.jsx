@@ -369,11 +369,8 @@ export default function HRDashboard() {
   // Fetch email templates
   const fetchEmailTemplates = async () => {
     try {
-      console.log('Fetching email templates...');
       const response = await api.get('/hr/email-templates');
-      console.log('Templates response:', response.data);
       setEmailTemplates(response.data.templates || []);
-      console.log('Templates set:', response.data.templates || []);
     } catch (error) {
       console.error('Error fetching email templates:', error);
     }
@@ -892,14 +889,14 @@ export default function HRDashboard() {
       }
     >
       {/* Tabs */}
-      <div className="flex gap-4 mb-6 overflow-x-auto">
+      <div className={`flex gap-1 p-1 rounded-xl border ${currentTheme.border} mb-6 overflow-x-auto w-fit ${currentTheme.surface}`}>
         {['overview', 'attendance', 'calendar', 'users', 'email'].map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
             className={`px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap ${
               activeTab === tab
-                ? `${currentColorScheme.primary} text-white`
+                ? `${currentColorScheme.primary} text-white shadow-sm`
                 : `${currentTheme.textSecondary} ${currentTheme.hover}`
             }`}
           >
@@ -915,7 +912,7 @@ export default function HRDashboard() {
             <div className="space-y-6">
               {/* Summary Cards */}
               {attendanceSummary && (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                   <div className={`${currentTheme.surface} rounded-lg p-6 border ${currentTheme.border}`}>
                     <div className="flex items-center justify-between">
                       <div>
@@ -962,7 +959,7 @@ export default function HRDashboard() {
               {/* Quick Actions */}
               <div className={`${currentTheme.surface} rounded-lg p-6 border ${currentTheme.border}`}>
                 <h2 className={`text-xl font-bold ${currentTheme.text} mb-4`}>Quick Actions</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <button
                     onClick={() => setActiveTab('attendance')}
                     className={`p-4 ${currentTheme.surfaceSecondary} rounded-lg ${currentTheme.hover} transition-colors border ${currentTheme.border}`}

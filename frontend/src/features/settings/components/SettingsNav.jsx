@@ -34,19 +34,19 @@ const SettingsNav = ({ sections = [], active, onNavigate, mobileOpen, onMobileCl
   });
 
   const NavContent = () => (
-    <nav className="h-full flex flex-col overflow-y-auto py-4" style={{ minWidth: 0 }}>
-      <div className="px-3 pb-4 border-b" style={{ borderColor: 'var(--border-soft)' }}>
+    <nav className="h-full min-h-0 flex flex-col overflow-hidden py-5" style={{ minWidth: 0 }}>
+      <div className="px-3 pb-5 border-b" style={{ borderColor: 'var(--border-soft)' }}>
         <p className="text-xs font-bold uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>
           Settings
         </p>
       </div>
 
-      <div className="flex-1 overflow-y-auto py-2 space-y-1">
+      <div className="flex-1 min-h-0 overflow-y-auto py-3 space-y-2">
         {groups.map(group => {
           const items = sections.filter(s => s.group === group);
           return (
-            <div key={group} className="pt-3 pb-1">
-              <p className="px-4 pb-1 text-[10px] font-bold uppercase tracking-widest"
+            <div key={group} className="pt-3 pb-2">
+              <p className="px-4 pb-2 text-[10px] font-bold uppercase tracking-widest"
                 style={{ color: 'var(--text-muted)' }}>
                 {group}
               </p>
@@ -56,7 +56,7 @@ const SettingsNav = ({ sections = [], active, onNavigate, mobileOpen, onMobileCl
                   <button
                     key={id}
                     onClick={() => onNavigate(id)}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-left text-sm rounded-lg mx-1 transition-all duration-150"
+                    className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm rounded-lg mx-1 transition-all duration-150"
                     style={{
                       width: 'calc(100% - 8px)',
                       background: isActive
@@ -102,7 +102,7 @@ const SettingsNav = ({ sections = [], active, onNavigate, mobileOpen, onMobileCl
     <>
       {/* ── Desktop sidebar ─────────────────────────────────────────────── */}
       <aside
-        className="hidden md:flex flex-col border-r shrink-0"
+        className="hidden md:flex h-full min-h-0 flex-col border-r shrink-0 overflow-hidden"
         style={{
           width: 220,
           minWidth: 220,

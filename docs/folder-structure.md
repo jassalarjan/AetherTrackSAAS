@@ -1,5 +1,54 @@
-# Folder Structure Reference — AetherTrack SaaS
-> Version: 2.0
+# AetherTrack — Folder Structure
+> Last updated: March 2026
+
+## Repository Root
+
+```
+AetherTrackSAAS/
+├── backend/                  # Node.js/Express API server
+├── frontend/                 # React/Vite SPA + Capacitor mobile
+├── android/                  # Capacitor-generated Android project
+├── android_custom_backup/    # Custom Android native overrides
+├── docs/                     # Documentation (this folder)
+├── scripts/                  # Misc utility scripts
+├── plans/                    # Architecture/planning documents
+├── UI/                       # UI reference/inspiration files
+├── package.json              # Root (Capacitor CLI wrapper)
+├── capacitor.config.ts       # Capacitor app configuration
+└── render.yaml               # Render.com deployment config
+```
+
+## Backend (`backend/`)
+
+```
+backend/
+├── server.js                 # Entry point — Express + Socket.IO setup, route mounting
+├── package.json
+├── vercel.json               # Vercel serverless config
+├── config/db.js              # MongoDB connection via Mongoose
+├── middleware/auth.js        # JWT authenticate + checkRole RBAC middleware
+├── models/                   # Mongoose schemas (28 models)
+├── routes/                   # Express routers (21 route files)
+├── services/                 # Business logic services
+│   ├── brevoEmailService.js  # Brevo API wrapper
+│   ├── hrEventService.js     # HR event → email dispatch
+│   ├── geofenceService.js    # Geofence CRUD + Haversine math
+│   ├── auditService.js       # Attendance audit helpers
+│   └── attendanceReviewService.js
+└── utils/                    # Shared utilities
+    ├── jwt.js                # Token generation/verification
+    ├── tokenBlacklist.js     # In-memory logout blacklist
+    ├── validation.js         # ObjectId validators + XSS sanitizers
+    ├── emailService.js       # Email helpers (verification, reset)
+    ├── changeLogService.js   # Audit trail writer/reader
+    ├── shiftService.js       # Shift resolution + metrics
+    ├── calendarEngine.js     # Working-day UTC math
+    ├── reportGenerator.js    # Excel + PDF generators
+    ├── scheduler.js          # Cron jobs (daily reminders, weekly reports)
+    └── templateVariableRegistry.js
+```
+
+## Frontend (`frontend/src/`) — Feature-sliced module layout
 
 ---
 

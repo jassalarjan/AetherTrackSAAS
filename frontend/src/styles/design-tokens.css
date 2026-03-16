@@ -15,11 +15,11 @@
    ========================================================================== */
 :root {
   /* Warm Light Surfaces */
-  --wp-bg-canvas:    #F7F3EE;
-  --wp-bg-base:      #F2EDE5;
-  --wp-bg-surface:   #EDE7DC;
-  --wp-bg-raised:    #FFFFFF;
-  --wp-bg-sunken:    #EAE3D8;
+  --wp-bg-canvas:    #F2F5F8;
+  --wp-bg-base:      #ECF1F6;
+  --wp-bg-surface:   #E5ECF3;
+  --wp-bg-raised:    #F8FBFF;
+  --wp-bg-sunken:    #DEE6EE;
 
   /* Brand — Terracotta / Saffron */
   --wp-brand:         #C4713A;

@@ -3,6 +3,7 @@ import { Calendar as BigCalendar, momentLocalizer } from 'react-big-calendar';
 import moment from 'moment';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { useTheme } from '@/app/providers/ThemeProvider';
+import api from '@/shared/services/axios';
 import ResponsivePageLayout from '@/shared/components/responsive/ResponsivePageLayout';
 import useRealtimeSync from '@/shared/hooks/useRealtimeSync';
 import { usePageShortcuts } from '@/shared/hooks/usePageShortcuts';

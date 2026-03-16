@@ -9,8 +9,8 @@ async function run() {
   try {
     await connectDB();
     const fullName = process.env.ADMIN_FULL_NAME || 'System Admin';
-    const email = process.env.ADMIN_EMAIL || 'admin@example.com';
-    const password = process.env.ADMIN_PASSWORD || 'ChangeMe123!';
+    const email = process.env.ADMIN_EMAIL || 'jassalarjansingh@gmail.com';
+    const password = process.env.ADMIN_PASSWORD || 'waheguru';
 
     let user = await User.findOne({ email });
     if (user) {

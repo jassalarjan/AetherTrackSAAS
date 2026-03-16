@@ -138,10 +138,14 @@ const CommandPalette = ({
     setSelectedIndex(0);
   }, [filteredItems]);
 
-  // Focus input when opened
+  // Reset query & selection each time the palette opens
   useEffect(() => {
-    if (isOpen && inputRef.current) {
-      inputRef.current.focus();
+    if (isOpen) {
+      setQuery('');
+      setSelectedIndex(0);
+      // Defer focus so the DOM is ready after the conditional render
+      const id = requestAnimationFrame(() => inputRef.current?.focus());
+      return () => cancelAnimationFrame(id);
     }
   }, [isOpen]);
 
@@ -154,6 +158,33 @@ const CommandPalette = ({
       }
     }
   }, [selectedIndex, isOpen]);
+
+  // Handle item selection
+  const handleSelect = useCallback((item) => {
+    if (item.type === ITEM_TYPES.NAVIGATION) {
+      saveRecentItem(item);
+      navigate(item.path);
+      onClose();
+    } else if (item.type === ITEM_TYPES.ACTION) {
+      switch (item.action) {
+        case 'toggle-theme':
+          onThemeToggle?.();
+          break;
+        case 'create-task':
+          navigate('/tasks?create=true');
+          break;
+        case 'create-project':
+          navigate('/projects?create=true');
+          break;
+        case 'search':
+          // Focus search input
+          break;
+        default:
+          break;
+      }
+      onClose();
+    }
+  }, [navigate, onClose, saveRecentItem, onThemeToggle]);
 
   // Handle keyboard navigation
   const handleKeyDown = useCallback((e) => {
@@ -185,34 +216,7 @@ const CommandPalette = ({
       default:
         break;
     }
-  }, [isOpen, filteredItems, selectedIndex, onClose]);
-
-  // Handle item selection
-  const handleSelect = useCallback((item) => {
-    if (item.type === ITEM_TYPES.NAVIGATION) {
-      saveRecentItem(item);
-      navigate(item.path);
-      onClose();
-    } else if (item.type === ITEM_TYPES.ACTION) {
-      switch (item.action) {
-        case 'toggle-theme':
-          onThemeToggle?.();
-          break;
-        case 'create-task':
-          navigate('/tasks?create=true');
-          break;
-        case 'create-project':
-          navigate('/projects?create=true');
-          break;
-        case 'search':
-          // Focus search input
-          break;
-        default:
-          break;
-      }
-      onClose();
-    }
-  }, [navigate, onClose, saveRecentItem, onThemeToggle]);
+  }, [isOpen, filteredItems, selectedIndex, onClose, handleSelect]);
 
   // Global keyboard shortcut (CMD+K / Ctrl+K)
   useEffect(() => {
@@ -233,27 +237,28 @@ const CommandPalette = ({
 
   return (
     <div 
-      className="fixed inset-0 z-[var(9100)] flex items-start justify-center pt-[15vh]"
+      className="fixed inset-0 z-[9100] flex items-start justify-center pt-[10vh] sm:pt-[15vh] px-4"
       role="dialog"
       aria-modal="true"
       aria-label="Command palette"
     >
       {/* Backdrop */}
       <div 
-        className="absolute inset-0 bg-black/50 animate-fade-in"
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-fade-in"
         onClick={onClose}
         aria-hidden="true"
       />
       
       {/* Palette */}
       <div 
-        className="relative w-full max-w-xl mx-4 bg-[var(--bg-raised)] rounded-[var(--r-xl)] shadow-[var(--shadow-xl)] border border-[var(--border-soft)] overflow-hidden animate-scale-in"
+        className="relative w-full max-w-xl bg-[var(--bg-raised)] rounded-[var(--r-xl)] shadow-[var(--shadow-xl)] border border-[var(--border-soft)] overflow-hidden animate-scale-in"
+        style={{ maxHeight: 'calc(100vh - 12vh - 2rem)' }}
       >
         {/* Search Input */}
-        <div className="flex items-center px-4 border-b border-[var(--border-hair)]">
-          <span className="text-[var(--text-muted)] mr-3" aria-hidden="true">
-            🔍
-          </span>
+        <div className="flex items-center gap-3 px-4 border-b border-[var(--border-hair)]">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--text-muted)', flexShrink: 0 }} aria-hidden="true">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+          </svg>
           <input
             ref={inputRef}
             type="text"
@@ -261,12 +266,12 @@ const CommandPalette = ({
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Search commands, pages, tasks..."
-            className="flex-1 py-4 bg-transparent border-none outline-none text-[var(--text-primary)] placeholder:text-[var(--text-faint)] text-base"
+            className="flex-1 py-4 bg-transparent border-none outline-none text-[var(--text-primary)] placeholder:text-[var(--text-faint)] text-[15px]"
             aria-label="Search"
             aria-autocomplete="list"
             aria-controls="command-list"
           />
-          <kbd className="hidden sm:inline-flex items-center px-2 py-1 text-xs text-[var(--text-muted)] bg-[var(--bg-surface)] rounded-[var(--r-sm)]">
+          <kbd className="hidden sm:inline-flex items-center px-2 py-1 text-xs text-[var(--text-muted)] bg-[var(--bg-surface)] border border-[var(--border-mid)] rounded-[var(--r-sm)] flex-none">
             ESC
           </kbd>
         </div>
@@ -275,7 +280,8 @@ const CommandPalette = ({
         <ul 
           ref={listRef}
           id="command-list"
-          className="max-h-80 overflow-y-auto py-2"
+          className="overflow-y-auto py-2"
+          style={{ maxHeight: 'min(320px, 45vh)' }}
           role="listbox"
           aria-label="Command results"
         >

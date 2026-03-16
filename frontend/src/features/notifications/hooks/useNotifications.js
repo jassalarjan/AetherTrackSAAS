@@ -76,20 +76,16 @@ export const useNotifications = () => {
 
     // Check if notifications are supported
     if (!notificationService.isNotificationSupported()) {
-      console.warn('Notifications not supported in this browser');
       return;
     }
 
     // Get current permission status
-    const permission = notificationService.getPermissionStatus();
-    console.log('Notification permission status:', permission);
+    notificationService.getPermissionStatus();
 
     // Set up socket listeners for real-time notifications
     if (socket) {
       // Generic notification handler
       const handleNotification = (data) => {
-        console.log('Received notification:', data);
-        
         if (data.type === 'task_assigned' && data.task) {
           queueNotification('assigned', data.task);
         } else if (data.type === 'status_changed' && data.task) {
@@ -98,13 +94,10 @@ export const useNotifications = () => {
       };
 
       const handleTaskCreated = (task) => {
-        console.log('Task created event:', task);
         queueNotification('created', task);
       };
 
       const handleTaskUpdated = (task) => {
-        console.log('Task updated event:', task);
-        
         // Check if current user is involved in this task
         const isAssigned = task.assigned_to?.some(u => u._id === user.id || u === user.id);
         const isCreator = task.created_by?._id === user.id || task.created_by === user.id;
@@ -115,8 +108,6 @@ export const useNotifications = () => {
       };
 
       const handleTaskAssigned = (data) => {
-        console.log('Task assigned event:', data);
-        
         // Check if task is assigned to current user
         const task = data.task || data;
         const assignedTo = task.assigned_to || [];
@@ -131,8 +122,6 @@ export const useNotifications = () => {
       };
 
       const handleCommentAdded = (data) => {
-        console.log('Comment added event:', data);
-        
         const task = data.task || data;
         // Check if current user is involved in this task
         const isAssigned = task.assigned_to?.some(u => u._id === user.id || u === user.id);
@@ -154,15 +143,6 @@ export const useNotifications = () => {
       socket.on('task:assigned', handleTaskAssigned);
       socket.on('comment:added', handleCommentAdded);
 
-      // Periodic check for connection health (every 30 seconds)
-      const healthCheckInterval = setInterval(() => {
-        if (socket.connected) {
-          console.log('Socket connected, notification system active');
-        } else {
-          console.warn('Socket disconnected, notifications may not work');
-        }
-      }, 30000);
-
       // Cleanup
       return () => {
         socket.off('notification:new', handleNotification);
@@ -170,7 +150,6 @@ export const useNotifications = () => {
         socket.off('task:updated', handleTaskUpdated);
         socket.off('task:assigned', handleTaskAssigned);
         socket.off('comment:added', handleCommentAdded);
-        clearInterval(healthCheckInterval);
       };
     }
   }, [user, socket]);
@@ -183,10 +162,9 @@ export const useNotifications = () => {
       try {
         if ('wakeLock' in navigator) {
           wakeLock = await navigator.wakeLock.request('screen');
-          console.log('Wake lock acquired for better notifications');
         }
-      } catch (err) {
-        console.log('Wake lock not available:', err);
+      } catch {
+        // Ignore wake lock acquisition failures silently.
       }
     };
 

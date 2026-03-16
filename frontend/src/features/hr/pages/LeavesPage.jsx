@@ -418,7 +418,7 @@ export default function LeavesPage() {
                           <div className="flex gap-2">
                             <button
                               onClick={() => openDetailsModal(request)}
-                              className="px-3 py-1 bg-blue-600 dark:bg-blue-500 text-white text-xs rounded hover:bg-[#A35C28] dark:hover:bg-[#A35C28] transition-colors"
+                              className="px-3 py-1.5 bg-blue-600 dark:bg-blue-500 text-white text-xs rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors"
                             >
                               View Details
                             </button>
@@ -426,7 +426,7 @@ export default function LeavesPage() {
                               <>
                                 <button
                                   onClick={() => handleApproveReject(request._id, 'approved')}
-                                  className="px-3 py-1 bg-green-600 dark:bg-green-500 text-white text-xs rounded hover:bg-green-700 dark:hover:bg-green-600 transition-colors"
+                                  className="px-3 py-1.5 bg-green-600 dark:bg-green-500 text-white text-xs rounded-lg hover:bg-green-700 dark:hover:bg-green-600 transition-colors"
                                 >
                                   Approve
                                 </button>
@@ -436,7 +436,7 @@ export default function LeavesPage() {
                                     setRejectionReason('');
                                     setShowRejectModal(true);
                                   }}
-                                  className="px-3 py-1 bg-red-600 dark:bg-red-500 text-white text-xs rounded hover:bg-red-700 dark:hover:bg-red-600 transition-colors"
+                                  className="px-3 py-1.5 bg-red-600 dark:bg-red-500 text-white text-xs rounded-lg hover:bg-red-700 dark:hover:bg-red-600 transition-colors"
                                 >
                                   Reject
                                 </button>
@@ -445,7 +445,7 @@ export default function LeavesPage() {
                             {isAdmin && (
                               <button
                                 onClick={() => openNotesModal(request)}
-                                className="px-3 py-1 bg-purple-600 dark:bg-purple-500 text-white text-xs rounded hover:bg-purple-700 dark:hover:bg-purple-600 transition-colors"
+                                className="px-3 py-1.5 bg-purple-600 dark:bg-purple-500 text-white text-xs rounded-lg hover:bg-purple-700 dark:hover:bg-purple-600 transition-colors"
                               >
                                 {request.hrNotes ? 'Edit Notes' : 'Add Notes'}
                               </button>
@@ -613,7 +613,7 @@ export default function LeavesPage() {
                               <h5 className={`text-sm font-semibold ${currentTheme.text} truncate`}>
                                 {type.name}
                               </h5>
-                              <span className={`text-xs px-2 py-0.5 rounded ${currentTheme.surfaceSecondary} ${currentTheme.textSecondary} border ${currentTheme.border}`}>
+                              <span className={`text-xs px-2 py-0.5 rounded-lg ${currentTheme.surfaceSecondary} ${currentTheme.textSecondary} border ${currentTheme.border}`}>
                                 {type.code}
                               </span>
                             </div>
@@ -626,7 +626,7 @@ export default function LeavesPage() {
                         <button
                           type="button"
                           onClick={() => handleEditLeaveType(type)}
-                          className="ml-2 px-3 py-1.5 text-xs bg-[#C4713A] text-white rounded hover:bg-[#A35C28] transition-colors flex-shrink-0"
+                          className="ml-2 px-3 py-1.5 text-xs bg-[#C4713A] text-white rounded-lg hover:bg-[#A35C28] transition-colors flex-shrink-0"
                         >
                           Edit
                         </button>

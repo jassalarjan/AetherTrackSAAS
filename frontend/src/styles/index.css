@@ -57,10 +57,13 @@
   }
 }
 
-* {
+*,
+*::before,
+*::after {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  min-width: 0;
 }
 
 html {
@@ -601,15 +604,28 @@ body {
   border: 1px solid var(--border-soft);
   border-radius: var(--r-md);
   padding: var(--s5);
-  transition: transform var(--base), box-shadow var(--base);
+  /* Only animate compositor-friendly properties */
+  transition: transform var(--base) var(--ease), box-shadow var(--base) var(--ease);
   overflow: hidden;
-  cursor: pointer;
+  cursor: default;
   --kpi-accent: var(--brand);
+}
+
+/* Clickable variant */
+.kpi-card[role="button"] {
+  cursor: pointer;
 }
 
 .kpi-card:hover {
   transform: translateY(-2px);
   box-shadow: var(--shadow-md);
+}
+
+/* Keyboard focus ring for clickable KPI cards */
+.kpi-card[role="button"]:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring), var(--shadow-md);
+  transform: translateY(-1px);
 }
 
 .kpi-label {
@@ -674,6 +690,40 @@ body {
 
 .kpi-card:hover .kpi-accent-bar {
   transform: scaleX(1);
+}
+
+/* ==========================================================================
+   INLINE EMPTY STATE — compact empty message for panels and kanban columns
+   ========================================================================== */
+.empty-state-inline {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s2);
+  padding: var(--s6) var(--s4);
+  text-align: center;
+  color: var(--text-muted);
+}
+
+/* ==========================================================================
+   TAB BUTTON RESET — .tab elements converted from <div> to <button>
+   ========================================================================== */
+button.tab {
+  /* Reset browser button defaults */
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font: inherit;
+  padding: 0;
+  text-align: left;
+}
+
+button.tab:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
 }
 
 /* AI Insight Banner */
@@ -922,11 +972,60 @@ body {
 .bg-stone-50     { background-color: var(--bg-canvas)   !important; }
 .bg-stone-100    { background-color: var(--bg-base)     !important; }
 
+/* White alpha backgrounds still used in a few pages/components */
+.bg-white\/5     { background-color: rgba(248, 251, 255, 0.05) !important; }
+.bg-white\/10    { background-color: rgba(248, 251, 255, 0.10) !important; }
+.bg-white\/20    { background-color: rgba(248, 251, 255, 0.20) !important; }
+.bg-white\/30    { background-color: rgba(248, 251, 255, 0.30) !important; }
+.bg-white\/40    { background-color: rgba(248, 251, 255, 0.40) !important; }
+.bg-white\/50    { background-color: rgba(248, 251, 255, 0.50) !important; }
+.bg-white\/60    { background-color: rgba(248, 251, 255, 0.60) !important; }
+.bg-white\/70    { background-color: rgba(248, 251, 255, 0.70) !important; }
+.bg-white\/80    { background-color: rgba(248, 251, 255, 0.80) !important; }
+.bg-white\/90    { background-color: rgba(248, 251, 255, 0.90) !important; }
+
 /* Hover surface overrides */
 .hover\:bg-white:hover      { background-color: var(--bg-raised)   !important; }
 .hover\:bg-gray-50:hover    { background-color: var(--bg-canvas)   !important; }
 .hover\:bg-gray-100:hover   { background-color: var(--bg-base)     !important; }
 .hover\:bg-gray-200:hover   { background-color: var(--bg-surface)  !important; }
+.hover\:bg-white\/5:hover   { background-color: rgba(248, 251, 255, 0.05) !important; }
+.hover\:bg-white\/10:hover  { background-color: rgba(248, 251, 255, 0.10) !important; }
+.hover\:bg-white\/20:hover  { background-color: rgba(248, 251, 255, 0.20) !important; }
+.hover\:bg-white\/30:hover  { background-color: rgba(248, 251, 255, 0.30) !important; }
+.hover\:bg-white\/80:hover  { background-color: rgba(248, 251, 255, 0.80) !important; }
+
+/* Gradient stop remap for white/gray tails that looked too bright */
+.from-gray-50 {
+  --tw-gradient-from: var(--bg-canvas) var(--tw-gradient-from-position) !important;
+  --tw-gradient-to: rgba(242, 245, 248, 0) var(--tw-gradient-to-position) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+}
+.from-gray-50\/50 {
+  --tw-gradient-from: rgba(242, 245, 248, 0.5) var(--tw-gradient-from-position) !important;
+  --tw-gradient-to: rgba(242, 245, 248, 0) var(--tw-gradient-to-position) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+}
+.from-white {
+  --tw-gradient-from: var(--bg-raised) var(--tw-gradient-from-position) !important;
+  --tw-gradient-to: rgba(248, 251, 255, 0) var(--tw-gradient-to-position) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+}
+.from-white\/10 {
+  --tw-gradient-from: rgba(248, 251, 255, 0.10) var(--tw-gradient-from-position) !important;
+  --tw-gradient-to: rgba(248, 251, 255, 0) var(--tw-gradient-to-position) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+}
+.to-white {
+  --tw-gradient-to: var(--bg-raised) var(--tw-gradient-to-position) !important;
+}
+.to-white\/5 {
+  --tw-gradient-to: rgba(248, 251, 255, 0.05) var(--tw-gradient-to-position) !important;
+}
+.via-white\/30 {
+  --tw-gradient-to: rgba(248, 251, 255, 0) var(--tw-gradient-to-position) !important;
+  --tw-gradient-stops: var(--tw-gradient-from), rgba(248, 251, 255, 0.30) var(--tw-gradient-via-position), var(--tw-gradient-to) !important;
+}
 
 /* ── Text colors ── */
 .text-gray-900   { color: var(--text-primary)   !important; }
@@ -1220,3 +1319,37 @@ header.h-16 {
 .bg-\[\#1a2234\]   { background-color: var(--bg-base)    !important; }
 .bg-\[\#0d121b\]   { background-color: var(--bg-canvas)  !important; }
 .text-\[\#0d121b\] { color: var(--text-primary)          !important; }
+
+/* CRITICAL LAYOUT GUARDRAILS */
+:root {
+  --sidebar-width: 284px;
+  --sidebar-collapsed: 64px;
+  --header-height: 64px;
+}
+html, body {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+img, video, svg {
+  max-width: 100%;
+  height: auto;
+}
+button, [role="button"], th, td, .badge, .pill, .chip {
+  max-width: 100%;
+}
+p, li, .break-words-safe {
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+.flex, .grid {
+  min-width: 0;
+}
+.toolbar, .filter-bar, [data-toolbar], [data-filter-bar] {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2);
+}
+#main-content {
+  scroll-padding-top: var(--header-height);
+}
+

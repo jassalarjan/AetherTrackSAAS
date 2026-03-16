@@ -59,6 +59,9 @@ const TableHeaderCell = ({
         ...(column.frozen && { left: column.frozenLeft }),
       }}
       onClick={handleSort}
+      onKeyDown={column.sortable ? (e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSort(); }
+      } : undefined}
       role={column.sortable ? 'button' : undefined}
       tabIndex={column.sortable ? 0 : undefined}
       aria-sort={sortKey === column.key 
@@ -186,7 +189,7 @@ const TableRow = ({
               e.stopPropagation();
               onActionMenu(row, e);
             }}
-            className="p-1 rounded hover:bg-[var(--bg-surface)] transition-colors"
+            className="p-1 rounded hover:bg-[var(--bg-surface)] transition-colors focus-visible:outline-none focus-visible:shadow-[var(--focus-ring)]"
             aria-label="Row actions"
           >
             <svg className="w-5 h-5 text-[var(--text-muted)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -239,7 +242,7 @@ const SelectionToolbar = ({ selectedCount, onClear, onAction, actions = [] }) =>
       <div className="flex items-center gap-2">
         <button
           onClick={onClear}
-          className="text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+          className="text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:shadow-[var(--focus-ring)] rounded px-1"
         >
           Clear
         </button>
@@ -247,7 +250,7 @@ const SelectionToolbar = ({ selectedCount, onClear, onAction, actions = [] }) =>
           <button
             key={index}
             onClick={() => action.onClick(selectedCount)}
-            className="px-3 py-1 text-sm rounded-md bg-[var(--brand)] text-white hover:opacity-90"
+            className="px-3 py-1 text-sm rounded-md bg-[var(--brand)] text-white hover:opacity-90 focus-visible:outline-none focus-visible:shadow-[var(--focus-ring)]"
           >
             {action.label}
           </button>
@@ -260,9 +263,40 @@ const SelectionToolbar = ({ selectedCount, onClear, onAction, actions = [] }) =>
 /**
  * Main DataTable Component
  */
+/**
+ * Skeleton row — shown while data is loading
+ */
+const SkeletonRow = ({ columns, selectable, hasActions }) => (
+  <tr className="border-b border-[var(--border-hair)] animate-pulse">
+    {selectable && (
+      <td className="px-4 py-3 w-10">
+        <div className="w-4 h-4 rounded bg-[var(--bg-surface)]" />
+      </td>
+    )}
+    {columns.map((col) => (
+      <td key={col.key} className="px-4 py-3">
+        <div
+          className="h-3 rounded bg-[var(--bg-surface)]"
+          style={{ width: col.skeletonWidth || '70%' }}
+        />
+      </td>
+    ))}
+    {hasActions && (
+      <td className="px-4 py-3 w-10">
+        <div className="w-5 h-5 rounded bg-[var(--bg-surface)]" />
+      </td>
+    )}
+  </tr>
+);
+
+/**
+ * Main DataTable Component
+ */
 export const DataTable = ({
   columns = [],
   data = [],
+  loading = false,          // show skeleton rows while data is loading
+  loadingRowCount = 5,      // number of skeleton rows to show
   sortable = true,
   selectable = false,
   resizable = false,
@@ -438,7 +472,17 @@ export const DataTable = ({
         </thead>
         
         <tbody>
-          {sortedData.length > 0 ? (
+          {loading ? (
+            /* Skeleton rows while data is in flight */
+            Array.from({ length: loadingRowCount }).map((_, i) => (
+              <SkeletonRow
+                key={i}
+                columns={processedColumns}
+                selectable={selectable}
+                hasActions={!!onActionMenu}
+              />
+            ))
+          ) : sortedData.length > 0 ? (
             sortedData.map((row, rowIndex) => (
               <TableRow
                 key={row.id || rowIndex}

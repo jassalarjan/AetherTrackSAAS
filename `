@@ -1,0 +1,1 @@
+s=s.replace(`      <main className=\"flex flex-col overflow-hidden min-w-0 h-screen\" style={{ marginLeft: isMobile ? 0 : (isCollapsed ? 'var(--sidebar-collapsed)' : 'var(--sidebar-width)') }},`      <mainn        className=\"flex min-w-0 h-screen flex-col overflow-hidden\^n        style={{^n          marginLeft: sidebarOffset,^n          width: isMobile ? '100%%' : 

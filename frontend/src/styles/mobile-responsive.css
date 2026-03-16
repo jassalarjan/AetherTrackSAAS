@@ -26,10 +26,10 @@ html, body {
   }
   [data-tabs-scroll]::-webkit-scrollbar { display: none; }
 
-  /* Chart containers — constrain height on small screens */
+  /* Chart containers — fluid height, avoids hard cuts on different aspect ratios */
   .recharts-wrapper,
   .recharts-responsive-container {
-    max-height: 240px !important;
+    max-height: var(--chart-h-mobile, clamp(160px, 45vw, 240px)) !important;
   }
 
   /* Tables — always wrap in overflow-x scroll on mobile */
@@ -63,10 +63,10 @@ html, body {
   input, select, textarea { font-size: 16px !important; }
 
   /* Even smaller charts on tiny screens */
-  .recharts-wrapper { height: 180px !important; }
+  .recharts-wrapper { max-height: var(--chart-h-xs, clamp(140px, 40vw, 180px)) !important; }
 }
 
-/* Landscape Mobile — compact header */
+/* Landscape Mobile — compact header uses token so one change adjusts everywhere */
 @media (max-width: 767px) and (orientation: landscape) {
-  .header { height: 48px !important; }
+  .header { height: var(--header-h-landscape, 48px) !important; }
 }

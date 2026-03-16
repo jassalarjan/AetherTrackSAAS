@@ -13,11 +13,11 @@
    ============================================================ */
 :root {
   /* ── Surfaces ── */
-  --bg-canvas:  #F7F3EE;
-  --bg-base:    #F2EDE5;
-  --bg-surface: #EDE7DC;
-  --bg-raised:  #FFFFFF;
-  --bg-sunken:  #EAE3D8;
+  --bg-canvas:  #F2F5F8;
+  --bg-base:    #ECF1F6;
+  --bg-surface: #E5ECF3;
+  --bg-raised:  #F8FBFF;
+  --bg-sunken:  #DEE6EE;
 
   /* ── Sidebar (always dark walnut) ── */
   --sidebar-bg:     #1C1510;
@@ -230,7 +230,7 @@
   --color-surface-muted:    var(--bg-surface);
   --color-surface-elevated: var(--bg-raised);
   --color-surface-ambient:  var(--bg-sunken);
-  --color-surface-glass:    rgba(247,243,238,0.70);
+  --color-surface-glass:    rgba(242,245,248,0.70);
   --color-surface-hover:    var(--border-hair);
   --color-surface-active:   var(--border-soft);
 
@@ -355,6 +355,20 @@
   --size-icon-md:       20px;
   --size-icon-lg:       24px;
   --size-icon-xl:       32px;
+
+  /* ── Component dimension tokens (single source of truth) ── */
+  --btn-h-sm:           28px;   /* small button height */
+  --btn-h-md:           36px;   /* medium button height */
+  --btn-h-lg:           44px;   /* large button / mobile touch = touch target */
+  --input-h:            36px;   /* form field height */
+  --input-h-sm:         28px;
+  --icon-container-sm:  28px;   /* small icon wrapper (e.g. header) */
+  --icon-container-md:  36px;
+  --icon-container-lg:  40px;   /* KPI card icon */
+  --header-h-landscape: 48px;   /* compact landscape header */
+  --chart-h-mobile:     clamp(160px, 45vw, 240px);   /* fluid chart height on mobile */
+  --chart-h-xs:         clamp(140px, 40vw, 180px);   /* chart height on <375px */
+  --notif-panel-w:      clamp(280px, 90vw, 340px);   /* notification panel width */
 
   --sidebar-width-collapsed: 48px;
   --sidebar-width-expanded:  var(--sidebar-w);

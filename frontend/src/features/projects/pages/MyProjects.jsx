@@ -170,52 +170,38 @@ const MyProjects = () => {
   }
 
   return (
-    <ResponsivePageLayout title="My Projects" icon={Briefcase}>
-        <div className="p-8 space-y-8">
-          {/* Header */}
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                  <Briefcase size={24} className="text-white" />
-                </div>
-                <div>
-                  <h2 className="text-3xl font-black tracking-tight text-[#0d121b] dark:text-white">
-                    {getRoleDisplayText(userRole)}
-                  </h2>
-                  <p className="text-[#4c669a] dark:text-gray-400 mt-1">
-                    {userRole === 'member' && 'Projects you\'re assigned to'}
-                    {userRole === 'team_lead' && 'Projects assigned to your team members'}
-                    {(userRole === 'hr' || userRole === 'admin') && 'All workspace projects you can manage'}
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="flex gap-3">
-              {canCreateProjects() && (
-                <button 
-                  onClick={handleCreateProject}
-                  className="flex items-center gap-2 px-4 py-2 bg-[#C4713A] text-white rounded-lg text-sm font-bold hover:bg-[#A35C28] transition-all shadow-sm"
-                >
-                  <Plus size={20} />
-                  <span>New Project</span>
-                </button>
-              )}
-              <button 
-                onClick={() => setShowFilters(!showFilters)}
-                className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-sm font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all shadow-sm"
-              >
-                <Filter size={20} />
-                <span>Filters</span>
-                {(filters.status || filters.priority || filters.search) && (
-                  <span className="ml-1 px-2 py-0.5 bg-[#C4713A] text-white text-xs rounded-full">
-                    Active
-                  </span>
-                )}
-              </button>
-            </div>
-          </div>
-
+    <ResponsivePageLayout
+      title="My Projects"
+      icon={Briefcase}
+      actions={
+        <div className="flex items-center gap-2">
+          {canCreateProjects() && (
+            <button
+              onClick={handleCreateProject}
+              className="flex items-center gap-1.5 h-8 px-3 rounded-lg text-[13px] font-semibold bg-[#C4713A] text-white hover:bg-[#A35C28] transition-colors"
+              style={{ fontFamily: 'var(--font-body)' }}
+            >
+              <Plus size={14} />
+              <span>New Project</span>
+            </button>
+          )}
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className="flex items-center gap-1.5 h-8 px-3 rounded-lg text-[13px] font-medium transition-colors bg-[var(--bg-base)] border border-[var(--border-soft)] text-[var(--text-secondary)] hover:bg-[var(--border-hair)] hover:text-[var(--text-primary)]"
+            style={{ fontFamily: 'var(--font-body)' }}
+          >
+            <Filter size={14} />
+            <span>Filters</span>
+            {(filters.status || filters.priority || filters.search) && (
+              <span className="px-1.5 py-0.5 bg-[#C4713A] text-white text-[10px] font-bold rounded-full">
+                On
+              </span>
+            )}
+          </button>
+        </div>
+      }
+    >
+        <div className="space-y-6">
           {/* Filter Section */}
           {showFilters && (
             <div className="bg-white dark:bg-[#1a2234] rounded-xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm">
