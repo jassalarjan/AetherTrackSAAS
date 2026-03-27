@@ -22,6 +22,11 @@ class VerificationService {
    * @returns {Promise<Object>} Verification settings
    */
   static async getSettings(workspaceId) {
+    // Validate workspaceId is provided
+    if (!workspaceId) {
+      throw new Error('workspaceId is required for verification settings');
+    }
+    
     let settings = await VerificationSettings.findOne({ workspaceId });
     
     if (!settings) {
@@ -60,6 +65,11 @@ class VerificationService {
    * @returns {Promise<Object>} Updated settings
    */
   static async updateSettings(workspaceId, settings, userId) {
+    // Validate workspaceId is provided
+    if (!workspaceId) {
+      throw new Error('workspaceId is required for updating verification settings');
+    }
+    
     const existingSettings = await VerificationSettings.findOne({ workspaceId });
     
     if (existingSettings) {

@@ -1,4 +1,5 @@
 import express from 'express';
+import mongoose from 'mongoose';
 import { authenticate } from '../middleware/auth.js';
 import { checkRole } from '../middleware/roleCheck.js';
 import Attendance from '../models/Attendance.js';
@@ -16,6 +17,44 @@ import AttendanceReviewService from '../services/attendanceReviewService.js';
 import AuditService from '../services/auditService.js';
 
 const router = express.Router();
+const MARKABLE_STATUSES = new Set(['present', 'absent', 'half_day', 'leave', 'wfh', 'holiday']);
+
+const normalizeAttendanceStatus = (value) => {
+  if (typeof value !== 'string') return '';
+
+  const normalized = value.trim().toLowerCase().replace(/[-\s]+/g, '_');
+  const aliases = {
+    halfday: 'half_day',
+    work_from_home: 'wfh'
+  };
+
+  return aliases[normalized] || normalized;
+};
+
+const parseOptionalDate = (value) => {
+  if (!value) return null;
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
+
+const toGeoPoint = (gps) => {
+  if (!gps) return null;
+
+  const latitude = Number(gps.latitude);
+  const longitude = Number(gps.longitude);
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+    return null;
+  }
+
+  if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
+    return null;
+  }
+
+  return {
+    type: 'Point',
+    coordinates: [longitude, latitude]
+  };
+};
 
 // Get attendance records (filtered by month/user)
 router.get('/', authenticate, async (req, res) => {
@@ -190,14 +229,37 @@ router.post('/mark', authenticate, checkRole(['admin', 'hr']), async (req, res) 
       return res.status(400).json({ message: 'userId, date, and status are required' });
     }
 
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ message: 'Invalid userId' });
+    }
+
+    const normalizedStatus = normalizeAttendanceStatus(status);
+    if (!MARKABLE_STATUSES.has(normalizedStatus)) {
+      return res.status(400).json({
+        message: `Invalid status. Allowed values: ${Array.from(MARKABLE_STATUSES).join(', ')}`
+      });
+    }
+
+    const attendanceDate = new Date(date);
+    if (Number.isNaN(attendanceDate.getTime())) {
+      return res.status(400).json({ message: 'Invalid date format' });
+    }
+    attendanceDate.setHours(0, 0, 0, 0);
+
+    const parsedCheckIn = parseOptionalDate(checkIn);
+    const parsedCheckOut = parseOptionalDate(checkOut);
+    if (checkIn && !parsedCheckIn) {
+      return res.status(400).json({ message: 'Invalid checkIn datetime' });
+    }
+    if (checkOut && !parsedCheckOut) {
+      return res.status(400).json({ message: 'Invalid checkOut datetime' });
+    }
+
     // Verify user exists
     const targetUser = await User.findOne({ _id: userId });
     if (!targetUser) {
       return res.status(404).json({ message: 'User not found' });
     }
-
-    const attendanceDate = new Date(date);
-    attendanceDate.setHours(0, 0, 0, 0);
 
     // Check if attendance already exists
     let attendance = await Attendance.findOne({
@@ -207,9 +269,9 @@ router.post('/mark', authenticate, checkRole(['admin', 'hr']), async (req, res) 
 
     if (attendance) {
       // Update existing
-      attendance.status = status;
-      if (checkIn) attendance.checkIn = new Date(checkIn);
-      if (checkOut) attendance.checkOut = new Date(checkOut);
+      attendance.status = normalizedStatus;
+      attendance.checkIn = parsedCheckIn;
+      attendance.checkOut = parsedCheckOut;
       attendance.notes = notes || attendance.notes;
       attendance.isOverride = true;
       attendance.overrideBy = req.user._id;
@@ -218,23 +280,43 @@ router.post('/mark', authenticate, checkRole(['admin', 'hr']), async (req, res) 
       attendance = new Attendance({
         userId,
         date: attendanceDate,
-        status,
-        checkIn: checkIn ? new Date(checkIn) : (status === 'present' ? new Date() : null),
-        checkOut: checkOut ? new Date(checkOut) : null,
+        status: normalizedStatus,
+        checkIn: parsedCheckIn || (normalizedStatus === 'present' ? new Date() : null),
+        checkOut: parsedCheckOut,
         notes,
         isOverride: true,
         overrideBy: req.user._id
       });
     }
 
-    await attendance.save();
+    try {
+      await attendance.save();
+    } catch (saveError) {
+      // Handle race condition on unique index (userId + date) for concurrent mark calls.
+      if (saveError?.code === 11000) {
+        attendance = await Attendance.findOne({ userId, date: attendanceDate });
+        if (!attendance) {
+          throw saveError;
+        }
+
+        attendance.status = normalizedStatus;
+        attendance.checkIn = parsedCheckIn;
+        attendance.checkOut = parsedCheckOut;
+        attendance.notes = notes || attendance.notes;
+        attendance.isOverride = true;
+        attendance.overrideBy = req.user._id;
+        await attendance.save();
+      } else {
+        throw saveError;
+      }
+    }
 
     await logChange({
       userId: req.user._id,
       action: attendance.isNew ? 'create' : 'update',
       entity: 'attendance',
       entityId: attendance._id,
-      details: { action: 'mark-attendance', targetUser: userId, status, date },
+      details: { action: 'mark-attendance', targetUser: userId, status: normalizedStatus, date },
       ipAddress: getClientIP(req)
     });
 
@@ -843,6 +925,19 @@ router.post('/recalculate', authenticate, checkRole(['admin', 'hr']), async (req
 router.get('/verification-settings', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
   try {
     const workspaceId = req.user.workspaceId;
+    
+    // Validate workspaceId is present
+    if (!workspaceId) {
+      console.error('VerificationSettings error: User has no workspaceId assigned', {
+        userId: req.user._id,
+        email: req.user.email,
+        role: req.user.role
+      });
+      return res.status(400).json({ 
+        message: 'Workspace not assigned. Please contact your administrator to assign a workspace to your account.' 
+      });
+    }
+    
     const settings = await VerificationService.getSettings(workspaceId);
     
     res.json({ success: true, settings });
@@ -861,6 +956,19 @@ router.get('/verification-settings', authenticate, checkRole(['admin', 'hr']), a
 router.put('/verification-settings', authenticate, checkRole(['admin']), async (req, res) => {
   try {
     const workspaceId = req.user.workspaceId;
+    
+    // Validate workspaceId is present
+    if (!workspaceId) {
+      console.error('VerificationSettings update error: User has no workspaceId assigned', {
+        userId: req.user._id,
+        email: req.user.email,
+        role: req.user.role
+      });
+      return res.status(400).json({ 
+        message: 'Workspace not assigned. Please contact your administrator to assign a workspace to your account.' 
+      });
+    }
+    
     const { photoVerification, gpsVerification, security } = req.body;
     
     const settings = await VerificationService.updateSettings(
@@ -953,11 +1061,13 @@ router.post('/checkin', authenticate, async (req, res) => {
       
       // Store verification data in attendance
       if (verificationResult.data) {
+        const geoPoint = toGeoPoint(verificationResult.data.gps);
         attendance.verification = {
           photoUrl: verificationResult.data.photo?.url,
           photoPublicId: verificationResult.data.photo?.publicId,
           photoHash: verificationResult.data.photo?.hash,
           gpsLocation: verificationResult.data.gps,
+          geoPoint,
           deviceInfo: verificationResult.data.deviceInfo,
           serverTimestamp: verificationResult.data.serverTimestamp
         };

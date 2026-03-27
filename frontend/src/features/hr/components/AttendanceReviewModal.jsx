@@ -156,9 +156,9 @@ export default function AttendanceReviewModal({
   const StatusBadge = ({ status }) => {
     const config = STATUS_CONFIG[status] || STATUS_CONFIG.PENDING;
     const Icon = config.icon;
-    
+
     return (
-      <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${config.color} bg-opacity-10 ${config.text} ${config.color}`}>
+      <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${config.color} bg-opacity-10 ${config.text}`}>
         <Icon className="w-3 h-3" />
         {config.label}
       </span>
@@ -184,12 +184,15 @@ export default function AttendanceReviewModal({
   if (!isOpen) return null;
 
   return (
-    <div 
+    <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
       onClick={handleClose}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-title"
     >
-      <div 
-        className={`relative w-full max-w-4xl max-h-[90vh] overflow-hidden rounded-lg shadow-xl ${
+      <div
+        className={`relative w-full max-w-full md:max-w-4xl max-h-[90vh] mx-2 md:mx-0 overflow-hidden rounded-lg shadow-xl ${
           isDark ? 'bg-[#1c2027]' : 'bg-white'
         }`}
         onClick={(e) => e.stopPropagation()}
@@ -199,9 +202,12 @@ export default function AttendanceReviewModal({
           isDark ? 'border-[#333a47]' : 'border-gray-200'
         }`}>
           <div className="flex items-center gap-3">
-            <h2 className={`text-lg font-semibold ${
-              isDark ? 'text-white' : 'text-gray-900'
-            }`}>
+            <h2
+              id="modal-title"
+              className={`text-lg font-semibold ${
+                isDark ? 'text-white' : 'text-gray-900'
+              }`}
+            >
               Attendance Review
             </h2>
             {attendance?.verificationStatus && (
@@ -210,6 +216,7 @@ export default function AttendanceReviewModal({
           </div>
           <button
             onClick={handleClose}
+            aria-label="Close modal"
             className={`p-1 rounded ${
               isDark ? 'hover:bg-[#282f39]' : 'hover:bg-gray-100'
             }`}
@@ -398,9 +405,9 @@ export default function AttendanceReviewModal({
 
               {/* Action Section */}
               {!actionMode && attendance.verificationStatus === 'PENDING' && (
-                <div className="flex flex-wrap gap-3 pt-4 border-t ${
+                <div className={`flex flex-wrap gap-3 pt-4 border-t ${
                   isDark ? 'border-[#333a47]' : 'border-gray-200'
-                }">
+                }`}>
                   <button
                     onClick={() => setActionMode('approve')}
                     className="aether-btn aether-btn-success"

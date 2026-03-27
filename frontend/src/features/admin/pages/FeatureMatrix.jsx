@@ -1,9 +1,13 @@
-﻿import { useState } from 'react';
+﻿import { useEffect, useMemo, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { useTheme } from '@/app/providers/ThemeProvider';
 import { TableProperties, Eye, EyeOff } from 'lucide-react';
 import ResponsivePageLayout from '@/shared/components/responsive/ResponsivePageLayout';
+import settingsService from '@/features/settings/services/settingsService';
+import { FEATURE_FLAG_SECTIONS, DEFAULT_FEATURE_FLAGS } from '@/features/workspace/constants/featureFlags';
+import { useSidebar } from '@/features/workspace/context/SidebarContext';
+import CyberToggle from '@/shared/components/ui/CyberToggle';
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 
@@ -95,15 +99,87 @@ function TagBadge({ tag, show, isDark }) {
 export default function FeatureMatrix() {
   const { user } = useAuth();
   const { theme } = useTheme();
+  const { refreshEnabledFeatures } = useSidebar();
   const isDark = theme === 'dark';
 
   const [activeCol, setActiveCol] = useState(null);
   const [showTags, setShowTags]   = useState(true);
+  const [features, setFeatures] = useState(DEFAULT_FEATURE_FLAGS);
+  const [loadingFeatures, setLoadingFeatures] = useState(true);
+  const [savingFeatures, setSavingFeatures] = useState(false);
+  const [featuresError, setFeaturesError] = useState('');
 
-  // Admin guard
-  if (user?.role !== 'admin') return <Navigate to="/" replace />;
+  const isSuperAdmin = user?.isSystemAdmin || user?.role === 'super_admin' || (user?.role === 'admin' && !user?.workspaceId);
+
+  useEffect(() => {
+    if (!isSuperAdmin) return;
+
+    let mounted = true;
+    const loadFeatures = async () => {
+      setLoadingFeatures(true);
+      setFeaturesError('');
+      try {
+        const incoming = await settingsService.getFeatureMatrix();
+        if (!mounted) return;
+        setFeatures({ ...DEFAULT_FEATURE_FLAGS, ...(incoming || {}) });
+      } catch (error) {
+        if (!mounted) return;
+        setFeaturesError(error?.response?.data?.message || 'Failed to load feature matrix.');
+      } finally {
+        if (mounted) setLoadingFeatures(false);
+      }
+    };
+
+    loadFeatures();
+    return () => {
+      mounted = false;
+    };
+  }, [isSuperAdmin]);
+
+  const enabledCount = useMemo(
+    () => Object.values(features).filter(Boolean).length,
+    [features]
+  );
+
+  // Super-admin guard
+  if (!isSuperAdmin) return <Navigate to="/" replace />;
 
   const handleColClick = (colId) => setActiveCol(prev => prev === colId ? null : colId);
+  const handleToggleFeature = (key) => {
+    setFeatures((prev) => ({
+      ...prev,
+      [key]: !prev[key],
+    }));
+  };
+
+  const areAllSectionItemsEnabled = (section) => (
+    section.items.every((item) => features[item.key] !== false)
+  );
+
+  const handleToggleSection = (section, nextState) => {
+    setFeatures((prev) => {
+      const next = { ...prev };
+      section.items.forEach((item) => {
+        next[item.key] = Boolean(nextState);
+      });
+      return next;
+    });
+  };
+
+  const handleSaveFeatureMatrix = async () => {
+    setSavingFeatures(true);
+    setFeaturesError('');
+    try {
+      const saved = await settingsService.updateFeatureMatrix(features);
+      const merged = { ...DEFAULT_FEATURE_FLAGS, ...(saved || {}) };
+      setFeatures(merged);
+      await refreshEnabledFeatures();
+    } catch (error) {
+      setFeaturesError(error?.response?.data?.message || 'Failed to save feature matrix.');
+    } finally {
+      setSavingFeatures(false);
+    }
+  };
 
   const colOpacity = (colId) => {
     if (!activeCol) return '';
@@ -119,7 +195,7 @@ export default function FeatureMatrix() {
       actions={
         <button
           onClick={() => setShowTags(v => !v)}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-all ${
+          className={`inline-flex w-full items-center justify-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium transition-all sm:w-auto ${
             showTags
               ? 'bg-[#C4713A] border-transparent text-white'
               : isDark
@@ -134,8 +210,125 @@ export default function FeatureMatrix() {
     >
 
       {/* ── Table ── */}
-      <div className="p-6">
-        <div className={`rounded-2xl border overflow-hidden shadow-sm ${
+      <div className="p-4 sm:p-6">
+        <div className="mb-5 rounded-2xl border border-[var(--border-soft)] bg-[var(--bg-base)] p-4 sm:mb-6 sm:p-5">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="text-sm font-semibold text-[var(--text-primary)]">Workspace Feature Access</p>
+              <p className="text-xs mt-1 text-[var(--text-muted)]">
+                Toggle features to control sidebar visibility for all users. Enabled: {enabledCount}
+              </p>
+            </div>
+            <button
+              onClick={handleSaveFeatureMatrix}
+              disabled={savingFeatures || loadingFeatures}
+              className="inline-flex w-full items-center justify-center rounded-lg px-4 py-2 text-sm font-semibold text-white disabled:opacity-60 sm:w-auto"
+              style={{ background: 'var(--sidebar-accent)' }}
+            >
+              {savingFeatures ? 'Saving...' : 'Save Feature Matrix'}
+            </button>
+          </div>
+
+          <div className="mt-3 flex flex-wrap gap-2">
+            <span className="rounded-full bg-[var(--bg-raised)] px-2.5 py-1 text-[11px] font-semibold text-[var(--text-muted)]">
+              Total: {Object.keys(DEFAULT_FEATURE_FLAGS).length}
+            </span>
+            <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
+              Enabled: {enabledCount}
+            </span>
+            <span className="rounded-full bg-rose-50 px-2.5 py-1 text-[11px] font-semibold text-rose-700 dark:bg-rose-500/10 dark:text-rose-300">
+              Disabled: {Object.keys(DEFAULT_FEATURE_FLAGS).length - enabledCount}
+            </span>
+          </div>
+
+          {featuresError && (
+            <div className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+              {featuresError}
+            </div>
+          )}
+
+          <div className="mt-4 grid gap-4 lg:grid-cols-2">
+            {FEATURE_FLAG_SECTIONS.map((section) => (
+              <div key={section.id} className="rounded-xl border border-[var(--border-soft)] bg-[var(--bg-raised)] p-4">
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <p className="text-xs font-bold uppercase tracking-wide text-[var(--text-muted)]">{section.label}</p>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-semibold text-[var(--text-muted)]">Toggle all</span>
+                    <CyberToggle
+                      checked={areAllSectionItemsEnabled(section)}
+                      disabled={loadingFeatures || savingFeatures}
+                      onChange={(nextState) => handleToggleSection(section, nextState)}
+                      label={`Toggle all ${section.label} features`}
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2.5">
+                  {section.items.map((item) => (
+                    <div key={item.key} className="flex items-start justify-between gap-3 rounded-lg border border-[var(--border-soft)] bg-[var(--bg-base)] px-3 py-3 sm:items-center">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-[var(--text-primary)]">{item.label}</p>
+                        <p className="mt-0.5 text-[11px] break-all text-[var(--text-muted)]">{item.path}</p>
+                      </div>
+                      <div className="flex shrink-0 items-center pt-0.5 sm:pt-0">
+                        <CyberToggle
+                          checked={features[item.key]}
+                          disabled={loadingFeatures || savingFeatures}
+                          onChange={() => handleToggleFeature(item.key)}
+                          label={`Toggle ${item.label}`}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="mb-4 space-y-3 md:hidden">
+          {ROWS.map((row) => (
+            <article
+              key={row.id}
+              className="rounded-xl border border-[var(--border-soft)] bg-[var(--bg-base)] p-4 shadow-sm"
+            >
+              <div className="flex items-start gap-2.5">
+                <div className={`mt-1 h-2 w-2 shrink-0 rounded-full ${ACCENT_DOT[row.accent]}`} />
+                <div>
+                  <p className="text-sm font-bold text-[var(--text-primary)]">{row.label}</p>
+                  <p className={`mt-0.5 text-xs leading-snug ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
+                    {row.description}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-3 space-y-2.5">
+                {COLUMNS.map((col) => {
+                  const cell = row.cells[col.id];
+                  return (
+                    <div
+                      key={col.id}
+                      className={`rounded-lg border px-3 py-2 ${
+                        col.isFuture
+                          ? 'border-amber-300/60 bg-amber-50/50 dark:border-amber-500/40 dark:bg-amber-500/10'
+                          : 'border-[var(--border-soft)] bg-[var(--bg-raised)]'
+                      }`}
+                    >
+                      <p className={`text-[11px] font-bold uppercase tracking-wide ${col.isFuture ? 'text-amber-700 dark:text-amber-300' : 'text-[var(--text-muted)]'}`}>
+                        {col.label}
+                      </p>
+                      <p className={`mt-1 text-sm font-medium leading-snug ${col.isFuture ? 'text-amber-700 dark:text-amber-200' : 'text-[var(--text-primary)]'}`}>
+                        {cell?.value ?? '-'}
+                      </p>
+                      <TagBadge tag={cell?.tag} show={showTags} isDark={isDark} />
+                    </div>
+                  );
+                })}
+              </div>
+            </article>
+          ))}
+        </div>
+
+        <div className={`hidden rounded-2xl border overflow-hidden shadow-sm md:block ${
           'border-[var(--border-soft)] bg-[var(--bg-base)]'
         }`}>
           <div className="overflow-x-auto">
@@ -245,7 +438,7 @@ export default function FeatureMatrix() {
         </div>
 
         {/* ── Legend ── */}
-        <div className="mt-4 flex flex-wrap items-center gap-5">
+        <div className="mt-4 flex flex-wrap items-center gap-3 sm:gap-5">
           <p className={`text-[11px] font-semibold uppercase tracking-wider ${isDark ? 'text-gray-600' : 'text-gray-400'}`}>
             Legend
           </p>

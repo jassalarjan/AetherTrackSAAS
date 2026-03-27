@@ -332,23 +332,27 @@ export default function GeofenceManagement() {
             </div>
 
             <button
+              type="button"
               onClick={handleBulkImport}
               className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
-                isDark 
-                  ? 'bg-[#282f39] text-white hover:bg-[#333a47]' 
+                isDark
+                  ? 'bg-[#282f39] text-white hover:bg-[#333a47]'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
+              aria-label="Import geofences from file"
             >
               <Upload className="w-4 h-4" />
               <span className="hidden sm:inline">Import</span>
             </button>
 
             <button
+              type="button"
               onClick={() => setShowForm(true)}
               className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#C4713A] text-white hover:bg-[#A35C28] transition-colors"
+              aria-label="Add new geofence"
             >
               <Plus className="w-4 h-4" />
-              Add Geofence
+              <span>Add Geofence</span>
             </button>
           </div>
         </div>
@@ -480,16 +484,34 @@ export default function GeofenceManagement() {
         {/* Add/Edit Form Modal rendered via portal to document.body */}
         {showForm && createPortal(
           <div
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in"
-            onClick={resetForm}
+            className="fixed inset-0 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in"
+            style={{ zIndex: 999999 }}
+            onClick={(e) => {
+              if (e.target === e.currentTarget) {
+                resetForm();
+              }
+            }}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="modal-title"
           >
             <div
               className="relative w-full max-w-2xl max-h-[90vh] overflow-hidden rounded-xl shadow-xl animate-scale-in"
-              style={{ background: 'var(--bg-raised)', border: '1px solid var(--border-soft)', boxShadow: 'var(--shadow-xl)' }}
+              style={{
+                background: isDark ? '#1c2027' : '#ffffff',
+                border: `1px solid ${isDark ? '#333a47' : '#e5e7eb'}`,
+                boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)'
+              }}
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex items-center justify-between p-4 border-b" style={{ borderColor: 'var(--border-soft)' }}>
-                <h2 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
+              <div
+                className="flex items-center justify-between p-4 border-b"
+                style={{
+                  borderColor: isDark ? '#333a47' : '#e5e7eb',
+                  background: isDark ? '#282f39' : '#f9fafb'
+                }}
+              >
+                <h2 id="modal-title" className={`text-lg font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>
                   {editingGeofence ? 'Edit Geofence' : 'Add New Geofence'}
                 </h2>
                 <button

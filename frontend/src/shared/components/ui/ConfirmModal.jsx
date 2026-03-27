@@ -1,4 +1,5 @@
 ﻿import { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X, AlertTriangle, Trash2, LogOut, Info } from 'lucide-react';
 import { useTheme } from '@/app/providers/ThemeProvider';
 
@@ -10,6 +11,7 @@ const ConfirmModal = ({
   message = 'Are you sure you want to proceed?',
   confirmText = 'Confirm',
   cancelText = 'Cancel',
+  showCancel = true,
   variant = 'danger', // 'danger', 'warning', 'info'
   isLoading = false,
 }) => {
@@ -68,13 +70,13 @@ const ConfirmModal = ({
   const currentVariant = variantStyles[variant] || variantStyles.info;
   const Icon = currentVariant.icon;
 
-  return (
+  const modalContent = (
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in"
+      className="fixed inset-0 z-[1200] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in"
       onClick={!isLoading ? onClose : undefined}
     >
       <div
-        className="relative w-full max-w-md rounded-xl shadow-xl animate-scale-in overflow-hidden"
+        className="relative w-full max-w-md rounded-xl shadow-xl animate-scale-in overflow-hidden max-h-[calc(100vh-2rem)]"
         style={{ background: 'var(--bg-raised)', border: '1px solid var(--border-soft)', boxShadow: 'var(--shadow-xl)' }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -96,38 +98,40 @@ const ConfirmModal = ({
         {/* Content */}
         <div className="p-6">
           {/* Icon */}
-          <div className="flex items-center gap-4 mb-4">
+          <div className="flex items-start sm:items-center gap-3 sm:gap-4 mb-4 pr-8">
             <div className={`p-3 rounded-full ${currentVariant.iconBg}`}>
               <Icon size={24} className={currentVariant.iconColor} />
             </div>
-            <h2 className="text-xl font-semibold" style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-heading)' }}>
+            <h2 className="text-lg sm:text-xl font-semibold leading-tight" style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-heading)' }}>
               {title}
             </h2>
           </div>
 
           {/* Message */}
-          <p className="text-sm leading-relaxed mb-6" style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-body)' }}>
+          <p className="text-sm leading-relaxed mb-6 whitespace-pre-line break-words" style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-body)' }}>
             {message}
           </p>
 
           {/* Actions */}
-          <div className="flex gap-3 justify-end">
-            <button
-              onClick={onClose}
-              disabled={isLoading}
-              className="px-4 py-2 rounded-lg font-medium text-sm transition-colors focus-visible:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
-              style={{ background: 'var(--border-soft)', color: 'var(--text-primary)' }}
-              onMouseOver={(e) => { e.currentTarget.style.background = 'var(--border-mid)'; }}
-              onMouseOut={(e)  => { e.currentTarget.style.background = 'var(--border-soft)'; }}
-              onFocus={(e)     => { e.currentTarget.style.boxShadow = 'var(--focus-ring)'; }}
-              onBlur={(e)      => { e.currentTarget.style.boxShadow = ''; }}
-            >
-              {cancelText}
-            </button>
+          <div className="flex flex-col-reverse sm:flex-row gap-3 justify-end">
+            {showCancel ? (
+              <button
+                onClick={onClose}
+                disabled={isLoading}
+                className="w-full sm:w-auto px-4 py-2 rounded-lg font-medium text-sm transition-colors focus-visible:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{ background: 'var(--border-soft)', color: 'var(--text-primary)' }}
+                onMouseOver={(e) => { e.currentTarget.style.background = 'var(--border-mid)'; }}
+                onMouseOut={(e)  => { e.currentTarget.style.background = 'var(--border-soft)'; }}
+                onFocus={(e)     => { e.currentTarget.style.boxShadow = 'var(--focus-ring)'; }}
+                onBlur={(e)      => { e.currentTarget.style.boxShadow = ''; }}
+              >
+                {cancelText}
+              </button>
+            ) : null}
             <button
               onClick={onConfirm}
               disabled={isLoading}
-              className={`aether-btn ${currentVariant.buttonBg}`}
+              className={`aether-btn ${currentVariant.buttonBg} w-full sm:w-auto`}
             >
               {isLoading ? (
                 <span className="flex items-center gap-2">
@@ -158,6 +162,12 @@ const ConfirmModal = ({
       </div>
     </div>
   );
+
+  if (typeof document === 'undefined') {
+    return null;
+  }
+
+  return createPortal(modalContent, document.body);
 };
 
 export default ConfirmModal;

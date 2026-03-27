@@ -10,6 +10,33 @@ html, body {
   max-width: 100vw;
 }
 
+img,
+video,
+canvas,
+svg,
+iframe {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Better touch ergonomics on mobile */
+@media (max-width: 767px) {
+  button,
+  [role="button"],
+  a,
+  input,
+  select,
+  textarea {
+    touch-action: manipulation;
+  }
+
+  button,
+  [role="button"],
+  .tap-target {
+    min-height: 44px;
+  }
+}
+
 /* iOS input zoom prevention — inputs must be ≥ 16px */ 
 @media (max-width: 767px) {
   input:not([type="range"]),
@@ -69,4 +96,16 @@ html, body {
 /* Landscape Mobile — compact header uses token so one change adjusts everywhere */
 @media (max-width: 767px) and (orientation: landscape) {
   .header { height: var(--header-h-landscape, 48px) !important; }
+}
+
+/* Very short viewports (foldables/landscape phones/keyboard open) */
+@media (max-height: 700px) {
+  .mobile-bottom-nav {
+    min-height: calc(50px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  .recharts-wrapper,
+  .recharts-responsive-container {
+    max-height: clamp(140px, 38vh, 220px) !important;
+  }
 }

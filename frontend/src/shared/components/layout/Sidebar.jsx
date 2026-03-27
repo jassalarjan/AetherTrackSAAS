@@ -103,6 +103,11 @@ const getPanelContent = (role, signals) => {
           { path: '/changelog', icon: FileText, label: 'Change Log' },
         ]},
       ],
+      features: [
+        { group: 'FEATURE CONTROL', items: [
+          { path: '/feature-matrix', icon: TableProperties, label: 'Feature Matrix' },
+        ]},
+      ],
     },
     hr: {
       dashboard: [
@@ -233,6 +238,7 @@ const RAIL_ITEMS = [
   { id: 'people',    icon: Users,           label: 'People',     roles: ['admin', 'hr'] },
   { id: 'calendar',  icon: Calendar,        label: 'Calendar',   roles: null },
   { id: 'reports',   icon: BarChart3,       label: 'Reports',    roles: ['admin', 'hr', 'team_lead'] },
+  { id: 'features',  icon: TableProperties, label: 'Features',   roles: ['admin', 'super_admin'] },
 ];
 
 // ─── Panel accent colors per section ───────────────────────────────────────
@@ -244,6 +250,7 @@ const PANEL_ACCENTS = {
   people:    { color: '#C49A3A', bg: 'rgba(196,154,58,0.14)',  text: '#C49A3A' },
   calendar:  { color: '#D4905A', bg: 'rgba(196,113,58,0.14)',  text: '#D4905A' },
   reports:   { color: '#C49A3A', bg: 'rgba(196,154,58,0.14)',  text: '#C49A3A' },
+  features:  { color: '#C5811D', bg: 'rgba(197,129,29,0.14)',  text: '#C5811D' },
   signals:   { color: '#C49A3A', bg: 'rgba(196,154,58,0.14)',  text: '#C49A3A' },
 };
 
@@ -251,7 +258,7 @@ const PANEL_ACCENTS = {
 const Sidebar = () => {
   const { user, logout } = useAuth();
   const { theme, currentColorScheme } = useTheme();
-  const { isMobileOpen, isMobile, closeMobileSidebar, isCollapsed, toggleCollapse } = useSidebar();
+  const { isMobileOpen, isMobile, closeMobileSidebar, isCollapsed, toggleCollapse, isFeatureEnabledForPath } = useSidebar();
   const navigate = useNavigate();
   const location = useLocation();
   const confirmModal = useConfirmModal();
@@ -359,14 +366,46 @@ const Sidebar = () => {
     signals.pendingApprovals > 0 || signals.blockedTasks > 0 ||
     signals.lateCheckIns    > 0 || signals.pendingLeaveReviews > 0 || signals.taskDueToday > 0;
 
-  // Visible rail items (role-gated)
-  const visibleRailItems = RAIL_ITEMS.filter(
-    (ri) => ri.roles === null || ri.roles.includes(user?.role)
+  // Get all nav items across all panels for search
+  const normalizedRole = user?.role === 'super_admin' ? 'admin' : user?.role;
+  const panelContent = getPanelContent(normalizedRole, signals);
+  const filterGroupsByFeature = (groups = []) => (
+    groups
+      .map((group) => ({
+        ...group,
+        items: (group.items || []).filter((item) => {
+          if (item.path === '/feature-matrix') return true;
+          return isFeatureEnabledForPath(item.path);
+        }),
+      }))
+      .filter((group) => group.items.length > 0)
   );
 
-  // Get all nav items across all panels for search
-  const panelContent = getPanelContent(user?.role, signals);
-  const allNavItems  = Object.values(panelContent)
+  const filteredPanelContent = Object.fromEntries(
+    Object.entries(panelContent).map(([panelId, groups]) => [panelId, filterGroupsByFeature(groups)])
+  );
+
+  // Visible rail items (role + feature-gated)
+  const visibleRailItems = RAIL_ITEMS.filter((ri) => {
+    const roleAllowed = ri.roles === null || ri.roles.includes(user?.role);
+    if (!roleAllowed) return false;
+
+    const groups = filteredPanelContent[ri.id] || [];
+    const hasVisibleItems = groups.some((group) => (group.items || []).length > 0);
+    return hasVisibleItems;
+  });
+
+  useEffect(() => {
+    if (!visibleRailItems.length) return;
+    const activeStillVisible = visibleRailItems.some((item) => item.id === activePanel);
+    if (!activeStillVisible) {
+      const nextPanelId = visibleRailItems[0].id;
+      setActivePanel(nextPanelId);
+      localStorage.setItem('sidebarActivePanel', nextPanelId);
+    }
+  }, [visibleRailItems, activePanel]);
+
+  const allNavItems  = Object.values(filteredPanelContent)
     .flat()
     .flatMap((g) => (Array.isArray(g.items) ? g.items : []));
 
@@ -719,7 +758,7 @@ const Sidebar = () => {
 
   const currentPanelGroups = activePanel === 'signals'
     ? null
-    : (panelContent[activePanel] || []);
+    : (filteredPanelContent[activePanel] || []);
 
   return (
     <>
@@ -757,7 +796,7 @@ const Sidebar = () => {
                 boxShadow: '0 2px 10px rgba(196,113,58,0.35)',
               }}
               onClick={() => handleNavigation('/')}
-              title="AetherTrack � go home"
+              title="AetherTrack - go home"
               aria-label="Go to homepage"
               onMouseOver={(e) => { e.currentTarget.style.boxShadow = '0 4px 16px rgba(196,113,58,0.5)'; e.currentTarget.style.transform = 'scale(1.08)'; }}
               onMouseOut={(e)  => { e.currentTarget.style.boxShadow = '0 2px 10px rgba(196,113,58,0.35)'; e.currentTarget.style.transform = ''; }}
@@ -926,7 +965,7 @@ const Sidebar = () => {
               <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--sidebar-muted)' }} />
               <input
                 type="text"
-                placeholder="Search�"
+                placeholder="Search..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onFocus={(e) => {

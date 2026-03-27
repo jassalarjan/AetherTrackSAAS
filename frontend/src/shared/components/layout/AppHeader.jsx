@@ -6,6 +6,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth }    from '@/features/auth/context/AuthContext';
+import { getAccessToken } from '@/features/auth/services/tokenStore';
 import { useTheme }   from '@/app/providers/ThemeProvider';
 import { useSidebar } from '@/features/workspace/context/SidebarContext';
 import api from '@/shared/services/axios';
@@ -52,21 +53,28 @@ const computeDropdownPos = (btnEl, dropdownWidth = 208, dropdownHeight = 320) =>
 };
 
 // -- Notification panel ------------------------------------------------------
-const NotifPanel = ({ open, onClose, panelRef, pos }) => {
+const NotifPanel = ({ open, onClose, panelRef, pos, canQuery }) => {
   const [items, setItems]     = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   const load = useCallback(async () => {
+    if (!canQuery) {
+      setItems([]);
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       const { data } = await api.get('/notifications');
       setItems(data.notifications || []);
     } catch (_) { /* silent */ }
     finally { setLoading(false); }
-  }, []);
+  }, [canQuery]);
 
   const markAll = async () => {
+    if (!canQuery) return;
     try { await api.patch('/notifications/mark-read'); load(); } catch (_) { /* silent */ }
   };
 
@@ -256,8 +264,15 @@ const AppHeader = ({
     'U'
   );
 
+  const canQueryNotifications = Boolean(user?.id && getAccessToken());
+
   // Fetch unread count
   useEffect(() => {
+    if (!canQueryNotifications) {
+      setUnread(0);
+      return;
+    }
+
     let cancelled = false;
     const fetchCount = async () => {
       try {
@@ -268,7 +283,7 @@ const AppHeader = ({
     fetchCount();
     const id = setInterval(fetchCount, 60_000);
     return () => { cancelled = true; clearInterval(id); };
-  }, []);
+  }, [canQueryNotifications]);
 
   // ⌘K / Ctrl+K → open command palette
   useEffect(() => {
@@ -336,6 +351,13 @@ const AppHeader = ({
     : title
       ? ['AetherTrack', title]
       : ['AetherTrack'];
+
+  // Avoid stale overlays intercepting clicks after navigation.
+  useEffect(() => {
+    setBellOpen(false);
+    setUserMenuOpen(false);
+    setCmdOpen(false);
+  }, [location.pathname]);
 
   return (
     <>
@@ -525,6 +547,7 @@ const AppHeader = ({
               onClose={() => setBellOpen(false)}
               panelRef={panelRef}
               pos={notifPos}
+              canQuery={canQueryNotifications}
             />
           </div>
 

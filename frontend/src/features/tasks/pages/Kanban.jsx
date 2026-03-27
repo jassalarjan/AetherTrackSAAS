@@ -70,6 +70,7 @@ const Kanban = () => {
   const [sprints, setSprints] = useState([]);
   const [selectedTeamMembers, setSelectedTeamMembers] = useState([]);
   const [dragOverColumn, setDragOverColumn] = useState(null);
+  const currentUserId = user?._id || user?.id || null;
 
   const columns = [
     { id: 'todo', title: 'Todo', dotColor: 'bg-slate-500', count: 0 },
@@ -287,12 +288,12 @@ const Kanban = () => {
     let members = selectedTeam ? selectedTeam.members : [];
 
     if (selectedTeam && user?.role === 'team_lead') {
-      const teamLeadAlreadyIncluded = members.some(member => member._id === user?.id);
-      if (!teamLeadAlreadyIncluded && selectedTeam.lead_id?._id === user?.id) {
+      const teamLeadAlreadyIncluded = currentUserId ? members.some(member => member._id === currentUserId) : false;
+      if (!teamLeadAlreadyIncluded && selectedTeam.lead_id?._id === currentUserId) {
         members = [
           ...members,
           {
-            _id: user.id,
+            _id: currentUserId,
             full_name: user.full_name || user.username || user.email,
             role: user.role,
             email: user.email
@@ -355,7 +356,7 @@ const Kanban = () => {
         const assignedIds = Array.isArray(t.assigned_to)
           ? t.assigned_to.map(u => typeof u === 'object' ? u._id : u)
           : [typeof t.assigned_to === 'object' ? t.assigned_to._id : t.assigned_to];
-        const isAssignedToUser = assignedIds.includes(user?.id);
+        const isAssignedToUser = currentUserId ? assignedIds.includes(currentUserId) : false;
         if (user?.role === 'member') {
           const belongsToUserTeam = user.team_id && t.team_id &&
             (t.team_id._id === user.team_id || t.team_id === user.team_id);
@@ -388,7 +389,13 @@ const Kanban = () => {
 
   const canEditTask = (task) => {
     if (['admin', 'hr', 'team_lead'].includes(user?.role)) return true;
-    return task.created_by._id === user?.id || (task.assigned_to && task.assigned_to.some(u => u._id === user?.id));
+
+    const createdById = task?.created_by?._id || task?.created_by;
+    const assignedIds = Array.isArray(task?.assigned_to)
+      ? task.assigned_to.map((u) => (typeof u === 'object' ? u._id : u))
+      : (task?.assigned_to ? [typeof task.assigned_to === 'object' ? task.assigned_to._id : task.assigned_to] : []);
+
+    return currentUserId ? (createdById === currentUserId || assignedIds.includes(currentUserId)) : false;
   };
 
   const canDeleteTask = (task) => {
@@ -443,9 +450,7 @@ const Kanban = () => {
                 className={`h-9 px-3 rounded border text-sm font-medium flex-shrink-0 focus:ring-2 focus:ring-[#C4713A] focus:border-transparent transition-all ${
                   filters.project
                     ? 'bg-purple-500/10 border-purple-500/50 text-purple-400'
-                    : theme === 'dark' 
-                      ? 'bg-[#282f39] border-[#3e454f] text-white' 
-                      : 'bg-white border-gray-200 text-gray-900'
+                    : 'bg-[var(--bg-raised)] border-[var(--border-mid)] text-[var(--text-primary)]'
                 }`}
               >
                 <option value="">All Projects</option>
@@ -467,7 +472,7 @@ const Kanban = () => {
                 placeholder="Search tasks..."
               />
             </div>
-            <div className="hidden sm:block w-px h-6 bg-[#3e454f] mx-2"></div>
+            <div className="hidden sm:block w-px h-6 bg-[var(--border-mid)] mx-2"></div>
 
             <div className="flex gap-2 flex-nowrap">
               {filters.project && (
@@ -542,7 +547,7 @@ const Kanban = () => {
                     <MoreHorizontal className="text-[#6b7280] hover:text-white cursor-pointer flex-shrink-0" size={18} />
                   </div>
 
-                  <div className="flex-1 overflow-y-auto p-2 sm:p-3 flex flex-col gap-2 sm:gap-3 scrollbar-thin scrollbar-thumb-[#3e454f] scrollbar-track-transparent">
+                  <div className="flex-1 overflow-y-auto p-2 sm:p-3 flex flex-col gap-2 sm:gap-3 scrollbar-thin scrollbar-thumb-[var(--border-mid)] scrollbar-track-transparent">
                     {columnTasks.map((task) => {
                       const priorityBadge = getPriorityBadge(task.priority);
                       const isDone = task.status === 'done';
@@ -553,7 +558,7 @@ const Kanban = () => {
                           draggable={canEditTask(task)}
                           onDragStart={(e) => handleDragStart(e, task)}
                           onDragEnd={handleDragEnd}
-                          className={`group ${theme === 'dark' ? 'bg-gradient-to-br from-[#282f39] to-[#242a35]' : 'bg-gradient-to-br from-gray-50 to-white'} p-3 sm:p-4 rounded-lg border border-[var(--border-soft)] hover:border-[#C4713A]/50 cursor-grab active:cursor-grabbing shadow-sm hover:shadow-lg transition-all duration-200 hover:-translate-y-0.5 ${isDone ? 'opacity-70 hover:opacity-100' : ''
+                          className={`group bg-[var(--bg-canvas)] p-3 sm:p-4 rounded-lg border border-[var(--border-soft)] hover:border-[#C4713A]/50 cursor-grab active:cursor-grabbing shadow-sm hover:shadow-lg transition-all duration-200 hover:-translate-y-0.5 ${isDone ? 'opacity-70 hover:opacity-100' : ''
                             }`}
                           onClick={() => setSelectedTask(task)}
                         >
@@ -598,7 +603,7 @@ const Kanban = () => {
                                 task.assigned_to.slice(0, 2).map((assignee, idx) => (
                                   <div
                                     key={assignee._id || idx}
-                                    className={`size-5 rounded-full bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center text-[8px] text-white font-bold ring-2 ring-[#282f39] ${isDone ? 'grayscale' : ''
+                                    className={`size-5 rounded-full bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center text-[8px] text-white font-bold ring-2 ring-[var(--bg-canvas)] ${isDone ? 'grayscale' : ''
                                       }`}
                                     title={assignee.full_name}
                                   >
@@ -606,7 +611,7 @@ const Kanban = () => {
                                   </div>
                                 ))
                               ) : (
-                                <div className="size-5 rounded-full bg-[#3e454f] flex items-center justify-center text-[8px] text-[#6b7280] font-bold">
+                                <div className="size-5 rounded-full bg-[var(--bg-surface)] flex items-center justify-center text-[8px] text-[var(--text-muted)] font-bold">
                                   ?
                                 </div>
                               )}
@@ -801,7 +806,7 @@ const Kanban = () => {
                             />
                             <span className={`text-sm text-[var(--text-primary)]`}>
                               {member.full_name} ({member.role})
-                              {member._id === user?.id && <span className="text-[#C4713A] font-medium"> (You)</span>}
+                              {member._id === currentUserId && <span className="text-[#C4713A] font-medium"> (You)</span>}
                             </span>
                           </label>
                         ))}

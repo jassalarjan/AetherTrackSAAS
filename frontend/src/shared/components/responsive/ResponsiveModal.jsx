@@ -66,7 +66,7 @@ const ResponsiveModal = ({
 
       {/* Modal Container */}
       <div
-        className={`relative w-full ${sizeClasses[size] || sizeClasses.default} rounded-t-3xl sm:rounded-xl shadow-2xl flex flex-col max-h-[92vh] sm:max-h-[90vh] animate-slideUp sm:animate-scaleIn border-t-4`}
+        className={`relative w-full ${sizeClasses[size] || sizeClasses.default} rounded-t-3xl sm:rounded-xl shadow-2xl flex flex-col max-h-[92vh] sm:max-h-[90vh] animate-slide-up sm:animate-scale-in border-t-4`}
         style={{ background: 'var(--bg-raised)', borderTopColor: 'var(--brand)', boxShadow: 'var(--shadow-xl)' }}
       >
         {/* Drag Handle - Mobile only */}

@@ -113,12 +113,34 @@ const SECTION_META = {
           { icon: String.fromCodePoint(0x25A7),  label: 'Features',     path: '/feature-matrix',      desc: 'Module access',       adminOnly: true },
         ],
       },
+      {
+        label: 'Distribution',
+        items: [
+          { icon: String.fromCodePoint(0x2B07),  label: 'Mobile App',   path: '/mobile-app-download', desc: 'Download Android app' },
+        ],
+      },
+    ],
+  },
+
+  features: {
+    icon: String.fromCodePoint(0x25A7),
+    label: 'Features',
+    tagline: 'Direct module controls',
+    accent: '#C5811D',
+    groups: [
+      {
+        label: 'Matrix',
+        items: [
+          { icon: String.fromCodePoint(0x25A7), label: 'Feature Matrix', path: '/feature-matrix', desc: 'Enable/disable modules', adminOnly: true },
+        ],
+      },
     ],
   },
 };
 
 /* --- Section detection ---------------------------------------------------- */
 function detectSection(pathname) {
+  if (pathname.startsWith('/feature-matrix') || pathname.startsWith('/mobile-app-download')) return 'system';
   if (
     pathname.startsWith('/hr') ||
     pathname === '/teams' ||
@@ -148,7 +170,7 @@ const GlobalSidebar = () => {
   const location  = useLocation();
   const { user }  = useAuth();
   const { theme, toggleTheme } = useTheme();
-  const { isCollapsed, toggleCollapse, isMobile, isMobileOpen, closeMobileSidebar } = useSidebar();
+  const { isCollapsed, toggleCollapse, isMobile, isMobileOpen, closeMobileSidebar, isFeatureEnabledForPath } = useSidebar();
 
   const [activeSection, setActiveSection]   = useState(() => detectSection(location.pathname));
   const [hoveredSection, setHoveredSection] = useState(null);
@@ -177,9 +199,35 @@ const GlobalSidebar = () => {
   const isHROrAbove = ['admin', 'super_admin', 'hr', 'team_lead'].includes(role);
   const showSystem  = ['admin', 'super_admin'].includes(role);
 
+  const sectionHasVisibleItems = useCallback((sectionKey) => {
+    const section = SECTION_META[sectionKey];
+    if (!section) return false;
+
+    return section.groups.some((group) =>
+      group.items.some((item) => {
+        if (item.adminOnly && !isAdmin) return false;
+        if (item.hrOnly && !isHROrAbove) return false;
+        if (item.path !== '/feature-matrix' && !isFeatureEnabledForPath(item.path)) return false;
+        return true;
+      })
+    );
+  }, [isAdmin, isHROrAbove, isFeatureEnabledForPath]);
+
   const visibleRail = ['overview', 'projects'];
   if (isHROrAbove) visibleRail.push('hr');
   if (showSystem)  visibleRail.push('system');
+  if (showSystem)  visibleRail.push('features');
+
+  const filteredVisibleRail = visibleRail.filter((sectionKey) => sectionHasVisibleItems(sectionKey));
+
+  useEffect(() => {
+    if (!filteredVisibleRail.length) return;
+    if (!filteredVisibleRail.includes(activeSection)) {
+      const nextSection = filteredVisibleRail[0];
+      setActiveSection(nextSection);
+      setHoveredSection(null);
+    }
+  }, [filteredVisibleRail, activeSection]);
 
   const isActive = useCallback((path) => {
     if (path === '/dashboard') return location.pathname === '/dashboard';
@@ -195,6 +243,7 @@ const GlobalSidebar = () => {
     const first = meta.groups.flatMap(g => g.items).find(item => {
       if (item.adminOnly && !isAdmin)    return false;
       if (item.hrOnly   && !isHROrAbove) return false;
+      if (item.path !== '/feature-matrix' && !isFeatureEnabledForPath(item.path)) return false;
       return true;
     });
     if (first) {
@@ -239,7 +288,7 @@ const GlobalSidebar = () => {
         </div>
 
         <nav className="rail-sections" aria-label="Section switcher">
-          {visibleRail.map((key) => {
+          {filteredVisibleRail.map((key) => {
             const meta        = SECTION_META[key];
             const isActiveSec  = activeSection === key;
             const isPreviewing = hoveredSection === key && !isActiveSec;
@@ -298,6 +347,7 @@ const GlobalSidebar = () => {
             const visibleItems = group.items.filter(item => {
               if (item.adminOnly && !isAdmin)    return false;
               if (item.hrOnly   && !isHROrAbove) return false;
+              if (item.path !== '/feature-matrix' && !isFeatureEnabledForPath(item.path)) return false;
               return true;
             });
             if (!visibleItems.length) return null;

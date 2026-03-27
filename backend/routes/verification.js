@@ -43,9 +43,9 @@ router.get('/', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
  * POST /api/geofences
  * Create a new geofence
  * @route POST /api/geofences
- * @access Private (Admin only)
+ * @access Private (Admin/HR)
  */
-router.post('/', authenticate, checkRole(['admin']), async (req, res) => {
+router.post('/', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
   try {
     const workspaceId = req.user.workspaceId;
     const { name, description, latitude, longitude, radiusMeters, isActive } = req.body;
@@ -87,13 +87,7 @@ router.post('/', authenticate, checkRole(['admin']), async (req, res) => {
  * @route GET /api/geofences/:id
  * @access Private (Admin/HR only)
  */
-router.get('/:id', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
-  // Guard: only match valid MongoDB ObjectIds — static paths (validate, status, nearby)
-  // must be declared after this catch-all but registered before it in Express order.
-  // This prevents routing conflicts when static paths are requested.
-  if (!/^[0-9a-fA-F]{24}$/.test(req.params.id)) {
-    return res.status(404).json({ message: 'Not found' });
-  }
+router.get('/:id([0-9a-fA-F]{24})', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
   try {
     const geofence = await GeofenceService.getGeofenceById(req.params.id);
     
@@ -113,9 +107,9 @@ router.get('/:id', authenticate, checkRole(['admin', 'hr']), async (req, res) =>
  * PUT /api/geofences/:id
  * Update an existing geofence
  * @route PUT /api/geofences/:id
- * @access Private (Admin only)
+ * @access Private (Admin/HR)
  */
-router.put('/:id', authenticate, checkRole(['admin']), async (req, res) => {
+router.put('/:id([0-9a-fA-F]{24})', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
   try {
     const workspaceId = req.user.workspaceId;
     const { name, description, latitude, longitude, radiusMeters, isActive } = req.body;
@@ -152,9 +146,9 @@ router.put('/:id', authenticate, checkRole(['admin']), async (req, res) => {
  * DELETE /api/geofences/:id
  * Delete a geofence
  * @route DELETE /api/geofences/:id
- * @access Private (Admin only)
+ * @access Private (Admin/HR)
  */
-router.delete('/:id', authenticate, checkRole(['admin']), async (req, res) => {
+router.delete('/:id([0-9a-fA-F]{24})', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
   try {
     const workspaceId = req.user.workspaceId;
     
@@ -193,7 +187,7 @@ router.get('/validate', authenticate, async (req, res) => {
     const workspaceId = req.user.workspaceId;
     const { latitude, longitude, required } = req.query;
     
-    if (!latitude || !longitude) {
+    if (latitude === undefined || latitude === null || latitude === '' || longitude === undefined || longitude === null || longitude === '') {
       return res.status(400).json({ message: 'Latitude and longitude are required' });
     }
     
@@ -231,7 +225,7 @@ router.post('/validate', authenticate, async (req, res) => {
     const workspaceId = req.user.workspaceId;
     const { latitude, longitude, required } = req.body;
     
-    if (!latitude || !longitude) {
+    if (latitude === undefined || latitude === null || latitude === '' || longitude === undefined || longitude === null || longitude === '') {
       return res.status(400).json({ message: 'Latitude and longitude are required' });
     }
     
@@ -264,7 +258,7 @@ router.get('/status', authenticate, async (req, res) => {
     const workspaceId = req.user.workspaceId;
     const { latitude, longitude } = req.query;
     
-    if (!latitude || !longitude) {
+    if (latitude === undefined || latitude === null || latitude === '' || longitude === undefined || longitude === null || longitude === '') {
       return res.status(400).json({ message: 'Latitude and longitude are required' });
     }
     
@@ -292,7 +286,7 @@ router.post('/status', authenticate, async (req, res) => {
     const workspaceId = req.user.workspaceId;
     const { latitude, longitude } = req.body;
     
-    if (!latitude || !longitude) {
+    if (latitude === undefined || latitude === null || latitude === '' || longitude === undefined || longitude === null || longitude === '') {
       return res.status(400).json({ message: 'Latitude and longitude are required' });
     }
     
@@ -338,9 +332,9 @@ router.get('/nearby', authenticate, checkRole(['admin', 'hr']), async (req, res)
  * POST /api/geofences/:id/toggle
  * Toggle geofence active status
  * @route POST /api/geofences/:id/toggle
- * @access Private (Admin only)
+ * @access Private (Admin/HR)
  */
-router.post('/:id/toggle', authenticate, checkRole(['admin']), async (req, res) => {
+router.post('/:id([0-9a-fA-F]{24})/toggle', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
   try {
     const workspaceId = req.user.workspaceId;
     
@@ -372,9 +366,9 @@ router.post('/:id/toggle', authenticate, checkRole(['admin']), async (req, res) 
  * POST /api/geofences/bulk
  * Bulk create geofences
  * @route POST /api/geofences/bulk
- * @access Private (Admin only)
+ * @access Private (Admin/HR)
  */
-router.post('/bulk', authenticate, checkRole(['admin']), async (req, res) => {
+router.post('/bulk', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
   try {
     const workspaceId = req.user.workspaceId;
     const { geofences } = req.body;

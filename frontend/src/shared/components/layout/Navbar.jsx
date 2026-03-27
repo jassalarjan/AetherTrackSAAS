@@ -1,7 +1,7 @@
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { useTheme } from '@/app/providers/ThemeProvider';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Bell, LogOut, LayoutDashboard, CheckSquare, Users, UserCog, Kanban, Menu, X, ChevronLeft, ChevronRight, BarChart3, Settings, Calendar as CalendarIcon, Activity, Building2 } from 'lucide-react';
+import { Bell, LogOut, LayoutDashboard, CheckSquare, Users, UserCog, Kanban, Menu, X, ChevronLeft, ChevronRight, BarChart3, Settings, Calendar as CalendarIcon, Activity, Building2, Download } from 'lucide-react';
 import Avatar from '@/shared/components/ui/Avatar';
 import { useState, useEffect } from 'react';
 import api from '@/shared/services/axios';
@@ -124,6 +124,12 @@ const Navbar = () => {
       name: 'Settings',
       href: '/settings',
       icon: Settings,
+      roles: ['admin', 'hr', 'team_lead', 'member'],
+    },
+    {
+      name: 'Mobile App',
+      href: '/mobile-app-download',
+      icon: Download,
       roles: ['admin', 'hr', 'team_lead', 'member'],
     },
     

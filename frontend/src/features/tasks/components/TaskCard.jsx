@@ -116,15 +116,15 @@ const AvatarStack = ({ users = [], max = 3, size = 24 }) => {
     <div className="flex -space-x-2">
       {visible.map((user, index) => (
         <div
-          key={user.id || index}
+          key={user._id || user.id || index}
           className="relative rounded-full border-2 border-[var(--bg-canvas)] overflow-hidden"
           style={{ width: size, height: size }}
-          title={user.name}
+          title={user.full_name || user.name}
         >
           {user.avatar ? (
             <img 
               src={user.avatar} 
-              alt={user.name}
+              alt={user.full_name || user.name}
               className="w-full h-full object-cover"
             />
           ) : (
@@ -132,7 +132,7 @@ const AvatarStack = ({ users = [], max = 3, size = 24 }) => {
               className="w-full h-full flex items-center justify-center text-[10px] font-medium text-white"
               style={{ backgroundColor: user.color || 'var(--brand)' }}
             >
-              {user.name?.charAt(0)?.toUpperCase() || '?'}
+              {(user.full_name || user.name)?.charAt(0)?.toUpperCase() || '?'}
             </div>
           )}
         </div>
@@ -242,6 +242,7 @@ export const TaskCard = ({
   const [isHovered, setIsHovered] = useState(false);
   
   const {
+    _id,
     id,
     title,
     description,
@@ -249,18 +250,26 @@ export const TaskCard = ({
     status = 'todo',
     progress = 0,
     dueDate,
+    due_date,
     assignees = [],
+    assigned_to,
     project,
+    project_id,
     tags = [],
   } = task;
+
+  const taskId = _id || id;
+  const normalizedDueDate = dueDate || due_date;
+  const normalizedAssignees = assignees.length > 0 ? assignees : (assigned_to || []);
+  const normalizedProject = project || project_id;
   
   const priorityColor = PRIORITY_COLORS[priority] || PRIORITY_COLORS.medium;
   
   const handleClick = () => {
     if (onClick) {
       onClick(task);
-    } else {
-      navigate(`/tasks/${id}`);
+    } else if (taskId) {
+      navigate(`/tasks/${taskId}`);
     }
   };
   
@@ -296,9 +305,9 @@ export const TaskCard = ({
       <div className="p-3 pl-5">
         {/* Header row: Project label + Priority */}
         <div className="flex items-center justify-between mb-2">
-          {project && (
+          {normalizedProject && (
             <span className="text-xs font-medium text-[var(--text-muted)] px-2 py-0.5 rounded bg-[var(--bg-base)]">
-              {project.name || project}
+              {normalizedProject.name || normalizedProject}
             </span>
           )}
           <span className="text-xs font-medium capitalize px-2 py-0.5 rounded" style={{ color: priorityColor, backgroundColor: `${priorityColor}15` }}>
@@ -340,16 +349,16 @@ export const TaskCard = ({
         {/* Footer row: Avatar stack + Due chip + Progress ring */}
         <div className="flex items-center justify-between mt-auto">
           <div className="flex-1">
-            {assignees.length > 0 ? (
-              <AvatarStack users={assignees} max={3} size={24} />
+            {normalizedAssignees.length > 0 ? (
+              <AvatarStack users={normalizedAssignees} max={3} size={24} />
             ) : (
               <span className="text-xs text-[var(--text-muted)]">Unassigned</span>
             )}
           </div>
           
           <div className="flex items-center gap-2">
-            {dueDate && (
-              <DueChip dueDate={dueDate} />
+            {normalizedDueDate && (
+              <DueChip dueDate={normalizedDueDate} />
             )}
             <ProgressRing 
               progress={progress} 

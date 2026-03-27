@@ -1,6 +1,7 @@
 ﻿import { useState, useEffect } from 'react';
 import { Calendar as BigCalendar, momentLocalizer } from 'react-big-calendar';
 import moment from 'moment';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { useTheme } from '@/app/providers/ThemeProvider';
 import api from '@/shared/services/axios';
@@ -16,6 +17,7 @@ const localizer = momentLocalizer(moment);
 const Calendar = () => {
   const { user } = useAuth();
   const { theme } = useTheme();
+  const navigate = useNavigate();
   const [tasks, setTasks] = useState([]);
   const [events, setEvents] = useState([]);
   const [selectedTask, setSelectedTask] = useState(null);
@@ -138,11 +140,12 @@ const Calendar = () => {
   };
 
   const handleSelectSlot = (slotInfo) => {
-    window.location.href = `/tasks?create=true&date=${slotInfo.start.toISOString()}`;
+    navigate(`/tasks?create=true&date=${slotInfo.start.toISOString()}`);
   };
 
   return (
     <ResponsivePageLayout title="Calendar" icon={CalendarIcon} noPadding>
+      <div className="flex flex-col h-full">
         {/* Header Section */}
         <header className={`border-b border-[var(--border-soft)] bg-[var(--bg-base)] shrink-0`}>
           <div className="flex items-center justify-between px-6 py-4">
@@ -159,7 +162,7 @@ const Calendar = () => {
                 <Settings size={20} />
               </button>
               <button
-                onClick={() => window.location.href = '/tasks?create=true'}
+                onClick={() => navigate('/tasks?create=true')}
                 className="flex items-center justify-center rounded h-9 px-4 bg-[#C4713A] text-white gap-2 text-sm font-bold hover:bg-[#A35C28] transition-colors shadow-sm shadow-blue-900/20"
               >
                 <Plus size={20} />
@@ -316,20 +319,20 @@ const Calendar = () => {
                 <p className={`text-[var(--text-secondary)]`}>{selectedTask.description || 'No description'}</p>
               </div>
 
-              <div className="flex gap-3">
+              <div className="flex gap-3 flex-wrap">
                 <span className={`inline-block px-3 py-1 rounded text-xs font-semibold uppercase ${
-                  selectedTask.status === 'todo' ? 'bg-slate-500/20 text-slate-300' :
-                  selectedTask.status === 'in_progress' ? 'bg-blue-500/20 text-blue-400' :
-                  selectedTask.status === 'review' ? 'bg-yellow-500/20 text-yellow-400' :
-                  'bg-green-500/20 text-green-400'
+                  selectedTask.status === 'todo'        ? 'bg-[var(--bg-surface)] text-[var(--text-secondary)] border border-[var(--border-mid)]' :
+                  selectedTask.status === 'in_progress' ? 'bg-[var(--brand-dim)] text-[var(--brand)]' :
+                  selectedTask.status === 'review'      ? 'bg-[var(--warning-dim)] text-[var(--warning)]' :
+                  'bg-[var(--success-dim)] text-[var(--success)]'
                 }`}>
                   {selectedTask.status.replace('_', ' ')}
                 </span>
                 <span className={`inline-block px-3 py-1 rounded text-xs font-semibold uppercase ${
-                  selectedTask.priority === 'low' ? 'bg-green-500/20 text-green-400' :
-                  selectedTask.priority === 'medium' ? 'bg-yellow-500/20 text-yellow-400' :
-                  selectedTask.priority === 'high' ? 'bg-orange-500/20 text-orange-400' :
-                  'bg-red-500/20 text-red-400'
+                  selectedTask.priority === 'low'    ? 'bg-[var(--success-dim)] text-[var(--success)]' :
+                  selectedTask.priority === 'medium' ? 'bg-[var(--warning-dim)] text-[var(--warning)]' :
+                  selectedTask.priority === 'high'   ? 'bg-[var(--brand-dim)] text-[var(--brand)]' :
+                  'bg-[var(--danger-dim)] text-[var(--danger)]'
                 }`}>
                   {selectedTask.priority}
                 </span>
@@ -368,7 +371,7 @@ const Calendar = () => {
                     </p>
                     <div className="flex flex-wrap gap-2">
                       {selectedTask.assigned_to.map((assignee) => (
-                        <span key={assignee._id} className="inline-block bg-blue-500/10 text-blue-400 text-xs px-2 py-1 rounded border border-blue-500/20">
+                        <span key={assignee._id} className="inline-block text-xs px-2 py-1 rounded border" style={{ background: 'var(--brand-dim)', color: 'var(--brand)', borderColor: 'rgba(196,113,58,0.25)' }}>
                           {assignee.full_name}
                         </span>
                       ))}
@@ -387,7 +390,7 @@ const Calendar = () => {
               </div>
 
               <button
-                onClick={() => window.location.href = `/tasks`}
+                onClick={() => navigate('/tasks')}
                 className="w-full px-6 py-2 bg-[var(--brand)] text-white rounded hover:bg-[var(--brand-light)] transition-colors font-semibold"
               >
                 View in Tasks
@@ -504,6 +507,7 @@ const Calendar = () => {
         shortcuts={calendarShortcuts}
         pageName="Calendar"
       />
+      </div>
     </ResponsivePageLayout>
   );
 };

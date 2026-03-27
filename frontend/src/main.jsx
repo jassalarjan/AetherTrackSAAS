@@ -6,7 +6,26 @@ import '@/styles/animations.css';
 import '@/styles/mobile-responsive.css';
 import { registerSW } from 'virtual:pwa-register';
 
-// Disable all browser console output for production-like UX cleanliness.
+const updateViewportUnits = () => {
+  if (typeof window === 'undefined' || typeof document === 'undefined') return;
+
+  const viewport = window.visualViewport;
+  const width = viewport?.width || window.innerWidth;
+  const height = viewport?.height || window.innerHeight;
+
+  document.documentElement.style.setProperty('--app-vw', `${width * 0.01}px`);
+  document.documentElement.style.setProperty('--app-vh', `${height * 0.01}px`);
+  document.documentElement.style.setProperty('--app-height', `${height}px`);
+};
+
+updateViewportUnits();
+window.addEventListener('resize', updateViewportUnits, { passive: true });
+window.addEventListener('orientationchange', updateViewportUnits, { passive: true });
+window.visualViewport?.addEventListener('resize', updateViewportUnits, { passive: true });
+
+// CONSOLE DISABLED FOR PRODUCTION - Enable for development/debugging
+// Uncomment the code below to enable console in production
+/*
 if (typeof window !== 'undefined') {
   const noop = () => {};
   console.log = noop;
@@ -15,6 +34,7 @@ if (typeof window !== 'undefined') {
   console.error = noop;
   console.debug = noop;
 }
+*/
 
 // Register Service Worker
 const updateSW = registerSW({

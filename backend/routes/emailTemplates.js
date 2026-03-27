@@ -9,16 +9,19 @@ import { sendEmail } from '../utils/emailService.js';
 import brevoService from '../services/brevoEmailService.js';
 
 const router = express.Router();
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const isValidEmail = (value) => {
+  if (typeof value !== 'string') return false;
+  return EMAIL_REGEX.test(value.trim());
+};
 
 // =============================================================================
 // SECURITY: Generic Error Response Helper
 // =============================================================================
-// In production, we return generic error messages to prevent information leakage
-// Only detailed errors are logged server-side for debugging
+// In production, we return generic error messages to prevent information leakage.
 const handleError = (res, error, context = 'operation') => {
-  // Log full error server-side for debugging
-  console.error(`[ERROR] ${context}:`, error);
-  
+  void context;
   // Return generic message in production
   if (process.env.NODE_ENV === 'production') {
     return res.status(500).json({ message: 'An error occurred. Please try again later.' });
@@ -44,8 +47,7 @@ router.get('/', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
     const templates = await EmailTemplate.find(query).sort({ isPredefined: -1, name: 1 });
 
     res.json({ success: true, templates });
-  } catch (error) {
-    console.error('Get templates error:', error);
+  } catch {
     res.status(500).json({ message: 'Failed to fetch email templates' });
   }
 });
@@ -78,7 +80,6 @@ router.post('/', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
 
     res.status(201).json({ success: true, template });
   } catch (error) {
-    console.error('Create template error:', error);
     if (error.code === 11000) {
       res.status(400).json({ message: 'Template code already exists' });
     } else {
@@ -122,8 +123,7 @@ router.put('/:id', authenticate, checkRole(['admin', 'hr']), async (req, res) =>
     });
 
     res.json({ success: true, template });
-  } catch (error) {
-    console.error('Update template error:', error);
+  } catch {
     res.status(500).json({ message: 'Failed to update template' });
   }
 });
@@ -155,8 +155,7 @@ router.delete('/:id', authenticate, checkRole(['admin', 'hr']), async (req, res)
     });
 
     res.json({ success: true, message: 'Template deleted' });
-  } catch (error) {
-    console.error('Delete template error:', error);
+  } catch {
     res.status(500).json({ message: 'Failed to delete template' });
   }
 });
@@ -189,8 +188,7 @@ router.post('/test', authenticate, checkRole(['admin', 'hr']), async (req, res) 
     } else {
       res.status(500).json({ message: 'Failed to send test email', error: result.error });
     }
-  } catch (error) {
-    console.error('Send test email error:', error);
+  } catch {
     res.status(500).json({ message: 'Failed to send test email' });
   }
 });
@@ -213,27 +211,29 @@ router.post('/send', authenticate, checkRole(['admin', 'hr']), async (req, res) 
         if (typeof firstRecipient === 'string') {
           if (firstRecipient.includes('@')) {
             // Direct email addresses
-            recipientEmails = recipients.map(email => ({ email, name: '' }));
+            recipientEmails = recipients.map(email => ({ email: String(email).trim(), name: '' }));
           } else {
             // User IDs - fetch user details
             const users = await User.find({
               _id: { $in: recipients },
               isActive: true
-            }).select('email fullName');
-            recipientEmails = users.map(user => ({ email: user.email, name: user.fullName }));
+            }).select('email full_name');
+            recipientEmails = users.map(user => ({ email: user.email, name: user.full_name }));
           }
         } else if (typeof firstRecipient === 'object' && firstRecipient.email) {
           // Recipient objects with email and name
           recipientEmails = recipients.map(recipient => ({
-            email: recipient.email,
+            email: String(recipient.email).trim(),
             name: recipient.name || recipient.email
           }));
         }
       }
     } else if (recipients === 'all') {
-      const users = await User.find({ isActive: true }).select('email fullName');
-      recipientEmails = users.map(user => ({ email: user.email, name: user.fullName }));
+      const users = await User.find({ isActive: true }).select('email full_name');
+      recipientEmails = users.map(user => ({ email: user.email, name: user.full_name }));
     }
+
+    recipientEmails = recipientEmails.filter((recipient) => isValidEmail(recipient.email));
 
     if (recipientEmails.length === 0) {
       return res.status(400).json({ message: 'No valid recipients found' });
@@ -245,28 +245,32 @@ router.post('/send', authenticate, checkRole(['admin', 'hr']), async (req, res) 
       template = await EmailTemplate.findById(templateId);
     }
 
+    const configuredSenderEmail =
+      process.env.EMAIL_FROM || process.env.BREVO_LOGIN_EMAIL || process.env.EMAIL_USER;
+
+    if (!isValidEmail(configuredSenderEmail || '')) {
+      return res.status(500).json({
+        message: 'Email sender is not configured. Set EMAIL_FROM or BREVO_LOGIN_EMAIL in backend environment variables.'
+      });
+    }
+
     // Interpolate variables in content and subject
     const interpolatedSubject = brevoService.interpolateVariables(subject, variables);
     const interpolatedHtml = brevoService.interpolateVariables(htmlContent, variables);
 
     // Use brevoService for sending
-    console.log('📧 Sending emails to:', recipientEmails.length, 'recipients');
-    console.log('📧 Recipients:', recipientEmails);
-    console.log('📧 Subject:', interpolatedSubject);
-    
     const result = await brevoService.send({
       to: recipientEmails.map(r => r.email),
       subject: interpolatedSubject,
       htmlContent: interpolatedHtml,
       params: {}, // No additional params needed since we already interpolated
-      from: template ? {
-        name: template.senderName || process.env.EMAIL_FROM_NAME || 'AetherTrack',
-        email: template.senderEmail || process.env.EMAIL_FROM || 'updates.codecatalyst@gmail.com'
-      } : null,
+      from: {
+        name: template?.senderName || process.env.EMAIL_FROM_NAME || 'AetherTrack',
+        // Always use configured sender email to avoid Brevo sender verification rejection.
+        email: configuredSenderEmail
+      },
       useLayout: false // Predefined templates already have complete HTML structure
     });
-    
-    console.log('📧 Send result:', result);
 
     if (result.success) {
       await logChange({
@@ -283,11 +287,9 @@ router.post('/send', authenticate, checkRole(['admin', 'hr']), async (req, res) 
         result
       });
     } else {
-      console.error('❌ Email send failed:', result.error);
       res.status(500).json({ message: 'Failed to send emails', error: result.error });
     }
   } catch (error) {
-    console.error('❌ Send email error:', error);
     // SECURITY: Do NOT expose error details in production response
     // Return generic message to prevent information leakage
     return handleError(res, error, 'Send emails');
@@ -373,8 +375,7 @@ router.get('/users', authenticate, checkRole(['admin', 'hr']), async (req, res) 
         roles: roles.sort()
       }
     });
-  } catch (error) {
-    console.error('Get users error:', error);
+  } catch {
     res.status(500).json({ message: 'Failed to fetch users' });
   }
 });
@@ -382,15 +383,16 @@ router.get('/users', authenticate, checkRole(['admin', 'hr']), async (req, res) 
 // Get email configuration status
 router.get('/config', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
   try {
+    const senderEmail = process.env.EMAIL_FROM || process.env.BREVO_LOGIN_EMAIL || process.env.EMAIL_USER || '';
     const config = {
       brevoConfigured: !!process.env.BREVO_API_KEY,
-      senderEmail: process.env.BREVO_SENDER_EMAIL || 'updates.codecatalyst@gmail.com',
-      senderName: process.env.BREVO_SENDER_NAME || 'AetherTrack'
+      senderConfigured: isValidEmail(senderEmail),
+      senderEmail: senderEmail || null,
+      senderName: process.env.EMAIL_FROM_NAME || process.env.BREVO_SENDER_NAME || 'AetherTrack'
     };
 
     res.json({ success: true, config });
-  } catch (error) {
-    console.error('Get email config error:', error);
+  } catch {
     res.status(500).json({ message: 'Failed to get email configuration' });
   }
 });
@@ -445,8 +447,7 @@ router.post('/test-send', authenticate, checkRole(['admin', 'hr']), async (req, 
     } else {
       res.status(500).json({ message: 'Failed to send test email', error: result.error });
     }
-  } catch (error) {
-    console.error('Test send error:', error);
+  } catch {
     res.status(500).json({ message: 'Failed to send test email' });
   }
 });
@@ -501,7 +502,6 @@ router.post('/bulk-send', authenticate, checkRole(['admin', 'hr']), async (req, 
           results.push({ email: recipient.email, status: 'failed', error: result.error });
         }
       } catch (error) {
-        console.error(`Failed to send to ${recipient.email}:`, error);
         results.push({ email: recipient.email, status: 'error', error: error.message });
       }
     }
@@ -526,8 +526,7 @@ router.post('/bulk-send', authenticate, checkRole(['admin', 'hr']), async (req, 
       message: `Emails processed: ${sentCount} sent, ${recipients.length - sentCount} failed`,
       results: { sentCount, totalCount: recipients.length, details: results }
     });
-  } catch (error) {
-    console.error('Bulk send error:', error);
+  } catch {
     res.status(500).json({ message: 'Failed to send emails' });
   }
 });

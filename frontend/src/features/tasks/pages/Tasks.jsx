@@ -62,6 +62,7 @@ const Tasks = () => {
   const [projects, setProjects] = useState([]);
   const [sprints, setSprints] = useState([]);
   const searchInputRef = useRef(null);
+  const currentUserId = user?._id || user?.id || null;
 
   // Pagination
   const [rowsPerPage, setRowsPerPage] = useState(25);
@@ -181,7 +182,7 @@ const Tasks = () => {
         const assignedIds = Array.isArray(t.assigned_to)
           ? t.assigned_to.map(u => typeof u === 'object' ? u._id : u)
           : [typeof t.assigned_to === 'object' ? t.assigned_to._id : t.assigned_to];
-        const isAssignedToUser = assignedIds.includes(user?.id);
+        const isAssignedToUser = currentUserId ? assignedIds.includes(currentUserId) : false;
         if (user?.role === 'member') {
           const belongsToUserTeam = user.team_id && t.team_id &&
             (t.team_id._id === user.team_id || t.team_id === user.team_id);
@@ -191,7 +192,7 @@ const Tasks = () => {
       });
     }
     setFilteredTasks(filtered);
-  }, [tasks, filters, user?.id, user?.role, user?.team_id]);
+  }, [tasks, filters, currentUserId, user?.role, user?.team_id]);
 
   const fetchTasks = async () => {
     try {
@@ -301,12 +302,12 @@ const Tasks = () => {
     let members = taskTeam ? taskTeam.members : [];
 
     if (taskTeam && user?.role === 'team_lead') {
-      const teamLeadAlreadyIncluded = members.some(member => member._id === user?.id);
-      if (!teamLeadAlreadyIncluded && taskTeam.lead_id?._id === user?.id) {
+      const teamLeadAlreadyIncluded = currentUserId ? members.some(member => member._id === currentUserId) : false;
+      if (!teamLeadAlreadyIncluded && taskTeam.lead_id?._id === currentUserId) {
         members = [
           ...members,
           {
-            _id: user.id,
+            _id: currentUserId,
             full_name: user.full_name || user.username || user.email,
             role: user.role,
             email: user.email
@@ -353,12 +354,12 @@ const Tasks = () => {
     let members = selectedTeam ? selectedTeam.members : [];
 
     if (selectedTeam && user?.role === 'team_lead') {
-      const teamLeadAlreadyIncluded = members.some(member => member._id === user?.id);
-      if (!teamLeadAlreadyIncluded && selectedTeam.lead_id?._id === user?.id) {
+      const teamLeadAlreadyIncluded = currentUserId ? members.some(member => member._id === currentUserId) : false;
+      if (!teamLeadAlreadyIncluded && selectedTeam.lead_id?._id === currentUserId) {
         members = [
           ...members,
           {
-            _id: user.id,
+            _id: currentUserId,
             full_name: user.full_name || user.username || user.email,
             role: user.role,
             email: user.email
@@ -498,12 +499,19 @@ const Tasks = () => {
 
   const canEditTask = (task) => {
     if (['admin', 'hr', 'team_lead'].includes(user?.role)) return true;
-    return task.created_by._id === user?.id || task.assigned_to?._id === user?.id;
+
+    const createdById = task?.created_by?._id || task?.created_by;
+    const assignedIds = Array.isArray(task?.assigned_to)
+      ? task.assigned_to.map((u) => (typeof u === 'object' ? u._id : u))
+      : (task?.assigned_to ? [typeof task.assigned_to === 'object' ? task.assigned_to._id : task.assigned_to] : []);
+
+    return currentUserId ? (createdById === currentUserId || assignedIds.includes(currentUserId)) : false;
   };
 
   const canDeleteTask = (task) => {
     if (['admin', 'hr', 'team_lead'].includes(user?.role)) return true;
-    return task.created_by._id === user?.id;
+    const createdById = task?.created_by?._id || task?.created_by;
+    return currentUserId ? createdById === currentUserId : false;
   };
 
   const getUserInitials = (name) => {
@@ -675,7 +683,7 @@ const Tasks = () => {
                 <TaskCard
                   key={task._id}
                   task={task}
-                  onView={() => viewTaskDetails(task)}
+                  onClick={() => viewTaskDetails(task)}
                   onEdit={() => openEditModal(task)}
                   onDelete={() => handleDeleteTask(task._id)}
                   onStatusChange={(status) => handleUpdateTask(task._id, { status })}
@@ -1229,12 +1237,12 @@ const Tasks = () => {
                     let members = selectedTeam ? selectedTeam.members : [];
 
                     if (selectedTeam && user?.role === 'team_lead') {
-                      const teamLeadAlreadyIncluded = members.some(member => member._id === user?.id);
-                      if (!teamLeadAlreadyIncluded && selectedTeam.lead_id?._id === user?.id) {
+                      const teamLeadAlreadyIncluded = currentUserId ? members.some(member => member._id === currentUserId) : false;
+                      if (!teamLeadAlreadyIncluded && selectedTeam.lead_id?._id === currentUserId) {
                         members = [
                           ...members,
                           {
-                            _id: user.id,
+                            _id: currentUserId,
                             full_name: user.full_name || user.username || user.email,
                             role: user.role,
                             email: user.email
@@ -1277,7 +1285,7 @@ const Tasks = () => {
                         />
                         <span className="text-sm text-[var(--text-primary)]">
                           {member.full_name} <span className="text-[var(--text-muted)] text-xs">({member.role})</span>
-                          {member._id === user?.id && <span className="text-[#C4713A] font-medium text-xs"> (You)</span>}
+                          {member._id === currentUserId && <span className="text-[#C4713A] font-medium text-xs"> (You)</span>}
                         </span>
                       </label>
                     ))}
@@ -1426,7 +1434,7 @@ const Tasks = () => {
                           />
                           <span className="text-sm text-[var(--text-primary)]">
                             {member.full_name} <span className="text-[var(--text-muted)] text-xs">({member.role})</span>
-                            {member._id === user?.id && <span className="text-[#C4713A] font-medium text-xs"> (You)</span>}
+                            {member._id === currentUserId && <span className="text-[#C4713A] font-medium text-xs"> (You)</span>}
                           </span>
                         </label>
                       ))}

@@ -47,6 +47,7 @@ const SprintManagement     = lazy(() => import('@/features/projects/pages/Sprint
 const ResourceWorkload     = lazy(() => import('@/features/projects/pages/ResourceWorkload'));
 const ReallocationDashboard = lazy(() => import('@/features/projects/pages/ReallocationDashboard'));
 const FeatureMatrix        = lazy(() => import('@/features/admin/pages/FeatureMatrix'));
+const MobileAppDownload    = lazy(() => import('@/features/admin/pages/MobileAppDownload'));
 const NotFound             = lazy(() => import('@/app/pages/NotFound'));
 
 function AppContent() {
@@ -345,11 +346,28 @@ function AppContent() {
       <Route
         path="/feature-matrix"
         element={
-          <ProtectedRoute allowedRoles={['admin']}>
+          <ProtectedRoute requireSystemAdmin>
             <FeatureMatrix />
           </ProtectedRoute>
         }
       />
+
+      <Route
+        path="/mobile-app-download"
+        element={
+          <ProtectedRoute>
+            <MobileAppDownload />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Legacy aliases kept for older quick links/bookmarks */}
+      <Route path="/hr/self-attendance" element={<Navigate to="/self-attendance" replace />} />
+      <Route path="/audit" element={<Navigate to="/audit-log" replace />} />
+      <Route path="/geofence" element={<Navigate to="/geofence-management" replace />} />
+      <Route path="/email-center" element={<Navigate to="/hr/email-center" replace />} />
+      <Route path="/features" element={<Navigate to="/feature-matrix" replace />} />
+      <Route path="/verification" element={<Navigate to="/verification-settings" replace />} />
 
       {/* Catch-all: show 404 page with sidebar for logged-in users */}
       <Route path="*" element={<NotFound />} />

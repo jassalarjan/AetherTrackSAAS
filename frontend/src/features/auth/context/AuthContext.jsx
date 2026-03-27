@@ -146,19 +146,64 @@ export const AuthProvider = ({ children }) => {
     const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
     const accessToken = getAccessToken();
 
-    if (!accessToken) return;
+    if (!accessToken || !userId) return;
+
+    // Ensure we never keep multiple active sockets.
+    if (socket) {
+      socket.disconnect();
+      setSocket(null);
+    }
     
     const newSocket = io(SOCKET_URL, {
       auth: { token: accessToken },
       transports: ['websocket', 'polling']
+    });
+
+    let attemptedSocketRefresh = false;
+
+    newSocket.io.on('reconnect_attempt', () => {
+      const latestToken = getAccessToken();
+      if (latestToken) {
+        newSocket.auth = { token: latestToken };
+      }
     });
     
     newSocket.on('connect', () => {
       newSocket.emit('join', userId);
     });
 
-    newSocket.on('connect_error', (error) => {
+    newSocket.on('connect_error', async (error) => {
       console.error('Socket connection error:', error.message);
+
+      const isAuthError = /Authentication error/i.test(error?.message || '');
+      if (!isAuthError) {
+        return;
+      }
+
+      // Token might have expired while socket auto-reconnected with stale auth.
+      if (!attemptedSocketRefresh) {
+        attemptedSocketRefresh = true;
+        try {
+          const response = await requestBootstrapRefresh();
+          const refreshedAccessToken = response?.data?.accessToken;
+          if (refreshedAccessToken) {
+            setAccessToken(refreshedAccessToken);
+            newSocket.auth = { token: refreshedAccessToken };
+            newSocket.connect();
+            return;
+          }
+        } catch {
+          // Fall through to logout flow below.
+        }
+      }
+
+      clearAccessToken();
+      localStorage.removeItem('user');
+      localStorage.removeItem('lastActivityTime');
+      setUser(null);
+      newSocket.disconnect();
+      setSocket(null);
+      window.dispatchEvent(new CustomEvent('auth:logout', { detail: { reason: 'socket-auth-failed' } }));
     });
 
     newSocket.on('disconnect', () => {

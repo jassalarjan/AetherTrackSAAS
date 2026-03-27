@@ -8,6 +8,22 @@
 import GeofenceLocation from '../models/GeofenceLocation.js';
 
 class GeofenceService {
+  static parseCoordinate(value, label) {
+    const parsed = Number(value);
+    if (!Number.isFinite(parsed)) {
+      throw new Error(`${label} must be a valid number`);
+    }
+    return parsed;
+  }
+
+  static getRadiusMeters(input, fallback = 100) {
+    const parsed = Number(input);
+    if (!Number.isFinite(parsed)) {
+      return fallback;
+    }
+    return parsed;
+  }
+
   /**
    * Create a new geofence location
    * @param {string} workspaceId - Workspace ID
@@ -16,7 +32,7 @@ class GeofenceService {
    * @returns {Promise<Object>} Created geofence
    */
   static async createGeofence(workspaceId, data, userId) {
-    const { name, description, latitude, longitude, radiusMeters, isActive = true } = data;
+    const { name, description, latitude, longitude, radiusMeters, radius_meters, isActive = true } = data;
     
     // Validate required fields
     if (!name) {
@@ -27,12 +43,15 @@ class GeofenceService {
       throw new Error('Latitude and longitude are required');
     }
     
+    const normalizedLatitude = this.parseCoordinate(latitude, 'Latitude');
+    const normalizedLongitude = this.parseCoordinate(longitude, 'Longitude');
+
     // Validate coordinates
-    if (latitude < -90 || latitude > 90) {
+    if (normalizedLatitude < -90 || normalizedLatitude > 90) {
       throw new Error('Latitude must be between -90 and 90');
     }
     
-    if (longitude < -180 || longitude > 180) {
+    if (normalizedLongitude < -180 || normalizedLongitude > 180) {
       throw new Error('Longitude must be between -180 and 180');
     }
     
@@ -43,9 +62,9 @@ class GeofenceService {
       description: description || '',
       location: {
         type: 'Point',
-        coordinates: [longitude, latitude] // GeoJSON uses [longitude, latitude]
+        coordinates: [normalizedLongitude, normalizedLatitude] // GeoJSON uses [longitude, latitude]
       },
-      radiusMeters: radiusMeters || 100,
+      radiusMeters: this.getRadiusMeters(radiusMeters ?? radius_meters),
       isActive,
       createdBy: userId
     });
@@ -77,8 +96,12 @@ class GeofenceService {
     }
     
     if (data.latitude !== undefined || data.longitude !== undefined) {
-      const latitude = data.latitude !== undefined ? data.latitude : geofence.location.coordinates[1];
-      const longitude = data.longitude !== undefined ? data.longitude : geofence.location.coordinates[0];
+      const latitude = data.latitude !== undefined
+        ? this.parseCoordinate(data.latitude, 'Latitude')
+        : geofence.location.coordinates[1];
+      const longitude = data.longitude !== undefined
+        ? this.parseCoordinate(data.longitude, 'Longitude')
+        : geofence.location.coordinates[0];
       
       // Validate coordinates
       if (latitude < -90 || latitude > 90) {
@@ -95,8 +118,11 @@ class GeofenceService {
       };
     }
     
-    if (data.radiusMeters !== undefined) {
-      geofence.radiusMeters = data.radiusMeters;
+    if (data.radiusMeters !== undefined || data.radius_meters !== undefined) {
+      geofence.radiusMeters = this.getRadiusMeters(
+        data.radiusMeters ?? data.radius_meters,
+        geofence.radiusMeters ?? 100
+      );
     }
     
     if (data.isActive !== undefined) {
@@ -240,9 +266,24 @@ class GeofenceService {
     // Handle both populated geofence objects and plain objects
     const geoLat = geofence.location?.coordinates?.[1] ?? geofence.latitude;
     const geoLon = geofence.location?.coordinates?.[0] ?? geofence.longitude;
-    const radius = geofence.radiusMeters || geofence.radius;
-    
-    const distance = this.calculateDistance(latitude, longitude, geoLat, geoLon);
+    const radius = geofence.radiusMeters ?? geofence.radius_meters ?? geofence.radius;
+
+    let distance;
+    try {
+      distance = this.calculateDistance(
+        this.parseCoordinate(latitude, 'Latitude'),
+        this.parseCoordinate(longitude, 'Longitude'),
+        this.parseCoordinate(geoLat, 'Geofence latitude'),
+        this.parseCoordinate(geoLon, 'Geofence longitude')
+      );
+    } catch {
+      return {
+        within: false,
+        distance: Infinity,
+        radius: Number(radius) || 0,
+        geofenceName: geofence.name
+      };
+    }
     
     return {
       within: distance <= radius,

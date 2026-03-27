@@ -42,6 +42,16 @@ const settingsService = {
   updateWorkspaceBilling: (data) =>
     api.patch('/settings/workspace/billing', data).then(r => r.data),
 
+  // ── Feature matrix / feature flags ───────────────────────────────────────
+  getEnabledFeatures: () =>
+    api.get('/settings/workspace/features').then(r => r.data.features ?? {}),
+
+  getFeatureMatrix: () =>
+    api.get('/settings/workspace/feature-matrix').then(r => r.data.features ?? {}),
+
+  updateFeatureMatrix: (features) =>
+    api.patch('/settings/workspace/feature-matrix', { features }).then(r => r.data.features ?? {}),
+
   // ── Webhooks ──────────────────────────────────────────────────────────────
   listWebhooks: () =>
     api.get('/settings/workspace/webhooks').then(r => r.data),

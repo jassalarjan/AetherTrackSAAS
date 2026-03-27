@@ -135,6 +135,18 @@ const attendanceSchema = new mongoose.Schema({
         default: null
       }
     },
+    // GeoJSON point for geospatial queries
+    geoPoint: {
+      type: {
+        type: String,
+        enum: ['Point'],
+        default: null
+      },
+      coordinates: {
+        type: [Number],
+        default: null
+      }
+    },
     // Device information
     deviceInfo: {
       userAgent: {
@@ -248,7 +260,7 @@ attendanceSchema.index({ shift_id: 1 });
 // Verification-related indexes
 attendanceSchema.index({ verificationStatus: 1 });
 attendanceSchema.index({ 'verification.photoHash': 1 });
-attendanceSchema.index({ 'verification.gpsLocation': '2dsphere' });
+attendanceSchema.index({ 'verification.geoPoint': '2dsphere' }, { sparse: true });
 attendanceSchema.index({ isOverridden: 1 });
 attendanceSchema.index({ 'adminReview.reviewedBy': 1 });
 

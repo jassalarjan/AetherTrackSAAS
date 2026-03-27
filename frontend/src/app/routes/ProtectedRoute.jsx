@@ -25,7 +25,7 @@ export const ProtectedRoute = ({ children, allowedRoles = [], requireSystemAdmin
 
   // Check if route requires system admin (admin with no workspace)
   if (requireSystemAdmin) {
-    const isSystemAdmin = user.isSystemAdmin || (!user.workspaceId && user.role === 'admin');
+    const isSystemAdmin = user.isSystemAdmin || user.role === 'super_admin' || (!user.workspaceId && user.role === 'admin');
     if (!isSystemAdmin) {
       return <Navigate to="/dashboard" replace />;
     }

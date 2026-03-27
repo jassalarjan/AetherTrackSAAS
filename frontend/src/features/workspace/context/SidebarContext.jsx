@@ -11,6 +11,9 @@
 
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
+import { useAuth } from '@/features/auth/context/AuthContext';
+import settingsService from '@/features/settings/services/settingsService';
+import { DEFAULT_FEATURE_FLAGS, FEATURE_KEY_BY_PATH } from '@/features/workspace/constants/featureFlags';
 
 const SidebarContext = createContext(undefined);
 
@@ -40,6 +43,8 @@ export const useSidebar = () => {
  * @param {React.ReactNode} children - Child components
  */
 export const SidebarProvider = ({ children }) => {
+  const { user } = useAuth();
+
   // Mobile detection
   const [isMobile, setIsMobile] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
@@ -60,10 +65,13 @@ export const SidebarProvider = ({ children }) => {
     return saved ? JSON.parse(saved) : [];
   });
 
+  const [enabledFeatures, setEnabledFeatures] = useState(DEFAULT_FEATURE_FLAGS);
+
   // Initialize on mount
   useEffect(() => {
     const checkMobile = () => {
-      const mobile = window.innerWidth < 1024;
+      // Keep drawer behavior for phones only; tablet/desktop use persistent sidebar.
+      const mobile = window.innerWidth < 768;
       const smallMobile = window.innerWidth < 768;
       setIsMobile(mobile);
       setShowBottomNav(smallMobile);   // only show bottom nav on phones, not tablets
@@ -86,6 +94,38 @@ export const SidebarProvider = ({ children }) => {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
+  const refreshEnabledFeatures = useCallback(async () => {
+    try {
+      const features = await settingsService.getEnabledFeatures();
+      setEnabledFeatures({
+        ...DEFAULT_FEATURE_FLAGS,
+        ...(features || {}),
+      });
+    } catch {
+      setEnabledFeatures(DEFAULT_FEATURE_FLAGS);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!user) {
+      setEnabledFeatures(DEFAULT_FEATURE_FLAGS);
+      return;
+    }
+    refreshEnabledFeatures();
+  }, [user, refreshEnabledFeatures]);
+
+  const isSuperAdmin = user?.role === 'super_admin' || (user?.role === 'admin' && !user?.workspaceId);
+
+  const isFeatureEnabledForPath = useCallback((path, options = {}) => {
+    const normalizedPath = (path || '').split('?')[0];
+    const key = FEATURE_KEY_BY_PATH[normalizedPath];
+
+    if (!key) return true;
+    if (options.superAdminBypass && isSuperAdmin) return true;
+
+    return enabledFeatures[key] !== false;
+  }, [enabledFeatures, isSuperAdmin]);
+
   // Determine shell mode based on route — keep sidebar visible for all normal
   // product routes, and only hide chrome on explicit command routes.
   const location = useLocation();
@@ -97,6 +137,9 @@ export const SidebarProvider = ({ children }) => {
     } else {
       setShellMode(SHELL_MODES.OPERATIONAL);
     }
+
+    // Route changes should always dismiss any mobile backdrop/drawer state.
+    setIsMobileOpen(false);
   }, [location.pathname]);
 
   // Toggle mobile sidebar
@@ -152,6 +195,7 @@ export const SidebarProvider = ({ children }) => {
     shellMode,
     showBottomNav,
     favorites,
+    enabledFeatures,
     isSidebarVisible,
     
     // Actions
@@ -161,6 +205,8 @@ export const SidebarProvider = ({ children }) => {
     setShellMode: setShellModeValue,
     toggleFavorite,
     reorderFavorites,
+    refreshEnabledFeatures,
+    isFeatureEnabledForPath,
     
     // Constants
     SHELL_MODES,

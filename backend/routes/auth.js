@@ -235,7 +235,9 @@ router.post('/login', loginLimiter, validateLogin, async (req, res) => {
         email: user.email,
         role: user.role,
         profile_picture: user.profile_picture || null,
-        team_id: user.team_id
+        team_id: user.team_id,
+        workspaceId: user.workspaceId || null,
+        isSystemAdmin: user.role === 'super_admin' || (user.role === 'admin' && !user.workspaceId),
       }
     });
   } catch (error) {
@@ -284,7 +286,9 @@ router.post('/refresh', refreshLimiter, async (req, res) => {
         full_name: user.full_name,
         email: user.email,
         role: user.role,
-        team_id: user.team_id
+        team_id: user.team_id,
+        workspaceId: user.workspaceId || null,
+        isSystemAdmin: user.role === 'super_admin' || (user.role === 'admin' && !user.workspaceId),
       }
     });
   } catch (error) {
@@ -587,7 +591,9 @@ router.get('/verify', authenticate, async (req, res) => {
         role: user.role,
         team_id: user.team_id,
         isEmailVerified: user.isEmailVerified,
-        profile_picture: user.profile_picture
+        profile_picture: user.profile_picture,
+        workspaceId: user.workspaceId || null,
+        isSystemAdmin: user.role === 'super_admin' || (user.role === 'admin' && !user.workspaceId),
       }
     });
   } catch (error) {

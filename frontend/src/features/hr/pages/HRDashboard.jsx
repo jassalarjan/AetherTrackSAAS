@@ -724,7 +724,7 @@ export default function HRDashboard() {
 
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div className={`${currentTheme.surface} rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden`}>
+        <div className={`${currentTheme.surface} rounded-lg shadow-xl max-w-full md:max-w-4xl mx-2 md:mx-0 w-full max-h-[90vh] overflow-hidden`}>
           <div className={`px-6 py-4 border-b ${currentTheme.border} flex items-center justify-between`}>
             <h3 className={`text-lg font-semibold ${currentTheme.text} flex items-center gap-2`}>
               <Eye className="w-5 h-5" />
@@ -889,12 +889,12 @@ export default function HRDashboard() {
       }
     >
       {/* Tabs */}
-      <div className={`flex gap-1 p-1 rounded-xl border ${currentTheme.border} mb-6 overflow-x-auto w-fit ${currentTheme.surface}`}>
+      <div className={`flex gap-2 p-2 rounded-xl border ${currentTheme.border} mb-6 overflow-x-auto w-full md:w-fit ${currentTheme.surface} min-h-[60px]`}>
         {['overview', 'attendance', 'calendar', 'users', 'email'].map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap ${
+            className={`px-5 py-3 rounded-lg font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
               activeTab === tab
                 ? `${currentColorScheme.primary} text-white shadow-sm`
                 : `${currentTheme.textSecondary} ${currentTheme.hover}`
@@ -978,8 +978,11 @@ export default function HRDashboard() {
                     <p className={`text-sm ${currentTheme.textSecondary}`}>{holidays.length} upcoming holidays</p>
                   </button>
 
-                  <button className="p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg hover:bg-orange-100 dark:hover:bg-orange-900/30 transition-colors">
-                    <TrendingUp className="w-8 h-8 text-orange-600 mb-2" />
+                  <button
+                    onClick={exportHRReport}
+                    className={`p-4 ${currentTheme.surfaceSecondary} rounded-lg ${currentTheme.hover} transition-colors border ${currentTheme.border}`}
+                  >
+                    <TrendingUp className={`w-8 h-8 ${currentColorScheme.primaryText} mb-2`} />
                     <p className={`font-medium ${currentTheme.text}`}>Generate Report</p>
                     <p className={`text-sm ${currentTheme.textSecondary}`}>Export attendance data</p>
                   </button>
@@ -1000,6 +1003,7 @@ export default function HRDashboard() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {users.slice(0, 9).map((userItem) => {
                     const attendanceStatus = getUserAttendanceStatus(userItem._id);
+                    const StatusIcon = attendanceStatus.icon;
                     return (
                       <div key={userItem._id} className={`${currentTheme.surfaceSecondary} rounded-lg p-4 border ${currentTheme.border}`}>
                         <div className="flex items-start justify-between mb-3">
@@ -1012,7 +1016,7 @@ export default function HRDashboard() {
                               <p className={`text-xs ${currentTheme.textSecondary}`}>{userItem.email}</p>
                             </div>
                           </div>
-                          <attendanceStatus.icon className={`w-5 h-5 ${attendanceStatus.color}`} />
+                          <StatusIcon className={`w-5 h-5 ${attendanceStatus.color}`} />
                         </div>
                         <div className="flex items-center justify-between">
                           <span className={`text-xs px-2 py-1 rounded-full ${getStatusColor(attendanceStatus.record?.status || 'not-marked')}`}>

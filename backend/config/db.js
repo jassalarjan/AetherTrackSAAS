@@ -1,9 +1,33 @@
 import mongoose from 'mongoose';
 
+const dropLegacyAttendanceGeoIndex = async (conn) => {
+  try {
+    const collection = conn.connection.db.collection('attendances');
+    const indexes = await collection.indexes();
+    const legacyGeoIndex = indexes.find(
+      (idx) => idx?.key && idx.key['verification.gpsLocation'] === '2dsphere'
+    );
+
+    if (!legacyGeoIndex) {
+      return;
+    }
+
+    await collection.dropIndex(legacyGeoIndex.name);
+    console.log(`✅ Dropped legacy attendance geo index: ${legacyGeoIndex.name}`);
+  } catch (error) {
+    if (error?.codeName === 'NamespaceNotFound') {
+      return;
+    }
+
+    console.warn('⚠️ Unable to clean up legacy attendance geo index:', error.message);
+  }
+};
+
 const connectDB = async () => {
   try {
     const conn = await mongoose.connect(process.env.MONGODB_URI);
     console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
+    await dropLegacyAttendanceGeoIndex(conn);
     
     // SECURITY: Handle connection errors after initial connection
     mongoose.connection.on('error', (err) => {

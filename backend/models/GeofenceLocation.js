@@ -90,12 +90,21 @@ geofenceLocationSchema.index({ workspaceId: 1, isActive: 1 });
  * @returns {Object} - { within: boolean, distance: number }
  */
 geofenceLocationSchema.methods.isWithinGeofence = function(longitude, latitude) {
+  const radius = this.radiusMeters ?? this.radius_meters ?? this.radius;
+  const lon2 = Number(longitude);
+  const lat2 = Number(latitude);
+
+  if (!Number.isFinite(lon2) || !Number.isFinite(lat2) || !Number.isFinite(radius)) {
+    return {
+      within: false,
+      distance: Infinity
+    };
+  }
+
   const R = 6371000; // Earth's radius in meters
   
   const lat1 = this.location.coordinates[1];
   const lon1 = this.location.coordinates[0];
-  const lat2 = latitude;
-  const lon2 = longitude;
   
   const dLat = this.toRad(lat2 - lat1);
   const dLon = this.toRad(lon2 - lon1);
@@ -108,7 +117,7 @@ geofenceLocationSchema.methods.isWithinGeofence = function(longitude, latitude) 
   const distance = R * c;
   
   return {
-    within: distance <= this.radiusMeters,
+    within: distance <= radius,
     distance: Math.round(distance)
   };
 };

@@ -201,9 +201,12 @@ const ResponsivePageLayout = ({
   return (
     <>
     <div
-      className="flex h-screen overflow-hidden"
+      className="flex overflow-hidden"
       style={{
         background: 'var(--bg-canvas)',
+        height: 'var(--app-height, 100dvh)',
+        minHeight: 'var(--app-height, 100dvh)',
+        paddingTop: 'var(--safe-top, 0px)',
         '--sidebar-width-expanded': '284px',
         '--sidebar-width-collapsed': '64px',
         '--sidebar-width': sidebarOffset,
@@ -214,11 +217,11 @@ const ResponsivePageLayout = ({
 
       {/* Main Content Area */}
       <main
-        className="flex min-w-0 h-screen flex-col"
+        className="flex min-w-0 flex-col"
         style={{
           flex: 1,
           minWidth: 0,
-          minHeight: '100vh',
+          minHeight: 'var(--app-height, 100dvh)',
         }}
       >
 
@@ -259,7 +262,7 @@ const ResponsivePageLayout = ({
           tabIndex={-1}
           style={showBottomNav ? { paddingBottom: 'calc(56px + env(safe-area-inset-bottom, 0px))' } : undefined}
         >
-          <div className={`${maxWidth} mx-auto w-full h-full ${noPadding ? '' : 'p-3 xs:p-4 sm:p-6 lg:p-8'}`}>
+          <div className={`${maxWidth} mx-auto w-full h-full flex flex-col ${noPadding ? '' : 'p-3 xs:p-4 sm:p-6 lg:p-8'}`}>
             {children}
           </div>
         </div>

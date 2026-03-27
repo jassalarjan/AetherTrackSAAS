@@ -23,6 +23,7 @@ export default function EmailCenter() {
   const { user: currentUser } = useAuth();
   const { currentTheme, currentColorScheme } = useTheme();
   const confirmModal = useConfirmModal();
+  const isValidEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || '').trim());
 
   // State management
   const [loading, setLoading] = useState(true);
@@ -72,8 +73,8 @@ export default function EmailCenter() {
     try {
       const response = await api.get('/hr/email-templates');
       setTemplates(response.data.templates || []);
-    } catch (error) {
-      console.error('Failed to load templates:', error);
+    } catch {
+      setTemplates([]);
     }
   };
 
@@ -81,8 +82,8 @@ export default function EmailCenter() {
     try {
       const response = await api.get('/hr/email-templates/users');
       setUsers(response.data.users || []);
-    } catch (error) {
-      console.error('Error fetching users:', error);
+    } catch {
+      setUsers([]);
     }
   };
 
@@ -90,8 +91,8 @@ export default function EmailCenter() {
     try {
       const response = await api.get('/hr/email-templates/config');
       setEmailConfig(response.data.config);
-    } catch (error) {
-      console.error('Error fetching email config:', error);
+    } catch {
+      setEmailConfig(null);
     }
   };
 
@@ -201,10 +202,15 @@ export default function EmailCenter() {
 
   const addExternalRecipient = () => {
     if (manualRecipient.name && manualRecipient.email) {
+      if (!isValidEmail(manualRecipient.email)) {
+        window.alert('Please enter a valid email address.');
+        return;
+      }
+
       const baseRecipient = {
         id: `ext-${Date.now()}`,
         name: manualRecipient.name,
-        email: manualRecipient.email,
+        email: manualRecipient.email.trim(),
         source: 'EXTERNAL',
         variables: {}
       };
@@ -240,6 +246,30 @@ export default function EmailCenter() {
     const sendEmails = async () => {
       if (!selectedTemplate || emailRecipients.length === 0) return;
 
+      const confirmed = await confirmModal.show({
+        title: '🚀 Send Campaign Now?',
+        message: `This will send ${emailRecipients.length} email${emailRecipients.length > 1 ? 's' : ''} immediately.`,
+        confirmText: 'Send Campaign',
+        cancelText: 'Cancel',
+        variant: 'warning'
+      });
+
+      if (!confirmed) {
+        return;
+      }
+
+      if (!emailConfig?.brevoConfigured || !emailConfig?.senderConfigured) {
+        await confirmModal.show({
+          title: '⚠️ Email Automation Not Configured',
+          message: 'Email sending is currently unavailable. Please configure BREVO_API_KEY and a verified sender email (EMAIL_FROM or BREVO_LOGIN_EMAIL) on the backend.',
+          confirmText: 'Dismiss',
+          cancelText: '',
+          showCancel: false,
+          variant: 'warning'
+        });
+        return;
+      }
+
       setIsSending(true);
       
       // Initialize statuses
@@ -248,6 +278,7 @@ export default function EmailCenter() {
       try {
         let successCount = 0;
         let errorCount = 0;
+        const failureMessages = [];
 
         // Personalized sending loop
         for (let i = 0; i < emailRecipients.length; i++) {
@@ -277,8 +308,9 @@ export default function EmailCenter() {
             successCount++;
             setEmailRecipients(prev => prev.map((r, idx) => idx === i ? { ...r, status: 'sent' } : r));
           } catch (err) {
-            console.error(`Failed to send to ${recipientObj.email}:`, err);
             errorCount++;
+            const reason = err?.response?.data?.message || err?.response?.data?.error || err?.message || 'Unknown error';
+            failureMessages.push(`${recipientObj.email}: ${reason}`);
             setEmailRecipients(prev => prev.map((r, idx) => idx === i ? { ...r, status: 'failed' } : r));
           }
         }
@@ -289,9 +321,11 @@ export default function EmailCenter() {
 
         await confirmModal.show({
           title: successCount === emailRecipients.length ? '✅ Campaign Complete' : '⚠️ Campaign Finished with Issues',
-          message: `${successCount} emails sent successfully.${errorCount > 0 ? ` ${errorCount} failed.` : ''}`,
+          message: `${successCount} emails sent successfully.${errorCount > 0 ? ` ${errorCount} failed.` : ''}${failureMessages.length > 0 ? `\n\nFailures:\n${failureMessages.slice(0, 5).join('\n')}${failureMessages.length > 5 ? '\n...and more' : ''}` : ''}`,
           confirmText: 'Dismiss',
-          variant: successCount === emailRecipients.length ? 'info' : 'warning'
+          cancelText: '',
+          showCancel: false,
+          variant: successCount === emailRecipients.length ? 'info' : (successCount > 0 ? 'warning' : 'danger')
         });
 
         if (successCount > 0) {
@@ -304,7 +338,6 @@ export default function EmailCenter() {
           setEmailData({ subject: '', htmlContent: '', variables: {} });
         }
       } catch (error) {
-        console.error('Send campaign error:', error);
         setIsSending(false);
         setShowPreview(false);
         
@@ -313,6 +346,8 @@ export default function EmailCenter() {
           title: '❌ Campaign Failed',
           message: error.response?.data?.message || error.message || 'An unexpected error occurred during the campaign.',
           confirmText: 'Dismiss',
+          cancelText: '',
+          showCancel: false,
           variant: 'danger'
         });
       }
@@ -429,24 +464,27 @@ export default function EmailCenter() {
             { step: 1, label: 'Template', icon: FileText },
             { step: 2, label: 'Recipients', icon: Users },
             { step: 3, label: 'Review', icon: Send }
-          ].map((s) => (
-            <div key={s.step} className="flex flex-col items-center">
-              <button
-                onClick={() => campaignStep > s.step && setCampaignStep(s.step)}
-                disabled={campaignStep < s.step}
-                className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all ${
-                  campaignStep >= s.step 
-                    ? 'bg-blue-500 text-white shadow-xl shadow-blue-500/30' 
-                    : `${currentTheme.surfaceSecondary} ${currentTheme.textSecondary} border-2 ${currentTheme.border}`
-                }`}
-              >
-                <s.icon className="w-6 h-6" />
-              </button>
-              <span className={`text-[10px] font-black uppercase tracking-widest mt-3 ${campaignStep >= s.step ? 'text-blue-500' : 'text-gray-400'}`}>
-                {s.label}
-              </span>
-            </div>
-          ))}
+          ].map((s) => {
+            const Icon = s.icon;
+            return (
+              <div key={s.step} className="flex flex-col items-center">
+                <button
+                  onClick={() => campaignStep > s.step && setCampaignStep(s.step)}
+                  disabled={campaignStep < s.step}
+                  className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all ${
+                    campaignStep >= s.step
+                      ? 'bg-blue-500 text-white shadow-xl shadow-blue-500/30'
+                      : `${currentTheme.surfaceSecondary} ${currentTheme.textSecondary} border-2 ${currentTheme.border}`
+                  }`}
+                >
+                  <Icon className="w-6 h-6" />
+                </button>
+                <span className={`text-[10px] font-black uppercase tracking-widest mt-3 ${campaignStep >= s.step ? 'text-blue-500' : 'text-gray-400'}`}>
+                  {s.label}
+                </span>
+              </div>
+            );
+          })}
         </div>
 
         {/* Step 1: Template Selection */}

@@ -126,6 +126,103 @@ const allowedOrigins = getAllowedOrigins();
 const APP_VERSION = process.env.APP_VERSION || '1.0.0';
 const BUILD_TIME = process.env.BUILD_TIME || new Date().toISOString();
 
+const DOWNLOAD_ROLE_ALLOWLIST = new Set(['admin', 'super_admin', 'hr']);
+const DOWNLOAD_PATH_PATTERNS = [
+  /\/download(\/|$)/i,
+  /\/export(\/|$)/i,
+  /\/template(\/|$)/i,
+  /\/data-export(\/|$)/i,
+  /\/report(s)?(\/|$)/i
+];
+const DOWNLOAD_QUERY_KEYS = new Set(['download', 'export', 'format', 'fileType', 'file_type']);
+const DOWNLOAD_FORMAT_VALUES = new Set(['csv', 'xlsx', 'xls', 'pdf', 'zip', 'json']);
+const DOWNLOAD_EXEMPT_PATHS = [
+  /^\/api\/mobile\//i,
+  /^\/api\/app-version(\/|$)/i,
+  /\.apk$/i,
+  /\/manifest\.webmanifest$/i,
+  /\/sw\.js$/i,
+  /\/workbox-[^/]+\.js$/i,
+  /\/icons\//i
+];
+
+const getTokenFromRequest = (req) => {
+  if (req.cookies?.access_token) {
+    return req.cookies.access_token;
+  }
+
+  const authHeader = req.headers.authorization;
+  if (authHeader?.startsWith('Bearer ')) {
+    return authHeader.slice(7);
+  }
+
+  return null;
+};
+
+const isDownloadRequest = (req) => {
+  const pathOnly = req.path || '';
+  const fullPath = req.originalUrl || pathOnly;
+
+  if (DOWNLOAD_EXEMPT_PATHS.some((pattern) => pattern.test(pathOnly) || pattern.test(fullPath))) {
+    return false;
+  }
+
+  if (DOWNLOAD_PATH_PATTERNS.some((pattern) => pattern.test(pathOnly))) {
+    return true;
+  }
+
+  for (const [key, value] of Object.entries(req.query || {})) {
+    if (!DOWNLOAD_QUERY_KEYS.has(key)) continue;
+
+    const normalized = String(value || '').trim().toLowerCase();
+    if (key === 'download' || key === 'export') {
+      if (['1', 'true', 'yes'].includes(normalized)) {
+        return true;
+      }
+      continue;
+    }
+
+    if (DOWNLOAD_FORMAT_VALUES.has(normalized)) {
+      return true;
+    }
+  }
+
+  const acceptHeader = String(req.headers.accept || '').toLowerCase();
+  if (
+    acceptHeader.includes('application/pdf') ||
+    acceptHeader.includes('text/csv') ||
+    acceptHeader.includes('application/zip') ||
+    acceptHeader.includes('application/vnd.openxmlformats-officedocument') ||
+    acceptHeader.includes('application/octet-stream')
+  ) {
+    return true;
+  }
+
+  return false;
+};
+
+const enforceDownloadRoleAccess = (req, res, next) => {
+  if (!isDownloadRequest(req)) {
+    return next();
+  }
+
+  const token = getTokenFromRequest(req);
+  if (!token) {
+    return res.status(401).json({ message: 'Authentication required for downloads' });
+  }
+
+  const decoded = verifyAccessToken(token);
+  const role = String(decoded?.role || '').toLowerCase();
+
+  if (!DOWNLOAD_ROLE_ALLOWLIST.has(role)) {
+    return res.status(403).json({
+      message: 'Only Admin, Super Admin, or HR users can download/export data from the system.'
+    });
+  }
+
+  return next();
+};
+
 // Initialize Socket.IO with strict CORS configuration (FAIL CLOSED)
 const io = new Server(httpServer, {
   cors: {
@@ -290,6 +387,10 @@ app.use((req, res, next) => {
   
   next();
 });
+
+  // Restrict all download/export style requests to privileged roles.
+  // APK/PWA update-related paths are explicitly exempt.
+  app.use('/api', enforceDownloadRoleAccess);
 
 // Make io accessible to routes
 app.set('io', io);

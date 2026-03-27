@@ -38,6 +38,35 @@ router.use(authenticate);
 
 const WORKSPACE_ID = 'main';
 
+const DEFAULT_FEATURE_MATRIX = {
+  dashboard: true,
+  tasks: true,
+  kanban: true,
+  calendar: true,
+  notifications: true,
+  self_attendance: true,
+  projects: true,
+  my_projects: true,
+  sprints: true,
+  gantt: true,
+  resources: true,
+  analytics: true,
+  hr_dashboard: true,
+  hr_attendance: true,
+  hr_leaves: true,
+  hr_calendar: true,
+  reallocation: true,
+  email_center: true,
+  teams: true,
+  users: true,
+  settings: true,
+  audit_log: true,
+  changelog: true,
+  geofencing: true,
+  verification: true,
+  feature_matrix: true,
+};
+
 // ─── helpers ────────────────────────────────────────────────────────────────
 
 const handleError = (res, err, ctx = 'Settings') => {
@@ -54,8 +83,47 @@ async function getOrCreateWorkspace() {
   if (!ws) {
     ws = await WorkspaceSettings.create({ workspace_id: WORKSPACE_ID });
   }
+  const mergedFeatures = {
+    ...DEFAULT_FEATURE_MATRIX,
+    ...(ws.feature_matrix || {}),
+  };
+  const hasFeatureDrift = JSON.stringify(mergedFeatures) !== JSON.stringify(ws.feature_matrix || {});
+  if (hasFeatureDrift) {
+    ws.feature_matrix = mergedFeatures;
+    await ws.save();
+  }
   return ws;
 }
+
+const normalizeFeatureMatrix = (incoming = {}, existing = {}) => {
+  const merged = {
+    ...DEFAULT_FEATURE_MATRIX,
+    ...(existing || {}),
+  };
+
+  for (const key of Object.keys(DEFAULT_FEATURE_MATRIX)) {
+    if (incoming[key] !== undefined) {
+      merged[key] = Boolean(incoming[key]);
+    }
+  }
+
+  return merged;
+};
+
+const isSuperAdminUser = (user) => {
+  if (!user) return false;
+  if (user.role === 'super_admin') return true;
+  return user.role === 'admin' && !user.workspaceId;
+};
+
+const requireSuperAdmin = (req, res, next) => {
+  if (!isSuperAdminUser(req.user)) {
+    return res.status(403).json({
+      message: 'Access denied. Super admin privileges are required.',
+    });
+  }
+  next();
+};
 
 /** Get-or-create user settings for req.user. */
 async function getOrCreateUserSettings(userId) {
@@ -270,6 +338,52 @@ router.get('/workspace', checkRole(['admin', 'hr']), async (req, res) => {
     handleError(res, err, 'Get workspace settings');
   }
 });
+
+// GET /settings/workspace/features  — readable by all authenticated users
+router.get('/workspace/features', async (req, res) => {
+  try {
+    const ws = await getOrCreateWorkspace();
+    res.json({ features: normalizeFeatureMatrix({}, ws.feature_matrix) });
+  } catch (err) {
+    handleError(res, err, 'Get workspace feature flags');
+  }
+});
+
+// GET /settings/workspace/feature-matrix  — super admin only
+router.get('/workspace/feature-matrix', requireSuperAdmin, async (req, res) => {
+  try {
+    const ws = await getOrCreateWorkspace();
+    res.json({ features: normalizeFeatureMatrix({}, ws.feature_matrix) });
+  } catch (err) {
+    handleError(res, err, 'Get feature matrix');
+  }
+});
+
+// PATCH /settings/workspace/feature-matrix  — super admin only
+router.patch(
+  '/workspace/feature-matrix',
+  requireSuperAdmin,
+  auditLogger({ event_type: 'WORKSPACE_SETTINGS_UPDATE', target_type: 'WorkspaceSettings', action: 'Update feature matrix' }),
+  async (req, res) => {
+    try {
+      const incomingFeatures = req.body?.features;
+      if (!incomingFeatures || typeof incomingFeatures !== 'object') {
+        return res.status(400).json({ message: 'features object is required' });
+      }
+
+      const ws = await getOrCreateWorkspace();
+      ws.feature_matrix = normalizeFeatureMatrix(incomingFeatures, ws.feature_matrix);
+      await ws.save();
+
+      res.json({
+        message: 'Feature matrix updated',
+        features: normalizeFeatureMatrix({}, ws.feature_matrix),
+      });
+    } catch (err) {
+      handleError(res, err, 'Update feature matrix');
+    }
+  }
+);
 
 // PATCH /settings/workspace/general  — admin only
 router.patch(

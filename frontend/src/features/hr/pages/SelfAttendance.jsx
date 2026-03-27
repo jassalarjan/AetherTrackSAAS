@@ -674,6 +674,28 @@ const SelfAttendance = () => {
               </div>
             )}
 
+            {/* Verification Requirements Warning */}
+            {(isPhotoRequired() && !capturedPhoto) || (isGPSRequired() && !capturedLocation) ? (
+              <div className="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                <div className="flex items-start gap-2">
+                  <AlertTriangle size={16} className="text-yellow-600 dark:text-yellow-500 mt-0.5 flex-shrink-0" />
+                  <div className="text-sm">
+                    <p className="font-medium text-yellow-700 dark:text-yellow-400 mb-1">
+                      Verification Required
+                    </p>
+                    <ul className="list-disc list-inside text-yellow-600 dark:text-yellow-500 space-y-1">
+                      {isPhotoRequired() && !capturedPhoto && (
+                        <li>Photo verification is required - please capture a photo</li>
+                      )}
+                      {isGPSRequired() && !capturedLocation && (
+                        <li>GPS verification is required - please capture your location</li>
+                      )}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+
             {/* Actions */}
             <div className="flex gap-3">
               <button

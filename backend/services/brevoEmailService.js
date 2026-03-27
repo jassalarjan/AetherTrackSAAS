@@ -1,4 +1,3 @@
-import * as brevoAPI from '@getbrevo/brevo';
 import nodemailer from 'nodemailer';
 import fs from 'fs';
 import path from 'path';
@@ -13,29 +12,12 @@ const __dirname = path.dirname(__filename);
  */
 class BrevoEmailService {
   constructor() {
-    this.client = null;
     this.smtpTransporter = null;
     this.layoutTemplate = null;
-    this.initClient();
   }
 
-  initClient() {
-    // Lazy initialization - only initialize when needed
-    return;
-  }
-
-  getClient() {
-    if (!this.client && process.env.BREVO_API_KEY) {
-      try {
-        const apiInstance = new brevoAPI.TransactionalEmailsApi();
-        apiInstance.setApiKey(brevoAPI.TransactionalEmailsApiApiKeys.apiKey, process.env.BREVO_API_KEY);
-        this.client = apiInstance;
-      } catch (error) {
-        console.error('❌ Failed to initialize Brevo client:', error.message);
-        this.client = null;
-      }
-    }
-    return this.client;
+  getBrevoApiKey() {
+    return process.env.BREVO_API_KEY || null;
   }
 
   getSmtpTransporter() {
@@ -52,7 +34,6 @@ class BrevoEmailService {
               pass: process.env.EMAIL_PASSWORD
             }
           });
-          console.log('✅ Initialized Brevo SMTP transporter');
         } 
         // Fallback to Gmail or other SMTP
         else if (process.env.EMAIL_HOST && process.env.EMAIL_USER && process.env.EMAIL_PASSWORD) {
@@ -65,10 +46,9 @@ class BrevoEmailService {
               pass: process.env.EMAIL_PASSWORD
             }
           });
-          console.log('✅ Initialized SMTP transporter');
         }
       } catch (error) {
-        console.error('❌ Failed to initialize SMTP transporter:', error.message);
+        void error;
         this.smtpTransporter = null;
       }
     }
@@ -98,6 +78,54 @@ class BrevoEmailService {
     };
   }
 
+  async sendViaBrevoApi({ to, subject, htmlContent, from }) {
+    const apiKey = this.getBrevoApiKey();
+    if (!apiKey) {
+      throw new Error('Brevo API key not configured');
+    }
+
+    const recipients = Array.isArray(to) ? to : [to];
+    const toPayload = recipients.map((recipient) => {
+      if (typeof recipient === 'string') {
+        return { email: recipient };
+      }
+
+      return {
+        email: recipient.email,
+        ...(recipient.name ? { name: recipient.name } : {})
+      };
+    });
+
+    const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: {
+        'api-key': apiKey,
+        'Content-Type': 'application/json',
+        Accept: 'application/json'
+      },
+      body: JSON.stringify({
+        sender: from,
+        to: toPayload,
+        subject,
+        htmlContent
+      })
+    });
+
+    if (!response.ok) {
+      const bodyText = await response.text();
+      throw new Error(`Brevo API ${response.status}: ${bodyText}`);
+    }
+
+    const body = await response.json().catch(() => ({}));
+
+    return {
+      success: true,
+      messageId: body?.messageId || null,
+      status: 'sent',
+      provider: 'brevo-api'
+    };
+  }
+
   /**
    * Load base layout from template.html
    */
@@ -109,7 +137,7 @@ class BrevoEmailService {
           this.layoutTemplate = fs.readFileSync(layoutPath, 'utf8');
         }
       } catch (error) {
-        console.error('❌ Failed to load email layout:', error.message);
+        void error;
       }
     }
     return this.layoutTemplate;
@@ -186,61 +214,30 @@ class BrevoEmailService {
 
     // Try Brevo API first
     try {
-      const client = this.getClient();
-      if (client) {
-        console.log('📤 Attempting to send via Brevo API...');
-        const sendSmtpEmail = new brevoAPI.SendSmtpEmail();
-        sendSmtpEmail.sender = from;
-        sendSmtpEmail.to = Array.isArray(to) ? to.map(email => ({ email })) : [{ email: to }];
-        sendSmtpEmail.subject = interpolatedSubject;
-        sendSmtpEmail.htmlContent = finalHtml;
-
-        console.log('📧 Brevo request:', {
-          sender: from,
-          to: sendSmtpEmail.to,
+      const apiKey = this.getBrevoApiKey();
+      if (apiKey) {
+        const result = await this.sendViaBrevoApi({
+          to,
           subject: interpolatedSubject,
-          htmlLength: finalHtml.length
+          htmlContent: finalHtml,
+          from
         });
-
-        const result = await client.sendTransacEmail(sendSmtpEmail);
-
-        // Handle different response structures
-        let messageId = null;
-        if (result.body) {
-          messageId = result.body.messageId || result.body.id;
-        }
-
-        console.log('✅ Email sent via Brevo API');
-        return {
-          success: true,
-          messageId: messageId,
-          status: 'sent',
-          provider: 'brevo-api'
-        };
+        return result;
       }
     } catch (error) {
-      console.error('❌ Brevo API error details:', {
-        message: error.message,
-        response: error.response?.body || error.response,
-        statusCode: error.statusCode,
-        stack: error.stack
-      });
-      console.warn('⚠️ Brevo API failed:', error.message, '- Trying SMTP fallback...');
+      // Try SMTP fallback after API failure.
     }
 
     // Fallback to SMTP
     try {
-      console.log('📤 Attempting to send via SMTP...');
       const result = await this.sendViaSMTP({
         to: Array.isArray(to) ? to : [to],
         subject: interpolatedSubject,
         htmlContent: finalHtml,
         from
       });
-      console.log('✅ Email sent via SMTP fallback');
       return result;
     } catch (smtpError) {
-      console.error('❌ SMTP fallback also failed:', smtpError.message);
       return {
         success: false,
         error: `Failed to send email. API: Unavailable, SMTP: ${smtpError.message}`,
