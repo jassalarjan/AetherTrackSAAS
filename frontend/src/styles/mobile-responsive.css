@@ -109,3 +109,68 @@ iframe {
     max-height: clamp(140px, 38vh, 220px) !important;
   }
 }
+
+/* Shared shell hardening for phone layouts */
+@media (max-width: 767px) {
+  #root,
+  #main-content,
+  main,
+  header,
+  section,
+  article {
+    min-width: 0;
+  }
+
+  .app-header-inner {
+    gap: 8px;
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+
+  .app-header-inner nav[aria-label="Breadcrumb"] {
+    max-width: min(46vw, 220px);
+  }
+
+  .app-header-inner nav[aria-label="Breadcrumb"] span:last-child > span {
+    max-width: 100% !important;
+  }
+
+  .header-theme-toggle {
+    display: none !important;
+  }
+
+  .notif-panel-dropdown {
+    width: min(320px, calc(100vw - 16px)) !important;
+  }
+
+  .sidebar--mobile-drawer {
+    width: min(88vw, 320px) !important;
+    max-width: calc(100vw - 24px) !important;
+  }
+
+  .mobile-bottom-nav {
+    min-height: calc(64px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  #main-content > div {
+    max-width: 100% !important;
+  }
+
+  #main-content .grid,
+  #main-content [class*="grid-cols-"],
+  #main-content [class*="grid grid-cols-"] {
+    min-width: 0;
+  }
+
+  #main-content table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  [role="dialog"] {
+    width: min(100%, calc(100vw - 20px)) !important;
+    max-width: calc(100vw - 20px) !important;
+  }
+}

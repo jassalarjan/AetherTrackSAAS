@@ -97,6 +97,10 @@ body {
   overscroll-behavior-y: contain;
   padding-left: var(--safe-left);
   padding-right: var(--safe-right);
+  padding-top: var(--safe-top, 0px);
+  /* Ensure status bar/notch doesn't overlap on Android */
+  position: relative;
+  z-index: 0;
 }
 
 #root {

@@ -197,6 +197,7 @@ const ResponsivePageLayout = ({
   const sidebarOffset = !isMobile && isSidebarVisible
     ? (isCollapsed ? 'var(--sidebar-width-collapsed)' : 'var(--sidebar-width-expanded)')
     : '0px';
+  const bottomNavOffset = showBottomNav ? 'calc(72px + var(--safe-bottom, 0px))' : '0px';
 
   return (
     <>
@@ -206,7 +207,8 @@ const ResponsivePageLayout = ({
         background: 'var(--bg-canvas)',
         height: 'var(--app-height, 100dvh)',
         minHeight: 'var(--app-height, 100dvh)',
-        paddingTop: 'var(--safe-top, 0px)',
+        width: '100%',
+        maxWidth: '100vw',
         '--sidebar-width-expanded': '284px',
         '--sidebar-width-collapsed': '64px',
         '--sidebar-width': sidebarOffset,
@@ -220,8 +222,10 @@ const ResponsivePageLayout = ({
         className="flex min-w-0 flex-col"
         style={{
           flex: 1,
+          width: '100%',
           minWidth: 0,
           minHeight: 'var(--app-height, 100dvh)',
+          overflow: 'hidden',
         }}
       >
 
@@ -248,6 +252,8 @@ const ResponsivePageLayout = ({
               borderColor: 'var(--border-soft)',
               scrollbarWidth: 'none',
               flexShrink: 0,
+              flexWrap: 'wrap',
+              alignContent: 'flex-start',
             }}
           >
             {actions}
@@ -260,9 +266,17 @@ const ResponsivePageLayout = ({
           className="flex-1 overflow-auto"
           id="main-content"
           tabIndex={-1}
-          style={showBottomNav ? { paddingBottom: 'calc(56px + env(safe-area-inset-bottom, 0px))' } : undefined}
+          style={{
+            paddingBottom: bottomNavOffset,
+            overflowX: 'hidden',
+          }}
         >
-          <div className={`${maxWidth} mx-auto w-full h-full flex flex-col ${noPadding ? '' : 'p-3 xs:p-4 sm:p-6 lg:p-8'}`}>
+          <div
+            className={`${maxWidth} mx-auto w-full h-full min-w-0 flex flex-col ${noPadding ? '' : 'p-3 xs:p-4 sm:p-6 lg:p-8'}`}
+            style={{
+              maxWidth: 'min(100%, 1920px)',
+            }}
+          >
             {children}
           </div>
         </div>

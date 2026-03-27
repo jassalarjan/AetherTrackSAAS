@@ -368,12 +368,13 @@ const AppHeader = ({
         background:  'var(--bg-canvas)',
         borderColor: 'var(--border-soft)',
         paddingInline: noPadding ? 0 : undefined,
+        paddingTop:  'var(--safe-top, 0px)',
       }}
     >
       <div className={`flex items-center justify-between w-full h-full app-header-inner ${noPadding ? '' : 'px-3 sm:px-6 lg:px-8'}`}>
 
         {/* -- LEFT: hamburger + breadcrumb -------------------------------- */}
-        <div className="flex items-center gap-3 min-w-0 flex-1">
+        <div className="flex items-center gap-2.5 min-w-0 flex-1">
           {isMobile && (
             <button
               onClick={toggleMobileSidebar}
@@ -417,7 +418,7 @@ const AppHeader = ({
         </div>
 
         {/* -- RIGHT: search + bell + theme + actions + user -------- */}
-        <div className="flex items-center gap-2 sm:gap-2.5 flex-none">
+        <div className="flex items-center gap-1.5 sm:gap-2.5 flex-none pl-2">
 
           {/* Search — icon-only on mobile */}
           <button
@@ -554,7 +555,7 @@ const AppHeader = ({
           {/* Theme toggle */}
           <button
             onClick={toggleTheme}
-            className="w-9 h-9 flex items-center justify-center rounded-lg transition-colors focus-visible:outline-none"
+            className="header-theme-toggle w-9 h-9 flex items-center justify-center rounded-lg transition-colors focus-visible:outline-none"
             style={{ color: 'var(--text-secondary)' }}
             aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
             title={isDark ? 'Light mode' : 'Dark mode'}
