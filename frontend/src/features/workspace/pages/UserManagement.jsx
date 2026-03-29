@@ -40,6 +40,9 @@ export default function UserManagement() {
     employmentStatus: 'ACTIVE'
   });
 
+  const currentUserId = user?.id || user?._id;
+  const isProtectedUserRole = (role) => role === 'admin' || role === 'super_admin';
+
   const hasPermission = user && (user.role === 'admin' || user.role === 'hr');
 
   useEffect(() => {
@@ -194,7 +197,7 @@ export default function UserManagement() {
 
   const handleDelete = (usr) => {
     // Super-admin (role === 'admin') can never be deleted
-    if (usr.role === 'admin') {
+    if (isProtectedUserRole(usr.role)) {
       setError('Admin users are protected and cannot be deleted.');
       setTimeout(() => setError(''), 4000);
       return;
@@ -228,7 +231,7 @@ export default function UserManagement() {
     // Admins are protected — remove any admin IDs that may have slipped into selection
     const safeIds = selectedUserIds.filter(id => {
       const usr = users.find(u => u._id === id);
-      return usr && usr.role !== 'admin';
+      return usr && !isProtectedUserRole(usr.role);
     });
     if (safeIds.length === 0) {
       setError('Admin users are protected and cannot be deleted.');
@@ -264,7 +267,7 @@ export default function UserManagement() {
 
   const toggleSelectAll = () => {
     // Exclude yourself and all admin users from bulk-select
-    const selectable = users.filter(usr => usr._id !== user.id && usr.role !== 'admin');
+    const selectable = users.filter(usr => usr._id !== currentUserId && !isProtectedUserRole(usr.role));
     if (selectedUserIds.length === selectable.length) {
       setSelectedUserIds([]);
     } else {
@@ -520,7 +523,7 @@ export default function UserManagement() {
                     <th className="px-4 py-3 text-left">
                       <input
                         type="checkbox"
-                        checked={selectedUserIds.length > 0 && selectedUserIds.length === users.filter(usr => usr._id !== user.id && usr.role !== 'admin').length}
+                        checked={selectedUserIds.length > 0 && selectedUserIds.length === users.filter(usr => usr._id !== currentUserId && !isProtectedUserRole(usr.role)).length}
                         onChange={toggleSelectAll}
                         className="rounded border-[#4b5563] text-[#C4713A] focus:ring-[#C4713A]"
                       />
@@ -551,8 +554,8 @@ export default function UserManagement() {
                               type="checkbox"
                               checked={selectedUserIds.includes(usr._id)}
                               onChange={() => toggleSelectUser(usr._id)}
-                              disabled={usr._id === user.id || usr.role === 'admin'}
-                              title={usr.role === 'admin' ? 'Admin users are protected and cannot be selected for deletion' : undefined}
+                              disabled={usr._id === currentUserId || isProtectedUserRole(usr.role)}
+                              title={isProtectedUserRole(usr.role) ? 'Admin users are protected and cannot be selected for deletion' : undefined}
                               className="rounded border-[#4b5563] text-[#C4713A] focus:ring-[#C4713A] disabled:opacity-50"
                             />
                           </td>
@@ -610,7 +613,7 @@ export default function UserManagement() {
                                 <Key size={16} />
                               </button>
                               {/* Admin users are protected — never show delete button for them */}
-                              {usr._id !== user.id && usr.role !== 'admin' && (
+                              {usr._id !== currentUserId && !isProtectedUserRole(usr.role) && (
                                 <button
                                   onClick={() => handleDelete(usr)}
                                   className="p-1.5 text-[var(--text-muted)] hover:text-red-500 hover:bg-red-500/10 rounded transition-colors"
@@ -620,7 +623,7 @@ export default function UserManagement() {
                                 </button>
                               )}
                               {/* Protected badge for admin users */}
-                              {usr.role === 'admin' && (
+                              {isProtectedUserRole(usr.role) && (
                                 <span
                                   className="p-1.5 text-xs text-[var(--text-muted)] cursor-default"
                                   title="Admin users are protected and cannot be deleted"
@@ -655,7 +658,7 @@ export default function UserManagement() {
                         type="checkbox"
                         checked={selectedUserIds.includes(usr._id)}
                         onChange={() => toggleSelectUser(usr._id)}
-                        disabled={usr._id === user.id}
+                        disabled={usr._id === currentUserId || isProtectedUserRole(usr.role)}
                         className="mt-1 rounded border-[#4b5563] text-[#C4713A] focus:ring-[#C4713A] disabled:opacity-50"
                       />
                       <div className="flex-1 min-w-0">
@@ -705,7 +708,7 @@ export default function UserManagement() {
                             Reset
                           </button>
                           {/* Admin users are protected — never show delete in mobile view */}
-                          {usr._id !== user.id && usr.role !== 'admin' && (
+                          {usr._id !== currentUserId && !isProtectedUserRole(usr.role) && (
                             <button
                               onClick={() => handleDelete(usr)}
                               className="px-3 py-2 bg-red-500/10 text-red-500 rounded text-xs font-medium hover:bg-red-500/20 transition-colors"
@@ -714,7 +717,7 @@ export default function UserManagement() {
                               <Trash2 size={14} />
                             </button>
                           )}
-                          {usr.role === 'admin' && (
+                          {isProtectedUserRole(usr.role) && (
                             <span
                               className="px-3 py-2 text-xs rounded text-center"
                               style={{ background: 'var(--brand-dim, rgba(196,113,58,0.12))', color: 'var(--brand)' }}

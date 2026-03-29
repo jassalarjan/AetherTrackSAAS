@@ -63,6 +63,21 @@ const sanitizeBulkValue = (value) => {
   return text.length > MAX_CELL_LENGTH ? text.slice(0, MAX_CELL_LENGTH) : text;
 };
 
+const normalizeObjectIdList = (values = []) => {
+  if (!Array.isArray(values)) {
+    return [];
+  }
+
+  return [...new Set(
+    values
+      .map((value) => {
+        if (value === null || value === undefined) return '';
+        return typeof value === 'string' ? value.trim() : value.toString();
+      })
+      .filter((value) => isValidObjectId(value))
+  )];
+};
+
 const parseExcelUsers = async (buffer) => {
   const workbook = new ExcelJS.Workbook();
   await workbook.xlsx.load(buffer);
@@ -477,8 +492,13 @@ router.post('/bulk-delete', authenticate, checkRole(['admin', 'hr']), async (req
       return res.status(400).json({ message: 'User IDs array is required' });
     }
 
+    const normalizedIds = normalizeObjectIdList(userIds);
+    if (normalizedIds.length === 0) {
+      return res.status(400).json({ message: 'No valid user IDs provided' });
+    }
+
     // Filter out the current user's ID to prevent self-deletion
-    const selfFiltered = userIds.filter(id => id !== req.user._id.toString());
+    const selfFiltered = normalizedIds.filter(id => id !== req.user._id.toString());
 
     if (selfFiltered.length === 0) {
       return res.status(400).json({ message: 'Cannot delete your own account' });
@@ -486,7 +506,7 @@ router.post('/bulk-delete', authenticate, checkRole(['admin', 'hr']), async (req
 
     // Protect admin (super admin) users — resolve targets and exclude admins
     const candidates = await User.find({ _id: { $in: selfFiltered } });
-    const adminCandidates = candidates.filter(u => u.role === 'admin');
+    const adminCandidates = candidates.filter(u => ['admin', 'super_admin'].includes(u.role));
     const idsToDelete = selfFiltered.filter(id =>
       !adminCandidates.some(u => u._id.toString() === id)
     );
@@ -498,12 +518,13 @@ router.post('/bulk-delete', authenticate, checkRole(['admin', 'hr']), async (req
     const usersToDelete = candidates.filter(u => idsToDelete.includes(u._id.toString()));
 
     for (const user of usersToDelete) {
-      if (user.teams && user.teams.length > 0) {
+      const teamIds = normalizeObjectIdList(user.teams || []);
+      if (teamIds.length > 0) {
         await Team.updateMany(
-          { _id: { $in: user.teams } },
+          { _id: { $in: teamIds } },
           { $pull: { members: user._id } }
         );
-      } else if (user.team_id) {
+      } else if (user.team_id && isValidObjectId(user.team_id.toString())) {
         await Team.findByIdAndUpdate(
           user.team_id,
           { $pull: { members: user._id } }
@@ -630,16 +651,17 @@ router.delete('/:id', authenticate, checkRole(['admin', 'hr']), validateIdParam(
     }
 
     // Protect admin (super admin) users from deletion
-    if (user.role === 'admin') {
+    if (['admin', 'super_admin'].includes(user.role)) {
       return res.status(403).json({ message: 'Admin users are protected and cannot be deleted.' });
     }
 
-    if (user.teams && user.teams.length > 0) {
+    const teamIds = normalizeObjectIdList(user.teams || []);
+    if (teamIds.length > 0) {
       await Team.updateMany(
-        { _id: { $in: user.teams } },
+        { _id: { $in: teamIds } },
         { $pull: { members: user._id } }
       );
-    } else if (user.team_id) {
+    } else if (user.team_id && isValidObjectId(user.team_id.toString())) {
       await Team.findByIdAndUpdate(
         user.team_id,
         { $pull: { members: user._id } }
