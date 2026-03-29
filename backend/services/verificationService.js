@@ -16,15 +16,43 @@ import GeofenceLocation from '../models/GeofenceLocation.js';
 import AttendanceAudit from '../models/AttendanceAudit.js';
 
 class VerificationService {
+  static getDefaultSettings() {
+    return {
+      photoVerification: {
+        enabled: false,
+        mandatory: false,
+        allowRetake: true,
+        maxRetakes: 3
+      },
+      gpsVerification: {
+        enabled: false,
+        mandatory: false,
+        accuracyThresholdMeters: 100,
+        requireFreshLocation: true,
+        locationFreshnessSeconds: 300
+      },
+      security: {
+        preventPhotoReuse: true,
+        captureDeviceInfo: true,
+        enforceServerTimestamp: true
+      },
+      attendanceGovernance: {
+        regularAttendanceMarkedBy: 'self',
+        specialDays: []
+      }
+    };
+  }
+
   /**
    * Get verification settings for a workspace
    * @param {string} workspaceId - Workspace ID
    * @returns {Promise<Object>} Verification settings
    */
   static async getSettings(workspaceId) {
-    // Validate workspaceId is provided
     if (!workspaceId) {
-      throw new Error('workspaceId is required for verification settings');
+      // Fallback for users not yet assigned to a workspace.
+      // This keeps self-attendance flows operational with non-mandatory verification.
+      return this.getDefaultSettings();
     }
     
     let settings = await VerificationSettings.findOne({ workspaceId });
@@ -33,24 +61,7 @@ class VerificationService {
       // Create default settings if none exist
       settings = await VerificationSettings.create({
         workspaceId,
-        photoVerification: {
-          enabled: false,
-          mandatory: false,
-          allowRetake: true,
-          maxRetakes: 3
-        },
-        gpsVerification: {
-          enabled: false,
-          mandatory: false,
-          accuracyThresholdMeters: 100,
-          requireFreshLocation: true,
-          locationFreshnessSeconds: 300
-        },
-        security: {
-          preventPhotoReuse: true,
-          captureDeviceInfo: true,
-          enforceServerTimestamp: true
-        }
+        ...this.getDefaultSettings()
       });
     }
     
@@ -90,6 +101,16 @@ class VerificationService {
         existingSettings.security = {
           ...existingSettings.security.toObject(),
           ...settings.security
+        };
+      }
+      if (settings.attendanceGovernance) {
+        const existingGovernance = existingSettings.attendanceGovernance?.toObject?.() || existingSettings.attendanceGovernance || {};
+        existingSettings.attendanceGovernance = {
+          ...existingGovernance,
+          ...settings.attendanceGovernance,
+          specialDays: Array.isArray(settings.attendanceGovernance.specialDays)
+            ? settings.attendanceGovernance.specialDays
+            : (existingGovernance.specialDays || [])
         };
       }
       
@@ -519,6 +540,12 @@ class VerificationService {
         preventPhotoReuse: settings.security?.preventPhotoReuse,
         captureDeviceInfo: settings.security?.captureDeviceInfo,
         enforceServerTimestamp: settings.security?.enforceServerTimestamp
+      },
+      attendanceGovernance: {
+        regularAttendanceMarkedBy: settings.attendanceGovernance?.regularAttendanceMarkedBy || 'self',
+        specialDays: Array.isArray(settings.attendanceGovernance?.specialDays)
+          ? settings.attendanceGovernance.specialDays
+          : []
       }
     };
   }

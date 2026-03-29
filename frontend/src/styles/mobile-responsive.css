@@ -53,6 +53,50 @@ iframe {
   }
   [data-tabs-scroll]::-webkit-scrollbar { display: none; }
 
+  /* Compact filter system for mobile pages */
+  [data-mobile-filter-shell] {
+    gap: 8px !important;
+    margin-bottom: 12px !important;
+  }
+
+  [data-mobile-filter-row] {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    align-items: center;
+    gap: 8px !important;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 2px;
+  }
+  [data-mobile-filter-row]::-webkit-scrollbar { display: none; }
+  [data-mobile-filter-row] > * { flex: 0 0 auto; }
+
+  [data-mobile-filter-panel] {
+    padding: 12px !important;
+  }
+
+  [data-mobile-filter-grid] {
+    gap: 8px !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  [data-mobile-filter-input] {
+    min-height: 40px !important;
+  }
+
+  [data-mobile-filter-chips] {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    gap: 8px !important;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 2px;
+  }
+  [data-mobile-filter-chips]::-webkit-scrollbar { display: none; }
+  [data-mobile-filter-chips] > * { flex: 0 0 auto; }
+
   /* Chart containers — fluid height, avoids hard cuts on different aspect ratios */
   .recharts-wrapper,
   .recharts-responsive-container {
@@ -91,6 +135,10 @@ iframe {
 
   /* Even smaller charts on tiny screens */
   .recharts-wrapper { max-height: var(--chart-h-xs, clamp(140px, 40vw, 180px)) !important; }
+
+  [data-mobile-filter-grid] {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
 }
 
 /* Landscape Mobile — compact header uses token so one change adjusts everywhere */
@@ -101,7 +149,7 @@ iframe {
 /* Very short viewports (foldables/landscape phones/keyboard open) */
 @media (max-height: 700px) {
   .mobile-bottom-nav {
-    min-height: calc(50px + env(safe-area-inset-bottom, 0px)) !important;
+    min-height: var(--mobile-bottom-chrome, calc(56px + env(safe-area-inset-bottom, 0px))) !important;
   }
 
   .recharts-wrapper,
@@ -149,7 +197,7 @@ iframe {
   }
 
   .mobile-bottom-nav {
-    min-height: calc(64px + env(safe-area-inset-bottom, 0px)) !important;
+    min-height: var(--mobile-bottom-chrome, calc(56px + env(safe-area-inset-bottom, 0px))) !important;
   }
 
   #main-content > div {
@@ -169,8 +217,4 @@ iframe {
     -webkit-overflow-scrolling: touch;
   }
 
-  [role="dialog"] {
-    width: min(100%, calc(100vw - 20px)) !important;
-    max-width: calc(100vw - 20px) !important;
-  }
 }

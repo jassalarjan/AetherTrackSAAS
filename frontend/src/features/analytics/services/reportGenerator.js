@@ -1,12 +1,12 @@
-﻿import * as XLSX from 'xlsx';
-import jsPDF from 'jspdf';
+﻿import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { createWorkbook, addWorksheetFromRows, downloadWorkbook } from '@/shared/utils/spreadsheetExport';
 
 /**
  * Generate comprehensive Excel report with multiple sheets
  */
-export const generateExcelReport = (tasks, analyticsData, filters, projects = []) => {
-  const workbook = XLSX.utils.book_new();
+export const generateExcelReport = async (tasks, analyticsData, filters, projects = []) => {
+  const workbook = await createWorkbook();
 
   // Sheet 1: Task Summary
   const taskSummaryData = tasks.map((task, index) => ({
@@ -26,25 +26,7 @@ export const generateExcelReport = (tasks, analyticsData, filters, projects = []
     'Days Until Due': task.due_date ? calculateDaysUntilDue(task.due_date) : 'N/A',
   }));
 
-  const taskSheet = XLSX.utils.json_to_sheet(taskSummaryData);
-  
-  // Set column widths
-  taskSheet['!cols'] = [
-    { wch: 5 },   // #
-    { wch: 30 },  // Task Title
-    { wch: 40 },  // Description
-    { wch: 15 },  // Status
-    { wch: 12 },  // Priority
-    { wch: 25 },  // Assigned To
-    { wch: 20 },  // Team
-    { wch: 20 },  // Created By
-    { wch: 15 },  // Created Date
-    { wch: 15 },  // Due Date
-    { wch: 12 },  // Is Overdue
-    { wch: 15 },  // Days Until Due
-  ];
-
-  XLSX.utils.book_append_sheet(workbook, taskSheet, 'Task Summary');
+  addWorksheetFromRows(workbook, 'Task Summary', taskSummaryData, [5, 30, 40, 15, 12, 25, 20, 20, 15, 15, 12, 15]);
 
   // Sheet 2: Status Distribution
   const statusData = analyticsData.statusDistribution.map(item => ({
@@ -52,9 +34,7 @@ export const generateExcelReport = (tasks, analyticsData, filters, projects = []
     'Count': item.value,
     'Percentage': ((item.value / analyticsData.totalTasks) * 100).toFixed(2) + '%',
   }));
-  const statusSheet = XLSX.utils.json_to_sheet(statusData);
-  statusSheet['!cols'] = [{ wch: 20 }, { wch: 10 }, { wch: 15 }];
-  XLSX.utils.book_append_sheet(workbook, statusSheet, 'Status Distribution');
+  addWorksheetFromRows(workbook, 'Status Distribution', statusData, [20, 10, 15]);
 
   // Sheet 3: Priority Distribution
   const priorityData = analyticsData.priorityDistribution.map(item => ({
@@ -62,22 +42,11 @@ export const generateExcelReport = (tasks, analyticsData, filters, projects = []
     'Count': item.value,
     'Percentage': ((item.value / analyticsData.totalTasks) * 100).toFixed(2) + '%',
   }));
-  const prioritySheet = XLSX.utils.json_to_sheet(priorityData);
-  prioritySheet['!cols'] = [{ wch: 20 }, { wch: 10 }, { wch: 15 }];
-  XLSX.utils.book_append_sheet(workbook, prioritySheet, 'Priority Distribution');
+  addWorksheetFromRows(workbook, 'Priority Distribution', priorityData, [20, 10, 15]);
 
   // Sheet 4: Team Performance
   const teamPerformance = calculateTeamPerformance(tasks);
-  const teamSheet = XLSX.utils.json_to_sheet(teamPerformance);
-  teamSheet['!cols'] = [
-    { wch: 25 },  // Team Name
-    { wch: 12 },  // Total Tasks
-    { wch: 12 },  // Completed
-    { wch: 12 },  // In Progress
-    { wch: 12 },  // Overdue
-    { wch: 18 },  // Completion Rate
-  ];
-  XLSX.utils.book_append_sheet(workbook, teamSheet, 'Team Performance');
+  addWorksheetFromRows(workbook, 'Team Performance', teamPerformance, [25, 12, 12, 12, 12, 18]);
 
   // Sheet 4.5: Tasks by Team (Simple Count)
   if (analyticsData.teamDistribution && analyticsData.teamDistribution.length > 0) {
@@ -87,14 +56,7 @@ export const generateExcelReport = (tasks, analyticsData, filters, projects = []
       'Total Tasks': item.value,
       'Percentage': ((item.value / analyticsData.totalTasks) * 100).toFixed(2) + '%',
     }));
-    const teamDistSheet = XLSX.utils.json_to_sheet(teamDistData);
-    teamDistSheet['!cols'] = [
-      { wch: 8 },   // Rank
-      { wch: 30 },  // Team Name
-      { wch: 15 },  // Total Tasks
-      { wch: 15 },  // Percentage
-    ];
-    XLSX.utils.book_append_sheet(workbook, teamDistSheet, 'Tasks by Team');
+    addWorksheetFromRows(workbook, 'Tasks by Team', teamDistData, [8, 30, 15, 15]);
   }
 
   // Sheet 5: User Performance
@@ -109,17 +71,7 @@ export const generateExcelReport = (tasks, analyticsData, filters, projects = []
                    user.completionRate >= 60 ? 'Good' : 
                    user.completionRate >= 40 ? 'Average' : 'Needs Improvement',
   }));
-  const userSheet = XLSX.utils.json_to_sheet(userPerformanceData);
-  userSheet['!cols'] = [
-    { wch: 25 },  // User Name
-    { wch: 12 },  // Total Tasks
-    { wch: 12 },  // Completed
-    { wch: 12 },  // Overdue
-    { wch: 12 },  // In Progress
-    { wch: 18 },  // Completion Rate
-    { wch: 18 },  // Performance
-  ];
-  XLSX.utils.book_append_sheet(workbook, userSheet, 'User Performance');
+  addWorksheetFromRows(workbook, 'User Performance', userPerformanceData, [25, 12, 12, 12, 12, 18, 18]);
 
   // Sheet 6: Overdue Tasks
   const overdueTasks = tasks.filter(isOverdue).map((task, index) => ({
@@ -133,17 +85,7 @@ export const generateExcelReport = (tasks, analyticsData, filters, projects = []
     'Days Overdue': Math.abs(calculateDaysUntilDue(task.due_date)),
     'Status': formatStatus(task.status),
   }));
-  const overdueSheet = XLSX.utils.json_to_sheet(overdueTasks);
-  overdueSheet['!cols'] = [
-    { wch: 5 },   // #
-    { wch: 30 },  // Task Title
-    { wch: 12 },  // Priority
-    { wch: 25 },  // Assigned To
-    { wch: 15 },  // Due Date
-    { wch: 15 },  // Days Overdue
-    { wch: 15 },  // Status
-  ];
-  XLSX.utils.book_append_sheet(workbook, overdueSheet, 'Overdue Tasks');
+  addWorksheetFromRows(workbook, 'Overdue Tasks', overdueTasks, [5, 30, 12, 25, 15, 15, 15]);
 
   // Sheet 6.5: Project Summary (if projects data is available)
   if (projects && projects.length > 0) {
@@ -163,23 +105,7 @@ export const generateExcelReport = (tasks, analyticsData, filters, projects = []
       'Health Score': calculateProjectHealth(project),
     }));
 
-    const projectSheet = XLSX.utils.json_to_sheet(projectSummaryData);
-    projectSheet['!cols'] = [
-      { wch: 5 },   // #
-      { wch: 30 },  // Project Name
-      { wch: 40 },  // Description
-      { wch: 15 },  // Status
-      { wch: 12 },  // Priority
-      { wch: 12 },  // Progress
-      { wch: 15 },  // Start Date
-      { wch: 15 },  // Due Date
-      { wch: 18 },  // Budget Allocated
-      { wch: 15 },  // Budget Spent
-      { wch: 18 },  // Budget Remaining
-      { wch: 15 },  // Team Members
-      { wch: 15 },  // Health Score
-    ];
-    XLSX.utils.book_append_sheet(workbook, projectSheet, 'Project Summary');
+    addWorksheetFromRows(workbook, 'Project Summary', projectSummaryData, [5, 30, 40, 15, 12, 12, 15, 15, 18, 15, 18, 15, 15]);
 
     // Add Project Statistics
     const projectStats = [
@@ -191,9 +117,7 @@ export const generateExcelReport = (tasks, analyticsData, filters, projects = []
       { 'Metric': 'Total Budget Allocated', 'Value': '$' + projects.reduce((sum, p) => sum + (p.budget?.allocated || 0), 0).toLocaleString() },
       { 'Metric': 'Total Budget Spent', 'Value': '$' + projects.reduce((sum, p) => sum + (p.budget?.spent || 0), 0).toLocaleString() },
     ];
-    const projectStatsSheet = XLSX.utils.json_to_sheet(projectStats);
-    projectStatsSheet['!cols'] = [{ wch: 25 }, { wch: 20 }];
-    XLSX.utils.book_append_sheet(workbook, projectStatsSheet, 'Project Statistics');
+    addWorksheetFromRows(workbook, 'Project Statistics', projectStats, [25, 20]);
   }
 
   // Sheet 7: Summary Statistics
@@ -205,16 +129,14 @@ export const generateExcelReport = (tasks, analyticsData, filters, projects = []
     { 'Metric': 'Completion Rate', 'Value': ((analyticsData.completedTasks / analyticsData.totalTasks) * 100).toFixed(2) + '%' },
     { 'Metric': 'Overdue Rate', 'Value': ((analyticsData.overdueTasks / analyticsData.totalTasks) * 100).toFixed(2) + '%' },
   ];
-  const summarySheet = XLSX.utils.json_to_sheet(summaryStats);
-  summarySheet['!cols'] = [{ wch: 25 }, { wch: 20 }];
-  XLSX.utils.book_append_sheet(workbook, summarySheet, 'Summary Statistics');
+  addWorksheetFromRows(workbook, 'Summary Statistics', summaryStats, [25, 20]);
 
   // Generate filename with timestamp
   const timestamp = new Date().toISOString().slice(0, 10);
   const filename = `AetherTrack_Report_${timestamp}.xlsx`;
 
   // Write file
-  XLSX.writeFile(workbook, filename);
+  await downloadWorkbook(workbook, filename);
 };
 
 /**

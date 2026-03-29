@@ -196,7 +196,9 @@
   .aether-bars-loader > div,
   .aether-pulse-loader > div,
   .aether-dots-loader > div,
-  #app-preloader .apl-ring {
+  #app-preloader .apl-morph-loader,
+  #app-preloader .apl-morph-loader svg #apl-loader-clipping,
+  #app-preloader .apl-morph-loader svg #apl-loader-clipping polygon {
     animation: none !important;
     opacity: 1 !important;
     transform: none !important;

@@ -234,7 +234,7 @@ const AppHeader = ({
   breadcrumbs,         // optional string[] that overrides auto-breadcrumb
   noPadding = false,
 }) => {
-  const { user, logout } = useAuth();
+  const { user, logout, loading: authLoading } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const { toggleMobileSidebar, isMobile, toggleCollapse } = useSidebar();
   const location = useLocation();
@@ -264,7 +264,8 @@ const AppHeader = ({
     'U'
   );
 
-  const canQueryNotifications = Boolean(user?.id && getAccessToken());
+  const userIdentity = user?.id || user?._id;
+  const canQueryNotifications = Boolean(!authLoading && userIdentity && getAccessToken());
 
   // Fetch unread count
   useEffect(() => {
@@ -274,14 +275,24 @@ const AppHeader = ({
     }
 
     let cancelled = false;
+    let unauthorized = false;
     const fetchCount = async () => {
+      if (unauthorized || cancelled) return;
+
       try {
         const { data } = await api.get('/notifications');
         if (!cancelled) setUnread(data.unreadCount || 0);
-      } catch (_) { /* silent */ }
+      } catch (error) {
+        if (error?.response?.status === 401) {
+          unauthorized = true;
+          if (!cancelled) setUnread(0);
+        }
+      }
     };
     fetchCount();
-    const id = setInterval(fetchCount, 60_000);
+    const id = setInterval(() => {
+      if (!unauthorized) fetchCount();
+    }, 60_000);
     return () => { cancelled = true; clearInterval(id); };
   }, [canQueryNotifications]);
 
@@ -363,12 +374,13 @@ const AppHeader = ({
     <>
     <header
       className="flex-none flex items-center border-b"
+      data-navbar
       style={{
         height:      'var(--header-h, 64px)',
         background:  'var(--bg-canvas)',
         borderColor: 'var(--border-soft)',
         paddingInline: noPadding ? 0 : undefined,
-        paddingTop:  'var(--safe-top, 0px)',
+        paddingTop:  isMobile ? '0px' : 'var(--safe-top, 0px)',
       }}
     >
       <div className={`flex items-center justify-between w-full h-full app-header-inner ${noPadding ? '' : 'px-3 sm:px-6 lg:px-8'}`}>
@@ -391,7 +403,7 @@ const AppHeader = ({
           )}
 
           <div className="flex items-center gap-2.5 min-w-0">
-            {TitleIcon && (
+            {TitleIcon && !isMobile && (
               <div
                 className="flex items-center justify-center rounded-md shrink-0"
                 style={{
@@ -405,7 +417,7 @@ const AppHeader = ({
             )}
             <div className="min-w-0">
               <Breadcrumb segments={segments} />
-              {subtitle && (
+              {subtitle && !isMobile && (
                 <p
                   className="truncate mt-0.5"
                   style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: 'var(--text-muted)' }}

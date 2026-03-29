@@ -183,8 +183,8 @@ router.patch('/:id/status', authenticate, checkRole(['admin', 'hr']), validateId
   }
 });
 
-// Get leave balance for a user
-router.get('/balance/:userId?', authenticate, async (req, res) => {
+// Get leave balance for current user or a specific user.
+const getLeaveBalance = async (req, res) => {
   try {
     const targetUserId = req.params.userId || req.user._id;
 
@@ -209,7 +209,10 @@ router.get('/balance/:userId?', authenticate, async (req, res) => {
     console.error('Get leave balance error:', error);
     res.status(500).json({ message: 'Failed to fetch leave balance' });
   }
-});
+};
+
+router.get('/balance', authenticate, getLeaveBalance);
+router.get('/balance/:userId', authenticate, validateIdParam('userId'), getLeaveBalance);
 
 // Get all leave balances (for HR/Admin)
 router.get('/balances', authenticate, checkRole(['admin', 'hr']), async (req, res) => {

@@ -29,8 +29,8 @@ router.get('/', authenticate, async (req, res) => {
   }
 });
 
-// Create holiday (Admin/HR only)
-router.post('/', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
+// Create holiday (Admin only)
+router.post('/', authenticate, checkRole(['admin']), async (req, res) => {
   try {
     const { name, date, isRecurring, description } = req.body;
 
@@ -59,8 +59,8 @@ router.post('/', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
   }
 });
 
-// Update holiday
-router.put('/:id', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
+// Update holiday (Admin only)
+router.put('/:id', authenticate, checkRole(['admin']), async (req, res) => {
   try {
     const { name, date, isRecurring, description, isActive } = req.body;
 
@@ -94,8 +94,8 @@ router.put('/:id', authenticate, checkRole(['admin', 'hr']), async (req, res) =>
   }
 });
 
-// Delete holiday
-router.delete('/:id', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
+// Delete holiday (Admin only)
+router.delete('/:id', authenticate, checkRole(['admin']), async (req, res) => {
   try {
     const holiday = await Holiday.findOneAndDelete({ 
       _id: req.params.id

@@ -9,6 +9,17 @@ const AuthContext = createContext(null);
 let refreshBootstrapPromise = null;
 let refreshBlockedUntil = 0;
 
+const normalizeAuthUser = (rawUser) => {
+  if (!rawUser) return rawUser;
+  const isSuper = rawUser.role === 'super_admin';
+  return {
+    ...rawUser,
+    systemRole: rawUser.systemRole || rawUser.role,
+    role: isSuper ? 'admin' : rawUser.role,
+    isSystemAdmin: Boolean(rawUser.isSystemAdmin || isSuper || (!rawUser.workspaceId && rawUser.role === 'admin')),
+  };
+};
+
 const requestBootstrapRefresh = async () => {
   if (Date.now() < refreshBlockedUntil) {
     const error = new Error('Refresh temporarily rate limited');
@@ -51,7 +62,7 @@ export const AuthProvider = ({ children }) => {
         // Prefer the user payload that comes with the refresh response;
         // fall back to whatever is cached in localStorage.
         const storedUser = localStorage.getItem('user');
-        const baseUser = refreshedUser ||
+          const baseUser = normalizeAuthUser(refreshedUser) ||
           (storedUser ? JSON.parse(storedUser) : null);
 
         if (baseUser) {
@@ -59,14 +70,15 @@ export const AuthProvider = ({ children }) => {
           try {
             const verifyResponse = await api.get('/auth/verify');
             const validatedUser = verifyResponse.data.user;
-            const userWithWorkspace = { ...validatedUser, workspace: validatedUser.workspace };
+            const userWithWorkspace = normalizeAuthUser({ ...validatedUser, workspace: validatedUser.workspace });
             localStorage.setItem('user', JSON.stringify(userWithWorkspace));
             setUser(userWithWorkspace);
             initializeSocket(validatedUser.id);
           } catch {
-            localStorage.setItem('user', JSON.stringify(baseUser));
-            setUser(baseUser);
-            initializeSocket(baseUser.id);
+            const normalizedBaseUser = normalizeAuthUser(baseUser);
+            localStorage.setItem('user', JSON.stringify(normalizedBaseUser));
+            setUser(normalizedBaseUser);
+            initializeSocket(normalizedBaseUser.id);
           }
         }
       } catch (error) {
@@ -156,7 +168,7 @@ export const AuthProvider = ({ children }) => {
     
     const newSocket = io(SOCKET_URL, {
       auth: { token: accessToken },
-      transports: ['websocket', 'polling']
+      transports: ['polling', 'websocket']
     });
 
     let attemptedSocketRefresh = false;
@@ -173,9 +185,14 @@ export const AuthProvider = ({ children }) => {
     });
 
     newSocket.on('connect_error', async (error) => {
-      console.error('Socket connection error:', error.message);
+      const message = error?.message || 'Socket connection failed';
+      const isTransportError = /websocket error|xhr poll error|transport error/i.test(message);
 
-      const isAuthError = /Authentication error/i.test(error?.message || '');
+      if (!isTransportError) {
+        console.error('Socket connection error:', message);
+      }
+
+      const isAuthError = /Authentication error/i.test(message);
       if (!isAuthError) {
         return;
       }
@@ -222,10 +239,10 @@ export const AuthProvider = ({ children }) => {
       const { user, workspace, accessToken } = response.data;
 
       // Include workspace info in user object for easy access
-      const userWithWorkspace = {
+      const userWithWorkspace = normalizeAuthUser({
         ...user,
         workspace: workspace
-      };
+      });
 
       localStorage.setItem('user', JSON.stringify(userWithWorkspace));
       localStorage.setItem('lastActivityTime', Date.now().toString());
@@ -256,12 +273,13 @@ export const AuthProvider = ({ children }) => {
       });
       const { user, accessToken } = response.data;
 
-      localStorage.setItem('user', JSON.stringify(user));
+      const normalizedUser = normalizeAuthUser(user);
+      localStorage.setItem('user', JSON.stringify(normalizedUser));
       localStorage.setItem('lastActivityTime', Date.now().toString());
       setAccessToken(accessToken);
 
-      setUser(user);
-      initializeSocket(user.id);
+      setUser(normalizedUser);
+      initializeSocket(normalizedUser.id);
 
       return { success: true };
     } catch (error) {
@@ -286,7 +304,7 @@ export const AuthProvider = ({ children }) => {
 
   // Update user data (e.g., after profile picture change)
   const updateUser = (updatedUserData) => {
-    const newUser = { ...user, ...updatedUserData };
+    const newUser = normalizeAuthUser({ ...user, ...updatedUserData });
     setUser(newUser);
     localStorage.setItem('user', JSON.stringify(newUser));
   };

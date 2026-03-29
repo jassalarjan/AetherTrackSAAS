@@ -108,6 +108,20 @@ body {
   min-height: 100dvh;
   min-height: var(--app-height);
   width: 100%;
+  container-type: inline-size;
+}
+
+/* Core app regions become query containers so fluid text tokens can adapt
+   to available width, not only the viewport width. */
+.main-content,
+.main-content-area,
+.page-content,
+.content-area,
+.page-container,
+.page-wrapper,
+.content-wrapper {
+  container-type: inline-size;
+  overflow-wrap: anywhere;
 }
 
 /* Ensure native form controls (select, input) follow the current color-scheme
@@ -425,12 +439,6 @@ textarea:focus-visible,
   
   h3 {
     font-size: var(--text-xl);
-  }
-  
-  /* Optimize modals for mobile */
-  [role="dialog"] {
-    max-width: 100%;
-    margin: var(--space-4);
   }
   
   /* Better table handling on mobile */

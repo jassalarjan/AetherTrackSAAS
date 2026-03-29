@@ -13,6 +13,7 @@ import GeofenceService from '../services/geofenceService.js';
 import VerificationService from '../services/verificationService.js';
 import getClientIP from '../utils/getClientIP.js';
 import { logChange } from '../utils/changeLogService.js';
+import { validateIdParam } from '../utils/validation.js';
 
 const router = express.Router();
 
@@ -78,101 +79,6 @@ router.post('/', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
   } catch (error) {
     console.error('Create geofence error:', error);
     res.status(500).json({ message: error.message || 'Failed to create geofence' });
-  }
-});
-
-/**
- * GET /api/geofences/:id
- * Get single geofence by ID
- * @route GET /api/geofences/:id
- * @access Private (Admin/HR only)
- */
-router.get('/:id([0-9a-fA-F]{24})', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
-  try {
-    const geofence = await GeofenceService.getGeofenceById(req.params.id);
-    
-    // Verify workspace access
-    if (geofence.workspaceId.toString() !== req.user.workspaceId.toString()) {
-      return res.status(403).json({ message: 'Access denied' });
-    }
-    
-    res.json({ success: true, geofence });
-  } catch (error) {
-    console.error('Get geofence error:', error);
-    res.status(500).json({ message: error.message || 'Failed to fetch geofence' });
-  }
-});
-
-/**
- * PUT /api/geofences/:id
- * Update an existing geofence
- * @route PUT /api/geofences/:id
- * @access Private (Admin/HR)
- */
-router.put('/:id([0-9a-fA-F]{24})', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
-  try {
-    const workspaceId = req.user.workspaceId;
-    const { name, description, latitude, longitude, radiusMeters, isActive } = req.body;
-    
-    // First check if geofence exists and belongs to workspace
-    const existingGeofence = await GeofenceService.getGeofenceById(req.params.id);
-    if (existingGeofence.workspaceId.toString() !== workspaceId.toString()) {
-      return res.status(403).json({ message: 'Access denied' });
-    }
-    
-    const geofence = await GeofenceService.updateGeofence(
-      req.params.id,
-      { name, description, latitude, longitude, radiusMeters, isActive },
-      req.user._id
-    );
-    
-    await logChange({
-      userId: req.user._id,
-      action: 'update',
-      entity: 'geofence',
-      entityId: req.params.id,
-      details: { action: 'update-geofence', name, latitude, longitude, radiusMeters },
-      ipAddress: getClientIP(req)
-    });
-    
-    res.json({ success: true, geofence });
-  } catch (error) {
-    console.error('Update geofence error:', error);
-    res.status(500).json({ message: error.message || 'Failed to update geofence' });
-  }
-});
-
-/**
- * DELETE /api/geofences/:id
- * Delete a geofence
- * @route DELETE /api/geofences/:id
- * @access Private (Admin/HR)
- */
-router.delete('/:id([0-9a-fA-F]{24})', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
-  try {
-    const workspaceId = req.user.workspaceId;
-    
-    // First check if geofence exists and belongs to workspace
-    const existingGeofence = await GeofenceService.getGeofenceById(req.params.id);
-    if (existingGeofence.workspaceId.toString() !== workspaceId.toString()) {
-      return res.status(403).json({ message: 'Access denied' });
-    }
-    
-    await GeofenceService.deleteGeofence(req.params.id);
-    
-    await logChange({
-      userId: req.user._id,
-      action: 'delete',
-      entity: 'geofence',
-      entityId: req.params.id,
-      details: { action: 'delete-geofence', name: existingGeofence.name },
-      ipAddress: getClientIP(req)
-    });
-    
-    res.json({ success: true, message: 'Geofence deleted successfully' });
-  } catch (error) {
-    console.error('Delete geofence error:', error);
-    res.status(500).json({ message: error.message || 'Failed to delete geofence' });
   }
 });
 
@@ -334,7 +240,7 @@ router.get('/nearby', authenticate, checkRole(['admin', 'hr']), async (req, res)
  * @route POST /api/geofences/:id/toggle
  * @access Private (Admin/HR)
  */
-router.post('/:id([0-9a-fA-F]{24})/toggle', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
+router.post('/:id/toggle', authenticate, checkRole(['admin', 'hr']), validateIdParam(), async (req, res) => {
   try {
     const workspaceId = req.user.workspaceId;
     
@@ -397,6 +303,101 @@ router.post('/bulk', authenticate, checkRole(['admin', 'hr']), async (req, res) 
   } catch (error) {
     console.error('Bulk create geofences error:', error);
     res.status(500).json({ message: 'Failed to create geofences' });
+  }
+});
+
+/**
+ * GET /api/geofences/:id
+ * Get single geofence by ID
+ * @route GET /api/geofences/:id
+ * @access Private (Admin/HR only)
+ */
+router.get('/:id', authenticate, checkRole(['admin', 'hr']), validateIdParam(), async (req, res) => {
+  try {
+    const geofence = await GeofenceService.getGeofenceById(req.params.id);
+
+    // Verify workspace access
+    if (geofence.workspaceId.toString() !== req.user.workspaceId.toString()) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+
+    res.json({ success: true, geofence });
+  } catch (error) {
+    console.error('Get geofence error:', error);
+    res.status(500).json({ message: error.message || 'Failed to fetch geofence' });
+  }
+});
+
+/**
+ * PUT /api/geofences/:id
+ * Update an existing geofence
+ * @route PUT /api/geofences/:id
+ * @access Private (Admin/HR)
+ */
+router.put('/:id', authenticate, checkRole(['admin', 'hr']), validateIdParam(), async (req, res) => {
+  try {
+    const workspaceId = req.user.workspaceId;
+    const { name, description, latitude, longitude, radiusMeters, isActive } = req.body;
+
+    // First check if geofence exists and belongs to workspace
+    const existingGeofence = await GeofenceService.getGeofenceById(req.params.id);
+    if (existingGeofence.workspaceId.toString() !== workspaceId.toString()) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+
+    const geofence = await GeofenceService.updateGeofence(
+      req.params.id,
+      { name, description, latitude, longitude, radiusMeters, isActive },
+      req.user._id
+    );
+
+    await logChange({
+      userId: req.user._id,
+      action: 'update',
+      entity: 'geofence',
+      entityId: req.params.id,
+      details: { action: 'update-geofence', name, latitude, longitude, radiusMeters },
+      ipAddress: getClientIP(req)
+    });
+
+    res.json({ success: true, geofence });
+  } catch (error) {
+    console.error('Update geofence error:', error);
+    res.status(500).json({ message: error.message || 'Failed to update geofence' });
+  }
+});
+
+/**
+ * DELETE /api/geofences/:id
+ * Delete a geofence
+ * @route DELETE /api/geofences/:id
+ * @access Private (Admin/HR)
+ */
+router.delete('/:id', authenticate, checkRole(['admin', 'hr']), validateIdParam(), async (req, res) => {
+  try {
+    const workspaceId = req.user.workspaceId;
+
+    // First check if geofence exists and belongs to workspace
+    const existingGeofence = await GeofenceService.getGeofenceById(req.params.id);
+    if (existingGeofence.workspaceId.toString() !== workspaceId.toString()) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+
+    await GeofenceService.deleteGeofence(req.params.id);
+
+    await logChange({
+      userId: req.user._id,
+      action: 'delete',
+      entity: 'geofence',
+      entityId: req.params.id,
+      details: { action: 'delete-geofence', name: existingGeofence.name },
+      ipAddress: getClientIP(req)
+    });
+
+    res.json({ success: true, message: 'Geofence deleted successfully' });
+  } catch (error) {
+    console.error('Delete geofence error:', error);
+    res.status(500).json({ message: error.message || 'Failed to delete geofence' });
   }
 });
 

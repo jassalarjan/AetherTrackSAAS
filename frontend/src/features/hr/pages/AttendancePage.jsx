@@ -36,7 +36,7 @@ export default function AttendancePage() {
   // Verification state
   const [pendingReviews, setPendingReviews] = useState([]);
   const [reviewLoading, setReviewLoading] = useState(false);
-  const [reviewFilter, setReviewFilter] = useState('PENDING');
+  const [reviewFilter, setReviewFilter] = useState('pending');
   const [reviewSearch, setReviewSearch] = useState('');
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [selectedAttendance, setSelectedAttendance] = useState(null);
@@ -136,7 +136,7 @@ export default function AttendancePage() {
     try {
       setReviewLoading(true);
       const response = await api.get('/hr/attendance/pending-reviews', {
-        params: { status: reviewFilter }
+        params: { verificationStatus: reviewFilter }
       });
       setPendingReviews(response.data.reviews || response.data || []);
     } catch (error) {
@@ -356,27 +356,30 @@ export default function AttendancePage() {
             <div className="space-y-4">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <h3 className={`text-lg font-bold ${currentTheme.text}`}>Pending Reviews</h3>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3" data-mobile-filter-row>
                   {/* Status Filter */}
                   <select
                     value={reviewFilter}
                     onChange={(e) => setReviewFilter(e.target.value)}
-                    className={`px-3 py-2 rounded-lg border text-sm ${currentTheme.surface} ${currentTheme.border} ${currentTheme.text}`}
+                    className={`px-3 py-2 rounded-lg border text-sm ${currentTheme.surface} ${currentTheme.border} ${currentTheme.text} flex-shrink-0`}
+                    data-mobile-filter-input
                   >
-                    <option value="PENDING">Pending</option>
-                    <option value="APPROVED">Approved</option>
-                    <option value="REJECTED">Rejected</option>
+                    <option value="pending">Pending</option>
+                    <option value="approved">Approved</option>
+                    <option value="rejected">Rejected</option>
+                    <option value="auto_approved">Auto-Approved</option>
+                    <option value="auto_rejected">Auto-Rejected</option>
                     <option value="">All</option>
                   </select>
                   {/* Search */}
-                  <div className={`relative flex items-center gap-2 px-3 py-2 rounded-lg border ${currentTheme.border}`}>
+                  <div className={`relative flex items-center gap-2 px-3 py-2 rounded-lg border ${currentTheme.border} flex-shrink-0 min-w-[220px]`} data-mobile-filter-input>
                     <Search className={`w-4 h-4 ${currentTheme.textSecondary}`} />
                     <input
                       type="text"
                       placeholder="Search by name..."
                       value={reviewSearch}
                       onChange={(e) => setReviewSearch(e.target.value)}
-                      className={`bg-transparent outline-none text-sm ${currentTheme.text}`}
+                      className={`bg-transparent outline-none text-sm ${currentTheme.text} w-full`}
                     />
                   </div>
                 </div>
@@ -395,26 +398,26 @@ export default function AttendancePage() {
               ) : (
                 <div className="space-y-3">
                   {pendingReviews
-                    .filter(r => !reviewSearch || (r.userId?.name || r.user?.name || '').toLowerCase().includes(reviewSearch.toLowerCase()))
+                    .filter(r => !reviewSearch || (r.userId?.full_name || r.user?.full_name || r.userId?.name || r.user?.name || '').toLowerCase().includes(reviewSearch.toLowerCase()))
                     .map((review) => (
                       <div
-                        key={review._id}
+                        key={review._id || review.id}
                         className={`${currentTheme.surface} border ${currentTheme.border} rounded-lg p-4 hover:shadow-md transition-shadow`}
                       >
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-2">
                               <h4 className={`font-medium ${currentTheme.text}`}>
-                                {review.userId?.name || review.user?.name || 'Unknown User'}
+                                {review.userId?.full_name || review.user?.full_name || review.userId?.name || review.user?.name || 'Unknown User'}
                               </h4>
                               {/* Verification Status Badge */}
                               <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                review.verificationStatus === 'PENDING' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
-                                review.verificationStatus === 'APPROVED' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
-                                review.verificationStatus === 'REJECTED' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
+                                (review.verificationStatus || '').toLowerCase() === 'pending' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
+                                (review.verificationStatus || '').toLowerCase() === 'approved' || (review.verificationStatus || '').toLowerCase() === 'auto_approved' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
+                                (review.verificationStatus || '').toLowerCase() === 'rejected' || (review.verificationStatus || '').toLowerCase() === 'auto_rejected' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
                                 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'
                               }`}>
-                                {review.verificationStatus || 'PENDING'}
+                                {(review.verificationStatus || 'pending').replace(/_/g, ' ').toUpperCase()}
                               </span>
                             </div>
                             <div className={`text-sm ${currentTheme.textSecondary}`}>
@@ -491,7 +494,7 @@ export default function AttendancePage() {
           {/* ── Exceptions Tab ── */}
           {pageTab === 'exceptions' && isAdmin && (
             <div className="space-y-4">
-              <div className="flex gap-2 mb-4">
+              <div className="flex gap-2 mb-4" data-mobile-filter-row>
                 {['PENDING', 'APPROVED', 'REJECTED'].map((status) => (
                   <button
                     key={status}
@@ -1089,7 +1092,7 @@ export default function AttendancePage() {
             setShowReviewModal(false);
             setSelectedAttendance(null);
           }}
-          attendanceId={selectedAttendance?._id}
+          attendanceId={selectedAttendance?._id || selectedAttendance?.id}
           onActionComplete={handleReviewComplete}
         />
     </ResponsivePageLayout>

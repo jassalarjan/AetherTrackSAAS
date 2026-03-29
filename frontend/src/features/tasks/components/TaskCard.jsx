@@ -226,7 +226,7 @@ const QuickActions = ({ onEdit, onDelete, onMove, className = '' }) => {
 };
 
 /**
- * Main TaskCard Component
+ * Mobile-optimized TaskCard with advanced display features
  */
 export const TaskCard = ({
   task,
@@ -239,7 +239,7 @@ export const TaskCard = ({
   className = '',
 }) => {
   const navigate = useNavigate();
-  const [isHovered, setIsHovered] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
   
   const {
     _id,
@@ -256,6 +256,7 @@ export const TaskCard = ({
     project,
     project_id,
     tags = [],
+    created_at,
   } = task;
 
   const taskId = _id || id;
@@ -264,6 +265,38 @@ export const TaskCard = ({
   const normalizedProject = project || project_id;
   
   const priorityColor = PRIORITY_COLORS[priority] || PRIORITY_COLORS.medium;
+  
+  // Calculate due date status
+  const calculateDueStatus = () => {
+    if (!normalizedDueDate) return { label: 'No date', icon: '📋', color: 'var(--text-muted)' };
+    const d = new Date(normalizedDueDate);
+    const now = new Date();
+    const diffDays = Math.ceil((d - now) / (1000 * 60 * 60 * 24));
+    
+    if (diffDays < 0) {
+      return { label: `${Math.abs(diffDays)}d overdue`, icon: '⚠️', color: 'var(--danger)' };
+    } else if (diffDays === 0) {
+      return { label: 'Due today', icon: '🔴', color: 'var(--warning)' };
+    } else if (diffDays === 1) {
+      return { label: 'Due tomorrow', icon: '🟡', color: 'var(--warning)' };
+    } else if (diffDays <= 3) {
+      return { label: `${diffDays}d left`, icon: '🟡', color: 'var(--warning)' };
+    }
+    return { label: `${diffDays}d left`, icon: '✅', color: 'var(--success)' };
+  };
+
+  const dueStatus = calculateDueStatus();
+
+  // Status configuration
+  const statusConfig = {
+    todo: { label: 'To Do', icon: '📋', color: '#6B7280', bg: '#F3F4F6' },
+    in_progress: { label: 'In Progress', icon: '⚡', color: 'var(--brand)', bg: 'var(--brand)12' },
+    review: { label: 'Review', icon: '👀', color: '#F59E0B', bg: '#FEF3C708' },
+    done: { label: 'Done', icon: '✅', color: '#10B981', bg: '#ECFDF508' },
+    archived: { label: 'Archived', icon: '📦', color: '#8B5CF6', bg: '#F3E8FF08' },
+  };
+
+  const currentStatus = statusConfig[status] || statusConfig.todo;
   
   const handleClick = () => {
     if (onClick) {
@@ -276,106 +309,200 @@ export const TaskCard = ({
   return (
     <div
       className={cn(
-        'task-card group relative bg-[var(--bg-canvas)] rounded-lg',
-        'border border-[var(--border-hair)]',
-        'shadow-[var(--shadow-sm)]',
-        'hover:shadow-[var(--shadow-md)] hover:border-[var(--border-soft)]',
-        'transition-all duration-[var(--base)]',
+        'task-card-advanced relative overflow-hidden rounded-xl',
+        'bg-gradient-to-br from-[var(--bg-raised)] to-[var(--bg-raised)]' ,
+        'border border-[var(--border-soft)]',
+        'shadow-[0_2px_8px_rgba(0,0,0,0.08)]',
+        'active:shadow-lg active:scale-[0.98]',
+        'transition-all duration-200 ease-out',
         'cursor-pointer',
-        isDragging && 'opacity-50 scale-[0.98]',
+        'flex flex-col',
+        'group',
+        isDragging && 'opacity-50 scale-[0.95]',
         className
       )}
-      style={{
-        '--tw-shadow-color': 'var(--shadow-color)',
-      }}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
       onClick={handleClick}
       draggable={draggable}
       role="article"
       aria-label={`Task: ${title}`}
     >
-      {/* Priority pip - 3px left border */}
-      <div 
-        className="absolute left-0 top-3 bottom-3 w-[3px] rounded-full"
-        style={{ backgroundColor: priorityColor }}
-        aria-hidden="true"
+      {/* Animated gradient border on top */}
+      <div
+        className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r opacity-0 group-active:opacity-100 transition-opacity"
+        style={{
+          backgroundImage: `linear-gradient(90deg, ${priorityColor}, ${priorityColor}80)`,
+        }}
       />
-      
-      <div className="p-3 pl-5">
-        {/* Header row: Project label + Priority */}
-        <div className="flex items-center justify-between mb-2">
-          {normalizedProject && (
-            <span className="text-xs font-medium text-[var(--text-muted)] px-2 py-0.5 rounded bg-[var(--bg-base)]">
-              {normalizedProject.name || normalizedProject}
-            </span>
-          )}
-          <span className="text-xs font-medium capitalize px-2 py-0.5 rounded" style={{ color: priorityColor, backgroundColor: `${priorityColor}15` }}>
-            {priority}
-          </span>
+
+      {/* Priority indicator - subtle left accent */}
+      <div
+        className="absolute left-0 top-0 bottom-0 w-1 transition-all duration-300 ease-out"
+        style={{ backgroundColor: priorityColor }}
+      />
+
+      {/* Advanced card content */}
+      <div className="flex flex-col p-3 pl-4 gap-2.5 flex-1">
+
+        {/* Row 1: Status badge + Priority pill + Quick indicator */}
+        <div className="flex items-center justify-between gap-2">
+          {/* Status with emoji */}
+          <div
+            className="flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-semibold transition-all"
+            style={{ backgroundColor: currentStatus.bg, color: currentStatus.color }}
+          >
+            <span>{currentStatus.icon}</span>
+            <span className="truncate">{currentStatus.label}</span>
+          </div>
+
+          {/* Priority badge - compact */}
+          <div
+            className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-transform hover:scale-110"
+            style={{
+              backgroundColor: `${priorityColor}20`,
+              color: priorityColor,
+              border: `1px solid ${priorityColor}40`,
+            }}
+            title={`${priority} priority`}
+          >
+            {priority === 'urgent' && '🔴'}
+            {priority === 'high' && '🟠'}
+            {priority === 'medium' && '🟡'}
+            {priority === 'low' && '🔵'}
+          </div>
         </div>
-        
-        {/* Title - 2 lines max, truncate */}
-        <h3 className="text-sm font-medium text-[var(--text-primary)] line-clamp-2 mb-2">
+
+        {/* Row 2: Title - enhanced typography */}
+        <h3 className="text-sm font-bold text-[var(--text-primary)] line-clamp-2 leading-tight">
           {title}
         </h3>
-        
-        {/* Description preview if exists */}
-        {description && (
-          <p className="text-xs text-[var(--text-muted)] line-clamp-1 mb-3">
+
+        {/* Row 3: Description or project info */}
+        {description ? (
+          <p className="text-[11px] text-[var(--text-muted)] line-clamp-1 leading-tight italic opacity-75">
             {description}
           </p>
-        )}
-        
-        {/* Tags */}
-        {tags.length > 0 && (
-          <div className="flex flex-wrap gap-1 mb-3">
-            {tags.slice(0, 3).map((tag, index) => (
-              <span 
-                key={index}
-                className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--bg-surface)] text-[var(--text-muted)]"
-              >
-                {tag}
-              </span>
-            ))}
-            {tags.length > 3 && (
-              <span className="text-[10px] text-[var(--text-muted)]">
-                +{tags.length - 3}
-              </span>
-            )}
-          </div>
-        )}
-        
-        {/* Footer row: Avatar stack + Due chip + Progress ring */}
-        <div className="flex items-center justify-between mt-auto">
-          <div className="flex-1">
-            {normalizedAssignees.length > 0 ? (
-              <AvatarStack users={normalizedAssignees} max={3} size={24} />
-            ) : (
-              <span className="text-xs text-[var(--text-muted)]">Unassigned</span>
-            )}
-          </div>
-          
-          <div className="flex items-center gap-2">
-            {normalizedDueDate && (
-              <DueChip dueDate={normalizedDueDate} />
-            )}
-            <ProgressRing 
-              progress={progress} 
-              size={28} 
-              strokeWidth={3}
-              status={status}
+        ) : normalizedProject ? (
+          <span className="text-[10px] font-medium text-[var(--brand)] px-1.5 py-0.5 rounded w-fit bg-[var(--brand)]10">
+            📌 {normalizedProject.name || normalizedProject}
+          </span>
+        ) : null}
+
+        {/* Row 4: Progress bar with percentage */}
+        <div className="space-y-1">
+          <div className="w-full h-1.5 rounded-full bg-[var(--bg-base)] overflow-hidden shadow-inner">
+            <div
+              className="h-full rounded-full transition-all duration-500 ease-out"
+              style={{
+                width: `${progress}%`,
+                backgroundColor:
+                  progress === 100
+                    ? 'var(--success)'
+                    : progress >= 75
+                      ? 'var(--brand)'
+                      : progress >= 50
+                        ? 'var(--warning)'
+                        : 'var(--danger)',
+              }}
             />
           </div>
+          <div className="flex justify-between items-center px-1">
+            <span className="text-[9px] font-medium text-[var(--text-muted)]">
+              {progress === 100 ? '✨ Complete' : `${progress}% done`}
+            </span>
+            <span className="text-[9px] text-[var(--text-muted)] opacity-60">
+              {(() => {
+                if (created_at) {
+                  const days = Math.floor(
+                    (new Date() - new Date(created_at)) / (1000 * 60 * 60 * 24)
+                  );
+                  if (days === 0) return 'Today';
+                  if (days === 1) return 'Yesterday';
+                  if (days < 7) return `${days}d ago`;
+                  return `${Math.floor(days / 7)}w ago`;
+                }
+                return '';
+              })()}
+            </span>
+          </div>
         </div>
-        
-        {/* Quick actions - fade in on hover */}
-        <QuickActions 
-          onEdit={onEdit}
-          onDelete={onDelete}
-          onMove={onMove}
-          className="absolute top-2 right-2"
-        />
+
+        {/* Flexible spacer */}
+        <div className="flex-1" />
+
+        {/* Row 5: Due date + Assignee indicators */}
+        <div className="flex items-center justify-between gap-2 pt-2 border-t border-[var(--border-hair)] opacity-85">
+          {/* Due date with dynamic styling */}
+          <div className="flex items-center gap-1.5 text-[10px] font-medium flex-shrink-0">
+            <span style={{ color: dueStatus.color }}>{dueStatus.icon}</span>
+            <span style={{ color: dueStatus.color }} className="max-w-[100px] truncate">
+              {dueStatus.label}
+            </span>
+          </div>
+
+          {/* Assignee stack */}
+          <div className="flex-1 flex justify-end">
+            {normalizedAssignees.length > 0 ? (
+              <AvatarStack users={normalizedAssignees} max={2} size={18} />
+            ) : (
+              <span className="text-[9px] text-[var(--text-muted)] italic">Unassigned</span>
+            )}
+          </div>
+        </div>
+
+        {/* Row 6: Tags if exists */}
+        {tags.length > 0 && (
+          <div className="flex flex-wrap gap-1 pt-1">
+            {tags.slice(0, 2).map((tag, i) => (
+              <span
+                key={i}
+                className="text-[9px] px-1.5 py-0.5 rounded-md bg-[var(--bg-base)] text-[var(--text-muted)] font-medium"
+              >
+                #{tag}
+              </span>
+            ))}
+            {tags.length > 2 && (
+              <span className="text-[9px] text-[var(--text-muted)] font-medium">
+                +{tags.length - 2}
+              </span>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Advanced action bar - always visible, touch-optimized */}
+      <div className="flex items-stretch gap-0 border-t border-[var(--border-hair)] bg-gradient-to-r from-transparent to-[var(--bg-base)]10">
+        {onEdit && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit();
+            }}
+            className="flex-1 min-h-[44px] flex flex-col items-center justify-center gap-0.5 rounded-bl-lg text-[var(--text-muted)] hover:text-[var(--brand)] hover:bg-[var(--brand)]10 active:bg-[var(--brand)]15 transition-all"
+            aria-label="Edit task"
+            title="Edit task"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+            <span className="text-[8px] font-bold">Edit</span>
+          </button>
+        )}
+        {onDelete && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete();
+            }}
+            className="flex-1 min-h-[44px] flex flex-col items-center justify-center gap-0.5 rounded-br-lg text-[var(--text-muted)] hover:text-[var(--danger)] hover:bg-[var(--danger)]10 active:bg-[var(--danger)]15 transition-all border-l border-[var(--border-hair)]"
+            aria-label="Delete task"
+            title="Delete task"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+            <span className="text-[8px] font-bold">Delete</span>
+          </button>
+        )}
       </div>
     </div>
   );

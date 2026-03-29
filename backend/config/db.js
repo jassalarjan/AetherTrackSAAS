@@ -4,16 +4,21 @@ const dropLegacyAttendanceGeoIndex = async (conn) => {
   try {
     const collection = conn.connection.db.collection('attendances');
     const indexes = await collection.indexes();
-    const legacyGeoIndex = indexes.find(
-      (idx) => idx?.key && idx.key['verification.gpsLocation'] === '2dsphere'
+    const legacyGeoIndexes = indexes.filter(
+      (idx) => idx?.key && (
+        idx.key['verification.gpsLocation'] === '2dsphere' ||
+        idx.key['verification.geoPoint'] === '2dsphere'
+      )
     );
 
-    if (!legacyGeoIndex) {
+    if (!legacyGeoIndexes.length) {
       return;
     }
 
-    await collection.dropIndex(legacyGeoIndex.name);
-    console.log(`✅ Dropped legacy attendance geo index: ${legacyGeoIndex.name}`);
+    for (const idx of legacyGeoIndexes) {
+      await collection.dropIndex(idx.name);
+      console.log(`✅ Dropped legacy attendance geo index: ${idx.name}`);
+    }
   } catch (error) {
     if (error?.codeName === 'NamespaceNotFound') {
       return;

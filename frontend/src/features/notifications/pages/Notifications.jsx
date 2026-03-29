@@ -146,7 +146,7 @@ const Notifications = () => {
 
   const filteredNotifications = getFilteredNotifications();
 
-  if (loading) return <PageLoader variant="dots" label="Loading notifications…" />;
+  if (loading) return <PageLoader />;
 
   return (
     <ResponsivePageLayout
@@ -169,7 +169,7 @@ const Notifications = () => {
     >
       {/* Filter Tabs — sticky within scroll container */}
       <div
-        className="sticky top-0 z-10 flex items-center gap-1 px-6 py-3 border-b"
+        className="z-10 flex items-center gap-1 px-6 py-3 border-b md:sticky md:top-0"
         style={{ background: 'var(--bg-canvas)', borderColor: 'var(--border-soft)' }}
       >
         {['all', 'unread', 'read'].map((f) => {

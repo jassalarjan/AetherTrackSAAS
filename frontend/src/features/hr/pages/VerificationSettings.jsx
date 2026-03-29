@@ -4,24 +4,56 @@ import { useTheme } from '@/app/providers/ThemeProvider';
 import { useSidebar } from '@/features/workspace/context/SidebarContext';
 import api from '@/shared/services/axios';
 import ResponsivePageLayout from '@/shared/components/responsive/ResponsivePageLayout';
-import { Settings as SettingsIcon, Save, RotateCcw, Check, X, AlertCircle, Shield, MapPin, Camera, Smartphone, Clock, Eye, EyeOff } from 'lucide-react';
+import { Settings as SettingsIcon, Save, RotateCcw, Check, X, AlertCircle, Shield, MapPin, Camera, Smartphone, Plus, Trash2 } from 'lucide-react';
 
 const DEFAULT_SETTINGS = {
   photoVerification: {
     enabled: false,
     mandatory: false,
-    preventReuse: true
+    allowRetake: true,
+    maxRetakes: 3
   },
   gpsVerification: {
     enabled: false,
     mandatory: false,
     accuracyThresholdMeters: 50,
+    requireFreshLocation: true,
     locationFreshnessSeconds: 300
   },
-  deviceInfoCapture: {
-    enabled: true
+  security: {
+    preventPhotoReuse: true,
+    captureDeviceInfo: true,
+    enforceServerTimestamp: true
+  },
+  attendanceGovernance: {
+    regularAttendanceMarkedBy: 'self',
+    specialDays: []
   }
 };
+
+const normalizeSettings = (raw) => ({
+  ...DEFAULT_SETTINGS,
+  ...raw,
+  photoVerification: {
+    ...DEFAULT_SETTINGS.photoVerification,
+    ...(raw?.photoVerification || {})
+  },
+  gpsVerification: {
+    ...DEFAULT_SETTINGS.gpsVerification,
+    ...(raw?.gpsVerification || {})
+  },
+  security: {
+    ...DEFAULT_SETTINGS.security,
+    ...(raw?.security || {})
+  },
+  attendanceGovernance: {
+    ...DEFAULT_SETTINGS.attendanceGovernance,
+    ...(raw?.attendanceGovernance || {}),
+    specialDays: Array.isArray(raw?.attendanceGovernance?.specialDays)
+      ? raw.attendanceGovernance.specialDays
+      : []
+  }
+});
 
 export default function VerificationSettings() {
   const { user } = useAuth();
@@ -29,7 +61,7 @@ export default function VerificationSettings() {
   const { toggleMobileSidebar } = useSidebar();
   const isDark = theme === 'dark';
 
-  const [settings, setSettings] = useState(DEFAULT_SETTINGS);
+  const [settings, setSettings] = useState(normalizeSettings(DEFAULT_SETTINGS));
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
@@ -48,7 +80,7 @@ export default function VerificationSettings() {
       setLoading(true);
       const response = await api.get('/hr/attendance/verification-settings');
       if (response.data.settings) {
-        setSettings(response.data.settings);
+        setSettings(normalizeSettings(response.data.settings));
       }
     } catch (error) {
       console.error('Error fetching settings:', error);
@@ -112,7 +144,7 @@ export default function VerificationSettings() {
       const response = await api.put('/hr/attendance/verification-settings', DEFAULT_SETTINGS);
       
       if (response.data.success) {
-        setSettings(DEFAULT_SETTINGS);
+        setSettings(normalizeSettings(DEFAULT_SETTINGS));
         setMessage({ type: 'success', text: 'Settings reset to defaults!' });
       } else {
         setMessage({ type: 'error', text: response.data.message || 'Failed to reset settings' });
@@ -147,6 +179,53 @@ export default function VerificationSettings() {
       />
     </button>
   );
+
+  const handleSpecialDayChange = (index, key, value) => {
+    setSettings((prev) => ({
+      ...prev,
+      attendanceGovernance: {
+        ...prev.attendanceGovernance,
+        specialDays: prev.attendanceGovernance.specialDays.map((day, i) => (
+          i === index ? { ...day, [key]: value } : day
+        ))
+      }
+    }));
+  };
+
+  const addSpecialDay = () => {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    const localDate = `${yyyy}-${mm}-${dd}`;
+
+    setSettings((prev) => ({
+      ...prev,
+      attendanceGovernance: {
+        ...prev.attendanceGovernance,
+        specialDays: [
+          ...prev.attendanceGovernance.specialDays,
+          {
+            date: localDate,
+            type: 'meeting',
+            markedBy: 'hr',
+            note: '',
+            isActive: true
+          }
+        ]
+      }
+    }));
+  };
+
+  const removeSpecialDay = (index) => {
+    setSettings((prev) => ({
+      ...prev,
+      attendanceGovernance: {
+        ...prev.attendanceGovernance,
+        specialDays: prev.attendanceGovernance.specialDays.filter((_, i) => i !== index)
+      }
+    }));
+  };
 
   const SettingSection = ({ icon: Icon, title, description, children }) => (
     <div className={`p-6 rounded-lg border ${
@@ -298,8 +377,8 @@ export default function VerificationSettings() {
                 description="Detect and block reuse of previously captured photos"
               >
                 <ToggleSwitch
-                  checked={settings.photoVerification.preventReuse}
-                  onChange={() => handleToggle('photoVerification', 'preventReuse')}
+                  checked={settings.security.preventPhotoReuse}
+                  onChange={() => handleToggle('security', 'preventPhotoReuse')}
                   disabled={!settings.photoVerification.enabled}
                 />
               </SettingRow>
@@ -388,10 +467,129 @@ export default function VerificationSettings() {
                 description="Record device type, browser, and IP address"
               >
                 <ToggleSwitch
-                  checked={settings.deviceInfoCapture.enabled}
-                  onChange={() => handleToggle('deviceInfoCapture', 'enabled')}
+                  checked={settings.security.captureDeviceInfo}
+                  onChange={() => handleToggle('security', 'captureDeviceInfo')}
                 />
               </SettingRow>
+
+              <SettingRow
+                label="Enforce Server Timestamp"
+                description="Use server time as source of truth for verification"
+              >
+                <ToggleSwitch
+                  checked={settings.security.enforceServerTimestamp}
+                  onChange={() => handleToggle('security', 'enforceServerTimestamp')}
+                />
+              </SettingRow>
+            </SettingSection>
+
+            {/* Attendance Governance */}
+            <SettingSection
+              icon={Shield}
+              title="Attendance Governance"
+              description="Choose who marks regular attendance and define special HR-controlled days"
+            >
+              <SettingRow
+                label="Regular Attendance Marked By"
+                description="Controls whether users can self check-in for normal days"
+              >
+                <select
+                  value={settings.attendanceGovernance.regularAttendanceMarkedBy}
+                  onChange={(e) => setSettings((prev) => ({
+                    ...prev,
+                    attendanceGovernance: {
+                      ...prev.attendanceGovernance,
+                      regularAttendanceMarkedBy: e.target.value
+                    }
+                  }))}
+                  className={`px-3 py-2 rounded-lg border ${
+                    isDark ? 'bg-[#282f39] border-[#333a47] text-white' : 'bg-white border-gray-300 text-gray-900'
+                  }`}
+                >
+                  <option value="self">Self (Check-in allowed)</option>
+                  <option value="hr">HR Only</option>
+                  <option value="admin">Admin Only</option>
+                </select>
+              </SettingRow>
+
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <p className={`font-medium ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                    Special Days (Meeting / Controlled Attendance)
+                  </p>
+                  <button
+                    type="button"
+                    onClick={addSpecialDay}
+                    className="aether-btn aether-btn-secondary"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add Day
+                  </button>
+                </div>
+
+                {settings.attendanceGovernance.specialDays.length === 0 ? (
+                  <p className="text-sm text-[var(--text-muted)]">No special days configured.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {settings.attendanceGovernance.specialDays.map((day, index) => (
+                      <div
+                        key={`special-day-${index}`}
+                        className={`grid grid-cols-1 md:grid-cols-5 gap-2 p-3 rounded-lg border ${
+                          isDark ? 'border-[#333a47] bg-[#282f39]' : 'border-gray-200 bg-gray-50'
+                        }`}
+                      >
+                        <input
+                          type="date"
+                          value={day.date ? new Date(day.date).toISOString().slice(0, 10) : ''}
+                          onChange={(e) => handleSpecialDayChange(index, 'date', e.target.value)}
+                          className={`px-2 py-2 rounded border ${isDark ? 'bg-[#1c2027] border-[#333a47] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                        />
+                        <select
+                          value={day.type || 'meeting'}
+                          onChange={(e) => handleSpecialDayChange(index, 'type', e.target.value)}
+                          className={`px-2 py-2 rounded border ${isDark ? 'bg-[#1c2027] border-[#333a47] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                        >
+                          <option value="meeting">Meeting</option>
+                          <option value="special">Special</option>
+                        </select>
+                        <select
+                          value={day.markedBy || 'hr'}
+                          onChange={(e) => handleSpecialDayChange(index, 'markedBy', e.target.value)}
+                          className={`px-2 py-2 rounded border ${isDark ? 'bg-[#1c2027] border-[#333a47] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                        >
+                          <option value="hr">HR</option>
+                          <option value="admin">Admin</option>
+                        </select>
+                        <input
+                          type="text"
+                          value={day.note || ''}
+                          onChange={(e) => handleSpecialDayChange(index, 'note', e.target.value)}
+                          placeholder="Note"
+                          className={`px-2 py-2 rounded border ${isDark ? 'bg-[#1c2027] border-[#333a47] text-white' : 'bg-white border-gray-300 text-gray-900'}`}
+                        />
+                        <div className="flex items-center justify-between gap-2">
+                          <label className="flex items-center gap-2 text-sm">
+                            <input
+                              type="checkbox"
+                              checked={day.isActive !== false}
+                              onChange={(e) => handleSpecialDayChange(index, 'isActive', e.target.checked)}
+                            />
+                            Active
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => removeSpecialDay(index)}
+                            className="p-2 rounded text-red-500 hover:bg-red-500/10"
+                            title="Remove day"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </SettingSection>
 
             {/* Action Buttons */}

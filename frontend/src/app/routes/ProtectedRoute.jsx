@@ -6,7 +6,7 @@ export const ProtectedRoute = ({ children, allowedRoles = [], requireSystemAdmin
   const { user, loading } = useAuth();
 
   if (loading) {
-    return <PageLoader label="Loading workspace…" />;
+    return <PageLoader />;
   }
 
   if (!user) {

@@ -57,7 +57,7 @@ const ResponsiveModal = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+    <div className="fixed inset-0 z-[var(--z-modal)] flex items-end sm:items-center justify-center">
       {/* Backdrop - darker on mobile for better contrast */}
       <div
         className="absolute inset-0 bg-black/80 backdrop-blur-sm"

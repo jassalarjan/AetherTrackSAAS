@@ -1,0 +1,35 @@
+/* Global mobile layout contract: top chrome + bottom chrome + scroll area */
+:root {
+  --mobile-top-chrome: 64px;
+  --mobile-bottom-chrome: 0px;
+  --mobile-scroll-area: 100dvh;
+}
+
+@media (max-width: 767px) {
+  :root {
+    --mobile-top-chrome: 52px;
+    --mobile-bottom-chrome: calc(56px + env(safe-area-inset-bottom, 0px));
+    --mobile-scroll-area: calc(100dvh - var(--mobile-top-chrome) - var(--mobile-bottom-chrome));
+  }
+
+  [data-page-content] {
+    height: var(--mobile-scroll-area) !important;
+    max-height: var(--mobile-scroll-area) !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+  }
+
+  [data-bottom-nav] {
+    height: var(--mobile-bottom-chrome) !important;
+    min-height: var(--mobile-bottom-chrome) !important;
+    padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+  }
+
+  [data-navbar] {
+    height: var(--mobile-top-chrome) !important;
+    min-height: var(--mobile-top-chrome) !important;
+    padding-top: 0 !important;
+  }
+}

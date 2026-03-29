@@ -11,10 +11,12 @@ import { Filter, Calendar, AlertTriangle, TrendingUp, BarChart3, Target, User, U
 import { PieChart as RechartsPieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, LineChart, Line, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Legend } from 'recharts';
 import { generateExcelReport } from '@/features/analytics/services/reportGenerator';
 import { generateComprehensivePDFReport } from '@/features/analytics/services/comprehensiveReportGenerator';
+import { useSidebar } from '@/features/workspace/context/SidebarContext';
 
 const Analytics = () => {
   const { user } = useAuth();
   const { theme, effectiveTheme } = useTheme();
+  const { isMobile } = useSidebar();
   const isDark = effectiveTheme === 'dark';
   const [tasks, setTasks] = useState([]);
   const [projects, setProjects] = useState([]);
@@ -630,7 +632,105 @@ const Analytics = () => {
     return palette[index % palette.length];
   };
 
-  if (loading) return <PageLoader variant="bars" label="Loading analytics…" />;
+  if (loading) return <PageLoader />;
+
+  if (isMobile) {
+    return (
+      <>
+        <ResponsivePageLayout title="Analytics" icon={BarChart3}>
+          <div className="space-y-4">
+            <div className="rounded-2xl border border-[var(--border-soft)] bg-[var(--bg-raised)] p-4">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--text-muted)]">Mobile Briefing</p>
+              <h2 className="mt-2 text-2xl font-black tracking-tight text-[var(--text-primary)]">Team Pulse</h2>
+              <p className="mt-2 text-sm text-[var(--text-secondary)]">A phone-first summary instead of a dense dashboard wall.</p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="rounded-2xl border border-[var(--border-soft)] bg-[var(--bg-raised)] p-4">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--text-muted)]">Tasks</p>
+                <p className="mt-2 text-2xl font-bold text-[var(--text-primary)]">{analyticsData.totalTasks}</p>
+              </div>
+              <div className="rounded-2xl border border-[var(--border-soft)] bg-[var(--bg-raised)] p-4">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--text-muted)]">Overdue</p>
+                <p className="mt-2 text-2xl font-bold text-[var(--danger)]">{analyticsData.overdueTasks}</p>
+              </div>
+              <div className="rounded-2xl border border-[var(--border-soft)] bg-[var(--bg-raised)] p-4">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--text-muted)]">Completed</p>
+                <p className="mt-2 text-2xl font-bold text-[var(--success)]">{analyticsData.completedTasks}</p>
+              </div>
+              <div className="rounded-2xl border border-[var(--border-soft)] bg-[var(--bg-raised)] p-4">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--text-muted)]">Projects</p>
+                <p className="mt-2 text-2xl font-bold text-[var(--text-primary)]">{analyticsData.totalProjects}</p>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-[var(--border-soft)] bg-[var(--bg-raised)] p-4">
+              <h3 className="mb-3 text-sm font-bold uppercase tracking-[0.12em] text-[var(--text-muted)]">Status Breakdown</h3>
+              <div className="space-y-3">
+                {analyticsData.statusDistribution.map((item) => (
+                  <div key={item.name}>
+                    <div className="mb-1 flex items-center justify-between text-sm">
+                      <span className="font-medium text-[var(--text-primary)]">{item.name}</span>
+                      <span className="text-[var(--text-muted)]">{item.value}</span>
+                    </div>
+                    <div className="h-2 rounded-full bg-[var(--bg-base)]">
+                      <div className="h-2 rounded-full" style={{ width: `${analyticsData.totalTasks ? (item.value / analyticsData.totalTasks) * 100 : 0}%`, backgroundColor: item.color || 'var(--brand)' }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-[var(--border-soft)] bg-[var(--bg-raised)] p-4">
+              <h3 className="mb-3 text-sm font-bold uppercase tracking-[0.12em] text-[var(--text-muted)]">Top Teams</h3>
+              <div className="space-y-3">
+                {analyticsData.teamDistribution.slice(0, 5).map((team) => (
+                  <div key={team.name} className="flex items-center justify-between rounded-xl bg-[var(--bg-base)] px-3 py-3">
+                    <span className="text-sm font-medium text-[var(--text-primary)]">{team.name}</span>
+                    <span className="text-sm font-semibold text-[var(--text-secondary)]">{team.value}</span>
+                  </div>
+                ))}
+                {analyticsData.teamDistribution.length === 0 && (
+                  <p className="text-sm text-[var(--text-muted)]">No team data available.</p>
+                )}
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-[var(--border-soft)] bg-[var(--bg-raised)] p-4">
+              <h3 className="mb-3 text-sm font-bold uppercase tracking-[0.12em] text-[var(--text-muted)]">Recent Task Feed</h3>
+              <div className="space-y-3">
+                {filteredTasks.slice(0, 8).map((task) => {
+                  const isOverdue = task.due_date && new Date(task.due_date) < new Date() && task.status !== 'done';
+                  return (
+                    <div key={task._id} className="rounded-xl border border-[var(--border-soft)] bg-[var(--bg-base)] p-4">
+                      <div className="mb-2 flex items-start justify-between gap-3">
+                        <p className="text-sm font-semibold text-[var(--text-primary)]">{task.title}</p>
+                        <span className="rounded-full px-2.5 py-1 text-[10px] font-bold uppercase" style={{ backgroundColor: `${getPriorityColor(task.priority)}22`, color: getPriorityColor(task.priority) }}>
+                          {task.priority}
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap gap-2 text-[11px]">
+                        <span className="rounded-full bg-[var(--bg-raised)] px-2.5 py-1 font-medium text-[var(--text-secondary)]">{task.status.replace('_', ' ')}</span>
+                        <span className={`rounded-full px-2.5 py-1 font-medium ${isOverdue ? 'bg-[var(--danger-dim)] text-[var(--danger)]' : 'bg-[var(--bg-raised)] text-[var(--text-secondary)]'}`}>
+                          {task.due_date ? new Date(task.due_date).toLocaleDateString() : 'No date'}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </ResponsivePageLayout>
+        <ShortcutsOverlay
+          show={showHelp}
+          onClose={() => setShowHelp(false)}
+          shortcuts={analyticsShortcuts}
+          pageName="Analytics"
+        />
+      </>
+    );
+  }
 
   return (
     <>
@@ -687,7 +787,7 @@ const Analytics = () => {
 
           {/* Filters Row */}
           <div className="px-3 sm:px-6 pb-3 sm:pb-4">
-            <div className="flex items-center justify-between mb-2 sm:mb-3">
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-2 sm:mb-3">
               <button
                 onClick={() => setShowFilters(!showFilters)}
                 className="flex items-center gap-2 hover:bg-[var(--bg-surface)] px-2 py-1 rounded transition-colors lg:pointer-events-none"
@@ -708,7 +808,7 @@ const Analytics = () => {
                 </button>
               )}
             </div>
-            <div className={`grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3 transition-all duration-300 overflow-hidden ${showFilters ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0 lg:max-h-[500px] lg:opacity-100'}`}>
+            <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2 sm:gap-3 transition-all duration-300 overflow-hidden ${showFilters ? 'max-h-[700px] opacity-100' : 'max-h-0 opacity-0 lg:max-h-[700px] lg:opacity-100'}`}>
               <select
                 value={filters.status}
                 onChange={(e) => setFilters({...filters, status: e.target.value})}
@@ -786,7 +886,7 @@ const Analytics = () => {
             </div>
 
             {filters.dateRange === 'custom' && showFilters && (
-              <div className="grid grid-cols-2 gap-2 sm:gap-3 mt-2 sm:mt-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 mt-2 sm:mt-3">
                 <input
                   type="date"
                   value={filters.customStartDate}

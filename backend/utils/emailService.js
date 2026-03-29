@@ -117,7 +117,7 @@ export const sendEmail = async (to, subject, htmlContent, from = null) => {
 };
 
 // HTML Email Template for New User Credentials
-const getCredentialEmailTemplate = (fullName, email, password, appUrl) => {
+const getCredentialEmailTemplate = (fullName, email, appUrl) => {
   return `
 <!DOCTYPE html>
 <html lang="en">
@@ -377,15 +377,17 @@ const getCredentialEmailTemplate = (fullName, email, password, appUrl) => {
         <div class="credentials-box">
           <h3>
             <span>ðŸ”</span>
-            Your Login Credentials
+            Your Account Details
           </h3>
           <div class="credential-item">
             <span class="credential-label">ðŸ“§ Email Address</span>
             <div class="credential-value">${email}</div>
           </div>
           <div class="credential-item">
-            <span class="credential-label">ðŸ”‘ Temporary Password</span>
-            <div class="credential-value">${password}</div>
+            <span class="credential-label">ðŸ›¡ï¸ Password Delivery</span>
+            <div class="credential-value" style="font-family: inherit; font-size: 14px; font-weight: 500;">
+              For security reasons, passwords are never sent over email. Please use the secure reset flow if you need to set or rotate your password.
+            </div>
           </div>
         </div>
 
@@ -497,7 +499,7 @@ export const sendVerificationEmail = async (fullName, email, verificationCode, p
       <div class="credentials-box">
         <h3 style="margin-top: 0; color: #10b981;">Your Login Credentials</h3>
         <p><strong>Email:</strong> ${email}</p>
-        <p><strong>Temporary Password:</strong> ${password}</p>
+        <p><strong>Password:</strong> Use the secure password setup/reset flow to set your password.</p>
       </div>
 
       <div class="warning">
@@ -544,7 +546,7 @@ export const sendCredentialEmail = async (fullName, email, password) => {
       ? 'https://AetherTrack-nine-phi.vercel.app'
       : (process.env.CLIENT_URL || 'https://AetherTrack-nine-phi.vercel.app');
 
-    const htmlContent = getCredentialEmailTemplate(fullName, email, password, appUrl);
+    const htmlContent = getCredentialEmailTemplate(fullName, email, appUrl);
     const subject = 'ðŸŽ‰ Welcome to AetherTrack - Your Account is Ready!';
 
     const result = await sendEmail(email, subject, htmlContent);
@@ -826,7 +828,7 @@ const getPasswordResetTemplate = (fullName, resetToken) => {
 };
 
 // Send password reset confirmation email with new password
-export const sendPasswordResetEmail = async (fullName, email, newPassword) => {
+export const sendPasswordResetEmail = async (fullName, email) => {
   try {
     const appUrl = process.env.NODE_ENV === 'production'
       ? 'https://AetherTrack-nine-phi.vercel.app'
@@ -841,8 +843,6 @@ export const sendPasswordResetEmail = async (fullName, email, newPassword) => {
     .container { max-width: 600px; margin: 0 auto; padding: 20px; }
     .header { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
     .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
-    .password-box { background: white; border: 2px solid #10b981; border-radius: 8px; padding: 20px; text-align: center; margin: 20px 0; }
-    .password { font-size: 24px; font-weight: bold; color: #10b981; letter-spacing: 2px; font-family: 'Courier New', monospace; }
     .btn { display: inline-block; padding: 12px 30px; background: linear-gradient(135deg, #136dec 0%, #0b4fb5 100%); color: white !important; text-decoration: none; border-radius: 5px; font-weight: bold; margin-top: 20px; }
     .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }
     .warning { background: #fff3cd; border-left: 4px solid #ffc107; padding: 12px; margin: 15px 0; }
@@ -856,25 +856,18 @@ export const sendPasswordResetEmail = async (fullName, email, newPassword) => {
     </div>
     <div class="content">
       <p>Hello <strong>${fullName}</strong>,</p>
-      <p>Your password has been successfully reset. Here are your new login credentials:</p>
-
-      <div class="password-box">
-        <p style="margin: 0; color: #666; font-size: 14px; margin-bottom: 10px;">Your New Password</p>
-        <div class="password">${newPassword}</div>
-      </div>
-
-      <p style="text-align: center; color: #666; font-size: 14px;">Use this password to log in to your account</p>
+      <p>Your password has been successfully reset.</p>
 
       <div class="warning">
         <strong>âš ï¸ Security Reminder:</strong>
         <ul style="margin: 10px 0;">
-          <li>Change this password after your next login</li>
+          <li>If you did not initiate this change, contact your administrator immediately</li>
           <li>Keep your credentials secure</li>
           <li>Never share your password with others</li>
         </ul>
       </div>
 
-      <p>Click the button below to log in with your new password:</p>
+      <p>Click the button below to access AetherTrack:</p>
       <a href="${appUrl}" class="btn">Login to AetherTrack</a>
 
       <p style="margin-top: 30px;">If you didn't request this password reset, please contact your administrator immediately.</p>

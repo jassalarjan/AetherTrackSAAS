@@ -1,8 +1,10 @@
 ﻿import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import ResponsivePageLayout from '@/shared/components/responsive/ResponsivePageLayout';
 import { PageLoader } from '@/shared/components/ui/Spinner';
 import api from '@/shared/services/axios';
+import { useSidebar } from '@/features/workspace/context/SidebarContext';
 import { 
   Search, Filter, Share2, Plus, ChevronLeft, ChevronRight,
   AlertTriangle, User, Edit2, Trash2, X
@@ -27,10 +29,36 @@ const ResourceWorkload = () => {
     password: '',
     role: 'member'
   });
+  const { isMobile } = useSidebar();
 
   useEffect(() => {
     fetchUsers();
   }, []);
+
+  useEffect(() => {
+    if (!showAddModal && !showEditModal) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    const onKeyDown = (e) => {
+      if (e.key !== 'Escape') return;
+      if (showEditModal) {
+        setShowEditModal(false);
+        return;
+      }
+      if (showAddModal) {
+        setShowAddModal(false);
+      }
+    };
+
+    document.addEventListener('keydown', onKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [showAddModal, showEditModal]);
 
   const fetchUsers = async () => {
     try {
@@ -213,15 +241,15 @@ const ResourceWorkload = () => {
   const dateRange = getDateRange();
   const daysOfWeek = getDaysOfWeek();
 
-  if (loading) return <PageLoader variant="bars" label="Loading workload…" />;
+  if (loading) return <PageLoader />;
 
   return (
     <ResponsivePageLayout title="Resource & Workload" icon={User} noPadding>
         {/* Header */}
-        <header className="h-16 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1a2234] flex items-center justify-between px-6 z-20">
-          <div className="flex items-center gap-6">
+        <header className={`${isMobile ? 'min-h-[72px] flex-col items-stretch gap-3 py-4' : 'h-16'} border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1a2234] flex justify-between px-4 sm:px-6 z-20`}>
+          <div className={`flex items-center gap-6 ${isMobile ? 'w-full flex-col items-stretch gap-2' : ''}`}>
             <h2 className="text-lg font-bold">Resource & Workload</h2>
-            <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+            <div className={`flex items-center bg-gray-100 dark:bg-gray-800 rounded-lg p-1 ${isMobile ? 'overflow-x-auto max-w-full w-full' : ''}`}>
               <button 
                 onClick={() => setViewMode('team')}
                 className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
@@ -254,8 +282,8 @@ const ResourceWorkload = () => {
               </button>
             </div>
           </div>
-          <div className="flex items-center gap-4">
-            <div className="relative w-64">
+          <div className={`flex items-center gap-3 ${isMobile ? 'w-full' : 'gap-4'}`}>
+            <div className={`relative ${isMobile ? 'flex-1' : 'w-64'}`}>
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
               <input
                 className="w-full bg-gray-100 dark:bg-gray-800 border-none rounded-lg py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-[#C4713A]/20 placeholder:text-gray-500 dark:placeholder:text-gray-400"
@@ -265,17 +293,17 @@ const ResourceWorkload = () => {
             </div>
             <button 
               onClick={() => setShowAddModal(true)}
-              className="bg-[#C4713A] text-white text-sm font-bold px-4 py-2 rounded-lg flex items-center gap-2"
+              className="bg-[#C4713A] text-white text-sm font-bold px-4 py-2 rounded-lg flex items-center gap-2 whitespace-nowrap"
             >
               <Plus size={18} />
-              Add Resource
+              <span className={isMobile ? 'hidden' : ''}>Add Resource</span>
             </button>
           </div>
         </header>
 
         {/* Subheader Controls */}
-        <div className="flex flex-wrap items-center justify-between gap-4 px-6 py-4 bg-white dark:bg-[#1a2234] border-b border-gray-100 dark:border-gray-800">
-          <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-3 sm:gap-4 px-4 sm:px-6 py-4 bg-white dark:bg-[#1a2234] border-b border-gray-100 dark:border-gray-800">
+          <div className={`flex items-center gap-3 ${isMobile ? 'w-full justify-between' : ''}`}>
             <div className="flex items-center gap-1">
               <button 
                 onClick={() => navigateWeek(-1)}
@@ -298,7 +326,7 @@ const ResourceWorkload = () => {
               Today
             </button>
           </div>
-          <div className="flex items-center gap-3">
+          <div className={`flex items-center gap-2 sm:gap-3 ${isMobile ? 'w-full flex-wrap' : ''}`}>
             <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-lg p-1 h-9">
               <button
                 onClick={() => setTimeView('day')}
@@ -327,11 +355,11 @@ const ResourceWorkload = () => {
             </div>
             <button className="flex items-center gap-2 px-3 py-1.5 border border-gray-200 dark:border-gray-700 rounded-lg text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800">
               <Filter size={18} />
-              Filters
+              <span className={isMobile ? 'hidden' : ''}>Filters</span>
             </button>
             <button className="flex items-center gap-2 px-3 py-1.5 border border-gray-200 dark:border-gray-700 rounded-lg text-xs font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800">
               <Share2 size={18} />
-              Export
+              <span className={isMobile ? 'hidden' : ''}>Export</span>
             </button>
           </div>
         </div>
@@ -357,12 +385,92 @@ const ResourceWorkload = () => {
             </div>
           ) : (
             <>
+              {isMobile && (
+                <div className="p-4 space-y-4">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-[#1a2234]">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-gray-500 dark:text-gray-400">Team Members</p>
+                      <p className="mt-2 text-2xl font-bold">{users.length}</p>
+                    </div>
+                    <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-[#1a2234]">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-gray-500 dark:text-gray-400">Focus Window</p>
+                      <p className="mt-2 text-sm font-semibold">{dateRange.display}</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    {users.slice(0, 12).map((user) => {
+                      const weekWorkloads = daysOfWeek.map((_, dayIdx) => getWorkload(user._id, dayIdx));
+                      const avgPercentage = Math.round(
+                        weekWorkloads.reduce((sum, w) => sum + w.percentage, 0) / weekWorkloads.length
+                      );
+
+                      return (
+                        <div key={user._id} className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-[#1a2234]">
+                          <div className="mb-3 flex items-start justify-between gap-3">
+                            <div className="flex items-center gap-3 min-w-0">
+                              <div className="size-10 rounded-full bg-gradient-to-br from-blue-400 to-purple-600 flex items-center justify-center text-xs font-bold text-white">
+                                {getUserInitials(user.full_name || user.username)}
+                              </div>
+                              <div className="min-w-0">
+                                <p className="truncate text-sm font-bold">{user.full_name || user.username}</p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">{user.role}</p>
+                              </div>
+                            </div>
+                            <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${getCapacityBadgeColor(avgPercentage)}`}>
+                              {avgPercentage}%
+                            </span>
+                          </div>
+
+                          <div className="mb-3 space-y-2">
+                            {daysOfWeek.map((day, dayIdx) => {
+                              const workload = weekWorkloads[dayIdx];
+                              return (
+                                <div key={dayIdx} className="flex items-center gap-3">
+                                  <div className="w-14 text-[11px] font-semibold text-gray-500 dark:text-gray-400">
+                                    {day.name} {day.date}
+                                  </div>
+                                  <div className="flex-1">
+                                    <div className="mb-1 flex items-center justify-between text-[11px]">
+                                      <span>{workload.allocated}h</span>
+                                      <span className="text-gray-500 dark:text-gray-400">{workload.percentage}%</span>
+                                    </div>
+                                    <div className="h-2 rounded-full bg-gray-100 dark:bg-gray-800">
+                                      <div className={`h-2 rounded-full ${getWorkloadColor(workload.percentage)}`} style={{ width: `${Math.min(workload.percentage, 100)}%` }} />
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => openEditModal(user)}
+                              className="flex-1 rounded-xl border border-gray-300 px-3 py-2 text-xs font-semibold hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => handleDeleteResource(user._id)}
+                              className="rounded-xl border border-red-300 px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-50 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-900/20"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
               {/* Team View */}
-              {viewMode === 'team' && (
+              {!isMobile && viewMode === 'team' && (
                 <table className="w-full border-separate border-spacing-0 table-fixed min-w-[1200px]">
                   <thead>
                     <tr className="bg-white dark:bg-[#1a2234] border-b border-gray-200 dark:border-gray-800">
-                      <th className="sticky left-0 top-0 bg-white dark:bg-[#1a2234] w-72 px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-gray-500 border-b border-gray-200 dark:border-gray-800 border-r border-gray-100 dark:border-gray-800 z-10">
+                      <th className="bg-white dark:bg-[#1a2234] w-72 px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-gray-500 border-b border-gray-200 dark:border-gray-800 border-r border-gray-100 dark:border-gray-800 z-10 lg:sticky lg:left-0 lg:top-0">
                         Team Member
                       </th>
                     {daysOfWeek.map((day, idx) => (
@@ -391,7 +499,7 @@ const ResourceWorkload = () => {
 
                     return (
                       <tr key={user._id} className="group hover:bg-gray-50 dark:hover:bg-[#1a2234]/50 transition-colors">
-                        <td className="sticky left-0 bg-white dark:bg-[#1a2234] group-hover:bg-gray-50 dark:group-hover:bg-[#1a2234]/50 border-r border-gray-100 dark:border-gray-800 px-6 py-4 z-10">
+                        <td className="bg-white dark:bg-[#1a2234] group-hover:bg-gray-50 dark:group-hover:bg-[#1a2234]/50 border-r border-gray-100 dark:border-gray-800 px-6 py-4 z-10 lg:sticky lg:left-0">
                           <div className="flex items-center gap-3">
                             <div className="size-9 rounded-full bg-gradient-to-br from-blue-400 to-purple-600 flex-shrink-0 flex items-center justify-center text-white text-xs font-bold">
                               {getUserInitials(user.full_name || user.username)}
@@ -483,7 +591,7 @@ const ResourceWorkload = () => {
               )}
 
               {/* Project View */}
-              {viewMode === 'project' && (
+              {!isMobile && viewMode === 'project' && (
                 <div className="p-6 max-w-6xl mx-auto">
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {users.slice(0, 12).map((user) => {
@@ -541,7 +649,7 @@ const ResourceWorkload = () => {
               )}
 
               {/* Capacity Map View */}
-              {viewMode === 'capacity' && (
+              {!isMobile && viewMode === 'capacity' && (
                 <div className="p-6">
                   <div className="bg-white dark:bg-[#1a2234] rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
                     <div className="p-6 border-b border-gray-200 dark:border-gray-700">
@@ -623,9 +731,9 @@ const ResourceWorkload = () => {
         </div>
 
       {/* Add Resource Modal */}
-      {showAddModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-[#1a2234] rounded-xl shadow-2xl w-full max-w-md">
+      {showAddModal && typeof document !== 'undefined' && createPortal(
+        <div className="fixed inset-0 z-[var(--z-modal)] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setShowAddModal(false)}>
+          <div className="bg-white dark:bg-[#1a2234] rounded-xl shadow-2xl w-full max-w-md" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
               <h3 className="text-lg font-bold">Add New Resource</h3>
               <button
@@ -707,13 +815,14 @@ const ResourceWorkload = () => {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Edit Resource Modal */}
-      {showEditModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-[#1a2234] rounded-xl shadow-2xl w-full max-w-md">
+      {showEditModal && typeof document !== 'undefined' && createPortal(
+        <div className="fixed inset-0 z-[var(--z-modal)] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setShowEditModal(false)}>
+          <div className="bg-white dark:bg-[#1a2234] rounded-xl shadow-2xl w-full max-w-md" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
               <h3 className="text-lg font-bold">Edit Resource</h3>
               <button
@@ -775,7 +884,8 @@ const ResourceWorkload = () => {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </ResponsivePageLayout>
   );

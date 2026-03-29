@@ -86,6 +86,41 @@ const verificationSettingsSchema = new mongoose.Schema({
     }
   },
 
+  // Attendance ownership and lock rules
+  attendanceGovernance: {
+    // Who should mark regular daily attendance
+    regularAttendanceMarkedBy: {
+      type: String,
+      enum: ['self', 'hr', 'admin'],
+      default: 'self'
+    },
+    // Calendar days where attendance is explicitly controlled by HR (e.g., meeting days)
+    specialDays: [{
+      date: {
+        type: Date,
+        required: true
+      },
+      type: {
+        type: String,
+        enum: ['meeting', 'special'],
+        default: 'meeting'
+      },
+      markedBy: {
+        type: String,
+        enum: ['hr', 'admin'],
+        default: 'hr'
+      },
+      note: {
+        type: String,
+        default: ''
+      },
+      isActive: {
+        type: Boolean,
+        default: true
+      }
+    }]
+  },
+
   // Creator of the settings
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
@@ -102,9 +137,6 @@ const verificationSettingsSchema = new mongoose.Schema({
 }, {
   timestamps: true
 });
-
-// Ensure only one settings document per workspace
-verificationSettingsSchema.index({ workspaceId: 1 }, { unique: true });
 
 const VerificationSettings = mongoose.model('VerificationSettings', verificationSettingsSchema);
 

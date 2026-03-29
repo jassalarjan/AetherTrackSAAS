@@ -43,8 +43,8 @@ export default function useVerification() {
       setSettings(response.data.settings);
       return response.data.settings;
     } catch (err) {
-      // If 403/404, use default settings
-      if (err.response?.status === 403 || err.response?.status === 404) {
+      // If settings are unavailable for this account/workspace, use defaults
+      if (err.response?.status === 400 || err.response?.status === 403 || err.response?.status === 404) {
         const defaultSettings = getDefaultSettings();
         setSettings(defaultSettings);
         return defaultSettings;

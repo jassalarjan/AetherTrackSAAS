@@ -4,7 +4,7 @@ import ResponsivePageLayout from '@/shared/components/responsive/ResponsivePageL
 import { projectsApi } from '@/features/projects/services/projectsApi';
 import api from '@/shared/services/axios';
 import { getAccessToken } from '@/features/auth/services/tokenStore';
-import * as XLSX from 'xlsx';
+import { createWorkbook, addWorksheetFromRows, downloadWorkbook } from '@/shared/utils/spreadsheetExport';
 import { 
   Info, CheckSquare, GitBranch, Users as UsersIcon, FileText, 
   Clock, Edit, Share2, Download, ChevronDown, Calendar,
@@ -255,7 +255,7 @@ const ProjectDetail = () => {
     return '';
   };
 
-  const handleExportExcel = () => {
+  const handleExportExcel = async () => {
     const taskData = filteredTasks.map(task => ({
       'Task Name': task.title,
       'Status': task.status,
@@ -266,12 +266,11 @@ const ProjectDetail = () => {
       'Assigned To': task.assigned_to?.map(u => u.full_name || u.username).join(', ') || ''
     }));
 
-    const worksheet = XLSX.utils.json_to_sheet(taskData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Tasks');
+    const workbook = await createWorkbook();
+    addWorksheetFromRows(workbook, 'Tasks', taskData);
     
     const timestamp = new Date().toISOString().split('T')[0];
-    XLSX.writeFile(workbook, `${project.name}-tasks-${timestamp}.xlsx`);
+    await downloadWorkbook(workbook, `${project.name}-tasks-${timestamp}.xlsx`);
     setShowExportMenu(false);
   };
 
@@ -418,7 +417,7 @@ const ProjectDetail = () => {
     <ResponsivePageLayout title={project.name} icon={GitBranch} noPadding>
       <main className="flex-1 flex flex-col overflow-y-auto">
         {/* Top Navigation Bar */}
-        <header className="min-h-16 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1a2234] sticky top-0 z-30">
+        <header className="min-h-16 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1a2234] md:sticky md:top-0 z-30">
           <div className="px-4 sm:px-8 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400 min-w-0">
               <button onClick={() => navigate('/projects')} className="hover:text-[#C4713A] transition-colors whitespace-nowrap">

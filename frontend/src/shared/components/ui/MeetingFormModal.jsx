@@ -193,7 +193,7 @@ export default function MeetingFormModal({ isOpen, onClose, onSave, initialData,
   );
 
   return (
-    <div className="fixed inset-0 z-50 flex">
+    <div className="fixed inset-0 z-[var(--z-modal)] flex">
       {/* Backdrop */}
       <div className="flex-1 bg-black/60 backdrop-blur-sm" onClick={onClose} />
 

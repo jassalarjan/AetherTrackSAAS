@@ -7,6 +7,7 @@ import useVerification from '@/features/hr/hooks/useVerification';
 import api from '@/shared/services/axios';
 import { PageLoader } from '@/shared/components/ui/Spinner';
 import Spinner from '@/shared/components/ui/Spinner';
+import { useSidebar } from '@/features/workspace/context/SidebarContext';
 import { Clock, CheckCircle, XCircle, Calendar, MapPin, Briefcase, Home, Building, AlertTriangle, FileText, Upload, Camera, Shield, ShieldCheck, ShieldAlert } from 'lucide-react';
 
 const SelfAttendance = () => {
@@ -32,6 +33,23 @@ const SelfAttendance = () => {
   const [capturedLocation, setCapturedLocation] = useState(null);
   const [verificationError, setVerificationError] = useState('');
   const [geofenceStatus, setGeofenceStatus] = useState(null);
+  const { isMobile } = useSidebar();
+  const currentUserId = user?._id?.toString() || user?.id?.toString() || null;
+
+  const normalizeId = (value) => {
+    if (!value) return null;
+    if (typeof value === 'string') return value;
+    if (typeof value === 'object') return (value._id || value.id || null)?.toString() || null;
+    return null;
+  };
+
+  const getLocalDateString = () => {
+    const now = new Date();
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  };
 
   useEffect(() => {
     fetchTodayAttendance();
@@ -49,13 +67,23 @@ const SelfAttendance = () => {
         }
       });
 
-      const todayRecord = response.data.records.find(r =>
-        new Date(r.date).toDateString() === today.toDateString() &&
-        r.userId?._id?.toString() === user._id?.toString()
-      );
+      const todayRecord = response.data.records.find((r) => {
+        const recordUserId = normalizeId(r.userId);
+        return (
+          new Date(r.date).toDateString() === today.toDateString() &&
+          recordUserId &&
+          currentUserId &&
+          recordUserId === currentUserId
+        );
+      });
 
       setCurrentAttendance(todayRecord || null);
-      setAttendance(response.data.records.filter(r => r.userId?._id?.toString() === user._id?.toString()));
+      setAttendance(
+        response.data.records.filter((r) => {
+          const recordUserId = normalizeId(r.userId);
+          return recordUserId && currentUserId && recordUserId === currentUserId;
+        })
+      );
       
       // Fetch evaluation for today if exists
       if (todayRecord?._id) {
@@ -130,7 +158,7 @@ const SelfAttendance = () => {
 
       const response = await api.post('/hr/attendance/checkin', {
         checkInTime: new Date().toISOString(),
-        date: new Date().toISOString().split('T')[0],
+        date: getLocalDateString(),
         workMode,
         reason,
         photo: capturedPhoto,
@@ -157,8 +185,17 @@ const SelfAttendance = () => {
       setCapturedLocation(null);
       setGeofenceStatus(null);
     } catch (err) {
-      console.error('Check-in error:', err);
-      setError(err.response?.data?.message || 'Failed to check in');
+      const status = err?.response?.status;
+      const serverMessage = err?.response?.data?.message || err?.response?.data?.error || err?.message || 'Failed to check in';
+
+      if (status === 400 && /already checked in/i.test(serverMessage)) {
+        setError('You are already checked in for today.');
+        fetchTodayAttendance();
+        setShowCheckInModal(false);
+      } else {
+        console.error('Check-in error:', err);
+        setError(serverMessage);
+      }
     } finally {
       setCheckingIn(false);
     }
@@ -292,18 +329,18 @@ const SelfAttendance = () => {
 
   const weekStats = getWeekStats();
 
-  if (loading) return <PageLoader variant="pulse" label="Loading attendance…" />;
+  if (loading) return <PageLoader />;
 
   return (
     <ResponsivePageLayout title="Attendance" icon={Clock}>
-      <div className="p-8">
+      <div className={isMobile ? 'p-4 space-y-4' : 'p-8'}>
           {/* Header */}
-          <div className="mb-8">
-            <h2 className="text-3xl font-black tracking-tight text-[#0d121b] dark:text-white">
+          <div className={isMobile ? 'mb-2' : 'mb-8'}>
+            <h2 className={`${isMobile ? 'text-2xl' : 'text-3xl'} font-black tracking-tight text-[#0d121b] dark:text-white`}>
               My Attendance
             </h2>
             <p className="text-[#4c669a] dark:text-gray-400 mt-1">
-              Track your daily check-in and check-out
+              {isMobile ? 'Quick daily check-in flow built for phones' : 'Track your daily check-in and check-out'}
             </p>
           </div>
 
@@ -320,10 +357,10 @@ const SelfAttendance = () => {
           )}
 
           {/* Today's Status Card */}
-          <div className="bg-white dark:bg-[#1a2234] rounded-xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm mb-6">
+          <div className={`bg-white dark:bg-[#1a2234] rounded-xl border border-gray-200 dark:border-gray-800 ${isMobile ? 'p-4' : 'p-6'} shadow-sm mb-6`}>
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
               <div>
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1">
+                <h3 className={`${isMobile ? 'text-base' : 'text-lg'} font-bold text-gray-900 dark:text-white mb-1`}>
                   Today - {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
                 </h3>
                 <div className="flex items-center gap-2 flex-wrap">
@@ -332,12 +369,12 @@ const SelfAttendance = () => {
                   {getFlagBadges()}
                 </div>
               </div>
-              <div className="flex gap-3">
+              <div className={`flex ${isMobile ? 'flex-col' : 'gap-3'}`}>
                 {!isCheckedIn && !isCompleted ? (
                   <button
                     onClick={() => setShowCheckInModal(true)}
                     disabled={verificationLoading}
-                    className="flex items-center gap-2 px-6 py-3 bg-[#C4713A] text-white rounded-lg font-bold hover:bg-[#A35C28] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex items-center justify-center gap-2 px-6 py-3 bg-[#C4713A] text-white rounded-lg font-bold hover:bg-[#A35C28] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <CheckCircle size={20} />
                     Check In
@@ -346,7 +383,7 @@ const SelfAttendance = () => {
                   <button
                     onClick={handleCheckOut}
                     disabled={checkingIn}
-                    className="flex items-center gap-2 px-6 py-3 bg-red-500 text-white rounded-lg font-bold hover:bg-red-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex items-center justify-center gap-2 px-6 py-3 bg-red-500 text-white rounded-lg font-bold hover:bg-red-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <XCircle size={20} />
                     {checkingIn ? 'Checking Out...' : 'Check Out'}
@@ -356,13 +393,13 @@ const SelfAttendance = () => {
             </div>
 
             {/* Today's Time Details */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className={`grid ${isMobile ? 'grid-cols-2 gap-3' : 'grid-cols-1 md:grid-cols-4 gap-4'}`}>
               <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4">
                 <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 mb-1">
                   <Clock size={16} />
                   <span className="text-sm font-medium">Check In</span>
                 </div>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                <p className={`${isMobile ? 'text-xl' : 'text-2xl'} font-bold text-gray-900 dark:text-white`}>
                   {formatTime(currentAttendance?.checkIn)}
                 </p>
               </div>
@@ -371,7 +408,7 @@ const SelfAttendance = () => {
                   <XCircle size={16} />
                   <span className="text-sm font-medium">Check Out</span>
                 </div>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                <p className={`${isMobile ? 'text-xl' : 'text-2xl'} font-bold text-gray-900 dark:text-white`}>
                   {formatTime(currentAttendance?.checkOut)}
                 </p>
               </div>
@@ -380,7 +417,7 @@ const SelfAttendance = () => {
                   <Briefcase size={16} />
                   <span className="text-sm font-medium">Total Hours</span>
                 </div>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                <p className={`${isMobile ? 'text-xl' : 'text-2xl'} font-bold text-gray-900 dark:text-white`}>
                   {currentAttendance?.workingHours || '0'} hrs
                 </p>
               </div>
@@ -389,7 +426,7 @@ const SelfAttendance = () => {
                   {currentAttendance?.workMode === 'wfh' ? <Home size={16} /> : <MapPin size={16} />}
                   <span className="text-sm font-medium">Work Mode</span>
                 </div>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                <p className={`${isMobile ? 'text-xl' : 'text-2xl'} font-bold text-gray-900 dark:text-white`}>
                   {currentAttendance?.workMode === 'wfh' ? 'WFH' : currentAttendance?.workMode === 'hybrid' ? 'Hybrid' : 'Onsite'}
                 </p>
               </div>
@@ -408,47 +445,47 @@ const SelfAttendance = () => {
           </div>
 
           {/* Week Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-            <div className="bg-white dark:bg-[#1a2234] rounded-xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm">
+          <div className={`grid ${isMobile ? 'grid-cols-2 gap-3' : 'grid-cols-1 md:grid-cols-4 gap-6'} mb-6`}>
+            <div className={`bg-white dark:bg-[#1a2234] rounded-xl border border-gray-200 dark:border-gray-800 ${isMobile ? 'p-4' : 'p-6'} shadow-sm`}>
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-lg bg-blue-100 dark:bg-blue-900/20 flex items-center justify-center">
                   <Calendar size={24} className="text-blue-600" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{weekStats.total}</p>
+                  <p className={`${isMobile ? 'text-xl' : 'text-2xl'} font-bold text-gray-900 dark:text-white`}>{weekStats.total}</p>
                   <p className="text-sm text-gray-500 dark:text-gray-400">Days in Week</p>
                 </div>
               </div>
             </div>
-            <div className="bg-white dark:bg-[#1a2234] rounded-xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm">
+            <div className={`bg-white dark:bg-[#1a2234] rounded-xl border border-gray-200 dark:border-gray-800 ${isMobile ? 'p-4' : 'p-6'} shadow-sm`}>
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-lg bg-green-100 dark:bg-green-900/20 flex items-center justify-center">
                   <CheckCircle size={24} className="text-green-600" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{weekStats.present}</p>
+                  <p className={`${isMobile ? 'text-xl' : 'text-2xl'} font-bold text-gray-900 dark:text-white`}>{weekStats.present}</p>
                   <p className="text-sm text-gray-500 dark:text-gray-400">Days Present</p>
                 </div>
               </div>
             </div>
-            <div className="bg-white dark:bg-[#1a2234] rounded-xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm">
+            <div className={`bg-white dark:bg-[#1a2234] rounded-xl border border-gray-200 dark:border-gray-800 ${isMobile ? 'p-4' : 'p-6'} shadow-sm`}>
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-lg bg-amber-100 dark:bg-amber-900/20 flex items-center justify-center">
                   <Clock size={24} className="text-amber-600" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{weekStats.wfh}</p>
+                  <p className={`${isMobile ? 'text-xl' : 'text-2xl'} font-bold text-gray-900 dark:text-white`}>{weekStats.wfh}</p>
                   <p className="text-sm text-gray-500 dark:text-gray-400">WFH Days</p>
                 </div>
               </div>
             </div>
-            <div className="bg-white dark:bg-[#1a2234] rounded-xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm">
+            <div className={`bg-white dark:bg-[#1a2234] rounded-xl border border-gray-200 dark:border-gray-800 ${isMobile ? 'p-4' : 'p-6'} shadow-sm`}>
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
                   <XCircle size={24} className="text-gray-500 dark:text-gray-400" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{weekStats.unmarked}</p>
+                  <p className={`${isMobile ? 'text-xl' : 'text-2xl'} font-bold text-gray-900 dark:text-white`}>{weekStats.unmarked}</p>
                   <p className="text-sm text-gray-500 dark:text-gray-400">Not Marked</p>
                 </div>
               </div>
@@ -474,78 +511,131 @@ const SelfAttendance = () => {
           )}
 
           {/* Recent Attendance */}
-          <div className="bg-white dark:bg-[#1a2234] rounded-xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm">
+          <div className={`bg-white dark:bg-[#1a2234] rounded-xl border border-gray-200 dark:border-gray-800 ${isMobile ? 'p-4' : 'p-6'} shadow-sm`}>
             <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Recent Attendance</h3>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-gray-200 dark:border-gray-700">
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600 dark:text-gray-400">Date</th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600 dark:text-gray-400">Check In</th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600 dark:text-gray-400">Check Out</th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600 dark:text-gray-400">Hours</th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600 dark:text-gray-400">Mode</th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600 dark:text-gray-400">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {attendance && attendance.length > 0 ? (
-                    attendance.slice(0, 10).map((record) => (
-                      <tr key={record._id} className="border-b border-gray-100 dark:border-gray-800">
-                        <td className="py-3 px-4 text-sm text-gray-900 dark:text-white">
-                          {new Date(record.date).toLocaleDateString('en-US', {
-                            weekday: 'short',
-                            month: 'short',
-                            day: 'numeric'
-                          })}
-                        </td>
-                        <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">
-                          {formatTime(record.checkIn)}
-                        </td>
-                        <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">
-                          {formatTime(record.checkOut)}
-                        </td>
-                        <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">
-                          {record.workingHours || 0} hrs
-                        </td>
-                        <td className="py-3 px-4">
-                          {getWorkModeBadge(record.workMode)}
-                        </td>
-                        <td className="py-3 px-4">
+            {isMobile ? (
+              <div className="space-y-3">
+                {attendance && attendance.length > 0 ? (
+                  attendance.slice(0, 10).map((record) => (
+                    <div key={record._id} className="rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-800/40">
+                      <div className="mb-2 flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                            {new Date(record.date).toLocaleDateString('en-US', {
+                              weekday: 'short',
+                              month: 'short',
+                              day: 'numeric'
+                            })}
+                          </p>
+                          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{record.workingHours || 0} hrs logged</p>
+                        </div>
+                        <div>
                           {record.checkIn && record.checkOut ? (
-                            <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
-                              Present
-                            </span>
+                            <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">Present</span>
                           ) : record.checkIn ? (
-                            <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
-                              In Progress
-                            </span>
+                            <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">In Progress</span>
                           ) : record.status === 'wfh' ? (
-                            <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400">
-                              WFH
-                            </span>
+                            <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400">WFH</span>
                           ) : record.status === 'absent' ? (
-                            <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400">
-                              Absent
-                            </span>
+                            <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400">Absent</span>
                           ) : (
-                            <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400">
-                              Unmarked
-                            </span>
+                            <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400">Unmarked</span>
                           )}
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3 text-xs text-gray-600 dark:text-gray-400">
+                        <div>
+                          <p className="mb-1 uppercase tracking-wide text-[10px]">Check In</p>
+                          <p className="font-semibold text-gray-900 dark:text-white">{formatTime(record.checkIn)}</p>
+                        </div>
+                        <div>
+                          <p className="mb-1 uppercase tracking-wide text-[10px]">Check Out</p>
+                          <p className="font-semibold text-gray-900 dark:text-white">{formatTime(record.checkOut)}</p>
+                        </div>
+                        <div className="col-span-2">
+                          {getWorkModeBadge(record.workMode)}
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="py-8 text-center text-gray-500 dark:text-gray-400">
+                    No attendance records found
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-gray-200 dark:border-gray-700">
+                      <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600 dark:text-gray-400">Date</th>
+                      <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600 dark:text-gray-400">Check In</th>
+                      <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600 dark:text-gray-400">Check Out</th>
+                      <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600 dark:text-gray-400">Hours</th>
+                      <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600 dark:text-gray-400">Mode</th>
+                      <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600 dark:text-gray-400">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {attendance && attendance.length > 0 ? (
+                      attendance.slice(0, 10).map((record) => (
+                        <tr key={record._id} className="border-b border-gray-100 dark:border-gray-800">
+                          <td className="py-3 px-4 text-sm text-gray-900 dark:text-white">
+                            {new Date(record.date).toLocaleDateString('en-US', {
+                              weekday: 'short',
+                              month: 'short',
+                              day: 'numeric'
+                            })}
+                          </td>
+                          <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">
+                            {formatTime(record.checkIn)}
+                          </td>
+                          <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">
+                            {formatTime(record.checkOut)}
+                          </td>
+                          <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">
+                            {record.workingHours || 0} hrs
+                          </td>
+                          <td className="py-3 px-4">
+                            {getWorkModeBadge(record.workMode)}
+                          </td>
+                          <td className="py-3 px-4">
+                            {record.checkIn && record.checkOut ? (
+                              <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                                Present
+                              </span>
+                            ) : record.checkIn ? (
+                              <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+                                In Progress
+                              </span>
+                            ) : record.status === 'wfh' ? (
+                              <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400">
+                                WFH
+                              </span>
+                            ) : record.status === 'absent' ? (
+                              <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400">
+                                Absent
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400">
+                                Unmarked
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="6" className="py-8 text-center text-gray-500 dark:text-gray-400">
+                          No attendance records found
                         </td>
                       </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan="6" className="py-8 text-center text-gray-500 dark:text-gray-400">
-                        No attendance records found
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </div>
 

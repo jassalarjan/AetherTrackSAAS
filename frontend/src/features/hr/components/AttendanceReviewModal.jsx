@@ -61,15 +61,26 @@ export default function AttendanceReviewModal({
       setLoading(true);
       setError(null);
       const response = await attendanceApi.getAttendanceForReview(attendanceId);
-      setAttendance(response.data.attendance || response.data);
+      const rawAttendance = response.data.attendance || response.data;
+      const normalizedAttendance = {
+        ...rawAttendance,
+        _id: rawAttendance._id || rawAttendance.id,
+        user: rawAttendance.user || rawAttendance.userId,
+        verificationStatus: (rawAttendance.verificationStatus || '').toLowerCase(),
+        photoUrl: rawAttendance.photoUrl || rawAttendance.verification?.photoUrl,
+        location: rawAttendance.location || rawAttendance.verification?.gpsLocation,
+        deviceInfo: rawAttendance.deviceInfo || rawAttendance.verification?.deviceInfo,
+      };
+
+      setAttendance(normalizedAttendance);
       
       // Pre-fill override data if editing
-      if (response.data.attendance?.checkIn) {
+      if (normalizedAttendance?.checkIn) {
         setOverrideData(prev => ({
           ...prev,
-          checkInTime: new Date(response.data.attendance.checkIn).toISOString().slice(0, 16),
-          checkOutTime: response.data.attendance.checkOut 
-            ? new Date(response.data.attendance.checkOut).toISOString().slice(0, 16)
+          checkInTime: new Date(normalizedAttendance.checkIn).toISOString().slice(0, 16),
+          checkOutTime: normalizedAttendance.checkOut 
+            ? new Date(normalizedAttendance.checkOut).toISOString().slice(0, 16)
             : ''
         }));
       }
@@ -154,7 +165,8 @@ export default function AttendanceReviewModal({
   };
 
   const StatusBadge = ({ status }) => {
-    const config = STATUS_CONFIG[status] || STATUS_CONFIG.PENDING;
+    const normalizedStatus = (status || 'pending').toUpperCase();
+    const config = STATUS_CONFIG[normalizedStatus] || STATUS_CONFIG.PENDING;
     const Icon = config.icon;
 
     return (
@@ -185,7 +197,7 @@ export default function AttendanceReviewModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+      className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
       onClick={handleClose}
       role="dialog"
       aria-modal="true"
@@ -256,7 +268,7 @@ export default function AttendanceReviewModal({
                 <div className="flex items-center gap-2">
                   <User className={`w-4 h-4 ${isDark ? 'text-[#9da8b9]' : 'text-gray-500'}`} />
                   <span className={isDark ? 'text-white' : 'text-gray-900'}>
-                    {attendance.userId?.name || attendance.user?.name || 'Unknown User'}
+                    {attendance.userId?.full_name || attendance.user?.full_name || attendance.userId?.name || attendance.user?.name || 'Unknown User'}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -404,7 +416,7 @@ export default function AttendanceReviewModal({
               )}
 
               {/* Action Section */}
-              {!actionMode && attendance.verificationStatus === 'PENDING' && (
+              {!actionMode && (attendance.verificationStatus || '').toLowerCase() === 'pending' && (
                 <div className={`flex flex-wrap gap-3 pt-4 border-t ${
                   isDark ? 'border-[#333a47]' : 'border-gray-200'
                 }`}>

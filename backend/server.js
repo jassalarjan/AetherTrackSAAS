@@ -494,7 +494,7 @@ io.on('connection', (socket) => {
           m => m.user?.toString() === userIdStr
         );
         const isCreator = project.created_by?.toString() === userIdStr;
-        const isAdminOrHr = ['admin', 'hr'].includes(socket.userRole);
+        const isAdminOrHr = ['super_admin', 'admin', 'hr'].includes(socket.userRole);
         if (!isMember && !isCreator && !isAdminOrHr) {
           console.warn(`[SECURITY] User ${socket.userId} unauthorised join attempt for project room: ${room}`);
           if (callback) callback({ success: false, error: 'Not authorized to join this room' });
@@ -613,6 +613,16 @@ app.use((err, req, res, next) => {
 
 // Start server
 const PORT = process.env.PORT || 5000;
+httpServer.on('error', (error) => {
+  if (error?.code === 'EADDRINUSE') {
+    console.error(`❌ Port ${PORT} is already in use. Stop the existing backend instance before starting a new one.`);
+    process.exit(1);
+  }
+
+  console.error('❌ HTTP server error:', error);
+  process.exit(1);
+});
+
 httpServer.listen(PORT, () => {
   console.log(`
 ╔════════════════════════════════════════╗

@@ -6,6 +6,7 @@ import { useTheme } from '@/app/providers/ThemeProvider';
 import ResponsivePageLayout from '@/shared/components/responsive/ResponsivePageLayout';
 import ConfirmModal from '@/shared/components/ui/ConfirmModal';
 import { useConfirmModal } from '@/shared/hooks/useConfirmModal';
+import { sanitizeHtml } from '@/shared/utils/sanitizeHtml';
 import {
   Mail, Send, Users, UserPlus, FileText, CheckCircle, 
   X, Eye, Code, Layout, ChevronRight, ChevronLeft,
@@ -804,7 +805,7 @@ export default function EmailCenter() {
                 ) : (
                   <div
                     contentEditable
-                    dangerouslySetInnerHTML={{ __html: emailData.htmlContent }}
+                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(emailData.htmlContent) }}
                     onInput={(e) => setEmailData(p => ({ ...p, htmlContent: e.target.innerHTML }))}
                     className="w-full flex-1 p-10 outline-none prose prose-lg dark:prose-invert max-w-none"
                   />
@@ -942,7 +943,7 @@ export default function EmailCenter() {
               <div className={`rounded-3xl border-2 ${currentTheme.border} p-10 bg-white min-h-[400px]`}>
                 <div 
                   className="prose prose-lg max-w-none dark:prose-invert"
-                  dangerouslySetInnerHTML={{ __html: generatePreviewHtml().html }}
+                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(generatePreviewHtml().html) }}
                 />
               </div>
             </div>

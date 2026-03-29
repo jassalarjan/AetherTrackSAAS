@@ -8,12 +8,15 @@ import { sendCredentialEmail, sendPasswordResetEmail } from '../utils/emailServi
 import { logChange } from '../utils/changeLogService.js';
 import HrActionService from '../services/hrActionService.js';
 import multer from 'multer';
-import xlsx from 'xlsx';
+import ExcelJS from 'exceljs';
 import getClientIP from '../utils/getClientIP.js';
 import { validatePassword } from '../utils/passwordValidator.js';
 import { validateIdParam, sanitizeBody, isValidObjectId } from '../utils/validation.js';
 
 const router = express.Router();
+const MAX_BULK_IMPORT_ROWS = 1000;
+const MAX_BULK_IMPORT_COLUMNS = 20;
+const MAX_CELL_LENGTH = 512;
 
 // =============================================================================
 // SECURITY: Generic Error Response Helper
@@ -31,6 +34,80 @@ const handleError = (res, error, context = 'operation') => {
   
   // Return detailed errors in development
   return res.status(500).json({ message: error.message || 'Server error' });
+};
+
+const sanitizeBulkValue = (value) => {
+  if (value === undefined || value === null) {
+    return '';
+  }
+
+  let normalized = value;
+
+  if (typeof value === 'object') {
+    if (Array.isArray(value.richText)) {
+      normalized = value.richText.map((part) => part?.text || '').join('');
+    } else if (typeof value.text === 'string') {
+      normalized = value.text;
+    } else if (typeof value.result !== 'undefined') {
+      normalized = value.result;
+    } else if (typeof value.hyperlink === 'string') {
+      normalized = value.hyperlink;
+    } else if (value instanceof Date) {
+      normalized = value.toISOString();
+    } else {
+      normalized = '';
+    }
+  }
+
+  const text = String(normalized).replace(/\u0000/g, '').trim();
+  return text.length > MAX_CELL_LENGTH ? text.slice(0, MAX_CELL_LENGTH) : text;
+};
+
+const parseExcelUsers = async (buffer) => {
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.load(buffer);
+
+  const worksheet = workbook.worksheets[0];
+  if (!worksheet) {
+    return [];
+  }
+
+  const headerRow = worksheet.getRow(1);
+  const rawHeaders = Array.isArray(headerRow.values) ? headerRow.values.slice(1) : [];
+  const headers = rawHeaders
+    .map((header) => sanitizeBulkValue(header).toLowerCase())
+    .filter(Boolean)
+    .slice(0, MAX_BULK_IMPORT_COLUMNS);
+
+  if (headers.length === 0) {
+    return [];
+  }
+
+  const users = [];
+
+  for (let rowNumber = 2; rowNumber <= worksheet.rowCount; rowNumber++) {
+    if (users.length >= MAX_BULK_IMPORT_ROWS) {
+      break;
+    }
+
+    const row = worksheet.getRow(rowNumber);
+    const entry = {};
+    let hasData = false;
+
+    headers.forEach((header, index) => {
+      const cellValue = sanitizeBulkValue(row.getCell(index + 1).value);
+      if (cellValue) {
+        hasData = true;
+      }
+      entry[header] = cellValue;
+    });
+
+    if (hasData) {
+      users.push(entry);
+    }
+  }
+
+  return users;
 };
 
 // Configure multer for file uploads (memory storage)
@@ -321,7 +398,7 @@ router.post('/', authenticate, checkRole(['admin', 'hr']), validateUserCreation,
     // Send credential email with timeout (non-blocking)
     // Don't wait more than 10 seconds for email
     const emailPromise = Promise.race([
-      sendCredentialEmail(full_name, email, password),
+      sendCredentialEmail(full_name, email),
       new Promise((resolve) => 
         setTimeout(() => resolve({ 
           success: false, 
@@ -608,7 +685,7 @@ router.patch('/:id/password', authenticate, checkRole(['admin', 'hr', 'community
     await user.save();
 
     // Send password reset email (non-blocking, fire and forget)
-    sendPasswordResetEmail(user.full_name, user.email, password)
+    sendPasswordResetEmail(user.full_name, user.email)
       .then((emailResult) => {
         // Email result handled silently
       })
@@ -617,7 +694,7 @@ router.patch('/:id/password', authenticate, checkRole(['admin', 'hr', 'community
       });
 
     res.json({ 
-      message: 'Password reset successfully. New credentials will be sent via email.',
+      message: 'Password reset successfully. Notify the user through a secure channel.',
       emailQueued: true
     });
   } catch (error) {
@@ -698,10 +775,7 @@ router.post('/bulk-import/excel', authenticate, checkRole(['admin', 'hr']), uplo
     // Parse Excel file
     let usersData;
     try {
-      const workbook = xlsx.read(req.file.buffer, { type: 'buffer' });
-      const sheetName = workbook.SheetNames[0];
-      const worksheet = workbook.Sheets[sheetName];
-      usersData = xlsx.utils.sheet_to_json(worksheet);
+      usersData = await parseExcelUsers(req.file.buffer);
     } catch (error) {
       return handleError(res, error, 'Parse Excel file');
     }
@@ -724,34 +798,52 @@ router.post('/bulk-import/excel', authenticate, checkRole(['admin', 'hr']), uplo
 
 // Helper function to process bulk users
 async function processBulkUsers(usersData, currentUser) {
+  if (!Array.isArray(usersData)) {
+    throw new Error('Invalid bulk payload format');
+  }
+
+  const boundedUsersData = usersData.slice(0, MAX_BULK_IMPORT_ROWS);
+
   const results = {
-    total: usersData.length,
+    total: boundedUsersData.length,
     successful: [],
     failed: [],
     teamsCreated: []
   };
 
-  for (let i = 0; i < usersData.length; i++) {
-    const userData = usersData[i];
+  if (usersData.length > MAX_BULK_IMPORT_ROWS) {
+    results.failed.push({
+      row: 'N/A',
+      email: 'N/A',
+      reason: `Only the first ${MAX_BULK_IMPORT_ROWS} rows were processed.`
+    });
+  }
+
+  for (let i = 0; i < boundedUsersData.length; i++) {
+    const userData = boundedUsersData[i];
     const rowNumber = i + 1;
 
     try {
+      const fullName = sanitizeBulkValue(userData.full_name);
+      const email = sanitizeBulkValue(userData.email).toLowerCase();
+      const password = sanitizeBulkValue(userData.password);
+
       // Validate required fields
-      if (!userData.full_name || !userData.email || !userData.password) {
+      if (!fullName || !email || !password) {
         results.failed.push({
           row: rowNumber,
-          email: userData.email || 'N/A',
+          email: email || 'N/A',
           reason: 'Missing required fields (full_name, email, password)'
         });
         continue;
       }
 
       // Validate password strength
-      const passwordValidation = validatePassword(userData.password);
+      const passwordValidation = validatePassword(password);
       if (!passwordValidation.isValid) {
         results.failed.push({
           row: rowNumber,
-          email: userData.email,
+          email,
           reason: `Password requirements not met: ${passwordValidation.errors.join(', ')}`
         });
         continue;
@@ -759,21 +851,21 @@ async function processBulkUsers(usersData, currentUser) {
 
       // Validate email format
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(userData.email)) {
+      if (!emailRegex.test(email)) {
         results.failed.push({
           row: rowNumber,
-          email: userData.email,
+          email,
           reason: 'Invalid email format'
         });
         continue;
       }
 
       // Check if user already exists
-      const existingUser = await User.findOne({ email: userData.email });
+      const existingUser = await User.findOne({ email });
       if (existingUser) {
         results.failed.push({
           row: rowNumber,
-          email: userData.email,
+          email,
           reason: 'User with this email already exists'
         });
         continue;
@@ -781,11 +873,11 @@ async function processBulkUsers(usersData, currentUser) {
 
       // Validate and set role
       const validRoles = ['admin', 'hr', 'team_lead', 'member'];
-      const role = userData.role ? userData.role.toLowerCase() : 'member';
+      const role = sanitizeBulkValue(userData.role || 'member').toLowerCase() || 'member';
       if (!validRoles.includes(role)) {
         results.failed.push({
           row: rowNumber,
-          email: userData.email,
+          email,
           reason: `Invalid role. Must be one of: ${validRoles.join(', ')}`
         });
         continue;
@@ -799,14 +891,14 @@ async function processBulkUsers(usersData, currentUser) {
       let teamNames = [];
       if (userData.teams) {
         if (Array.isArray(userData.teams)) {
-          teamNames = userData.teams;
+          teamNames = userData.teams.map((teamName) => sanitizeBulkValue(teamName)).filter(Boolean);
         } else if (typeof userData.teams === 'string') {
           // Split comma-separated string and trim
-          teamNames = userData.teams.split(',').map(t => t.trim()).filter(t => t);
+          teamNames = userData.teams.split(',').map((t) => sanitizeBulkValue(t)).filter(Boolean);
         }
       } else if (userData.team || userData.team_name) {
         // Fallback to single team field for backward compatibility
-        teamNames = [userData.team || userData.team_name];
+        teamNames = [sanitizeBulkValue(userData.team || userData.team_name)].filter(Boolean);
       }
       
       // Process each team
@@ -845,13 +937,13 @@ async function processBulkUsers(usersData, currentUser) {
       // Validate employment status
       const validStatuses = ['ACTIVE', 'INACTIVE', 'ON_NOTICE', 'EXITED'];
       const employmentStatus = userData.employment_status 
-        ? userData.employment_status.toUpperCase() 
+        ? sanitizeBulkValue(userData.employment_status).toUpperCase() 
         : 'ACTIVE';
       
       if (!validStatuses.includes(employmentStatus)) {
         results.failed.push({
           row: rowNumber,
-          email: userData.email,
+          email,
           reason: `Invalid employment_status. Must be one of: ${validStatuses.join(', ')}`
         });
         continue;
@@ -859,9 +951,9 @@ async function processBulkUsers(usersData, currentUser) {
 
       // Create user with teams array
       const newUser = new User({
-        full_name: userData.full_name,
-        email: userData.email.toLowerCase(),
-        password_hash: userData.password,
+        full_name: fullName,
+        email,
+        password_hash: password,
         role: role,
         team_id: teamId,
         teams: teamIds,
@@ -881,15 +973,15 @@ async function processBulkUsers(usersData, currentUser) {
 
       // Try to send credential email (don't fail import if email fails)
       try {
-        await sendCredentialEmail(userData.email, userData.password);
+        await sendCredentialEmail(fullName, email);
       } catch (emailError) {
-        console.error(`Failed to send email to ${userData.email}:`, emailError);
+        console.error(`Failed to send email to ${email}:`, emailError);
       }
 
       results.successful.push({
         row: rowNumber,
-        email: userData.email,
-        full_name: userData.full_name,
+        email,
+        full_name: fullName,
         role: role,
         teams: teamNames.length > 0 ? teamNames.join(', ') : 'None',
         employment_status: employmentStatus
@@ -898,7 +990,7 @@ async function processBulkUsers(usersData, currentUser) {
     } catch (error) {
       results.failed.push({
         row: rowNumber,
-        email: userData.email || 'N/A',
+        email: sanitizeBulkValue(userData.email) || 'N/A',
         reason: error.message
       });
     }
@@ -908,7 +1000,7 @@ async function processBulkUsers(usersData, currentUser) {
 }
 
 // Download sample Excel template
-router.get('/bulk-import/template', authenticate, checkRole(['admin', 'hr']), (req, res) => {
+router.get('/bulk-import/template', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
   try {
     // Create sample data
     const sampleData = [
@@ -942,28 +1034,32 @@ router.get('/bulk-import/template', authenticate, checkRole(['admin', 'hr']), (r
     ];
 
     // Create workbook
-    const worksheet = xlsx.utils.json_to_sheet(sampleData);
-    const workbook = xlsx.utils.book_new();
-    xlsx.utils.book_append_sheet(workbook, worksheet, 'Users');
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Users');
 
-    // Set column widths
-    worksheet['!cols'] = [
-      { wch: 20 },  // full_name
-      { wch: 30 },  // email
-      { wch: 15 },  // password
-      { wch: 12 },  // role
-      { wch: 20 },  // team (primary/legacy)
-      { wch: 30 },  // teams (comma-separated)
-      { wch: 18 }   // employment_status
+    worksheet.columns = [
+      { header: 'full_name', key: 'full_name', width: 20 },
+      { header: 'email', key: 'email', width: 30 },
+      { header: 'password', key: 'password', width: 15 },
+      { header: 'role', key: 'role', width: 12 },
+      { header: 'team', key: 'team', width: 20 },
+      { header: 'teams', key: 'teams', width: 30 },
+      { header: 'employment_status', key: 'employment_status', width: 18 }
     ];
 
+    sampleData.forEach((row) => {
+      worksheet.addRow(row);
+    });
+
+    worksheet.getRow(1).font = { bold: true };
+
     // Generate buffer
-    const excelBuffer = xlsx.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+    const excelBuffer = await workbook.xlsx.writeBuffer();
 
     // Send file
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     res.setHeader('Content-Disposition', 'attachment; filename=user_import_template.xlsx');
-    res.send(excelBuffer);
+    res.send(Buffer.from(excelBuffer));
   } catch (error) {
     console.error('Template download error:', error);
     res.status(500).json({ message: 'Server error' });

@@ -66,6 +66,4 @@ const userSettingsSchema = new mongoose.Schema(
   }
 );
 
-userSettingsSchema.index({ user_id: 1 }, { unique: true });
-
 export default mongoose.model('UserSettings', userSettingsSchema);

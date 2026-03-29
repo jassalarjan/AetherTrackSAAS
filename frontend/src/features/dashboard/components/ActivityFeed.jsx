@@ -1,5 +1,6 @@
 import React from 'react';
 import Avatar from '@/shared/components/ui/Avatar';
+import { sanitizeHtml } from '@/shared/utils/sanitizeHtml';
 
 /**
  * Activity Feed Component
@@ -63,7 +64,7 @@ const ActivityFeed = ({ activities = [], maxItems = 10, className = '' }) => {
           <div>
             <div 
               className="feed-text"
-              dangerouslySetInnerHTML={{ __html: activity.action }}
+              dangerouslySetInnerHTML={{ __html: sanitizeHtml(activity.action) }}
             />
             <div className="feed-time">
               {formatTimestamp(activity.timestamp)}

@@ -41,7 +41,10 @@ const SettingsNav = ({ sections = [], active, onNavigate, mobileOpen, onMobileCl
         </p>
       </div>
 
-      <div className="flex-1 min-h-0 overflow-y-auto py-3 space-y-2">
+      <div
+        className="flex-1 min-h-0 overflow-y-auto py-3 space-y-2 overscroll-contain"
+        style={{ WebkitOverflowScrolling: 'touch' }}
+      >
         {groups.map(group => {
           const items = sections.filter(s => s.group === group);
           return (
@@ -123,9 +126,8 @@ const SettingsNav = ({ sections = [], active, onNavigate, mobileOpen, onMobileCl
           <div className="absolute inset-0 bg-black/50" />
           {/* Drawer */}
           <div
-            className="relative flex flex-col border-r"
+            className="relative flex h-[100dvh] max-h-[100dvh] min-h-0 w-[min(82vw,280px)] flex-col border-r overflow-hidden"
             style={{
-              width: 260,
               background: 'var(--bg-canvas)',
               borderColor: 'var(--border-soft)',
             }}
@@ -141,7 +143,7 @@ const SettingsNav = ({ sections = [], active, onNavigate, mobileOpen, onMobileCl
                 <X size={20} />
               </button>
             </div>
-            <div className="flex-1 overflow-hidden">
+            <div className="flex-1 min-h-0 overflow-hidden">
               <NavContent />
             </div>
           </div>

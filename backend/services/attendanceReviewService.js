@@ -283,6 +283,10 @@ class AttendanceReviewService {
     if (filters.status) {
       query.status = filters.status;
     }
+
+    if (filters.verificationStatus) {
+      query.verificationStatus = filters.verificationStatus;
+    }
     
     if (filters.hasFlags) {
       query.verificationFlags = { $exists: true, $ne: [] };
@@ -290,7 +294,7 @@ class AttendanceReviewService {
     
     const attendances = await Attendance.find(query)
       .sort({ date: -1, createdAt: -1 })
-      .populate('userId', 'name email')
+      .populate('userId', 'full_name email profile_picture')
       .limit(filters.limit || 100)
       .skip(filters.skip || 0);
     
@@ -319,9 +323,9 @@ class AttendanceReviewService {
    */
   static async getReviewableAttendance(attendanceId) {
     const attendance = await Attendance.findById(attendanceId)
-      .populate('userId', 'name email')
-      .populate('overrideBy', 'name email')
-      .populate('adminReview.reviewedBy', 'name email');
+      .populate('userId', 'full_name email profile_picture')
+      .populate('overrideBy', 'full_name email')
+      .populate('adminReview.reviewedBy', 'full_name email');
     
     if (!attendance) {
       throw new Error('Attendance record not found');

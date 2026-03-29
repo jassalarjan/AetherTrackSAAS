@@ -114,6 +114,7 @@ const MobileBottomNav = () => {
 
       <nav
         className="mobile-bottom-nav"
+        data-bottom-nav
         aria-label="Mobile quick navigation"
         style={{
           display:         'flex',
@@ -132,7 +133,7 @@ const MobileBottomNav = () => {
           paddingLeft:     '4px',
           paddingRight:    '4px',
           alignItems:      'stretch',
-          minHeight:       'calc(56px + env(safe-area-inset-bottom, 0px))',
+          minHeight:       'var(--mobile-bottom-chrome, calc(56px + env(safe-area-inset-bottom, 0px)))',
           overflow:        'hidden',
         }}
       >
@@ -197,22 +198,23 @@ const ResponsivePageLayout = ({
   const sidebarOffset = !isMobile && isSidebarVisible
     ? (isCollapsed ? 'var(--sidebar-width-collapsed)' : 'var(--sidebar-width-expanded)')
     : '0px';
-  const bottomNavOffset = showBottomNav ? 'calc(72px + var(--safe-bottom, 0px))' : '0px';
+  const bottomNavOffset = showBottomNav ? 'var(--mobile-bottom-chrome, calc(56px + var(--safe-bottom, 0px)))' : '0px';
 
   return (
     <>
     <div
-      className="flex overflow-hidden"
+      className="flex"
       style={{
         background: 'var(--bg-canvas)',
         height: 'var(--app-height, 100dvh)',
         minHeight: 'var(--app-height, 100dvh)',
         width: '100%',
         maxWidth: '100vw',
+        overflowX: 'hidden',
         '--sidebar-width-expanded': '284px',
         '--sidebar-width-collapsed': '64px',
         '--sidebar-width': sidebarOffset,
-        '--header-height': '64px',
+        '--header-h': isMobile ? 'var(--mobile-top-chrome, 52px)' : '64px',
       }}
     >
       {isSidebarVisible && <GlobalSidebar />}
@@ -225,7 +227,8 @@ const ResponsivePageLayout = ({
           width: '100%',
           minWidth: 0,
           minHeight: 'var(--app-height, 100dvh)',
-          overflow: 'hidden',
+          overflowX: 'hidden',
+          overflowY: 'visible',
         }}
       >
 
@@ -243,31 +246,14 @@ const ResponsivePageLayout = ({
           noPadding={noPadding}
         />
 
-        {/* Mobile actions bar — only shown on small screens when actions exist */}
-        {(actions || headerContent) && (
-          <div
-            className="sm:hidden flex items-center gap-2 px-3 py-2 border-b overflow-x-auto"
-            style={{
-              background:  'var(--bg-canvas)',
-              borderColor: 'var(--border-soft)',
-              scrollbarWidth: 'none',
-              flexShrink: 0,
-              flexWrap: 'wrap',
-              alignContent: 'flex-start',
-            }}
-          >
-            {actions}
-            {headerContent}
-          </div>
-        )}
-
         {/* Scrollable Content — extra bottom padding on mobile for bottom nav */}
         <div
           className="flex-1 overflow-auto"
           id="main-content"
+          data-page-content
           tabIndex={-1}
           style={{
-            paddingBottom: bottomNavOffset,
+            paddingBottom: isMobile ? '0px' : bottomNavOffset,
             overflowX: 'hidden',
           }}
         >

@@ -4,11 +4,16 @@ export const checkRole = (allowedRoles) => {
       return res.status(401).json({ message: 'Unauthorized' });
     }
 
-    if (!allowedRoles.includes(req.user.role)) {
+    const normalizedAllowed = Array.isArray(allowedRoles) ? allowedRoles : [];
+    const currentRole = req.user.role;
+    const hasDirectRole = normalizedAllowed.includes(currentRole);
+    const hasSuperAdminOverride = currentRole === 'super_admin' && normalizedAllowed.includes('admin');
+
+    if (!hasDirectRole && !hasSuperAdminOverride) {
       return res.status(403).json({ 
         message: 'Access denied. Insufficient permissions.',
-        required: allowedRoles,
-        current: req.user.role
+        required: normalizedAllowed,
+        current: currentRole
       });
     }
 

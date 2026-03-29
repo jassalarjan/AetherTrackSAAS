@@ -15,6 +15,7 @@ import ProjectLabel from '@/features/projects/components/ProjectLabel';
 import TeamLabel from '@/shared/components/layout/TeamLabel';
 import SprintLabel from '@/features/projects/components/SprintLabel';
 import ProgressBar from '@/shared/components/ui/ProgressBar';
+import { useSidebar } from '@/features/workspace/context/SidebarContext';
 
 const Tasks = () => {
   const { user, socket } = useAuth();
@@ -63,6 +64,7 @@ const Tasks = () => {
   const [sprints, setSprints] = useState([]);
   const searchInputRef = useRef(null);
   const currentUserId = user?._id || user?.id || null;
+  const { isMobile } = useSidebar();
 
   // Pagination
   const [rowsPerPage, setRowsPerPage] = useState(25);
@@ -544,8 +546,14 @@ const Tasks = () => {
     filters.dueDateTo,
     filters.search,
   ].filter(Boolean).length;
+  const taskSummary = {
+    total: filteredTasks.length,
+    mine: filteredTasks.filter((task) => Array.isArray(task.assigned_to) && task.assigned_to.some((u) => (u._id || u) === currentUserId)).length,
+    inProgress: filteredTasks.filter((task) => task.status === 'in_progress').length,
+    overdue: filteredTasks.filter((task) => task.due_date && new Date(task.due_date) < new Date() && task.status !== 'done').length,
+  };
 
-  if (loading) return <PageLoader label="Loading tasks…" />;
+  if (loading) return <PageLoader />;
 
   return (
     <>
@@ -563,9 +571,9 @@ const Tasks = () => {
         }
       >
         {/* Search and Filters */}
-        <div className="mb-6 space-y-3">
-          <div className="flex flex-col sm:flex-row gap-2">
-            <div className="relative flex-1">
+        <div className="mb-6 space-y-3" data-mobile-filter-shell>
+          <div className="flex items-center gap-2 overflow-x-auto sm:overflow-visible" data-mobile-filter-row>
+            <div className="relative flex-1 min-w-[220px]">
               <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] pointer-events-none" />
               <input
                 ref={searchInputRef}
@@ -573,12 +581,14 @@ const Tasks = () => {
                 value={filters.search}
                 onChange={(e) => setFilters({ ...filters, search: e.target.value })}
                 placeholder="Search tasks..."
-                className="w-full h-11 pl-9 pr-4 bg-[var(--bg-raised)] border border-[var(--border-soft)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] rounded-lg text-sm focus:ring-2 focus:ring-[#C4713A] focus:border-transparent focus:ring-offset-0 transition-[border-color,box-shadow]"
+                className="w-full h-10 pl-9 pr-4 bg-[var(--bg-raised)] border border-[var(--border-soft)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] rounded-lg text-sm focus:ring-2 focus:ring-[#C4713A] focus:border-transparent focus:ring-offset-0 transition-[border-color,box-shadow]"
+                data-mobile-filter-input
               />
             </div>
             <button
               onClick={() => setShowFilterDrawer(true)}
-              className="lg:hidden inline-flex items-center justify-center gap-2 h-11 px-4 bg-[var(--bg-raised)] border border-[var(--border-soft)] text-[var(--text-primary)] rounded-lg hover:border-[#C4713A] transition-colors focus:ring-2 focus:ring-[#C4713A] focus:ring-offset-0"
+              className="lg:hidden inline-flex items-center justify-center gap-2 h-10 px-4 bg-[var(--bg-raised)] border border-[var(--border-soft)] text-[var(--text-primary)] rounded-lg hover:border-[#C4713A] transition-colors focus:ring-2 focus:ring-[#C4713A] focus:ring-offset-0 flex-shrink-0"
+              data-mobile-filter-input
             >
               <Filter size={16} />
               <span className="text-sm">Filters</span>
@@ -589,6 +599,27 @@ const Tasks = () => {
               )}
             </button>
           </div>
+
+          {isMobile && (
+            <div className="grid grid-cols-2 gap-3">
+              <div className="rounded-2xl border border-[var(--border-soft)] bg-[var(--bg-raised)] p-4">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--text-muted)]">Visible Tasks</p>
+                <p className="mt-2 text-2xl font-bold text-[var(--text-primary)]">{taskSummary.total}</p>
+              </div>
+              <div className="rounded-2xl border border-[var(--border-soft)] bg-[var(--bg-raised)] p-4">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--text-muted)]">Mine</p>
+                <p className="mt-2 text-2xl font-bold text-[var(--text-primary)]">{taskSummary.mine}</p>
+              </div>
+              <div className="rounded-2xl border border-[var(--border-soft)] bg-[var(--bg-raised)] p-4">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--text-muted)]">In Progress</p>
+                <p className="mt-2 text-2xl font-bold text-[var(--brand)]">{taskSummary.inProgress}</p>
+              </div>
+              <div className="rounded-2xl border border-[var(--border-soft)] bg-[var(--bg-raised)] p-4">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--text-muted)]">Overdue</p>
+                <p className="mt-2 text-2xl font-bold text-[var(--danger)]">{taskSummary.overdue}</p>
+              </div>
+            </div>
+          )}
 
           {/* Desktop Filters */}
           <div className="hidden lg:flex flex-wrap items-center gap-2">
@@ -660,8 +691,8 @@ const Tasks = () => {
           </div>
         </div>
 
-        {/* Mobile Card Grid (< 1024px) */}
-        <div className="lg:hidden">
+        {/* Mobile Card Grid (< 1025px) */}
+        <div style={{ display: isMobile ? 'block' : 'none' }} className="w-full">
           {filteredTasks.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center rounded-xl border border-dashed border-[var(--border-soft)]">
               <div className="w-14 h-14 rounded-full bg-[var(--bg-raised)] flex items-center justify-center mb-4">
@@ -678,8 +709,8 @@ const Tasks = () => {
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {paginatedTasks.map((task) => (
+            <div className="grid grid-cols-1 gap-4 pb-20">
+              {filteredTasks.map((task) => (
                 <TaskCard
                   key={task._id}
                   task={task}
@@ -690,14 +721,15 @@ const Tasks = () => {
                   canEdit={canEditTask(task)}
                   canDelete={canDeleteTask(task)}
                   getUserInitials={getUserInitials}
+                  className="min-h-[200px]"
                 />
               ))}
             </div>
           )}
         </div>
 
-        {/* Desktop Table (>= 1024px) */}
-        <div className="hidden lg:block">
+        {/* Desktop Table (>= 1025px) */}
+        <div style={{ display: !isMobile ? 'block' : 'none' }}>
           {filteredTasks.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-center rounded-xl border border-dashed border-[var(--border-soft)] bg-[var(--bg-base)]">
               <div className="w-16 h-16 rounded-full bg-[var(--bg-raised)] flex items-center justify-center mb-4">

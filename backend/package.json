@@ -10,8 +10,11 @@
     "test:email": "node test-email.js",
     "test:cloudinary": "node test-cloudinary-connection.js",
     "seed:admin": "node scripts/seedAdmin.js",
+    "make:super-admin": "node scripts/makeSuperAdmin.js",
     "cleanup:admins": "node scripts/cleanupAdminUsers.js",
-    "migrate:workspaces": "node scripts/migrateToWorkspaces.js"
+    "migrate:workspaces": "node scripts/migrateToWorkspaces.js",
+    "dedupe:attendance": "node scripts/dedupe-attendance-records.js",
+    "dedupe:attendance:apply": "node scripts/dedupe-attendance-records.js --apply"
   },
   "dependencies": {
     "@fullcalendar/daygrid": "^6.1.19",
@@ -24,20 +27,27 @@
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "exceljs": "^4.4.0",
-    "express": "^4.18.2",
-    "express-rate-limit": "^8.2.1",
-    "express-validator": "^7.0.1",
+    "express": "^5.1.0",
+    "express-rate-limit": "^8.3.1",
+    "express-validator": "^7.3.1",
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.2",
-    "jspdf": "^3.0.3",
-    "jspdf-autotable": "^5.0.2",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.7",
     "mongoose": "^8.0.0",
-    "multer": "^2.0.2",
+    "multer": "^2.1.1",
     "node-cron": "^4.2.1",
-    "nodemailer": "^7.0.12",
-    "socket.io": "^4.6.0",
-    "xlsx": "^0.18.5",
+    "nodemailer": "^8.0.4",
+    "socket.io": "^4.8.3",
     "xss": "^1.0.15"
+  },
+  "overrides": {
+    "brace-expansion": "^2.0.2",
+    "jws": "^3.2.3",
+    "lodash": "^4.17.22",
+    "minimatch": "^5.1.8",
+    "qs": "^6.14.1",
+    "socket.io-parser": "^4.2.6"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"

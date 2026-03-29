@@ -82,7 +82,7 @@ export default function MeetingDetailPanel({ meeting, isOpen, onClose, onEdit, o
   } focus:outline-none focus:ring-1 focus:ring-blue-500`;
 
   return (
-    <div className="fixed inset-0 z-50 flex">
+    <div className="fixed inset-0 z-[var(--z-modal)] flex">
       {/* Backdrop */}
       <div className="flex-1 bg-black/60 backdrop-blur-sm" onClick={onClose} />
 

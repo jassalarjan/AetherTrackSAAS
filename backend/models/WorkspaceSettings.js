@@ -121,6 +121,4 @@ const workspaceSettingsSchema = new mongoose.Schema(
   }
 );
 
-workspaceSettingsSchema.index({ workspace_id: 1 }, { unique: true });
-
 export default mongoose.model('WorkspaceSettings', workspaceSettingsSchema);

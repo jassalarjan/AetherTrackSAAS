@@ -9,13 +9,14 @@
  * - Same interactions (tabs, command palette, toasts, theme toggle)
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { SectionLoader } from '@/shared/components/ui/Spinner';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { useTheme } from '@/app/providers/ThemeProvider';
 import { useSidebar } from '@/features/workspace/context/SidebarContext';
 import api from '@/shared/services/axios';
+import { MobileKanbanRoot } from '@/components/kanban/mobile';
 import '@/styles/aethertrack-reference.css';
 import ResponsivePageLayout from '@/shared/components/responsive/ResponsivePageLayout';
 import ALL_PAGES from '@/shared/constants/pages.json';
@@ -366,11 +367,58 @@ const KanbanCard = ({ title, tag, due, borderColor, opacity = 1 }) => {
 };
 
 // Kanban Panel component
-const KanbanPanel = ({ tasks, sprint, onNavigate }) => {
+const KanbanPanel = ({ tasks, sprint, onNavigate, isMobile = false, onTaskMove }) => {
   const taskArray = Array.isArray(tasks) ? tasks : [];
   const todoTasks = taskArray.filter(t => t.status === 'todo' || t.status === 'pending');
   const inProgressTasks = taskArray.filter(t => t.status === 'in_progress' || t.status === 'inprogress');
   const doneTasks = taskArray.filter(t => t.status === 'done' || t.status === 'completed');
+
+  const mobileColumns = useMemo(() => {
+    const colorMap = {
+      todo: '#64748b',
+      in_progress: '#C4713A',
+      done: '#22c55e',
+    };
+
+    return [
+      { id: 'todo', title: 'To Do', color: colorMap.todo, cards: todoTasks },
+      { id: 'in_progress', title: 'In Progress', color: colorMap.in_progress, cards: inProgressTasks },
+      { id: 'done', title: 'Done', color: colorMap.done, cards: doneTasks },
+    ].map((column) => ({
+      id: column.id,
+      title: column.title,
+      color: column.color,
+      cards: column.cards.map((task) => ({
+        id: task._id || task.id,
+        title: task.title || task.name || 'Untitled task',
+        assignee: Array.isArray(task.assigned_to) ? task.assigned_to[0] || null : task.assigned_to || null,
+        priority: task.priority,
+        tags: task.tags || [],
+        dueDate: task.due_date || task.dueDate,
+        description: task.description || '',
+        columnId: column.id,
+        columnColor: column.color,
+        rawTask: task,
+      })),
+    }));
+  }, [todoTasks, inProgressTasks, doneTasks]);
+
+  const handleMobileCardMove = async (cardId, toColumnId) => {
+    if (!onTaskMove) return;
+    await onTaskMove(cardId, toColumnId);
+  };
+
+  const handleMobileCardAdd = async () => {
+    onNavigate && onNavigate('/kanban?create=true');
+  };
+
+  const handleMobileCardEdit = async () => {
+    onNavigate && onNavigate('/kanban');
+  };
+
+  const handleMobileCardDelete = async () => {
+    onNavigate && onNavigate('/kanban');
+  };
   
   const formatTaskDue = (dueDate) => {
     if (!dueDate) return '';
@@ -409,6 +457,17 @@ const KanbanPanel = ({ tasks, sprint, onNavigate }) => {
         </div>
         <button className="btn btn-ghost btn-sm" onClick={() => onNavigate && onNavigate('/kanban')}>Full board →</button>
       </div>
+      {isMobile ? (
+        <MobileKanbanRoot
+          columns={mobileColumns}
+          loading={false}
+          onCardMove={handleMobileCardMove}
+          onCardAdd={handleMobileCardAdd}
+          onCardEdit={handleMobileCardEdit}
+          onCardDelete={handleMobileCardDelete}
+          onCardAssign={() => {}}
+        />
+      ) : (
       <div className="kanban">
         <div className="kb-col">
           <div className="kb-col-hd">
@@ -482,6 +541,7 @@ const KanbanPanel = ({ tasks, sprint, onNavigate }) => {
           )}
         </div>
       </div>
+      )}
     </div>
   );
 };
@@ -1432,8 +1492,8 @@ const Workspace = () => {
   const handleTaskComplete = async (taskId, newStatus) => {
     try {
       await api.patch(`/tasks/${taskId}`, { status: newStatus });
-      setTasks(prev => prev.map(t => t._id === taskId ? { ...t, status: newStatus } : t));
-      toast('Task marked as done ✓');
+      setTasks(prev => prev.map(t => (t._id === taskId || t.id === taskId) ? { ...t, status: newStatus } : t));
+      toast(newStatus === 'done' ? 'Task marked as done ✓' : 'Task status updated ✓');
     } catch (err) {
       console.error('Error updating task:', err);
       toast('Failed to update task');
@@ -1539,7 +1599,7 @@ const Workspace = () => {
               {/* Left Column */}
               <div>
                 <TasksPanel tasks={tasks} loading={loading.tasks} onTaskComplete={handleTaskComplete} onNavigate={handleNavigate} />
-                <KanbanPanel tasks={tasks} sprint={activeSprint} onNavigate={handleNavigate} />
+                <KanbanPanel tasks={tasks} sprint={activeSprint} onNavigate={handleNavigate} isMobile={isMobile} onTaskMove={handleTaskComplete} />
                 <VelocityPanel projects={projects} sprint={activeSprint} onNavigate={handleNavigate} />
               </div>
               

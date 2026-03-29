@@ -3,7 +3,7 @@ import { projectsApi } from '@/features/projects/services/projectsApi';
 import { useNavigate } from 'react-router-dom';
 import ResponsivePageLayout from '@/shared/components/responsive/ResponsivePageLayout';
 import { Filter, Share2, FolderOpen, DollarSign, Users as UsersIcon, AlertTriangle, PieChart, TrendingUp, ArrowRight, MoreHorizontal, Mail, Plus, X, Edit, Trash2, Download, FileSpreadsheet, Search, UserPlus } from 'lucide-react';
-import * as XLSX from 'xlsx';
+import { createWorkbook, addWorksheetFromRows, downloadWorkbook } from '@/shared/utils/spreadsheetExport';
 import api from '@/shared/services/axios';
 
 const ProjectDashboard = () => {
@@ -184,7 +184,7 @@ const ProjectDashboard = () => {
     return name.substring(0, 2).toUpperCase();
   };
 
-  const handleExportExcel = () => {
+  const handleExportExcel = async () => {
     const projectData = projects.map(project => ({
       'Project Name': project.name,
       'Description': project.description || '',
@@ -198,25 +198,11 @@ const ProjectDashboard = () => {
       'Team Members': project.team_members?.length || 0
     }));
 
-    const worksheet = XLSX.utils.json_to_sheet(projectData);
-    worksheet['!cols'] = [
-      { wch: 30 }, // Project Name
-      { wch: 50 }, // Description
-      { wch: 15 }, // Status
-      { wch: 12 }, // Priority
-      { wch: 10 }, // Progress
-      { wch: 15 }, // Start Date
-      { wch: 15 }, // Due Date
-      { wch: 18 }, // Budget Allocated
-      { wch: 15 }, // Budget Spent
-      { wch: 15 }  // Team Members
-    ];
-
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Projects');
+    const workbook = await createWorkbook();
+    addWorksheetFromRows(workbook, 'Projects', projectData, [30, 50, 15, 12, 10, 15, 15, 18, 15, 15]);
     
     const timestamp = new Date().toISOString().split('T')[0];
-    XLSX.writeFile(workbook, `projects-report-${timestamp}.xlsx`);
+    await downloadWorkbook(workbook, `projects-report-${timestamp}.xlsx`);
     setShowExportMenu(false);
   };
 
@@ -863,7 +849,7 @@ const ProjectDashboard = () => {
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-[#1a2234] rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-gray-200 dark:border-gray-800">
             {/* Modal Header */}
-            <div className="sticky top-0 bg-white dark:bg-[#1a2234] border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between z-10">
+            <div className="bg-white dark:bg-[#1a2234] border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between z-10 md:sticky md:top-0">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg bg-green-100 dark:bg-green-900/20 flex items-center justify-center">
                   <UserPlus size={20} className="text-green-600" />

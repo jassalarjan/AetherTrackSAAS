@@ -1,6 +1,7 @@
 ﻿import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ResponsivePageLayout from '@/shared/components/responsive/ResponsivePageLayout';
+import { useSidebar } from '@/features/workspace/context/SidebarContext';
 import api from '@/shared/services/axios';
 import { projectsApi } from '@/features/projects/services/projectsApi';
 import { usePageShortcuts } from '@/shared/hooks/usePageShortcuts';
@@ -13,6 +14,7 @@ import {
 
 const MyProjects = () => {
   const navigate = useNavigate();
+  const { isMobile } = useSidebar();
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({ status: '', priority: '', search: '' });
@@ -174,11 +176,11 @@ const MyProjects = () => {
       title="My Projects"
       icon={Briefcase}
       actions={
-        <div className="flex items-center gap-2">
+        <div className="flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto sm:flex-nowrap">
           {canCreateProjects() && (
             <button
               onClick={handleCreateProject}
-              className="flex items-center gap-1.5 h-8 px-3 rounded-lg text-[13px] font-semibold bg-[#C4713A] text-white hover:bg-[#A35C28] transition-colors"
+              className="flex items-center gap-1.5 h-9 px-3 rounded-lg text-[13px] font-semibold bg-[#C4713A] text-white hover:bg-[#A35C28] transition-colors"
               style={{ fontFamily: 'var(--font-body)' }}
             >
               <Plus size={14} />
@@ -187,7 +189,7 @@ const MyProjects = () => {
           )}
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center gap-1.5 h-8 px-3 rounded-lg text-[13px] font-medium transition-colors bg-[var(--bg-base)] border border-[var(--border-soft)] text-[var(--text-secondary)] hover:bg-[var(--border-hair)] hover:text-[var(--text-primary)]"
+            className="flex items-center gap-1.5 h-9 px-3 rounded-lg text-[13px] font-medium transition-colors bg-[var(--bg-base)] border border-[var(--border-soft)] text-[var(--text-secondary)] hover:bg-[var(--border-hair)] hover:text-[var(--text-primary)]"
             style={{ fontFamily: 'var(--font-body)' }}
           >
             <Filter size={14} />
@@ -204,9 +206,9 @@ const MyProjects = () => {
         <div className="space-y-6">
           {/* Filter Section */}
           {showFilters && (
-            <div className="bg-white dark:bg-[#1a2234] rounded-xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
+            <div className="bg-white dark:bg-[#1a2234] rounded-xl border border-gray-200 dark:border-gray-800 p-4 sm:p-6 shadow-sm" data-mobile-filter-panel>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4" data-mobile-filter-grid>
+                <div className="col-span-2 lg:col-span-1">
                   <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                     Search Projects
                   </label>
@@ -219,6 +221,7 @@ const MyProjects = () => {
                       onChange={(e) => setFilters({ ...filters, search: e.target.value })}
                       placeholder="Search by name..."
                       className="w-full pl-10 pr-4 py-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-[#C4713A] focus:border-[#C4713A]"
+                      data-mobile-filter-input
                     />
                   </div>
                 </div>
@@ -230,6 +233,7 @@ const MyProjects = () => {
                     value={filters.status}
                     onChange={(e) => setFilters({ ...filters, status: e.target.value })}
                     className="w-full px-4 py-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-[#C4713A] focus:border-[#C4713A]"
+                    data-mobile-filter-input
                   >
                     <option value="">All Statuses</option>
                     <option value="active">Active</option>
@@ -246,6 +250,7 @@ const MyProjects = () => {
                     value={filters.priority}
                     onChange={(e) => setFilters({ ...filters, priority: e.target.value })}
                     className="w-full px-4 py-2 border-2 border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:ring-2 focus:ring-[#C4713A] focus:border-[#C4713A]"
+                    data-mobile-filter-input
                   >
                     <option value="">All Priorities</option>
                     <option value="urgent">Urgent</option>
@@ -258,7 +263,7 @@ const MyProjects = () => {
             </div>
           )}
 
-          {/* Projects Grid */}
+          {/* Projects Listing */}
           {projects.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16">
               <div className="w-20 h-20 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-4">
@@ -274,94 +279,152 @@ const MyProjects = () => {
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-              {projects.map((project) => (
-                <div
-                  key={project._id}
-                  onClick={() => navigate(`/projects/${project._id}`)}
-                  className="bg-white dark:bg-[#1a2234] rounded-xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm hover:shadow-lg transition-all cursor-pointer group"
-                >
-                  {/* Header */}
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center gap-2">
-                      {getStatusIcon(project.status)}
-                      <span className={`${getStatusBadge(project.status)} text-xs font-bold uppercase px-2 py-1 rounded border`}>
-                        {project.status.replace('_', ' ')}
+            isMobile ? (
+              <div className="space-y-3" role="list" aria-label="Project cards">
+                {projects.map((project) => (
+                  <article
+                    key={project._id}
+                    role="listitem"
+                    className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-[#1a2234]"
+                  >
+                    <div className="mb-3 flex items-start justify-between gap-2">
+                      <div className="flex min-w-0 items-center gap-2">
+                        {getStatusIcon(project.status)}
+                        <span className={`${getStatusBadge(project.status)} text-[10px] font-bold uppercase px-2 py-1 rounded border`}>
+                          {project.status.replace('_', ' ')}
+                        </span>
+                      </div>
+                      <span className={`${getPriorityBadge(project.priority)} text-[10px] font-bold uppercase px-2 py-1 rounded border`}>
+                        {project.priority}
                       </span>
                     </div>
-                    <span className={`${getPriorityBadge(project.priority)} text-xs font-bold uppercase px-2 py-1 rounded border`}>
-                      {project.priority}
-                    </span>
-                  </div>
 
-                  {/* Project Name */}
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2 group-hover:text-[#C4713A] transition-colors line-clamp-1">
-                    {project.name}
-                  </h3>
+                    <h3 className="text-base font-bold text-gray-900 dark:text-white line-clamp-1">{project.name}</h3>
+                    <p className="mt-1 text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
+                      {project.description || 'No description provided'}
+                    </p>
 
-                  {/* Description */}
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-4 line-clamp-2 min-h-[40px]">
-                    {project.description || 'No description provided'}
-                  </p>
-
-                  {/* Progress Bar */}
-                  <div className="mb-4">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">
-                        Progress
-                      </span>
-                      <span className="text-xs font-bold text-gray-900 dark:text-white">
-                        {project.progress}%
-                      </span>
-                    </div>
-                    <div className="w-full bg-gray-100 dark:bg-gray-800 h-2 rounded-full overflow-hidden">
-                      <div
-                        className={`${getProgressColor(project.progress)} h-full rounded-full transition-all duration-300`}
-                        style={{ width: `${project.progress}%` }}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Footer */}
-                  <div className="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-gray-800">
-                    {/* Team Members */}
-                    <div className="flex -space-x-2">
-                      {project.team_members?.slice(0, 3).map((member, idx) => (
+                    <div className="mt-3">
+                      <div className="mb-2 flex items-center justify-between text-xs">
+                        <span className="font-semibold text-gray-500 dark:text-gray-400">Progress</span>
+                        <span className="font-bold text-gray-900 dark:text-white">{project.progress}%</span>
+                      </div>
+                      <div className="h-2 rounded-full bg-gray-100 dark:bg-gray-800">
                         <div
-                          key={idx}
-                          className="w-8 h-8 rounded-full border-2 border-white dark:border-[#1a2234] bg-gradient-to-br from-blue-400 to-purple-600 flex items-center justify-center text-white text-xs font-bold"
-                          title={member.user?.full_name}
-                        >
-                          {getUserInitials(member.user?.full_name)}
-                        </div>
-                      ))}
-                      {project.team_members?.length > 3 && (
-                        <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 border-2 border-white dark:border-[#1a2234] flex items-center justify-center text-xs font-bold text-gray-500">
-                          +{project.team_members.length - 3}
-                        </div>
-                      )}
-                      {(!project.team_members || project.team_members.length === 0) && (
-                        <span className="text-xs text-gray-400 dark:text-gray-500">No team assigned</span>
-                      )}
+                          className={`${getProgressColor(project.progress)} h-2 rounded-full transition-all duration-300`}
+                          style={{ width: `${project.progress}%` }}
+                        />
+                      </div>
                     </div>
 
-                    {/* Due Date */}
-                    <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
-                      <Calendar size={14} />
-                      <span>{formatDate(project.due_date)}</span>
+                    <div className="mt-3 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                      <div className="flex items-center gap-1">
+                        <Users size={14} />
+                        <span>{project.team_members?.length || 0} members</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Calendar size={14} />
+                        <span>{formatDate(project.due_date)}</span>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 grid grid-cols-2 gap-2">
+                      <button
+                        onClick={() => navigate(`/projects/${project._id}`)}
+                        className="min-h-[48px] rounded-xl bg-[#C4713A] px-3 text-sm font-bold text-white hover:bg-[#A35C28]"
+                        aria-label={`Open project ${project.name}`}
+                      >
+                        Open
+                      </button>
+                      <button
+                        onClick={() => navigate(`/projects/gantt?project=${project._id}`)}
+                        className="min-h-[48px] rounded-xl border border-gray-300 px-3 text-sm font-semibold text-gray-700 dark:border-gray-700 dark:text-gray-200"
+                        aria-label={`View timeline for ${project.name}`}
+                      >
+                        Timeline
+                      </button>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                {projects.map((project) => (
+                  <div
+                    key={project._id}
+                    onClick={() => navigate(`/projects/${project._id}`)}
+                    className="bg-white dark:bg-[#1a2234] rounded-xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm hover:shadow-lg transition-all cursor-pointer group"
+                  >
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center gap-2">
+                        {getStatusIcon(project.status)}
+                        <span className={`${getStatusBadge(project.status)} text-xs font-bold uppercase px-2 py-1 rounded border`}>
+                          {project.status.replace('_', ' ')}
+                        </span>
+                      </div>
+                      <span className={`${getPriorityBadge(project.priority)} text-xs font-bold uppercase px-2 py-1 rounded border`}>
+                        {project.priority}
+                      </span>
+                    </div>
+
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2 group-hover:text-[#C4713A] transition-colors line-clamp-1">
+                      {project.name}
+                    </h3>
+
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-4 line-clamp-2 min-h-[40px]">
+                      {project.description || 'No description provided'}
+                    </p>
+
+                    <div className="mb-4">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">Progress</span>
+                        <span className="text-xs font-bold text-gray-900 dark:text-white">{project.progress}%</span>
+                      </div>
+                      <div className="w-full bg-gray-100 dark:bg-gray-800 h-2 rounded-full overflow-hidden">
+                        <div
+                          className={`${getProgressColor(project.progress)} h-full rounded-full transition-all duration-300`}
+                          style={{ width: `${project.progress}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-gray-800">
+                      <div className="flex -space-x-2">
+                        {project.team_members?.slice(0, 3).map((member, idx) => (
+                          <div
+                            key={idx}
+                            className="w-8 h-8 rounded-full border-2 border-white dark:border-[#1a2234] bg-gradient-to-br from-blue-400 to-purple-600 flex items-center justify-center text-white text-xs font-bold"
+                            title={member.user?.full_name}
+                          >
+                            {getUserInitials(member.user?.full_name)}
+                          </div>
+                        ))}
+                        {project.team_members?.length > 3 && (
+                          <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 border-2 border-white dark:border-[#1a2234] flex items-center justify-center text-xs font-bold text-gray-500">
+                            +{project.team_members.length - 3}
+                          </div>
+                        )}
+                        {(!project.team_members || project.team_members.length === 0) && (
+                          <span className="text-xs text-gray-400 dark:text-gray-500">No team assigned</span>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+                        <Calendar size={14} />
+                        <span>{formatDate(project.due_date)}</span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-end mt-4 pt-4 border-t border-gray-100 dark:border-gray-800">
+                      <span className="text-sm font-semibold text-[#C4713A] group-hover:gap-2 flex items-center gap-1 transition-all">
+                        View Details
+                        <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                      </span>
                     </div>
                   </div>
-
-                  {/* View Details Arrow */}
-                  <div className="flex items-center justify-end mt-4 pt-4 border-t border-gray-100 dark:border-gray-800">
-                    <span className="text-sm font-semibold text-[#C4713A] group-hover:gap-2 flex items-center gap-1 transition-all">
-                      View Details
-                      <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )
           )}
 
           {/* Summary Stats */}
@@ -421,13 +484,26 @@ const MyProjects = () => {
               </div>
             </div>
           )}
+
+          {isMobile && canCreateProjects() && (
+            <button
+              onClick={handleCreateProject}
+              className="fixed bottom-24 right-4 z-40 min-h-[56px] rounded-2xl bg-[#C4713A] px-5 text-sm font-bold text-white shadow-lg shadow-[#C4713A]/30"
+              aria-label="Create project"
+            >
+              <span className="inline-flex items-center gap-2">
+                <Plus size={16} />
+                New Project
+              </span>
+            </button>
+          )}
         </div>
 
       {/* Create Project Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="bg-white dark:bg-[#1a2234] rounded-xl border border-gray-200 dark:border-gray-800 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
-            <div className="sticky top-0 bg-white dark:bg-[#1a2234] border-b border-gray-200 dark:border-gray-800 p-6 flex items-center justify-between z-10">
+            <div className="bg-white dark:bg-[#1a2234] border-b border-gray-200 dark:border-gray-800 p-6 flex items-center justify-between z-10 md:sticky md:top-0">
               <h3 className="text-xl font-bold text-gray-900 dark:text-white">Create New Project</h3>
               <button 
                 onClick={() => setShowCreateModal(false)}

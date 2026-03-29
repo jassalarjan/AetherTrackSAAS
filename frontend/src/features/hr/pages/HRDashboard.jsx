@@ -10,6 +10,7 @@ import { PageLoader } from '@/shared/components/ui/Spinner';
 import api from '@/shared/services/axios';
 import ResponsivePageLayout from '@/shared/components/responsive/ResponsivePageLayout';
 import ConfirmModal from '@/shared/components/ui/ConfirmModal';
+import { sanitizeHtml } from '@/shared/utils/sanitizeHtml';
 import HRCalendar from './HRCalendar';
 import {
   Calendar, Clock, CheckCircle, XCircle, AlertCircle, User,
@@ -109,6 +110,13 @@ export default function HRDashboard() {
   useEffect(() => {
     fetchAllData();
   }, [currentDate]);
+
+  useEffect(() => {
+    if (activeTab !== 'calendar') return;
+    // Ensure dashboard-level overlays do not block embedded calendar interactions.
+    setShowHelp(false);
+    setShowEmployeeActionModal(false);
+  }, [activeTab]);
 
   const fetchAllData = async () => {
     setLoading(true);
@@ -233,12 +241,20 @@ export default function HRDashboard() {
     return { status: 'Not Marked', icon: AlertCircle, color: 'text-gray-400' };
   };
 
+  const getLocalDateString = () => {
+    const now = new Date();
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  };
+
   // Mark attendance for a single user
   const markUserAttendance = async (userId, status) => {
     try {
       await api.post('/hr/attendance/mark', {
         userId,
-        date: new Date().toISOString().split('T')[0],
+        date: getLocalDateString(),
         status
       });
       
@@ -261,7 +277,7 @@ export default function HRDashboard() {
       const promises = selectedUsers.map(userId =>
         api.post('/hr/attendance/mark', {
           userId,
-          date: new Date().toISOString().split('T')[0],
+          date: getLocalDateString(),
           status: massAttendanceStatus
         })
       );
@@ -755,7 +771,7 @@ export default function HRDashboard() {
               <div className="max-h-96 overflow-y-auto p-4">
                 <div
                   className="prose prose-sm max-w-none dark:prose-invert"
-                  dangerouslySetInnerHTML={{ __html: generatePreviewHtml().html }}
+                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(generatePreviewHtml().html) }}
                 />
               </div>
             </div>
@@ -866,7 +882,7 @@ export default function HRDashboard() {
     }
   };
 
-  if (loading) return <PageLoader variant="pulse" label="Loading HR Dashboard…" />;
+  if (loading) return <PageLoader />;
 
   return (
     <>
@@ -1835,7 +1851,7 @@ export default function HRDashboard() {
                             ) : (
                               <div
                                 contentEditable
-                                dangerouslySetInnerHTML={{ __html: emailData.htmlContent }}
+                                dangerouslySetInnerHTML={{ __html: sanitizeHtml(emailData.htmlContent) }}
                                 onInput={(e) => setEmailData(prev => ({ ...prev, htmlContent: e.target.innerHTML }))}
                                 className={`w-full p-6 min-h-[400px] outline-none prose prose-sm dark:prose-invert max-w-none ${currentTheme.text}`}
                               />
@@ -1955,7 +1971,7 @@ export default function HRDashboard() {
 
     {/* Employee Action Confirmation Modal */}
     {showEmployeeActionModal && (
-      <div className="fixed inset-0 z-50 overflow-y-auto">
+      <div className="fixed inset-0 z-[var(--z-modal)] overflow-y-auto">
         <div className="flex items-center justify-center min-h-screen px-4">
           <div className="fixed inset-0 bg-black opacity-50" onClick={() => setShowEmployeeActionModal(false)}></div>
 

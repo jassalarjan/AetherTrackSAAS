@@ -93,7 +93,7 @@ function RedistributeModal({ log, theme, onClose, onSubmit, teamMembers }) {
       : 'bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400'}`;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+    <div className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
       <div className={`w-full max-w-md rounded-2xl border shadow-2xl
         bg-[var(--bg-raised)] border-[var(--border-soft)]`}>
         <div className="p-6 border-b border-inherit">
@@ -187,7 +187,7 @@ function RejectModal({ log, theme, onClose, onSubmit }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+    <div className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
       <div className={`w-full max-w-md rounded-2xl border shadow-2xl
         bg-[var(--bg-raised)] border-[var(--border-soft)]`}>
         <div className="p-6 border-b border-inherit">

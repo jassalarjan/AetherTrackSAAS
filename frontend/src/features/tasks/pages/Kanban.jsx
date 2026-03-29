@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useCallback, useRef } from 'react';
+﻿import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { useTheme } from '@/app/providers/ThemeProvider';
 import { useSearchParams, useNavigate } from 'react-router-dom';
@@ -16,6 +16,8 @@ import TeamLabel from '@/shared/components/layout/TeamLabel';
 import SprintLabel from '@/features/projects/components/SprintLabel';
 import ProgressBar from '@/shared/components/ui/ProgressBar';
 import LatestCommentPreview from '@/shared/components/layout/LatestCommentPreview';
+import { useSidebar } from '@/features/workspace/context/SidebarContext';
+import { MobileKanbanRoot } from '@/components/kanban/mobile';
 import {
   Plus, X, Search, Settings, UserPlus, Calendar as CalendarIcon,
   MoreHorizontal, MessageSquare
@@ -71,6 +73,7 @@ const Kanban = () => {
   const [selectedTeamMembers, setSelectedTeamMembers] = useState([]);
   const [dragOverColumn, setDragOverColumn] = useState(null);
   const currentUserId = user?._id || user?.id || null;
+  const { isMobile } = useSidebar();
 
   const columns = [
     { id: 'todo', title: 'Todo', dotColor: 'bg-slate-500', count: 0 },
@@ -402,7 +405,72 @@ const Kanban = () => {
     return ['admin', 'hr', 'team_lead'].includes(user?.role);
   };
 
-  if (loading) return <PageLoader variant="pulse" label="Loading board…" />;
+  const mobileColumns = useMemo(() => {
+    const colorMap = {
+      todo: '#64748b',
+      in_progress: '#C4713A',
+      review: '#a855f7',
+      done: '#22c55e',
+    };
+
+    return columns.map((column) => {
+      const columnTasks = getTasksByStatus(column.id);
+      return {
+        id: column.id,
+        title: column.title,
+        color: colorMap[column.id] || '#64748b',
+        cards: columnTasks.map((task) => ({
+          id: task._id || task.id,
+          title: task.title,
+          assignee: task.assigned_to?.[0] || null,
+          priority: task.priority,
+          tags: task.tags || [],
+          dueDate: task.due_date || task.dueDate,
+          description: task.description,
+          columnId: column.id,
+          columnColor: colorMap[column.id] || '#64748b',
+          rawTask: task,
+        })),
+      };
+    });
+  }, [tasks, filters, columns]);
+
+  const handleMobileCardMove = async (cardId, toColumnId, insertIndex = 0) => {
+    const task = tasks.find((t) => (t._id || t.id) === cardId);
+    if (!task) return;
+    await handleUpdateTask(task._id || task.id, { status: toColumnId });
+  };
+
+  const handleMobileCardAdd = async (columnId, title) => {
+    try {
+      await api.post('/tasks', {
+        title,
+        description: '',
+        status: columnId,
+        priority: 'medium',
+        progress: 0,
+      });
+      fetchTasks();
+    } catch (error) {
+      // Fall back to full create flow when backend requires additional fields.
+      setFormData((prev) => ({ ...prev, title, status: columnId }));
+      setShowCreateModal(true);
+    }
+  };
+
+  const handleMobileCardEdit = async (cardId, updates) => {
+    const task = tasks.find((t) => (t._id || t.id) === cardId);
+    if (!task) return;
+    await handleUpdateTask(task._id || task.id, updates);
+  };
+
+  const handleMobileCardDelete = async (cardId) => {
+    const task = tasks.find((t) => (t._id || t.id) === cardId);
+    if (!task) return;
+    handleDeleteTask(task._id || task.id);
+  };
+
+  if (loading) return <PageLoader />;
 
   return (
     <>
@@ -441,13 +509,13 @@ const Kanban = () => {
           </div>
 
           {/* Bottom Row: Filters */}
-          <div className="flex items-center gap-2 sm:gap-4 px-3 sm:px-6 pb-3 sm:pb-4 overflow-x-auto scrollbar-thin">
+          <div className="flex items-center gap-2 px-3 sm:px-6 pb-3 sm:pb-4 overflow-x-auto sm:gap-4 sm:scrollbar-thin" data-mobile-filter-row>
             {/* Project Selector */}
             {projects.length > 0 && (
               <select
                 value={filters.project}
                 onChange={(e) => setFilters({ ...filters, project: e.target.value })}
-                className={`h-9 px-3 rounded border text-sm font-medium flex-shrink-0 focus:ring-2 focus:ring-[#C4713A] focus:border-transparent transition-all ${
+                className={`h-9 w-auto min-w-[180px] sm:w-auto px-3 rounded border text-sm font-medium flex-shrink-0 focus:ring-2 focus:ring-[#C4713A] focus:border-transparent transition-all ${
                   filters.project
                     ? 'bg-purple-500/10 border-purple-500/50 text-purple-400'
                     : 'bg-[var(--bg-raised)] border-[var(--border-mid)] text-[var(--text-primary)]'
@@ -462,7 +530,7 @@ const Kanban = () => {
               </select>
             )}
             
-            <div className={`relative flex items-center h-9 w-full sm:w-64 bg-[var(--bg-surface)] rounded border border-[var(--border-soft)] focus-within:border-[#C4713A]/50 transition-colors flex-shrink-0`}>
+            <div className={`relative flex items-center h-9 w-auto min-w-[220px] sm:w-64 bg-[var(--bg-surface)] rounded border border-[var(--border-soft)] focus-within:border-[#C4713A]/50 transition-colors flex-shrink-0`}>
               <Search className={`text-[var(--text-muted)] ml-3 flex-shrink-0`} size={18} />
               <input
                 ref={searchInputRef}
@@ -474,7 +542,7 @@ const Kanban = () => {
             </div>
             <div className="hidden sm:block w-px h-6 bg-[var(--border-mid)] mx-2"></div>
 
-            <div className="flex gap-2 flex-nowrap">
+            <div className="flex gap-2" data-mobile-filter-chips>
               {filters.project && (
                 <button
                   onClick={() => setFilters({ ...filters, project: '' })}
@@ -515,13 +583,19 @@ const Kanban = () => {
         </header>
 
         {/* Kanban Board Area */}
-        <div className="flex-1 overflow-x-auto overflow-y-hidden p-3 sm:p-6">
-          {/* Mobile hint */}
-          <div className="lg:hidden mb-2 flex items-center gap-2 text-xs text-[#9da8b9]">
-            <span>← Swipe to see more columns →</span>
-          </div>
-
-          <div className="flex h-full gap-3 sm:gap-4 pb-4" style={{ minWidth: 'max-content' }}>
+        <div className={`flex-1 p-3 sm:p-6 ${isMobile ? 'overflow-x-auto overflow-y-hidden pb-24' : 'overflow-x-hidden overflow-y-hidden'}`}>
+          {isMobile ? (
+            <MobileKanbanRoot
+              columns={mobileColumns}
+              loading={loading}
+              onCardMove={handleMobileCardMove}
+              onCardAdd={handleMobileCardAdd}
+              onCardEdit={handleMobileCardEdit}
+              onCardDelete={handleMobileCardDelete}
+              onCardAssign={() => {}}
+            />
+          ) : (
+          <div className="flex h-full gap-3 sm:gap-4 pb-4">
             {columns.map((column) => {
               const columnTasks = getTasksByStatus(column.id);
               const isDragOver = dragOverColumn === column.id;
@@ -529,7 +603,7 @@ const Kanban = () => {
               return (
                 <div
                   key={column.id}
-                  className={`flex flex-col w-[280px] sm:w-[320px] lg:w-1/4 lg:min-w-[280px] bg-[var(--bg-raised)] rounded-xl h-full border transition-all duration-200 ${isDragOver ? 'border-[#C4713A] bg-[#C4713A]/5 scale-[1.02]' : `border-[var(--border-hair)]`
+                  className={`flex flex-col min-w-0 flex-1 bg-[var(--bg-raised)] rounded-xl h-full border transition-all duration-200 ${isDragOver ? 'border-[#C4713A] bg-[#C4713A]/5 scale-[1.02]' : `border-[var(--border-hair)]`
                     }`}
                   onDragOver={handleDragOver}
                   onDragEnter={(e) => handleDragEnter(e, column.id)}
@@ -649,6 +723,7 @@ const Kanban = () => {
               );
             })}
           </div>
+          )}
         </div>
 
       {/* Create Task Modal */}

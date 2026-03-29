@@ -259,8 +259,6 @@ attendanceSchema.index({ shift_id: 1 });
 
 // Verification-related indexes
 attendanceSchema.index({ verificationStatus: 1 });
-attendanceSchema.index({ 'verification.photoHash': 1 });
-attendanceSchema.index({ 'verification.geoPoint': '2dsphere' }, { sparse: true });
 attendanceSchema.index({ isOverridden: 1 });
 attendanceSchema.index({ 'adminReview.reviewedBy': 1 });
 

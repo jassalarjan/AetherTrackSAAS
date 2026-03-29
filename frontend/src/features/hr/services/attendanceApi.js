@@ -45,6 +45,29 @@ export const updateVerificationSettings = async (settings) => {
   return response.data;
 };
 
+/**
+ * Get attendance governance settings (who marks attendance, special days)
+ * @returns {Promise<Object>} Governance settings
+ */
+export const getAttendanceGovernanceSettings = async () => {
+  const response = await api.get(`${BASE_URL}/verification-settings`);
+  const settings = response.data?.settings || response.data || {};
+  return settings.attendanceGovernance || {
+    regularAttendanceMarkedBy: 'self',
+    specialDays: []
+  };
+};
+
+/**
+ * Update attendance governance settings
+ * @param {Object} attendanceGovernance - Governance config
+ * @returns {Promise<Object>} Updated settings
+ */
+export const updateAttendanceGovernanceSettings = async (attendanceGovernance) => {
+  const response = await api.put(`${BASE_URL}/verification-settings`, { attendanceGovernance });
+  return response.data;
+};
+
 // ==================== Check-In ====================
 
 /**
@@ -210,6 +233,8 @@ export const validateLocation = async (latitude, longitude, required = false) =>
 const attendanceApi = {
   getVerificationSettings,
   updateVerificationSettings,
+  getAttendanceGovernanceSettings,
+  updateAttendanceGovernanceSettings,
   checkIn,
   checkOut,
   getPendingReviews,

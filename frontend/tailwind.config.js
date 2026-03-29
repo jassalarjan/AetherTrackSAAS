@@ -61,6 +61,13 @@ export default {
   
   theme: {
     extend: {
+      // Explicit adaptive breakpoints: mobile (0-480), tablet (481-1024), desktop (1025+)
+      screens: {
+        xs: '480px',
+        md: '481px',
+        lg: '1025px',
+      },
+
       // ===========================================
       // COLOR SYSTEM - Maps to CSS custom properties
       // Reference: Section 1.2 - Color System

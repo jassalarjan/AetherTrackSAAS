@@ -11,7 +11,6 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Calendar as BigCalendar, momentLocalizer } from 'react-big-calendar';
-import withDragAndDrop from 'react-big-calendar/lib/addons/dragAndDrop';
 import moment from 'moment';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { useTheme } from '@/app/providers/ThemeProvider';
@@ -22,14 +21,12 @@ import MeetingFormModal from '@/shared/components/ui/MeetingFormModal';
 import MeetingDetailPanel from '@/shared/components/ui/MeetingDetailPanel';
 import useMeetings, { MEETING_TYPE_COLORS, MEETING_TYPE_LABELS } from '@/shared/hooks/useMeetings';
 import {
-  Calendar as CalendarIcon, Clock, User, CheckCircle, XCircle,
+  Calendar as CalendarIcon, CheckCircle, XCircle,
   AlertCircle, X, Plus, RefreshCw, Video, ChevronDown
 } from 'lucide-react';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
-import 'react-big-calendar/lib/addons/dragAndDrop/styles.css';
 
 const localizer   = momentLocalizer(moment);
-const DnDCalendar = withDragAndDrop(BigCalendar);
 
 // â”€â”€ Roles with write access â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const MANAGER_ROLES = ['admin', 'hr'];
@@ -59,6 +56,7 @@ const LEGEND = [
 export default function HRCalendar({ embedded = false }) {
   const { user }                = useAuth();
   const { theme, currentTheme } = useTheme();
+  const { isMobile, isMobileOpen, closeMobileSidebar } = useSidebar();
   const canManage               = MANAGER_ROLES.includes(user?.role);
 
   // â”€â”€ Attendance / leave / holiday state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -82,7 +80,7 @@ export default function HRCalendar({ embedded = false }) {
   } = useMeetings();
 
   // â”€â”€ UI state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  const [selectedHREvent,  setSelectedHREvent]  = useState(null);
+  const [selectedDay,      setSelectedDay]      = useState(null);
   const [selectedMeeting,  setSelectedMeeting]  = useState(null);
   const [showForm,         setShowForm]          = useState(false);
   const [editingMeeting,   setEditingMeeting]    = useState(null);
@@ -146,8 +144,69 @@ export default function HRCalendar({ embedded = false }) {
     fetchMeetings({ start, end, type: typeFilter || undefined });
   }, [currentDate, currentView, typeFilter]);
 
+  useEffect(() => {
+    if (isMobile && isMobileOpen) {
+      closeMobileSidebar();
+    }
+  }, [isMobile, isMobileOpen, closeMobileSidebar]);
+
+  useEffect(() => {
+    // Close any global overlays (shortcuts/command palette/modals) that may intercept clicks.
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+
+    const neutralizeBackdrop = () => {
+      document.querySelectorAll('.sidebar-backdrop').forEach((el) => {
+        el.style.pointerEvents = 'none';
+        el.style.opacity = '0';
+      });
+    };
+
+    neutralizeBackdrop();
+    const observer = new MutationObserver(neutralizeBackdrop);
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    return () => {
+      observer.disconnect();
+      document.querySelectorAll('.sidebar-backdrop').forEach((el) => {
+        el.style.pointerEvents = '';
+        el.style.opacity = '';
+      });
+    };
+  }, []);
+
   // â”€â”€ Merged event stream â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const allEvents = [...hrEvents, ...meetingEvents];
+
+  const toDayKey = useCallback((value) => moment(value).format('YYYY-MM-DD'), []);
+
+  const getDayDetails = useCallback((date) => {
+    const dayKey = toDayKey(date);
+
+    const attendanceCounts = { present: 0, absent: 0, half_day: 0, leave: 0, holiday: 0 };
+    const holidays = [];
+
+    hrEvents.forEach((event) => {
+      if (toDayKey(event.start) !== dayKey) return;
+      if (event.resource?.type === 'holiday') {
+        holidays.push(event.resource?.data);
+      } else if (attendanceCounts[event.resource?.type] !== undefined) {
+        attendanceCounts[event.resource.type] += Number(event.resource?.data?.count || 0);
+      }
+    });
+
+    const meetings = meetingEvents
+      .filter((event) => toDayKey(event.start) === dayKey)
+      .map((event) => event.resource?.data)
+      .filter(Boolean);
+
+    return { date: new Date(date), attendanceCounts, holidays, meetings };
+  }, [hrEvents, meetingEvents, toDayKey]);
+
+  const openDayDetails = useCallback((date) => {
+    setSelectedDay(getDayDetails(date));
+    setSelectedMeeting(null);
+  }, [getDayDetails]);
 
   // â”€â”€ Event colour getter â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const eventStyleGetter = (event) => {
@@ -171,28 +230,18 @@ export default function HRCalendar({ embedded = false }) {
 
   // â”€â”€ Click handlers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const handleSelectEvent = (event) => {
-    if (event.resource?.type === 'meeting') { setSelectedMeeting(event.resource.data); setSelectedHREvent(null); }
-    else { setSelectedHREvent(event); setSelectedMeeting(null); }
+    if (event.resource?.type === 'meeting') {
+      setSelectedMeeting(event.resource.data);
+      return;
+    }
+    openDayDetails(event.start);
   };
 
   const handleSelectSlot = ({ start }) => {
-    if (!canManage) return;
-    setFormDefaultStart(start);
-    setEditingMeeting(null);
-    setShowForm(true);
+    openDayDetails(start);
   };
 
   // â”€â”€ Drag-to-reschedule â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  const handleEventDrop = useCallback(async ({ event, start, end }) => {
-    if (!canManage || event.resource?.type !== 'meeting') return;
-    await updateMeeting(event.resource.data._id, { start_time: start.toISOString(), end_time: end.toISOString() });
-  }, [canManage, updateMeeting]);
-
-  const handleEventResize = useCallback(async ({ event, start, end }) => {
-    if (!canManage || event.resource?.type !== 'meeting') return;
-    await updateMeeting(event.resource.data._id, { start_time: start.toISOString(), end_time: end.toISOString() });
-  }, [canManage, updateMeeting]);
-
   // â”€â”€ Form save â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const handleSaveMeeting = async (payload) => {
     if (editingMeeting) return updateMeeting(editingMeeting._id, payload);
@@ -208,10 +257,10 @@ export default function HRCalendar({ embedded = false }) {
 
   // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const calendarContent = (
-    <div className="space-y-4">
+    <div className="space-y-4 relative pointer-events-auto isolate">
 
       {/* Toolbar */}
-      <div className={`flex flex-wrap items-center gap-3 p-3 rounded-xl border ${currentTheme.surface} ${currentTheme.border}`}>
+      <div className={`relative flex flex-wrap items-center gap-3 p-3 rounded-xl border ${currentTheme.surface} ${currentTheme.border}`}>
         <div className="relative">
           <select
             value={typeFilter}
@@ -242,6 +291,13 @@ export default function HRCalendar({ embedded = false }) {
           title="Refresh"
         >
           <RefreshCw className="w-4 h-4" />
+        </button>
+
+        <button
+          onClick={() => openDayDetails(currentDate)}
+          className={`px-3 py-2 text-sm rounded-lg border transition-colors ${theme === 'dark' ? 'border-slate-600 text-slate-300 hover:bg-slate-800' : 'border-slate-300 text-slate-600 hover:bg-slate-50'}`}
+        >
+          Day Details
         </button>
 
         {canManage && (
@@ -277,8 +333,8 @@ export default function HRCalendar({ embedded = false }) {
           </div>
         </div>
       ) : (
-        <div className={`calendar-container ${currentTheme.surface} rounded-xl border ${currentTheme.border} p-4`}>
-          <DnDCalendar
+        <div className={`relative calendar-container ${currentTheme.surface} rounded-xl border ${currentTheme.border} p-4`}>
+          <BigCalendar
             localizer={localizer}
             events={allEvents}
             startAccessor="start"
@@ -287,11 +343,11 @@ export default function HRCalendar({ embedded = false }) {
             style={{ height: embedded ? 520 : 720, minHeight: embedded ? 420 : 540 }}
             eventPropGetter={eventStyleGetter}
             onSelectEvent={handleSelectEvent}
+            onDoubleClickEvent={handleSelectEvent}
             onSelectSlot={handleSelectSlot}
-            onEventDrop={canManage ? handleEventDrop : undefined}
-            onEventResize={canManage ? handleEventResize : undefined}
-            resizable={canManage}
-            selectable={canManage}
+            onDrillDown={openDayDetails}
+            onShowMore={(events, date) => openDayDetails(date)}
+            selectable={canManage ? 'ignoreEvents' : true}
             views={['month', 'week', 'day', 'agenda']}
             view={currentView}
             date={currentDate}
@@ -299,37 +355,96 @@ export default function HRCalendar({ embedded = false }) {
             onView={setCurrentView}
             popup
             tooltipAccessor={e => e.resource?.type === 'meeting' ? `${e.title} Â· ${e.resource.data?.organizer_role?.toUpperCase()}` : e.title}
-            components={{ event: CalendarEventComponent }}
+            components={{
+              event: CalendarEventComponent,
+              dateCellWrapper: (props) => (
+                <DateCellWrapper {...props} onOpenDay={openDayDetails} />
+              ),
+            }}
           />
         </div>
       )}
 
-      {/* HR event detail modal */}
-      {selectedHREvent && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-          <div className={`${currentTheme.surface} rounded-xl p-7 max-w-md w-full border ${currentTheme.border} shadow-2xl`}>
+      {/* Day detail modal */}
+      {selectedDay && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[var(--z-modal)] p-4" onClick={() => setSelectedDay(null)}>
+          <div
+            className={`${currentTheme.surface} rounded-xl p-7 max-w-lg w-full border ${currentTheme.border} shadow-2xl max-h-[85vh] overflow-y-auto`}
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex justify-between items-center mb-5">
-              <h2 className={`text-xl font-bold ${currentTheme.text}`}>{selectedHREvent.title}</h2>
-              <button onClick={() => setSelectedHREvent(null)} className={`${currentTheme.textSecondary} p-1`}>
+              <h2 className={`text-xl font-bold ${currentTheme.text}`}>Attendance of the Day</h2>
+              <button onClick={() => setSelectedDay(null)} className={`${currentTheme.textSecondary} p-1`}>
                 <X className="w-6 h-6" />
               </button>
             </div>
             <div className="space-y-3">
               <p className={`text-sm flex items-center gap-2 ${currentTheme.text}`}>
                 <CalendarIcon size={14} />
-                {selectedHREvent.start.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                {selectedDay.date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
               </p>
-              {['present', 'absent', 'half_day', 'leave'].includes(selectedHREvent.resource?.type) && (
-                <div className="flex items-center gap-2">
-                  {selectedHREvent.resource.type === 'present'  && <CheckCircle className="w-4 h-4 text-green-400" />}
-                  {selectedHREvent.resource.type === 'absent'   && <XCircle     className="w-4 h-4 text-red-400" />}
-                  {selectedHREvent.resource.type === 'half_day' && <AlertCircle className="w-4 h-4 text-yellow-400" />}
-                  {selectedHREvent.resource.type === 'leave'    && <CalendarIcon className="w-4 h-4 text-blue-400" />}
-                  <span className={`text-sm ${currentTheme.text}`}>Count: {selectedHREvent.resource.data?.count}</span>
+              <div className="grid grid-cols-2 gap-2">
+                <div className={`rounded-lg border ${currentTheme.border} p-2 text-sm flex items-center gap-2 ${currentTheme.text}`}>
+                  <CheckCircle className="w-4 h-4 text-green-400" /> Present: {selectedDay.attendanceCounts.present}
+                </div>
+                <div className={`rounded-lg border ${currentTheme.border} p-2 text-sm flex items-center gap-2 ${currentTheme.text}`}>
+                  <XCircle className="w-4 h-4 text-red-400" /> Absent: {selectedDay.attendanceCounts.absent}
+                </div>
+                <div className={`rounded-lg border ${currentTheme.border} p-2 text-sm flex items-center gap-2 ${currentTheme.text}`}>
+                  <AlertCircle className="w-4 h-4 text-yellow-400" /> Half Day: {selectedDay.attendanceCounts.half_day}
+                </div>
+                <div className={`rounded-lg border ${currentTheme.border} p-2 text-sm flex items-center gap-2 ${currentTheme.text}`}>
+                  <CalendarIcon className="w-4 h-4 text-blue-400" /> Leave: {selectedDay.attendanceCounts.leave}
+                </div>
+              </div>
+
+              {selectedDay.holidays.length > 0 && (
+                <div className={`rounded-lg border ${currentTheme.border} p-3`}>
+                  <p className={`text-xs font-semibold uppercase tracking-wide mb-2 ${currentTheme.textSecondary}`}>Holiday</p>
+                  {selectedDay.holidays.map((holiday, idx) => (
+                    <p key={`${holiday?.name || 'holiday'}-${idx}`} className={`text-sm ${currentTheme.text}`}>
+                      {holiday?.name || 'Public Holiday'}
+                    </p>
+                  ))}
                 </div>
               )}
-              {selectedHREvent.resource?.type === 'holiday' && (
-                <p className={`text-sm ${currentTheme.text}`}>{selectedHREvent.resource.data.name || 'Public Holiday'}</p>
+
+              <div className={`rounded-lg border ${currentTheme.border} p-3`}>
+                <p className={`text-xs font-semibold uppercase tracking-wide mb-2 ${currentTheme.textSecondary}`}>Meetings Info</p>
+                {selectedDay.meetings.length > 0 ? (
+                  <div className="space-y-2">
+                    {selectedDay.meetings.map((meeting) => (
+                      <button
+                        key={meeting._id}
+                        onClick={() => { setSelectedDay(null); setSelectedMeeting(meeting); }}
+                        className={`w-full text-left rounded-lg border ${currentTheme.border} px-3 py-2 hover:bg-black/5 dark:hover:bg-white/5 transition-colors`}
+                      >
+                        <p className={`text-sm font-semibold ${currentTheme.text}`}>{meeting.title}</p>
+                        <p className={`text-xs ${currentTheme.textSecondary}`}>
+                          {new Date(meeting.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          {' - '}
+                          {new Date(meeting.end_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <p className={`text-sm ${currentTheme.textSecondary}`}>No meetings scheduled for this day.</p>
+                )}
+              </div>
+
+              {canManage && (
+                <button
+                  onClick={() => {
+                    setFormDefaultStart(selectedDay.date);
+                    setEditingMeeting(null);
+                    setSelectedDay(null);
+                    setShowForm(true);
+                  }}
+                  className="aether-btn aether-btn-primary w-full"
+                >
+                  <Plus className="w-4 h-4" /> Schedule Meeting For This Day
+                </button>
               )}
             </div>
           </div>
@@ -360,7 +475,7 @@ export default function HRCalendar({ embedded = false }) {
         />
       )}
 
-      <style dangerouslySetInnerHTML={{ __html: calendarStyles() }} />
+      <style>{calendarStyles()}</style>
     </div>
   );
 
@@ -383,6 +498,20 @@ function CalendarEventComponent({ event }) {
       {isRecurring && <RefreshCw className="w-2.5 h-2.5 flex-shrink-0 opacity-80" />}
       {hasLink     && <Video     className="w-2.5 h-2.5 flex-shrink-0 opacity-80" />}
       <span className="truncate text-[0.68rem] font-semibold leading-tight">{event.title}</span>
+    </div>
+  );
+}
+
+function DateCellWrapper({ value, children, onOpenDay }) {
+  return (
+    <div
+      onClick={(e) => {
+        if (!e?.target?.closest) return;
+        if (e.target.closest('.rbc-event') || e.target.closest('.rbc-show-more')) return;
+        onOpenDay?.(value);
+      }}
+    >
+      {children}
     </div>
   );
 }

@@ -32,7 +32,7 @@ const Badge = ({ label, color }) => (
 
 /* ─────────── API Key revealed modal ─────────── */
 const RevealModal = ({ rawKey, onClose }) => (
-  <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.55)' }}>
+  <div className="fixed inset-0 z-[var(--z-modal)] flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.55)' }}>
     <div className="rounded-xl border shadow-2xl p-6 w-full max-w-md" style={{ background: 'var(--bg-raised)', borderColor: 'var(--card-border, var(--border-soft))' }}>
       <div className="flex items-center justify-between mb-3">
         <h3 className="font-bold" style={{ color: 'var(--text-primary)' }}>Your New API Key</h3>

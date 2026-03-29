@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import ResponsivePageLayout from '@/shared/components/responsive/ResponsivePageLayout';
 import api from '@/shared/services/axios';
 import { PageLoader } from '@/shared/components/ui/Spinner';
+import { useSidebar } from '@/features/workspace/context/SidebarContext';
 import {
   Plus, ChevronRight, Info, Flag, CheckCircle, Circle,
   ArrowUp, Minus, Check, X, Calendar, Users, Target, Settings
@@ -30,6 +31,7 @@ const SprintManagement = () => {
     { id: 3, text: 'UAT Sign-off by Client', completed: false },
     { id: 4, text: 'Deploy to Staging', completed: false }
   ]);
+  const { isMobile } = useSidebar();
 
   useEffect(() => {
     fetchData();
@@ -142,12 +144,12 @@ const SprintManagement = () => {
     { sprint: 'S12', points: totalStoryPoints, percentage: 40, current: true }
   ];
 
-  if (loading) return <PageLoader variant="bars" label="Loading sprints…" />;
+  if (loading) return <PageLoader />;
 
   return (
     <ResponsivePageLayout title="Sprint Management" icon={Target} noPadding>
         {/* Top Navigation */}
-        <header className="h-14 sm:h-16 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1a2234] flex items-center justify-between px-4 sm:px-8 shrink-0">
+        <header className={`${isMobile ? 'min-h-[72px] flex-col items-start gap-3 py-4' : 'h-14 sm:h-16'} border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1a2234] flex justify-between px-4 sm:px-8 shrink-0`}>
           <div className="flex items-center gap-8">
             <h2 className="text-xl font-bold tracking-tight">Sprint Management</h2>
             <nav className="hidden md:flex items-center gap-6">
@@ -160,13 +162,13 @@ const SprintManagement = () => {
               </button>
             </nav>
           </div>
-          <div className="flex items-center gap-4">
+          <div className={`flex items-center gap-4 ${isMobile ? 'w-full justify-between' : ''}`}>
             <button className="p-2 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">
               <Info size={20} />
             </button>
           </div>
         </header>
-        <div className="bg-white dark:bg-[#1a2234] border-b border-gray-200 dark:border-gray-800 px-8 py-3 flex items-center justify-between shrink-0">
+        <div className={`bg-white dark:bg-[#1a2234] border-b border-gray-200 dark:border-gray-800 ${isMobile ? 'px-4 py-3 flex-col items-start gap-3' : 'px-8 py-3 flex items-center justify-between'} shrink-0`}>
           <div className="flex items-center gap-2 text-sm">
             <button onClick={() => navigate('/projects')} className="text-gray-500 dark:text-gray-400 hover:text-[#C4713A]">
               {selectedProject?.name || 'All Projects'}
@@ -177,21 +179,90 @@ const SprintManagement = () => {
               Active
             </span>
           </div>
-          <div className="flex gap-3">
+          <div className={`flex gap-3 ${isMobile ? 'w-full' : ''}`}>
             <button 
               onClick={() => setShowSettingsModal(true)}
-              className="px-4 py-1.5 text-sm font-semibold bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors flex items-center gap-2"
+              className={`px-4 py-1.5 text-sm font-semibold bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors flex items-center gap-2 ${isMobile ? 'flex-1 justify-center' : ''}`}
             >
               <Settings size={16} />
               Sprint Settings
             </button>
-            <button className="px-4 py-1.5 text-sm font-semibold bg-[#C4713A] text-white rounded-lg hover:bg-[#A35C28] shadow-sm transition-colors">
+            <button className={`px-4 py-1.5 text-sm font-semibold bg-[#C4713A] text-white rounded-lg hover:bg-[#A35C28] shadow-sm transition-colors ${isMobile ? 'flex-1' : ''}`}>
               Complete Sprint
             </button>
           </div>
         </div>
 
         {/* Main Content Area */}
+        {isMobile ? (
+          <div className="flex-1 overflow-auto bg-gray-50 p-4 dark:bg-[#0d1117]">
+            <div className="space-y-4">
+              <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-[#1a2234]">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-gray-500 dark:text-gray-400">Current Sprint</p>
+                <h1 className="mt-2 text-2xl font-black tracking-tight">{sprintSettings.name}</h1>
+                <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">{sprintSettings.goal}</p>
+                <div className="mt-4 grid grid-cols-2 gap-3">
+                  <div className="rounded-xl bg-gray-50 p-3 dark:bg-gray-800/50">
+                    <p className="text-[10px] uppercase tracking-wide text-gray-500 dark:text-gray-400">Capacity</p>
+                    <p className="mt-1 text-xl font-bold">{sprintSettings.capacity}</p>
+                  </div>
+                  <div className="rounded-xl bg-gray-50 p-3 dark:bg-gray-800/50">
+                    <p className="text-[10px] uppercase tracking-wide text-gray-500 dark:text-gray-400">Team Size</p>
+                    <p className="mt-1 text-xl font-bold">{sprintSettings.teamSize}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-[#1a2234]">
+                <h3 className="mb-3 text-sm font-bold uppercase tracking-[0.12em] text-gray-500 dark:text-gray-400">Sprint Goals</h3>
+                <div className="space-y-2">
+                  {sprintGoals.map((goal) => (
+                    <div key={goal.id} className="flex items-center gap-3 rounded-xl bg-gray-50 p-3 dark:bg-gray-800/40">
+                      {goal.completed ? <Check size={16} className="text-emerald-500" /> : <Circle size={16} className="text-gray-400" />}
+                      <span className={`text-sm ${goal.completed ? 'line-through text-gray-500 dark:text-gray-400' : 'text-gray-900 dark:text-white'}`}>{goal.text}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-[#1a2234]">
+                <div className="mb-3 flex items-center justify-between">
+                  <h3 className="text-sm font-bold uppercase tracking-[0.12em] text-gray-500 dark:text-gray-400">Sprint Backlog</h3>
+                  <button className="rounded-full bg-[#C4713A] px-3 py-1.5 text-xs font-bold text-white">Add Item</button>
+                </div>
+                <div className="space-y-3">
+                  {tasks.slice(0, 10).map((task, index) => (
+                    <div key={task._id} className="rounded-xl border border-gray-200 p-4 dark:border-gray-700">
+                      <div className="mb-2 flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Task-{String(index + 100).padStart(3, '0')}</p>
+                          <p className="mt-1 text-sm font-semibold">{task.title}</p>
+                        </div>
+                        <span className={`inline-block px-3 py-1 text-xs font-bold rounded-lg border ${getStatusBadge(task.status)}`}>
+                          {getStatusText(task.status)}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
+                        <span className="flex items-center gap-1.5">{getPriorityIcon(task.priority)} {getPriorityText(task.priority)}</span>
+                        <span>{task.assigned_to?.[0]?.full_name || 'Unassigned'}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                {velocityData.map((sprint) => (
+                  <div key={sprint.sprint} className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-[#1a2234]">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-gray-500 dark:text-gray-400">{sprint.sprint}</p>
+                    <p className={`mt-2 text-2xl font-bold ${sprint.current ? 'text-[#C4713A]' : ''}`}>{sprint.points}</p>
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{sprint.percentage}% velocity</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        ) : (
         <div className="flex-1 flex flex-col lg:flex-row overflow-auto lg:overflow-hidden">
           {/* Left Pane: Backlog/Tasks */}
           <section className="flex-1 overflow-y-auto p-6 border-r border-gray-200 dark:border-gray-800">
@@ -389,6 +460,7 @@ const SprintManagement = () => {
             </div>
           </aside>
         </div>
+        )}
 
         {/* Footer / Status Bar */}
         <footer className="bg-white dark:bg-[#1a2234] border-t border-gray-200 dark:border-gray-800 px-6 py-2 flex items-center justify-between text-[11px] font-medium text-gray-500 dark:text-gray-400 shrink-0">
@@ -412,7 +484,7 @@ const SprintManagement = () => {
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-[#1a2234] rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-gray-200 dark:border-gray-800">
             {/* Modal Header */}
-            <div className="sticky top-0 bg-white dark:bg-[#1a2234] border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between z-10">
+            <div className="bg-white dark:bg-[#1a2234] border-b border-gray-200 dark:border-gray-800 px-6 py-4 flex items-center justify-between z-10 md:sticky md:top-0">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg bg-[#C4713A]/10 flex items-center justify-center">
                   <Settings size={20} className="text-[#C4713A]" />

@@ -26,7 +26,7 @@ async function makeSuperAdmin() {
         full_name: 'Super Admin',
         email: email,
         password_hash: password_hash,
-        role: 'admin',
+        role: 'super_admin',
         workspaceId: null,  // System admins have no workspace
         team_id: null,      // System admins are not in teams
         isEmailVerified: true,
@@ -52,8 +52,8 @@ async function makeSuperAdmin() {
         currentWorkspaceId: user.workspaceId 
       });
 
-      // Update to system admin
-      user.role = 'admin';
+      // Update to super admin
+      user.role = 'super_admin';
       user.workspaceId = null;  // System admins have no workspace
       user.team_id = null;      // System admins are not in teams
       await user.save();

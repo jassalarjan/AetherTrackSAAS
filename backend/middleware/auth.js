@@ -44,6 +44,11 @@ export const authenticate = async (req, res, next) => {
 
     // Attach user and raw token to request (raw token needed for blacklisting on logout)
     req.user = user;
+    // Keep legacy role checks working while introducing super_admin as first-class role.
+    req.user.systemRole = user.role;
+    if (user.role === 'super_admin') {
+      req.user.role = 'admin';
+    }
     req.token = token;
     next();
   } catch (error) {

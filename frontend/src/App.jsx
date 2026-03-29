@@ -18,6 +18,9 @@ import VerifyEmail from '@/features/auth/pages/VerifyEmail';
 import ForgotPassword from '@/features/auth/pages/ForgotPassword';
 import ResetPassword from '@/features/auth/pages/ResetPassword';
 
+// Landing page – loaded eagerly (public homepage)
+import Landing from '@/features/landing/pages/Landing';
+
 // All other pages – lazy-loaded to keep initial bundle lean
 const Workspace            = lazy(() => import('@/features/dashboard/pages/Workspace'));
 const Tasks                = lazy(() => import('@/features/tasks/pages/Tasks'));
@@ -82,8 +85,9 @@ function AppContent() {
 
   return (
     <>
-    <Suspense fallback={<PageLoader label="Loading page…" />}>
+    <Suspense fallback={<PageLoader />}>
     <Routes>
+      <Route path="/landing" element={<Landing />} />
       <Route path="/" element={<Login />} />
       <Route path="/login" element={<Login />} />
       <Route path="/verify-email" element={<VerifyEmail />} />

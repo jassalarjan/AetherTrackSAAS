@@ -149,12 +149,21 @@
   /* Legacy font aliases */
   --font-sans: var(--font-body);
 
-  /* Font sizes (kept for component compat) */
-  --text-xs:   0.75rem;
-  --text-sm:   0.8125rem;
-  --text-base: 0.9375rem;
-  --text-lg:   1.125rem;
-  --text-xl:   1.375rem;
+  /*
+   * Fluid text scale:
+   * - uses container query units when a parent container exists
+   * - gracefully falls back to viewport-relative behavior otherwise
+   * - clamps preserve legibility and prevent runaway growth/overflow
+   */
+  --text-xs:   clamp(0.68rem, 0.14cqi + 0.64rem, 0.75rem);
+  --text-sm:   clamp(0.75rem, 0.18cqi + 0.70rem, 0.84rem);
+  --text-base: clamp(0.84rem, 0.22cqi + 0.78rem, 0.96rem);
+  --text-lg:   clamp(0.96rem, 0.30cqi + 0.88rem, 1.14rem);
+  --text-xl:   clamp(1.08rem, 0.42cqi + 0.95rem, 1.38rem);
+  --text-2xl:  clamp(1.24rem, 0.62cqi + 1.05rem, 1.64rem);
+  --text-3xl:  clamp(1.44rem, 0.92cqi + 1.16rem, 2.00rem);
+  --text-4xl:  clamp(1.72rem, 1.30cqi + 1.32rem, 2.46rem);
+  --text-5xl:  clamp(2.02rem, 1.75cqi + 1.48rem, 3.00rem);
 
   /* Font weights */
   --font-weight-normal:   400;
@@ -335,15 +344,15 @@
    Z-INDEX SCALE
    ============================================================ */
 :root {
-  --z-dropdown:       100;
-  --z-sticky:         200;
-  --z-fixed:          300;
-  --z-modal-backdrop: 400;
-  --z-modal:          500;
-  --z-popover:        600;
-  --z-tooltip:        700;
-  --z-toast:          800;
-  --z-command:        900;
+  --z-dropdown:       2147483200;
+  --z-sticky:         2147483250;
+  --z-fixed:          2147483300;
+  --z-modal-backdrop: 2147483350;
+  --z-modal:          2147483400;
+  --z-popover:        2147483450;
+  --z-tooltip:        2147483500;
+  --z-toast:          2147483550;
+  --z-command:        2147483600;
 }
 
 /* ============================================================

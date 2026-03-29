@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import App from './App.jsx';
 import '@/styles/index.css';
 import '@/styles/animations.css';
+import '@/styles/mobile-layout.css';
 import '@/styles/mobile-responsive.css';
 import { registerSW } from 'virtual:pwa-register';
 

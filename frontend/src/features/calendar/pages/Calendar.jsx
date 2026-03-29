@@ -9,6 +9,7 @@ import ResponsivePageLayout from '@/shared/components/responsive/ResponsivePageL
 import useRealtimeSync from '@/shared/hooks/useRealtimeSync';
 import { usePageShortcuts } from '@/shared/hooks/usePageShortcuts';
 import ShortcutsOverlay from '@/features/tasks/components/ShortcutsOverlay';
+import { useSidebar } from '@/features/workspace/context/SidebarContext';
 import { Plus, X, Calendar as CalendarIcon, Filter, Settings } from 'lucide-react';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 
@@ -27,8 +28,10 @@ const Calendar = () => {
     priority: '',
     showMyTasksOnly: false,
   });
+  const [showFilters, setShowFilters] = useState(false);
   const [showLegend, setShowLegend] = useState(true);
   const [calendarDate, setCalendarDate] = useState(new Date());
+  const { isMobile } = useSidebar();
 
   // ── Keyboard shortcuts ──────────────────────────────────────────────────
   const calendarShortcuts = [
@@ -72,10 +75,12 @@ const Calendar = () => {
     if (filters.showMyTasksOnly) {
       filtered = filtered.filter((t) => {
         if (!t.assigned_to) return false;
+        const currentUserId = user?._id || user?.id;
+        if (!currentUserId) return false;
         const assignedIds = Array.isArray(t.assigned_to) 
           ? t.assigned_to.map(u => typeof u === 'object' ? u._id : u)
           : [typeof t.assigned_to === 'object' ? t.assigned_to._id : t.assigned_to];
-        return assignedIds.includes(user?.id);
+        return assignedIds.includes(currentUserId);
       });
     }
     const calendarEvents = filtered
@@ -143,17 +148,21 @@ const Calendar = () => {
     navigate(`/tasks?create=true&date=${slotInfo.start.toISOString()}`);
   };
 
+  const mobileEvents = [...events]
+    .sort((a, b) => new Date(a.start) - new Date(b.start))
+    .slice(0, 12);
+
   return (
     <ResponsivePageLayout title="Calendar" icon={CalendarIcon} noPadding>
       <div className="flex flex-col h-full">
         {/* Header Section */}
         <header className={`border-b border-[var(--border-soft)] bg-[var(--bg-base)] shrink-0`}>
-          <div className="flex items-center justify-between px-6 py-4">
+          <div className="flex items-center justify-between px-4 sm:px-6 py-4">
             <div>
-              <h2 className={`text-[var(--text-primary)] text-xl font-bold leading-tight`}>Calendar View</h2>
-              <p className={`text-[var(--text-muted)] text-xs mt-1`}>Visualize tasks by due date</p>
+              <h2 className={`text-[var(--text-primary)] text-lg sm:text-xl font-bold leading-tight`}>Calendar View</h2>
+              <p className={`text-[var(--text-muted)] text-xs mt-1`}>{isMobile ? 'Agenda-first mobile planner' : 'Visualize tasks by due date'}</p>
             </div>
-            <div className="flex gap-3">
+            <div className="flex gap-2 sm:gap-3">
               <button
                 onClick={() => setShowLegend(!showLegend)}
                 className={`flex items-center justify-center rounded h-9 px-3 bg-[var(--bg-surface)] text-[var(--text-muted)] hover:text-[var(--text-primary)] border border-[var(--border-soft)] hover:border-[var(--border-mid)] transition-colors`}
@@ -163,64 +172,80 @@ const Calendar = () => {
               </button>
               <button
                 onClick={() => navigate('/tasks?create=true')}
-                className="flex items-center justify-center rounded h-9 px-4 bg-[#C4713A] text-white gap-2 text-sm font-bold hover:bg-[#A35C28] transition-colors shadow-sm shadow-blue-900/20"
+                className="flex items-center justify-center rounded h-9 px-3 sm:px-4 bg-[#C4713A] text-white gap-2 text-sm font-bold hover:bg-[#A35C28] transition-colors shadow-sm shadow-blue-900/20"
               >
                 <Plus size={20} />
-                <span>Create Task</span>
+                <span className={isMobile ? 'hidden' : ''}>Create Task</span>
               </button>
             </div>
           </div>
 
           {/* Filters Row */}
-          <div className="flex items-center gap-4 px-6 pb-4 overflow-x-auto">
-            <div className="flex items-center gap-2 min-w-fit">
+          <div className="px-4 sm:px-6 pb-4">
+            <div className="mb-2 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2 min-w-fit">
               <Filter size={16} className={`text-[var(--text-muted)]`} />
               <span className={`text-sm text-[var(--text-primary)] font-medium`}>Filters:</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className={`text-xs text-[var(--text-muted)] min-w-fit`}>
+                  <span className={`font-medium text-[var(--text-primary)]`}>{events.length}</span> task{events.length !== 1 ? 's' : ''}
+                </div>
+                {isMobile && (
+                  <button
+                    type="button"
+                    onClick={() => setShowFilters((prev) => !prev)}
+                    className="h-8 px-3 rounded border border-[var(--border-soft)] bg-[var(--bg-surface)] text-xs font-semibold text-[var(--text-primary)]"
+                    aria-expanded={showFilters}
+                    aria-label={showFilters ? 'Hide filters' : 'Show filters'}
+                  >
+                    {showFilters ? 'Hide' : 'Show'}
+                  </button>
+                )}
+              </div>
             </div>
 
-            <select
-              value={filters.status}
-              onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-              className={`h-9 px-3 bg-[var(--bg-surface)] border border-[var(--border-soft)] rounded text-sm text-[var(--text-primary)] focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
-            >
-              <option value="">All Statuses</option>
-              <option value="todo">To Do</option>
-              <option value="in_progress">In Progress</option>
-              <option value="review">Review</option>
-              <option value="done">Done</option>
-            </select>
+            <div className={`${isMobile && !showFilters ? 'hidden' : 'grid'} grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3`}>
+              <select
+                value={filters.status}
+                onChange={(e) => setFilters({ ...filters, status: e.target.value })}
+                className={`h-9 w-full px-3 bg-[var(--bg-surface)] border border-[var(--border-soft)] rounded text-sm text-[var(--text-primary)] focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
+              >
+                <option value="">All Statuses</option>
+                <option value="todo">To Do</option>
+                <option value="in_progress">In Progress</option>
+                <option value="review">Review</option>
+                <option value="done">Done</option>
+              </select>
 
-            <select
-              value={filters.priority}
-              onChange={(e) => setFilters({ ...filters, priority: e.target.value })}
-              className={`h-9 px-3 bg-[var(--bg-surface)] border border-[var(--border-soft)] rounded text-sm text-[var(--text-primary)] focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
-            >
-              <option value="">All Priorities</option>
-              <option value="low">Low</option>
-              <option value="medium">Medium</option>
-              <option value="high">High</option>
-              <option value="urgent">Urgent</option>
-            </select>
+              <select
+                value={filters.priority}
+                onChange={(e) => setFilters({ ...filters, priority: e.target.value })}
+                className={`h-9 w-full px-3 bg-[var(--bg-surface)] border border-[var(--border-soft)] rounded text-sm text-[var(--text-primary)] focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
+              >
+                <option value="">All Priorities</option>
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+                <option value="urgent">Urgent</option>
+              </select>
 
-            <button
-              onClick={() => setFilters({ ...filters, showMyTasksOnly: !filters.showMyTasksOnly })}
-              className={`h-9 px-4 rounded text-sm font-medium transition-colors ${
-                filters.showMyTasksOnly
-                  ? 'bg-[#C4713A] text-white border-[#C4713A]'
-                  : `bg-[var(--bg-surface)] text-[var(--text-muted)] border-[var(--border-soft)] hover:text-[var(--text-primary)]`
-              } border`}
-            >
-              {filters.showMyTasksOnly ? 'My Tasks Only' : 'All Tasks'}
-            </button>
-
-            <div className={`ml-auto text-sm text-[var(--text-muted)]`}>
-              <span className={`font-medium text-[var(--text-primary)]`}>{events.length}</span> task{events.length !== 1 ? 's' : ''} with due dates
+              <button
+                onClick={() => setFilters({ ...filters, showMyTasksOnly: !filters.showMyTasksOnly })}
+                className={`h-9 w-full px-4 rounded text-sm font-medium transition-colors ${
+                  filters.showMyTasksOnly
+                    ? 'bg-[#C4713A] text-white border-[#C4713A]'
+                    : `bg-[var(--bg-surface)] text-[var(--text-muted)] border-[var(--border-soft)] hover:text-[var(--text-primary)]`
+                } border`}
+              >
+                {filters.showMyTasksOnly ? 'My Tasks Only' : 'All Tasks'}
+              </button>
             </div>
           </div>
         </header>
 
         {/* Calendar Area */}
-        <div className="flex-1 overflow-auto p-6">
+        <div className="flex-1 overflow-auto p-4 sm:p-6">
           {showLegend && (
             <div className={`bg-[var(--bg-raised)] rounded border border-[var(--border-soft)] p-4 mb-6`}>
               <div className="flex items-center justify-between mb-3">
@@ -279,25 +304,126 @@ const Calendar = () => {
             </div>
           )}
 
-          <div className={`bg-[var(--bg-raised)] rounded border border-[var(--border-soft)] p-4 calendar-container`}>
-            <BigCalendar
-              localizer={localizer}
-              events={events}
-              startAccessor="start"
-              endAccessor="end"
-              style={{ height: 700, minHeight: 500 }}
-              eventPropGetter={eventStyleGetter}
-              onSelectEvent={handleSelectEvent}
-              onSelectSlot={handleSelectSlot}
-              selectable
-              views={['month', 'week', 'day', 'agenda']}
-              defaultView="month"
-              date={calendarDate}
-              onNavigate={(date) => setCalendarDate(date)}
-              popup
-              tooltipAccessor={(event) => `${event.title} - ${event.resource.priority}`}
-            />
-          </div>
+          {isMobile ? (
+            <div className="space-y-4">
+              <div className="rounded-2xl border border-[var(--border-soft)] bg-[var(--bg-raised)] p-2 calendar-container">
+                <BigCalendar
+                  localizer={localizer}
+                  events={events}
+                  startAccessor="start"
+                  endAccessor="end"
+                  style={{ height: 560, minHeight: 460 }}
+                  eventPropGetter={eventStyleGetter}
+                  onSelectEvent={handleSelectEvent}
+                  onSelectSlot={handleSelectSlot}
+                  selectable
+                  views={['month', 'agenda']}
+                  defaultView="month"
+                  date={calendarDate}
+                  onNavigate={(date) => setCalendarDate(date)}
+                  popup
+                  tooltipAccessor={(event) => `${event.title} - ${event.resource.priority}`}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-2xl border border-[var(--border-soft)] bg-[var(--bg-raised)] p-4">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--text-muted)]">Visible Tasks</p>
+                  <p className="mt-2 text-2xl font-bold text-[var(--text-primary)]">{events.length}</p>
+                </div>
+                <div className="rounded-2xl border border-[var(--border-soft)] bg-[var(--bg-raised)] p-4">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--text-muted)]">Focus Date</p>
+                  <p className="mt-2 text-base font-semibold text-[var(--text-primary)]">
+                    {calendarDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                  </p>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-[var(--border-soft)] bg-[var(--bg-raised)] p-4">
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--text-muted)]">Upcoming Agenda</p>
+                    <p className="mt-1 text-sm text-[var(--text-secondary)]">Calendar-first view with quick scan list</p>
+                  </div>
+                  <button
+                    onClick={() => setCalendarDate(new Date())}
+                    className="rounded-full border border-[var(--border-soft)] px-3 py-1.5 text-xs font-semibold text-[var(--text-primary)]"
+                  >
+                    Today
+                  </button>
+                </div>
+
+                {mobileEvents.length === 0 ? (
+                  <div className="rounded-xl border border-dashed border-[var(--border-soft)] bg-[var(--bg-base)] px-4 py-8 text-center text-sm text-[var(--text-muted)]">
+                    No due dates match the current filters.
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {mobileEvents.map((event) => {
+                      const task = event.resource;
+                      const statusColor = getStatusColor(task.status);
+                      const priorityColor = getPriorityBadgeColor(task.priority);
+
+                      return (
+                        <button
+                          key={event.id}
+                          onClick={() => handleSelectEvent(event)}
+                          className="w-full rounded-2xl border border-[var(--border-soft)] bg-[var(--bg-base)] p-4 text-left transition-colors hover:border-[var(--brand)]"
+                        >
+                          <div className="mb-3 flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <p className="text-sm font-semibold text-[var(--text-primary)]">{task.title}</p>
+                              <p className="mt-1 text-xs text-[var(--text-muted)]">
+                                {new Date(task.due_date).toLocaleDateString('en-US', {
+                                  weekday: 'short',
+                                  month: 'short',
+                                  day: 'numeric',
+                                })}
+                              </p>
+                            </div>
+                            <div className="h-3 w-3 flex-shrink-0 rounded-full" style={{ backgroundColor: statusColor }} />
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            <span className="rounded-full px-2.5 py-1 text-[11px] font-semibold" style={{ backgroundColor: `${statusColor}22`, color: statusColor }}>
+                              {task.status.replace('_', ' ')}
+                            </span>
+                            <span className="rounded-full px-2.5 py-1 text-[11px] font-semibold" style={{ backgroundColor: `${priorityColor}22`, color: priorityColor }}>
+                              {task.priority}
+                            </span>
+                            {task.team_id?.name && (
+                              <span className="rounded-full bg-[var(--bg-raised)] px-2.5 py-1 text-[11px] font-medium text-[var(--text-secondary)]">
+                                {task.team_id.name}
+                              </span>
+                            )}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className={`bg-[var(--bg-raised)] rounded border border-[var(--border-soft)] p-4 calendar-container`}>
+              <BigCalendar
+                localizer={localizer}
+                events={events}
+                startAccessor="start"
+                endAccessor="end"
+                style={{ height: 700, minHeight: 500 }}
+                eventPropGetter={eventStyleGetter}
+                onSelectEvent={handleSelectEvent}
+                onSelectSlot={handleSelectSlot}
+                selectable
+                views={['month', 'week', 'day', 'agenda']}
+                defaultView="month"
+                date={calendarDate}
+                onNavigate={(date) => setCalendarDate(date)}
+                popup
+                tooltipAccessor={(event) => `${event.title} - ${event.resource.priority}`}
+              />
+            </div>
+          )}
         </div>
 
       {/* Task Detail Modal */}
@@ -400,7 +526,7 @@ const Calendar = () => {
         </div>
       )}
 
-      <style dangerouslySetInnerHTML={{__html: `
+      <style>{`
         .calendar-container .rbc-calendar {
           font-family: 'Inter', sans-serif;
           color: var(--text-primary);
@@ -498,7 +624,7 @@ const Calendar = () => {
         .calendar-container .rbc-current-time-indicator {
           background-color: var(--brand);
         }
-      `}} />
+      `}</style>
 
       {/* Keyboard shortcuts help overlay */}
       <ShortcutsOverlay

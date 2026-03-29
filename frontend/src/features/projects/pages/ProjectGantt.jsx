@@ -5,7 +5,6 @@ import ResponsivePageLayout from '@/shared/components/responsive/ResponsivePageL
 import { projectsApi } from '@/features/projects/services/projectsApi';
 import api from '@/shared/services/axios';
 import { PageLoader } from '@/shared/components/ui/Spinner';
-import * as XLSX from 'xlsx';
 import {
   Plus, Share2, Calendar, ChevronRight, Check, Loader, Database,
   Lock, MoreHorizontal, ChevronDown, Filter, Download, FileSpreadsheet, X, History, AlertCircle
@@ -13,12 +12,15 @@ import {
 import { normalizeGanttData, recalculateForZoom, buildDependencyArrows } from '@/features/projects/utils/ganttNormalization';
 import { formatDate, isToday, isWeekend } from '@/shared/utils/dateNormalization';
 import { DebugOverlay, logNormalizedDataSummary } from '@/features/projects/utils/ganttDebugger';
+import { useSidebar } from '@/features/workspace/context/SidebarContext';
+import { createWorkbook, addWorksheetFromRows, downloadWorkbook } from '@/shared/utils/spreadsheetExport';
 
 const ProjectGantt = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const projectId = searchParams.get('project');
   const { theme, currentColorScheme } = useTheme();
+  const { isMobile } = useSidebar();
   
   const [project, setProject] = useState(null);
   const [projects, setProjects] = useState([]);
@@ -305,7 +307,7 @@ const ProjectGantt = () => {
     return `${progress || 0}%`;
   };
 
-  const handleExportExcel = () => {
+  const handleExportExcel = async () => {
     const taskData = filteredTasks.map(task => ({
       'Task Name': task.title,
       'Status': task.status,
@@ -318,25 +320,12 @@ const ProjectGantt = () => {
       'Project': project?.name || 'All Projects'
     }));
 
-    const worksheet = XLSX.utils.json_to_sheet(taskData);
-    worksheet['!cols'] = [
-      { wch: 30 },
-      { wch: 15 },
-      { wch: 12 },
-      { wch: 10 },
-      { wch: 15 },
-      { wch: 15 },
-      { wch: 12 },
-      { wch: 30 },
-      { wch: 25 }
-    ];
-
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Gantt Chart');
+    const workbook = await createWorkbook();
+    addWorksheetFromRows(workbook, 'Gantt Chart', taskData, [30, 15, 12, 10, 15, 15, 12, 30, 25]);
     
     const timestamp = new Date().toISOString().split('T')[0];
     const fileName = project?.name ? `${project.name}-gantt-${timestamp}.xlsx` : `gantt-chart-${timestamp}.xlsx`;
-    XLSX.writeFile(workbook, fileName);
+    await downloadWorkbook(workbook, fileName);
     setShowExportMenu(false);
   };
 
@@ -371,15 +360,100 @@ const ProjectGantt = () => {
     setShowExportMenu(false);
   };
 
-  if (loading) return <PageLoader variant="bars" label="Loading Gantt chart…" />;
+  if (loading) return <PageLoader />;
+
+  if (isMobile) {
+    return (
+      <ResponsivePageLayout title={project?.name || 'Gantt Chart'} icon={Calendar}>
+        <div className="space-y-4">
+          <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-[#1a2234]">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-gray-500 dark:text-gray-400">Mobile Timeline</p>
+            <h2 className="mt-2 text-2xl font-black tracking-tight text-gray-900 dark:text-white">
+              {project?.name || 'All Project Tasks'}
+            </h2>
+            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+              Phone-first sequence view instead of a compressed Gantt grid.
+            </p>
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <div className="rounded-xl bg-gray-50 p-3 dark:bg-gray-800/50">
+                <p className="text-[10px] uppercase tracking-wide text-gray-500 dark:text-gray-400">Scheduled</p>
+                <p className="mt-1 text-xl font-bold">{scheduledTasks.length}</p>
+              </div>
+              <div className="rounded-xl bg-gray-50 p-3 dark:bg-gray-800/50">
+                <p className="text-[10px] uppercase tracking-wide text-gray-500 dark:text-gray-400">Unscheduled</p>
+                <p className="mt-1 text-xl font-bold">{unscheduledTasks.length}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-[#1a2234]">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <span className="text-xs font-semibold uppercase tracking-[0.12em] text-gray-500 dark:text-gray-400">Tasks</span>
+              <select
+                value={projectId || ''}
+                onChange={handleProjectChange}
+                className="rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800"
+              >
+                <option value="">All Projects</option>
+                {projects.map((proj) => (
+                  <option key={proj._id} value={proj._id}>{proj.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-3">
+              {scheduledTasks.slice(0, 20).map((task) => (
+                <div key={task._id || task.id} className="rounded-xl border border-gray-200 p-4 dark:border-gray-700">
+                  <div className="mb-2 flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-gray-900 dark:text-white">{task.title}</p>
+                      <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                        {formatDate(task.start_date, 'short')} to {formatDate(task.end_date, 'short')}
+                      </p>
+                    </div>
+                    {task.is_critical && showCriticalPath && (
+                      <span className="rounded-full bg-rose-100 px-2 py-1 text-[10px] font-bold uppercase text-rose-700 dark:bg-rose-900/20 dark:text-rose-300">
+                        Critical
+                      </span>
+                    )}
+                  </div>
+                  <div className="mb-3 h-2 rounded-full bg-gray-100 dark:bg-gray-800">
+                    <div className={`${getTaskBarColor(task)} h-2 rounded-full`} style={{ width: `${Math.max(task.progress || 8, 8)}%` }} />
+                  </div>
+                  <div className="flex flex-wrap gap-2 text-[11px]">
+                    <span className="rounded-full bg-gray-100 px-2.5 py-1 font-semibold text-gray-600 dark:bg-gray-800 dark:text-gray-300">{task.status}</span>
+                    <span className="rounded-full bg-gray-100 px-2.5 py-1 font-semibold text-gray-600 dark:bg-gray-800 dark:text-gray-300">{task.duration_days}d</span>
+                    {task.total_float != null && (
+                      <span className="rounded-full bg-amber-100 px-2.5 py-1 font-semibold text-amber-700 dark:bg-amber-900/20 dark:text-amber-300">Float {task.total_float}d</span>
+                    )}
+                  </div>
+                </div>
+              ))}
+              {scheduledTasks.length === 0 && (
+                <div className="rounded-xl border border-dashed border-gray-300 px-4 py-8 text-center text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">
+                  No scheduled tasks to show.
+                </div>
+              )}
+            </div>
+          </div>
+
+          {unscheduledTasks.length > 0 && (
+            <div className="rounded-2xl border border-dashed border-amber-300 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-700 dark:bg-amber-900/20 dark:text-amber-300">
+              {unscheduledTasks.length} task{unscheduledTasks.length !== 1 ? 's' : ''} are missing schedule dates and need planning.
+            </div>
+          )}
+        </div>
+      </ResponsivePageLayout>
+    );
+  }
 
   return (
     <ResponsivePageLayout title={project?.name || 'Gantt Chart'} icon={Calendar} noPadding>
       <main className="flex-1 flex flex-col overflow-hidden">
         {/* Top Navigation Bar */}
-        <header className="h-16 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1a2234] flex items-center justify-between px-8 shrink-0">
-          <div className="flex items-center gap-4">
-            <nav className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+        <header className={`${isMobile ? 'min-h-[76px] px-4 py-3 flex-col items-stretch gap-3' : 'h-16 px-8 items-center'} border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-[#1a2234] flex justify-between shrink-0`}>
+          <div className={`flex items-center gap-4 ${isMobile ? 'flex-col items-stretch gap-2' : ''}`}>
+            <nav className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 min-w-0 overflow-hidden">
               <button onClick={() => navigate('/projects')} className={`${currentColorScheme.primaryText.replace('text-', 'hover:text-')} transition-colors`}>
                 Projects
               </button>
@@ -393,7 +467,7 @@ const ProjectGantt = () => {
             <select 
               value={projectId || ''}
               onChange={handleProjectChange}
-              className={`ml-4 px-3 py-1.5 border border-gray-300 dark:border-gray-700 rounded-lg text-sm font-medium bg-white dark:bg-gray-800 focus:ring-2 ${currentColorScheme.primaryText.replace('text-', 'focus:ring-')} focus:border-transparent`}
+              className={`${isMobile ? 'w-full ml-0' : 'ml-4'} px-3 py-1.5 border border-gray-300 dark:border-gray-700 rounded-lg text-sm font-medium bg-white dark:bg-gray-800 focus:ring-2 ${currentColorScheme.primaryText.replace('text-', 'focus:ring-')} focus:border-transparent`}
             >
               <option value="">All Projects</option>
               {projects.map(proj => (
@@ -401,10 +475,10 @@ const ProjectGantt = () => {
               ))}
             </select>
           </div>
-          <div className="flex items-center gap-3">
+          <div className={`flex items-center gap-2 ${isMobile ? 'flex-wrap' : 'gap-3'}`}>
             <button 
               onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 text-sm font-medium transition-colors"
+              className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 text-sm font-medium transition-colors"
             >
               <Filter size={18} />
               Filters
@@ -417,10 +491,10 @@ const ProjectGantt = () => {
             <div className="relative">
               <button 
                 onClick={() => setShowExportMenu(!showExportMenu)}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 text-sm font-medium transition-colors"
+                className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 text-sm font-medium transition-colors"
               >
                 <Share2 size={18} />
-                Export
+                <span className={isMobile ? 'hidden' : ''}>Export</span>
               </button>
               {showExportMenu && (
                 <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50">
@@ -443,22 +517,22 @@ const ProjectGantt = () => {
             </div>
             <button 
               onClick={() => navigate('/changelog')}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 text-sm font-medium transition-colors"
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 text-sm font-medium transition-colors ${isMobile ? 'hidden' : ''}`}
             >
               <History size={18} />
               View History
             </button>
-            <button className={`${currentColorScheme.primary} text-white text-sm font-semibold px-4 py-2 rounded-lg flex items-center gap-2 shadow-sm ${currentColorScheme.primaryHover}`}>
+            <button className={`${currentColorScheme.primary} text-white text-sm font-semibold px-3 py-2 rounded-lg flex items-center gap-2 shadow-sm ${currentColorScheme.primaryHover}`}>
               <Plus size={18} />
-              New Task
+              <span className={isMobile ? 'hidden' : ''}>New Task</span>
             </button>
           </div>
         </header>
 
         {/* Filter Section */}
         {showFilters && (
-          <div className="bg-white dark:bg-[#1a2234] border-b border-gray-200 dark:border-gray-800 px-8 py-4">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="bg-white dark:bg-[#1a2234] border-b border-gray-200 dark:border-gray-800 px-4 sm:px-8 py-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                   Search Tasks
@@ -521,7 +595,7 @@ const ProjectGantt = () => {
                 </select>
               </div>
             </div>
-            <div className="mt-4 flex items-center gap-3">
+            <div className="mt-4 flex flex-wrap items-center gap-2 sm:gap-3">
               <button
                 onClick={() => setFilters({ status: '', priority: '', assignee: '', search: '' })}
                 className="px-4 py-2 text-sm font-semibold text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
@@ -771,7 +845,7 @@ const ProjectGantt = () => {
           {/* Timeline Grid (Right Side) */}
           <div className="flex-1 overflow-x-auto overflow-y-hidden relative bg-gradient-to-b from-gray-50/50 to-white dark:from-gray-900/50 dark:to-[#1a2234]">
             {/* Timeline Header */}
-            <div className="sticky top-0 z-20 shadow-sm">
+            <div className="z-20 shadow-sm md:sticky md:top-0">
               {/* Month Headers */}
               <div className="flex border-b-2 border-gray-300 dark:border-gray-700 bg-gradient-to-b from-gray-100 to-gray-50 dark:from-gray-800 dark:to-gray-800/50 h-10">
                 {timelineHeaders.map((header, idx) => (

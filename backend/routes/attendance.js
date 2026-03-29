@@ -15,6 +15,8 @@ import AttendanceAutomationService, { ATTENDANCE_EVENTS } from '../services/atte
 import VerificationService from '../services/verificationService.js';
 import AttendanceReviewService from '../services/attendanceReviewService.js';
 import AuditService from '../services/auditService.js';
+import LeaveRequest from '../models/LeaveRequest.js';
+import Holiday from '../models/Holiday.js';
 
 const router = express.Router();
 const MARKABLE_STATUSES = new Set(['present', 'absent', 'half_day', 'leave', 'wfh', 'holiday']);
@@ -37,6 +39,37 @@ const parseOptionalDate = (value) => {
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 };
 
+const resolveAttendanceDay = (value) => {
+  const input = value ?? new Date();
+
+  // Parse YYYY-MM-DD as local calendar day to avoid UTC date-shift issues.
+  if (typeof input === 'string') {
+    const match = input.trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (match) {
+      const [, y, m, d] = match;
+      const localDay = new Date(Number(y), Number(m) - 1, Number(d));
+      if (!Number.isNaN(localDay.getTime())) {
+        const dayStart = new Date(localDay);
+        dayStart.setHours(0, 0, 0, 0);
+        const dayEnd = new Date(dayStart);
+        dayEnd.setDate(dayEnd.getDate() + 1);
+        return { dayStart, dayEnd };
+      }
+    }
+  }
+
+  const parsed = new Date(input);
+  if (Number.isNaN(parsed.getTime())) {
+    return null;
+  }
+
+  const dayStart = new Date(parsed);
+  dayStart.setHours(0, 0, 0, 0);
+  const dayEnd = new Date(dayStart);
+  dayEnd.setDate(dayEnd.getDate() + 1);
+  return { dayStart, dayEnd };
+};
+
 const toGeoPoint = (gps) => {
   if (!gps) return null;
 
@@ -54,6 +87,29 @@ const toGeoPoint = (gps) => {
     type: 'Point',
     coordinates: [longitude, latitude]
   };
+};
+
+const getAttendanceGovernance = (settings) => {
+  const governance = settings?.attendanceGovernance || {};
+  return {
+    regularAttendanceMarkedBy: governance.regularAttendanceMarkedBy || 'self',
+    specialDays: Array.isArray(governance.specialDays) ? governance.specialDays : []
+  };
+};
+
+const sameCalendarDay = (left, right) => {
+  const l = new Date(left);
+  const r = new Date(right);
+  return l.getFullYear() === r.getFullYear() && l.getMonth() === r.getMonth() && l.getDate() === r.getDate();
+};
+
+const isSpecialGovernedDay = (specialDays, dayStart) => {
+  return (specialDays || []).find((d) => d?.isActive !== false && d?.date && sameCalendarDay(d.date, dayStart));
+};
+
+const isRecurringHolidayMatch = (holidayDate, dayStart) => {
+  const h = new Date(holidayDate);
+  return h.getMonth() === dayStart.getMonth() && h.getDate() === dayStart.getDate();
 };
 
 // Get attendance records (filtered by month/user)
@@ -121,12 +177,15 @@ router.get('/evaluations/:id', authenticate, async (req, res) => {
 router.post('/checkout', authenticate, async (req, res) => {
   try {
     const { date } = req.body;
-    const today = date ? new Date(date) : new Date();
-    today.setHours(0, 0, 0, 0);
+    const dayWindow = resolveAttendanceDay(date);
+    if (!dayWindow) {
+      return res.status(400).json({ message: 'Invalid date value for checkout' });
+    }
+    const { dayStart, dayEnd } = dayWindow;
 
     const attendance = await Attendance.findOne({
       userId: req.user._id,
-      date: today
+      date: { $gte: dayStart, $lt: dayEnd }
     });
 
     if (!attendance || !attendance.checkIn) {
@@ -148,7 +207,7 @@ router.post('/checkout', authenticate, async (req, res) => {
     let shift = null;
     try {
       const metrics = await resolveShiftAndComputeMetrics(
-        req.user._id, today, attendance.checkIn, checkOutTime
+        req.user._id, dayStart, attendance.checkIn, checkOutTime
       );
       if (metrics.shift) {
         shift = metrics.shift;
@@ -173,7 +232,7 @@ router.post('/checkout', authenticate, async (req, res) => {
     try {
       const evalResult = await AttendancePolicyEngine.evaluate({
         userId: req.user._id,
-        date: today,
+        date: dayStart,
         checkInTime: attendance.checkIn,
         checkOutTime: attendance.checkOut,
         shift,
@@ -240,11 +299,40 @@ router.post('/mark', authenticate, checkRole(['admin', 'hr']), async (req, res) 
       });
     }
 
-    const attendanceDate = new Date(date);
-    if (Number.isNaN(attendanceDate.getTime())) {
+    const dayWindow = resolveAttendanceDay(date);
+    if (!dayWindow) {
       return res.status(400).json({ message: 'Invalid date format' });
     }
-    attendanceDate.setHours(0, 0, 0, 0);
+    const { dayStart, dayEnd } = dayWindow;
+
+    const verificationSettings = await VerificationService.getSettings(req.user.workspaceId);
+    const attendanceGovernance = getAttendanceGovernance(verificationSettings);
+    const regularAttendanceMarkedBy = attendanceGovernance.regularAttendanceMarkedBy;
+    const specialDay = isSpecialGovernedDay(attendanceGovernance.specialDays, dayStart);
+
+    const regularStatuses = new Set(['present', 'absent', 'half_day', 'wfh']);
+    if (regularStatuses.has(normalizedStatus) && regularAttendanceMarkedBy !== 'self' && req.user.role !== regularAttendanceMarkedBy) {
+      return res.status(403).json({
+        message: `Regular attendance is configured to be marked by ${regularAttendanceMarkedBy.toUpperCase()} only.`
+      });
+    }
+
+    // Leave attendance must be marked by HR as requested.
+    if (normalizedStatus === 'leave' && req.user.role !== 'hr') {
+      return res.status(403).json({ message: 'Leave attendance can only be marked by HR.' });
+    }
+
+    // Holiday attendance must be marked by Admin as requested.
+    if (normalizedStatus === 'holiday' && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Holiday attendance can only be marked by Admin.' });
+    }
+
+    // Special meeting/specified days are controlled by configured role (default HR).
+    if (specialDay && req.user.role !== (specialDay.markedBy || 'hr')) {
+      return res.status(403).json({
+        message: `Attendance for this special day is controlled by ${(specialDay.markedBy || 'hr').toUpperCase()}.`
+      });
+    }
 
     const parsedCheckIn = parseOptionalDate(checkIn);
     const parsedCheckOut = parseOptionalDate(checkOut);
@@ -264,7 +352,7 @@ router.post('/mark', authenticate, checkRole(['admin', 'hr']), async (req, res) 
     // Check if attendance already exists
     let attendance = await Attendance.findOne({
       userId,
-      date: attendanceDate
+      date: { $gte: dayStart, $lt: dayEnd }
     });
 
     if (attendance) {
@@ -279,7 +367,7 @@ router.post('/mark', authenticate, checkRole(['admin', 'hr']), async (req, res) 
       // Create new
       attendance = new Attendance({
         userId,
-        date: attendanceDate,
+        date: dayStart,
         status: normalizedStatus,
         checkIn: parsedCheckIn || (normalizedStatus === 'present' ? new Date() : null),
         checkOut: parsedCheckOut,
@@ -294,7 +382,7 @@ router.post('/mark', authenticate, checkRole(['admin', 'hr']), async (req, res) 
     } catch (saveError) {
       // Handle race condition on unique index (userId + date) for concurrent mark calls.
       if (saveError?.code === 11000) {
-        attendance = await Attendance.findOne({ userId, date: attendanceDate });
+        attendance = await Attendance.findOne({ userId, date: { $gte: dayStart, $lt: dayEnd } });
         if (!attendance) {
           throw saveError;
         }
@@ -365,8 +453,8 @@ router.put('/:id', authenticate, checkRole(['admin', 'hr']), async (req, res) =>
   }
 });
 
-// Get attendance summary for a user
-router.get('/summary/:userId?', authenticate, async (req, res) => {
+// Get attendance summary for the current user or a specific user.
+const getAttendanceSummary = async (req, res) => {
   try {
     const targetUserId = (req.params.userId || req.user._id).toString();
     const requesterId = req.user._id.toString();
@@ -414,7 +502,10 @@ router.get('/summary/:userId?', authenticate, async (req, res) => {
     console.error('Get summary error:', error);
     res.status(500).json({ message: 'Failed to fetch summary' });
   }
-});
+};
+
+router.get('/summary', authenticate, getAttendanceSummary);
+router.get('/summary/:userId', authenticate, getAttendanceSummary);
 
 // ==================== Policy Management Routes ====================
 
@@ -922,24 +1013,12 @@ router.post('/recalculate', authenticate, checkRole(['admin', 'hr']), async (req
  * @route GET /api/hr/attendance/verification-settings
  * @access Private (Admin/HR only)
  */
-router.get('/verification-settings', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
+router.get('/verification-settings', authenticate, async (req, res) => {
   try {
     const workspaceId = req.user.workspaceId;
-    
-    // Validate workspaceId is present
-    if (!workspaceId) {
-      console.error('VerificationSettings error: User has no workspaceId assigned', {
-        userId: req.user._id,
-        email: req.user.email,
-        role: req.user.role
-      });
-      return res.status(400).json({ 
-        message: 'Workspace not assigned. Please contact your administrator to assign a workspace to your account.' 
-      });
-    }
-    
+
     const settings = await VerificationService.getSettings(workspaceId);
-    
+
     res.json({ success: true, settings });
   } catch (error) {
     console.error('Get verification settings error:', error);
@@ -969,11 +1048,11 @@ router.put('/verification-settings', authenticate, checkRole(['admin']), async (
       });
     }
     
-    const { photoVerification, gpsVerification, security } = req.body;
+    const { photoVerification, gpsVerification, security, attendanceGovernance } = req.body;
     
     const settings = await VerificationService.updateSettings(
       workspaceId,
-      { photoVerification, gpsVerification, security },
+      { photoVerification, gpsVerification, security, attendanceGovernance },
       req.user._id
     );
     
@@ -1014,13 +1093,62 @@ router.post('/checkin', authenticate, async (req, res) => {
       deviceInfo
     } = req.body;
     
-    const today = date ? new Date(date) : new Date();
-    today.setHours(0, 0, 0, 0);
+    const dayWindow = resolveAttendanceDay(date);
+    if (!dayWindow) {
+      return res.status(400).json({ message: 'Invalid date value for check-in' });
+    }
+    const { dayStart, dayEnd } = dayWindow;
+
+    const workspaceId = req.user.workspaceId;
+    const verificationSettings = await VerificationService.getSettings(workspaceId);
+    const attendanceGovernance = getAttendanceGovernance(verificationSettings);
+
+    // If regular attendance is not self-marked, check-in must be blocked.
+    if (attendanceGovernance.regularAttendanceMarkedBy !== 'self') {
+      return res.status(403).json({
+        message: `Self check-in is disabled. Regular attendance is marked by ${attendanceGovernance.regularAttendanceMarkedBy.toUpperCase()}.`
+      });
+    }
+
+    // If this is configured as a special governed day (e.g. meeting day), self check-in is blocked.
+    const specialDay = isSpecialGovernedDay(attendanceGovernance.specialDays, dayStart);
+    if (specialDay) {
+      return res.status(403).json({
+        message: `Self check-in is disabled for this special day. Attendance is marked by ${(specialDay.markedBy || 'hr').toUpperCase()}.`
+      });
+    }
+
+    // Approved leave should lock attendance and prevent check-in.
+    const approvedLeave = await LeaveRequest.findOne({
+      userId: req.user._id,
+      status: 'approved',
+      startDate: { $lte: dayEnd },
+      endDate: { $gte: dayStart }
+    });
+    if (approvedLeave) {
+      return res.status(403).json({ message: 'You are on approved leave for this date. Attendance is marked by HR.' });
+    }
+
+    // Holidays should lock attendance and prevent check-in.
+    const oneTimeHoliday = await Holiday.findOne({ isActive: true, date: { $gte: dayStart, $lt: dayEnd } });
+    let recurringHoliday = null;
+    if (!oneTimeHoliday) {
+      const recurringHolidays = await Holiday.find({ isActive: true, isRecurring: true });
+      recurringHoliday = recurringHolidays.find((h) => isRecurringHolidayMatch(h.date, dayStart)) || null;
+    }
+    if (oneTimeHoliday || recurringHoliday) {
+      return res.status(403).json({ message: 'Today is a holiday. Attendance is managed by Admin.' });
+    }
 
     let attendance = await Attendance.findOne({
       userId: req.user._id,
-      date: today
+      date: { $gte: dayStart, $lt: dayEnd }
     });
+
+    // If attendance is already manually marked by HR/Admin, self check-in must not override it.
+    if (attendance?.isOverride) {
+      return res.status(403).json({ message: 'Attendance for this day is already marked by HR/Admin.' });
+    }
 
     if (attendance && attendance.checkIn) {
       return res.status(400).json({ message: 'Already checked in today' });
@@ -1029,7 +1157,7 @@ router.post('/checkin', authenticate, async (req, res) => {
     if (!attendance) {
       attendance = new Attendance({
         userId: req.user._id,
-        date: today,
+        date: dayStart,
         workspaceId: req.user.workspaceId
       });
     }
@@ -1045,9 +1173,6 @@ router.post('/checkin', authenticate, async (req, res) => {
     if (attachmentUrl) attendance.attachmentUrl = attachmentUrl;
     if (attachmentType) attendance.attachmentType = attachmentType;
 
-    // Get workspace ID for verification
-    const workspaceId = req.user.workspaceId;
-    
     // Perform verification if photo or GPS data is provided
     let verificationResult = null;
     if (photo || gpsLocation) {
@@ -1067,7 +1192,7 @@ router.post('/checkin', authenticate, async (req, res) => {
           photoPublicId: verificationResult.data.photo?.publicId,
           photoHash: verificationResult.data.photo?.hash,
           gpsLocation: verificationResult.data.gps,
-          geoPoint,
+          ...(geoPoint ? { geoPoint } : {}),
           deviceInfo: verificationResult.data.deviceInfo,
           serverTimestamp: verificationResult.data.serverTimestamp
         };
@@ -1080,7 +1205,7 @@ router.post('/checkin', authenticate, async (req, res) => {
     // Resolve shift for today and attach shift_id / expected_hours
     let shift = null;
     try {
-      const shiftResult = await resolveShiftAndComputeMetrics(req.user._id, today, checkInTime, null);
+      const shiftResult = await resolveShiftAndComputeMetrics(req.user._id, dayStart, checkInTime, null);
       if (shiftResult.shift) {
         shift = shiftResult.shift;
         attendance.shift_id = shift._id;
@@ -1088,14 +1213,28 @@ router.post('/checkin', authenticate, async (req, res) => {
       }
     } catch (_) { /* silently skip shift resolution on error */ }
 
-    await attendance.save();
+    try {
+      await attendance.save();
+    } catch (saveError) {
+      if (saveError?.code === 11000) {
+        const existing = await Attendance.findOne({
+          userId: req.user._id,
+          date: { $gte: dayStart, $lt: dayEnd }
+        });
+
+        if (existing?.checkIn) {
+          return res.status(400).json({ message: 'Already checked in today' });
+        }
+      }
+      throw saveError;
+    }
 
     // Evaluate against policy
     let evaluation = null;
     try {
       const evalResult = await AttendancePolicyEngine.evaluate({
         userId: req.user._id,
-        date: today,
+        date: dayStart,
         checkInTime: attendance.checkIn,
         checkOutTime: null,
         shift,
@@ -1181,13 +1320,25 @@ router.post('/checkin', authenticate, async (req, res) => {
 router.get('/pending-reviews', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
   try {
     const workspaceId = req.user.workspaceId;
-    const { userId, startDate, endDate, status, hasFlags, page = 1, limit = 20 } = req.query;
+    const { userId, startDate, endDate, status, verificationStatus, hasFlags, page = 1, limit = 20 } = req.query;
+
+    const normalizeReviewStatus = (value) => {
+      if (!value || typeof value !== 'string') return undefined;
+      return value.trim().toLowerCase();
+    };
+
+    const normalizedStatus = normalizeReviewStatus(status);
+    const normalizedVerificationStatus = normalizeReviewStatus(verificationStatus) || normalizedStatus;
+
+    const verificationStatuses = new Set(['pending', 'approved', 'rejected', 'auto_approved', 'auto_rejected']);
+    const attendanceStatuses = new Set(['present', 'absent', 'half_day', 'leave', 'wfh', 'holiday']);
     
     const filters = {
       userId,
       startDate,
       endDate,
-      status,
+      status: verificationStatuses.has(normalizedStatus) ? undefined : (attendanceStatuses.has(normalizedStatus) ? normalizedStatus : undefined),
+      verificationStatus: verificationStatuses.has(normalizedVerificationStatus) ? normalizedVerificationStatus : undefined,
       hasFlags: hasFlags === 'true',
       limit: parseInt(limit),
       skip: (parseInt(page) - 1) * parseInt(limit)
