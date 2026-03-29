@@ -553,11 +553,15 @@ router.post('/bulk-delete', authenticate, checkRole(['admin', 'hr']), async (req
 // Update user (Admin, HR & Community Admin)
 router.put('/:id', authenticate, checkRole(['admin', 'hr']), validateIdParam(), sanitizeBody(['full_name']), async (req, res) => {
   try {
-    const { full_name, email, role, team_id } = req.body;
+    const { full_name, email, role, team_id, teams, employmentStatus } = req.body;
     const { id } = req.params;
 
     if (role && !['admin', 'hr', 'team_lead', 'member'].includes(role)) {
       return res.status(400).json({ message: 'Invalid role' });
+    }
+
+    if (employmentStatus && !['ACTIVE', 'INACTIVE', 'ON_NOTICE', 'EXITED'].includes(employmentStatus)) {
+      return res.status(400).json({ message: 'Invalid employment status' });
     }
 
     const currentUser = await User.findOne({ _id: id });
@@ -585,10 +589,23 @@ router.put('/:id', authenticate, checkRole(['admin', 'hr']), validateIdParam(), 
       });
     }
 
+    // Normalize team payload to avoid ObjectId cast errors on empty values
+    const normalizedTeamId =
+      team_id === '' || team_id === null || typeof team_id === 'undefined'
+        ? null
+        : team_id;
+    const normalizedTeams = Array.isArray(teams) ? normalizeObjectIdList(teams) : undefined;
+
     // If changing to admin role, remove team assignment
-    let finalTeamId = team_id;
-    if (role === 'admin') {
+    const nextRole = role || currentUser.role;
+    let finalTeamId = normalizedTeamId;
+    if (nextRole === 'admin') {
       finalTeamId = null;
+    }
+
+    // If primary team is not provided but teams array exists, pick first team as primary
+    if (!finalTeamId && Array.isArray(normalizedTeams) && normalizedTeams.length > 0 && nextRole !== 'admin') {
+      finalTeamId = normalizedTeams[0];
     }
 
     const updates = {
@@ -597,6 +614,7 @@ router.put('/:id', authenticate, checkRole(['admin', 'hr']), validateIdParam(), 
 
     if (full_name) updates.full_name = full_name;
     if (email) updates.email = email;
+    if (employmentStatus) updates.employmentStatus = employmentStatus;
     if (role) {
       updates.role = role;
       // Automatically remove team if upgrading to admin
@@ -605,7 +623,11 @@ router.put('/:id', authenticate, checkRole(['admin', 'hr']), validateIdParam(), 
         updates.teams = [];  // Clear teams array for admins
       }
     }
-    if (finalTeamId !== undefined && role !== 'admin') {
+    if (Array.isArray(normalizedTeams) && nextRole !== 'admin') {
+      updates.teams = normalizedTeams;
+    }
+
+    if (finalTeamId !== undefined && nextRole !== 'admin') {
       updates.team_id = finalTeamId;
       if (finalTeamId) {
         updates.$addToSet = { teams: finalTeamId };
@@ -633,8 +655,8 @@ router.put('/:id', authenticate, checkRole(['admin', 'hr']), validateIdParam(), 
   }
 });
 
-// Delete user (Admin & HR)
-router.delete('/:id', authenticate, checkRole(['admin', 'hr']), validateIdParam(), async (req, res) => {
+// Delete user (Admin, HR & Super Admin)
+router.delete('/:id', authenticate, checkRole(['admin', 'hr', 'super_admin']), validateIdParam(), async (req, res) => {
   try {
     const { id } = req.params;
 

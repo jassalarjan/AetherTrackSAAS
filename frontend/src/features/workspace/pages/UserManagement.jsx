@@ -40,10 +40,11 @@ export default function UserManagement() {
     employmentStatus: 'ACTIVE'
   });
 
+  const getUserId = (usr) => usr?.id || usr?._id || '';
   const currentUserId = user?.id || user?._id;
   const isProtectedUserRole = (role) => role === 'admin' || role === 'super_admin';
 
-  const hasPermission = user && (user.role === 'admin' || user.role === 'hr');
+  const hasPermission = user && (user.role === 'admin' || user.role === 'hr' || user.role === 'super_admin' || user.isSystemAdmin);
 
   useEffect(() => {
     if (hasPermission) {
@@ -141,14 +142,14 @@ export default function UserManagement() {
     setModalMode('edit');
     setSelectedUser(usr);
     const userTeamIds = usr.teams && usr.teams.length > 0 
-      ? usr.teams.map(t => t._id || t)
-      : (usr.team_id ? [usr.team_id._id || usr.team_id] : []);
+      ? usr.teams.map(t => t._id || t.id || t)
+      : (usr.team_id ? [usr.team_id._id || usr.team_id.id || usr.team_id] : []);
     setFormData({ 
       full_name: usr.full_name, 
       email: usr.email, 
       password: '', 
       role: usr.role, 
-      team_id: usr.team_id?._id || '',
+      team_id: usr.team_id?._id || usr.team_id?.id || '',
       teams: userTeamIds,
       employmentStatus: usr.employmentStatus || 'ACTIVE'
     });
@@ -180,7 +181,8 @@ export default function UserManagement() {
             updateData.teams = formData.teams;
           }
         }
-        await api.put(`/users/${selectedUser._id}`, updateData);
+        const selectedUserId = getUserId(selectedUser);
+        await api.put(`/users/${selectedUserId}`, updateData);
         setSuccess('User updated successfully');
       }
       await fetchUsers();
@@ -195,34 +197,47 @@ export default function UserManagement() {
     }
   };
 
-  const handleDelete = (usr) => {
+  const handleDelete = async (usr) => {
     // Super-admin (role === 'admin') can never be deleted
     if (isProtectedUserRole(usr.role)) {
       setError('Admin users are protected and cannot be deleted.');
       setTimeout(() => setError(''), 4000);
       return;
     }
-    confirmModal.show({
-      title: 'Delete User',
-      message: `Are you sure you want to delete user: ${usr.email}? This will permanently remove their account and all associated data.`,
-      confirmText: 'Delete User',
-      cancelText: 'Cancel',
-      variant: 'danger',
-      onConfirm: async () => {
-        try {
-          await api.delete(`/users/${usr._id}`);
-          setSuccess('User deleted successfully');
-          await fetchUsers();
-          setTimeout(() => setSuccess(''), 3000);
-        } catch (err) {
-          setError(err.response?.data?.message || 'Failed to delete user');
-          setTimeout(() => setError(''), 3000);
-        }
-      },
-    });
+    const confirmed = window.confirm(
+      `Are you sure you want to delete user: ${usr.email}? This will permanently remove their account and all associated data.`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      const targetUserId = getUserId(usr);
+      if (!targetUserId) {
+        setError('Unable to delete user: invalid user ID');
+        setTimeout(() => setError(''), 3000);
+        return;
+      }
+
+      try {
+        await api.delete(`/users/${targetUserId}`);
+      } catch (deleteErr) {
+        // Fallback for environments where DELETE may be blocked or routed differently.
+        await api.post('/users/bulk-delete', { userIds: [targetUserId] });
+      }
+
+      setSuccess('User deleted successfully');
+      await fetchUsers();
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err) {
+      const data = err.response?.data;
+      setError(data?.message || data?.error || 'Failed to delete user');
+      setTimeout(() => setError(''), 3000);
+    }
   };
 
-  const handleBulkDelete = () => {
+  const handleBulkDelete = async () => {
     if (selectedUserIds.length === 0) {
       setError('Please select users to delete');
       setTimeout(() => setError(''), 3000);
@@ -230,7 +245,7 @@ export default function UserManagement() {
     }
     // Admins are protected — remove any admin IDs that may have slipped into selection
     const safeIds = selectedUserIds.filter(id => {
-      const usr = users.find(u => u._id === id);
+      const usr = users.find(u => getUserId(u) === id);
       return usr && !isProtectedUserRole(usr.role);
     });
     if (safeIds.length === 0) {
@@ -238,25 +253,24 @@ export default function UserManagement() {
       setTimeout(() => setError(''), 4000);
       return;
     }
-    confirmModal.show({
-      title: 'Delete Multiple Users',
-      message: `Are you sure you want to delete ${safeIds.length} user(s)? This will permanently remove their accounts and all associated data. This action cannot be undone.`,
-      confirmText: `Delete ${safeIds.length} User${safeIds.length !== 1 ? 's' : ''}`,
-      cancelText: 'Cancel',
-      variant: 'danger',
-      onConfirm: async () => {
-        try {
-          const response = await api.post('/users/bulk-delete', { userIds: safeIds });
-          setSuccess(response.data.message);
-          setSelectedUserIds([]);
-          await fetchUsers();
-          setTimeout(() => setSuccess(''), 3000);
-        } catch (err) {
-          setError(err.response?.data?.message || 'Failed to delete users');
-          setTimeout(() => setError(''), 3000);
-        }
-      },
-    });
+    const confirmed = window.confirm(
+      `Are you sure you want to delete ${safeIds.length} user(s)? This will permanently remove their accounts and all associated data. This action cannot be undone.`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      const response = await api.post('/users/bulk-delete', { userIds: safeIds });
+      setSuccess(response.data.message);
+      setSelectedUserIds([]);
+      await fetchUsers();
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to delete users');
+      setTimeout(() => setError(''), 3000);
+    }
   };
 
   const toggleSelectUser = (userId) => {
@@ -267,11 +281,11 @@ export default function UserManagement() {
 
   const toggleSelectAll = () => {
     // Exclude yourself and all admin users from bulk-select
-    const selectable = users.filter(usr => usr._id !== currentUserId && !isProtectedUserRole(usr.role));
+    const selectable = users.filter(usr => getUserId(usr) !== currentUserId && !isProtectedUserRole(usr.role));
     if (selectedUserIds.length === selectable.length) {
       setSelectedUserIds([]);
     } else {
-      setSelectedUserIds(selectable.map(usr => usr._id));
+      setSelectedUserIds(selectable.map(usr => getUserId(usr)).filter(Boolean));
     }
   };
 
@@ -523,7 +537,7 @@ export default function UserManagement() {
                     <th className="px-4 py-3 text-left">
                       <input
                         type="checkbox"
-                        checked={selectedUserIds.length > 0 && selectedUserIds.length === users.filter(usr => usr._id !== currentUserId && !isProtectedUserRole(usr.role)).length}
+                        checked={selectedUserIds.length > 0 && selectedUserIds.length === users.filter(usr => getUserId(usr) !== currentUserId && !isProtectedUserRole(usr.role)).length}
                         onChange={toggleSelectAll}
                         className="rounded border-[#4b5563] text-[#C4713A] focus:ring-[#C4713A]"
                       />
@@ -545,16 +559,17 @@ export default function UserManagement() {
                     </tr>
                   ) : (
                     filteredUsers.map((usr) => {
+                      const userId = getUserId(usr);
                       const badge = getRoleBadge(usr.role);
                       const statusBadge = getEmploymentStatusBadge(usr.employmentStatus);
                       return (
-                        <tr key={usr._id} className={`${currentTheme.hover} transition-colors`}>
+                        <tr key={userId} className={`${currentTheme.hover} transition-colors`}>
                           <td className="px-4 py-3">
                             <input
                               type="checkbox"
-                              checked={selectedUserIds.includes(usr._id)}
-                              onChange={() => toggleSelectUser(usr._id)}
-                              disabled={usr._id === currentUserId || isProtectedUserRole(usr.role)}
+                              checked={selectedUserIds.includes(userId)}
+                              onChange={() => toggleSelectUser(userId)}
+                              disabled={userId === currentUserId || isProtectedUserRole(usr.role)}
                               title={isProtectedUserRole(usr.role) ? 'Admin users are protected and cannot be selected for deletion' : undefined}
                               className="rounded border-[#4b5563] text-[#C4713A] focus:ring-[#C4713A] disabled:opacity-50"
                             />
@@ -606,14 +621,14 @@ export default function UserManagement() {
                                 <Edit2 size={16} />
                               </button>
                               <button
-                                onClick={() => handleResetPassword(usr._id, usr.email)}
+                                onClick={() => handleResetPassword(userId, usr.email)}
                                 className={`p-1.5 text-[var(--text-muted)] ${theme === 'dark' ? 'hover:text-white hover:bg-[#282f39]' : 'hover:text-gray-900 hover:bg-gray-100'} rounded transition-colors`}
                                 title="Reset Password"
                               >
                                 <Key size={16} />
                               </button>
                               {/* Admin users are protected — never show delete button for them */}
-                              {usr._id !== currentUserId && !isProtectedUserRole(usr.role) && (
+                              {userId !== currentUserId && !isProtectedUserRole(usr.role) && (
                                 <button
                                   onClick={() => handleDelete(usr)}
                                   className="p-1.5 text-[var(--text-muted)] hover:text-red-500 hover:bg-red-500/10 rounded transition-colors"
@@ -650,15 +665,16 @@ export default function UserManagement() {
               </div>
             ) : (
               filteredUsers.map((usr) => {
+                const userId = getUserId(usr);
                 const badge = getRoleBadge(usr.role);
                 return (
-                  <div key={usr._id} className={`${currentTheme.surface} rounded border ${currentTheme.border} p-4`}>
+                  <div key={userId} className={`${currentTheme.surface} rounded border ${currentTheme.border} p-4`}>
                     <div className="flex items-start gap-3">
                       <input
                         type="checkbox"
-                        checked={selectedUserIds.includes(usr._id)}
-                        onChange={() => toggleSelectUser(usr._id)}
-                        disabled={usr._id === currentUserId || isProtectedUserRole(usr.role)}
+                        checked={selectedUserIds.includes(userId)}
+                        onChange={() => toggleSelectUser(userId)}
+                        disabled={userId === currentUserId || isProtectedUserRole(usr.role)}
                         className="mt-1 rounded border-[#4b5563] text-[#C4713A] focus:ring-[#C4713A] disabled:opacity-50"
                       />
                       <div className="flex-1 min-w-0">
@@ -701,14 +717,14 @@ export default function UserManagement() {
                             Edit
                           </button>
                           <button
-                            onClick={() => handleResetPassword(usr._id, usr.email)}
+                            onClick={() => handleResetPassword(userId, usr.email)}
                             className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-[var(--bg-surface)] text-[var(--text-primary)] rounded text-xs font-medium transition-colors`}
                           >
                             <Key size={14} />
                             Reset
                           </button>
                           {/* Admin users are protected — never show delete in mobile view */}
-                          {usr._id !== currentUserId && !isProtectedUserRole(usr.role) && (
+                          {userId !== currentUserId && !isProtectedUserRole(usr.role) && (
                             <button
                               onClick={() => handleDelete(usr)}
                               className="px-3 py-2 bg-red-500/10 text-red-500 rounded text-xs font-medium hover:bg-red-500/20 transition-colors"
