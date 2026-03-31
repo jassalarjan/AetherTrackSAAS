@@ -466,7 +466,7 @@ const Teams = () => {
 
       {/* Create Team Modal */}
       {showCreateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" data-testid="create-team-modal">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[var(--z-modal)]" data-testid="create-team-modal">
           <div className="bg-[#1c2027] rounded-[0.125rem] p-8 max-w-md w-full mx-4 border border-[#282f39]">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold text-white">Create New Team</h2>
@@ -569,7 +569,7 @@ const Teams = () => {
         });
 
         return (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" data-testid="add-member-modal">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[var(--z-modal)]" data-testid="add-member-modal">
             <div className="bg-[#1c2027] rounded-[0.125rem] p-8 max-w-3xl w-full mx-4 border border-[#282f39] max-h-[90vh] overflow-y-auto">
               <div className="flex justify-between items-center mb-6">
                 <div>

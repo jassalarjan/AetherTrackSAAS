@@ -116,7 +116,8 @@ const Dialog = ({
 
   return createPortal(
     <div 
-      className="fixed inset-0 z-[var(--z-modal-backdrop)] flex items-center justify-center p-4"
+      className="fixed inset-0 flex items-center justify-center p-4"
+      style={{ zIndex: 9998 }}
       role="presentation"
     >
       {/* Overlay */}

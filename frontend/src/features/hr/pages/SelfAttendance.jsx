@@ -641,7 +641,7 @@ const SelfAttendance = () => {
 
       {/* Check In Modal */}
       {showCheckInModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[var(--z-modal)] overflow-y-auto">
           <div className="bg-white dark:bg-[#1a2234] rounded-xl p-6 w-full max-w-lg mx-4 my-8">
             <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">Check In</h3>
             

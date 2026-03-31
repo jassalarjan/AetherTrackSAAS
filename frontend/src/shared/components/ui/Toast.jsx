@@ -152,7 +152,8 @@ const ToastContainer = ({ toasts, onRemove, position }) => {
   
   return (
     <div 
-      className={`fixed ${positionClasses[position]} z-[var(9000)] flex flex-col gap-2 max-w-sm w-full pointer-events-none`}
+      className={`fixed ${positionClasses[position]} flex flex-col gap-2 max-w-sm w-full pointer-events-none`}
+      style={{ zIndex: 9999 }}
       role="region"
       aria-label="Notifications"
     >

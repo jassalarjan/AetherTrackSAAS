@@ -72,7 +72,8 @@ const ConfirmModal = ({
 
   const modalContent = (
     <div 
-      className="fixed inset-0 z-[1200] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in"
+      className="fixed inset-0 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in"
+      style={{ zIndex: 9999 }}
       onClick={!isLoading ? onClose : undefined}
     >
       <div

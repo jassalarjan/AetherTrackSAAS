@@ -1,17 +1,22 @@
 ﻿import { X } from 'lucide-react';
-import { useTheme } from '@/app/providers/ThemeProvider';
 import { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 
 /**
  * ResponsiveModal - Mobile-first modal component
+ * Uses React Portal to render outside the main app hierarchy
  * 
  * Features:
+ * - Renders at document.body level via Portal
  * - Full screen on mobile (< 640px)
  * - Centered card on tablet/desktop
- * - Responsive padding and sizing
  * - Smooth animations
  * - Scrollable content
  * - Accessible (ESC to close, focus trap)
+ * 
+ * NOTE: Using inline styles for reliability. The original Tailwind-based
+ * implementation had issues with modal visibility - this inline-styled
+ * version ensures consistent behavior across different environments.
  */
 const ResponsiveModal = ({
   isOpen,
@@ -22,8 +27,6 @@ const ResponsiveModal = ({
   size = 'default', // 'small', 'default', 'large', 'full'
   noPadding = false
 }) => {
-  const { theme } = useTheme();
-
   // Close on ESC key
   useEffect(() => {
     const handleEsc = (e) => {
@@ -31,8 +34,10 @@ const ResponsiveModal = ({
         onClose();
       }
     };
-    window.addEventListener('keydown', handleEsc);
-    return () => window.removeEventListener('keydown', handleEsc);
+    if (isOpen) {
+      window.addEventListener('keydown', handleEsc);
+      return () => window.removeEventListener('keydown', handleEsc);
+    }
   }, [isOpen, onClose]);
 
   // Prevent body scroll when modal is open
@@ -49,77 +54,118 @@ const ResponsiveModal = ({
 
   if (!isOpen) return null;
 
-  const sizeClasses = {
-    small: 'sm:max-w-md',
-    default: 'sm:max-w-lg md:max-w-2xl',
-    large: 'sm:max-w-2xl md:max-w-4xl lg:max-w-5xl',
-    full: 'sm:max-w-full sm:m-4 md:m-8'
+  // Size configurations for max-width
+  const sizeMaxWidths = {
+    small: '28rem',    // max-w-md
+    default: '42rem', // max-w-2xl
+    large: '64rem',    // max-w-5xl
+    full: 'min(100vw - 1rem, 1440px)'
   };
 
-  return (
-    <div className="fixed inset-0 z-[var(--z-modal)] flex items-end sm:items-center justify-center">
-      {/* Backdrop - darker on mobile for better contrast */}
-      <div
-        className="absolute inset-0 bg-black/80 backdrop-blur-sm"
-        onClick={onClose}
-      />
-
-      {/* Modal Container */}
-      <div
-        className={`relative w-full ${sizeClasses[size] || sizeClasses.default} rounded-t-3xl sm:rounded-xl shadow-2xl flex flex-col max-h-[92vh] sm:max-h-[90vh] animate-slide-up sm:animate-scale-in border-t-4`}
-        style={{ background: 'var(--bg-raised)', borderTopColor: 'var(--brand)', boxShadow: 'var(--shadow-xl)' }}
+  // Render at document body level using Portal
+  // Using inline styles for reliability - ensures modal visibility
+  return createPortal(
+    <div 
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 9999,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '16px'
+      }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+      role="dialog"
+      aria-modal="true"
+      aria-label={title || 'Modal'}
+    >
+      <div style={{
+        background: 'var(--bg-raised)',
+        borderRadius: '12px',
+        maxWidth: sizeMaxWidths[size] || sizeMaxWidths.default,
+        width: '100%',
+        maxHeight: 'calc(100dvh - 2rem)',
+        display: 'flex',
+        flexDirection: 'column',
+        border: '1px solid var(--border-soft)',
+        boxShadow: 'var(--shadow-xl)'
+      }}
+      onClick={(e) => e.stopPropagation()}
       >
-        {/* Drag Handle - Mobile only */}
-        <div className="sm:hidden flex justify-center pt-3 pb-2">
-          <div className="w-12 h-1.5 rounded-full" style={{ background: 'var(--border-mid)' }}></div>
-        </div>
-
-        {/* Header - Sticky on mobile */}
-        <div
-          className={`flex-none flex items-center justify-between ${noPadding ? '' : 'px-4 py-3 sm:p-6'} border-b sticky top-0 z-10 rounded-t-3xl sm:rounded-t-xl`}
-            style={{ borderColor: 'var(--border-soft)', background: 'var(--bg-raised)' }}
-        >
-          <h2
-            className="font-bold text-base sm:text-xl lg:text-2xl pr-4 truncate"
-            style={{ fontFamily: 'var(--font-heading)', color: 'var(--text-primary)', letterSpacing: '-0.025em' }}
-          >
+        {/* Header */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '12px 16px',
+          borderBottom: '1px solid var(--border-soft)',
+          background: 'var(--bg-raised)',
+          borderRadius: '12px 12px 0 0',
+          flex: 'none'
+        }}>
+          <h2 style={{
+            fontWeight: 'bold',
+            fontSize: '1.125rem',
+            color: 'var(--text-primary)',
+            fontFamily: 'var(--font-heading)',
+            margin: 0,
+            paddingRight: '16px',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap'
+          }}>
             {title}
           </h2>
           <button
             onClick={onClose}
-            className="flex-none p-2 rounded-lg transition-colors focus-visible:outline-none"
-            style={{ color: 'var(--text-secondary)' }}
+            style={{
+              padding: '8px',
+              borderRadius: '8px',
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              color: 'var(--text-secondary)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flex: 'none'
+            }}
             aria-label="Close modal"
-            onMouseOver={(e) => { e.currentTarget.style.background = 'var(--border-hair)'; e.currentTarget.style.color = 'var(--text-primary)'; }}
-            onMouseOut={(e)  => { e.currentTarget.style.background = ''; e.currentTarget.style.color = 'var(--text-secondary)'; }}
-            onFocus={(e)     => { e.currentTarget.style.boxShadow = 'var(--focus-ring)'; }}
-            onBlur={(e)      => { e.currentTarget.style.boxShadow = ''; }}
           >
             <X size={20} />
           </button>
         </div>
 
-        {/* Content - Scrollable */}
-        <div
-          className={`
-            flex-1 overflow-y-auto overflow-x-hidden
-            ${noPadding ? '' : 'p-4 sm:p-6'}
-          `}
-        >
+        {/* Content */}
+        <div style={{
+          flex: 1,
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          padding: noPadding ? '0' : '16px 24px',
+          minHeight: '100px'
+        }}>
           {children}
         </div>
 
-        {/* Footer - Sticky on mobile if provided */}
+        {/* Footer */}
         {footer && (
-          <div
-            className={`flex-none ${noPadding ? '' : 'p-4 sm:p-6'} border-t sticky bottom-0 sm:rounded-b-xl`}
-            style={{ borderColor: 'var(--border-soft)', background: 'var(--bg-raised)' }}
-          >
+          <div style={{
+            flex: 'none',
+            padding: noPadding ? '0' : '12px 16px',
+            borderTop: '1px solid var(--border-soft)',
+            background: 'var(--bg-raised)',
+            borderRadius: '0 0 12px 12px'
+          }}>
             {footer}
           </div>
         )}
       </div>
-    </div >
+    </div>,
+    document.body
   );
 };
 

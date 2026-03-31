@@ -501,7 +501,7 @@ const MyProjects = () => {
 
       {/* Create Project Modal */}
       {showCreateModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[var(--z-modal)]">
           <div className="bg-white dark:bg-[#1a2234] rounded-xl border border-gray-200 dark:border-gray-800 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
             <div className="bg-white dark:bg-[#1a2234] border-b border-gray-200 dark:border-gray-800 p-6 flex items-center justify-between z-10 md:sticky md:top-0">
               <h3 className="text-xl font-bold text-gray-900 dark:text-white">Create New Project</h3>

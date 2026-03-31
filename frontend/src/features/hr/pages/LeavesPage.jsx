@@ -465,7 +465,10 @@ export default function LeavesPage() {
 
       {/* Apply Leave Modal */}
       {showModal && (
-        <div className="fixed inset-0 z-[var(--z-modal)] overflow-y-auto">
+        <div 
+          className="fixed inset-0 overflow-y-auto"
+          style={{ zIndex: 9999 }}
+        >
           <div className="flex items-center justify-center min-h-screen px-4">
             <div className="fixed inset-0 bg-black opacity-50" onClick={() => setShowModal(false)}></div>
 
@@ -576,7 +579,10 @@ export default function LeavesPage() {
 
       {/* Leave Type Management Modal */}
       {showLeaveTypeModal && (
-        <div className="fixed inset-0 z-[var(--z-modal)] overflow-y-auto">
+        <div 
+          className="fixed inset-0 overflow-y-auto"
+          style={{ zIndex: 9999 }}
+        >
           <div className="flex items-center justify-center min-h-screen px-4">
             <div className="fixed inset-0 bg-black opacity-50" onClick={() => setShowLeaveTypeModal(false)}></div>
 

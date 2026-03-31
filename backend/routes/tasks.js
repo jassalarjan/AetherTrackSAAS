@@ -170,8 +170,8 @@ router.get('/', authenticate, async (req, res) => {
       if (userTeams.length > 0) {
         query.team_id = { $in: userTeams };
       } else {
-        // Fallback to primary team if no teams array
-        query.team_id = req.user.team_id;
+        // Fallback: if team lead has no teams assigned, they see no tasks
+        query.team_id = null; // This ensures no tasks are returned
       }
     }
     // HR and Admin see all tasks (within their workspace)
@@ -442,10 +442,21 @@ router.patch('/:id', authenticate, validateIdParam(), sanitizeBody(['title', 'de
       }
     }
 
+    // Fetch latest comment for the updated task
+    const latestComment = await Comment.findOne({ task_id: task._id })
+      .sort({ created_at: -1 })
+      .limit(1)
+      .populate('author_id', 'full_name');
+
     const updatedTask = await Task.findById(task._id)
       .populate('created_by', 'full_name email')
       .populate('assigned_to', 'full_name email')
-      .populate('team_id', 'name');
+      .populate('team_id', 'name')
+      .populate('project_id', 'name status')
+      .populate('sprint_id', 'name start_date end_date');
+
+    const taskWithComment = updatedTask.toObject();
+    taskWithComment.latest_comment = latestComment;
 
     // Log task update
     const user_ip = getClientIP(req);
@@ -502,10 +513,10 @@ router.patch('/:id', authenticate, validateIdParam(), sanitizeBody(['title', 'de
 
     // Emit socket event
     if (req.app.get('io')) {
-      req.app.get('io').emit('task:updated', updatedTask);
+      req.app.get('io').emit('task:updated', taskWithComment);
     }
 
-    res.json({ message: 'Task updated', task: updatedTask });
+    res.json({ message: 'Task updated', task: taskWithComment });
   } catch (error) {
     console.error('Update task error:', error);
     res.status(500).json({ message: 'Server error' });

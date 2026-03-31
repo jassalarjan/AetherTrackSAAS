@@ -64,11 +64,8 @@ const Tasks = () => {
   const [sprints, setSprints] = useState([]);
   const searchInputRef = useRef(null);
   const currentUserId = user?._id || user?.id || null;
+  const getTaskId = (task) => task?._id || task?.id || null;
   const { isMobile } = useSidebar();
-
-  // Pagination
-  const [rowsPerPage, setRowsPerPage] = useState(25);
-  const [currentPage, setCurrentPage] = useState(1);
 
   // ── Keyboard shortcuts ──────────────────────────────────────────────────
   const taskShortcuts = [
@@ -100,8 +97,9 @@ const Tasks = () => {
       });
 
       socket.on('task:updated', (task) => {
+        const updatedTaskId = getTaskId(task);
         setTasks((prev) =>
-          prev.map((t) => (t._id === task._id ? task : t))
+          prev.map((t) => (getTaskId(t) === updatedTaskId ? task : t))
         );
       });
 
@@ -248,9 +246,27 @@ const Tasks = () => {
     }
   };
 
+  const openCreateModal = () => {
+    setShowCreateModal(true);
+  };
+
   const handleCreateTask = async (e) => {
-    e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
     try {
+      // Validate required fields
+      if (!formData.title.trim()) {
+        alert('Please enter a task title');
+        return;
+      }
+      if (!formData.project_id) {
+        alert('Please select a project');
+        return;
+      }
+      if (!formData.due_date) {
+        alert('Please select a due date');
+        return;
+      }
+
       await api.post('/tasks', formData);
       setShowCreateModal(false);
       setFormData({
@@ -274,7 +290,7 @@ const Tasks = () => {
 
   const handleUpdateTask = async (taskId, updates) => {
     setTasks((prev) =>
-      prev.map((t) => (t._id === taskId ? { ...t, ...updates } : t))
+      prev.map((t) => (getTaskId(t) === taskId ? { ...t, ...updates } : t))
     );
 
     try {
@@ -282,14 +298,14 @@ const Tasks = () => {
       const updatedTask = response.data.task;
 
       setTasks((prev) =>
-        prev.map((t) => (t._id === taskId ? updatedTask : t))
+        prev.map((t) => (getTaskId(t) === taskId ? updatedTask : t))
       );
 
-      if (selectedTask?._id === taskId) {
+      if (getTaskId(selectedTask) === taskId) {
         setSelectedTask(updatedTask);
         selectedTaskRef.current = updatedTask;
       }
-      if (editingTask?._id === taskId) {
+      if (getTaskId(editingTask) === taskId) {
         setEditingTask(updatedTask);
       }
     } catch (error) {
@@ -328,8 +344,24 @@ const Tasks = () => {
   };
 
   const handleEditTask = async (e) => {
-    e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
     try {
+      const editingTaskId = getTaskId(editingTask);
+      if (!editingTaskId) {
+        alert('Unable to update task: missing task ID');
+        return;
+      }
+
+      // Validate required fields
+      if (!editingTask.title.trim()) {
+        alert('Please enter a task title');
+        return;
+      }
+      if (!editingTask.due_date) {
+        alert('Please select a due date');
+        return;
+      }
+
       const updates = {
         title: editingTask.title,
         description: editingTask.description,
@@ -340,7 +372,7 @@ const Tasks = () => {
         assigned_to: editingTask.assigned_to,
       };
 
-      await api.patch(`/tasks/${editingTask._id}`, updates);
+      await api.patch(`/tasks/${editingTaskId}`, updates);
       setShowEditModal(false);
       setEditingTask(null);
       setSelectedTeamMembers([]);
@@ -415,12 +447,15 @@ const Tasks = () => {
   };
 
   const viewTaskDetails = async (task) => {
+    const taskId = getTaskId(task);
+    if (!taskId) return;
+
     setSelectedTask(task);
     selectedTaskRef.current = task;
     setShowDetailModal(true);
 
     try {
-      const response = await api.get(`/comments/${task._id}/comments`);
+      const response = await api.get(`/comments/${taskId}/comments`);
       setComments(response.data.comments);
     } catch (error) {
       console.error('Error fetching comments:', error);
@@ -431,8 +466,11 @@ const Tasks = () => {
     e.preventDefault();
     if (!newComment.trim()) return;
 
+    const selectedTaskId = getTaskId(selectedTask);
+    if (!selectedTaskId) return;
+
     try {
-      const response = await api.post(`/comments/${selectedTask._id}/comments`, {
+      const response = await api.post(`/comments/${selectedTaskId}/comments`, {
         content: newComment,
       });
       setNewComment('');
@@ -444,7 +482,7 @@ const Tasks = () => {
         // Update the task's latest_comment
         setTasks((prev) =>
           prev.map((t) => {
-            if (t._id === selectedTask._id) {
+            if (getTaskId(t) === selectedTaskId) {
               return { ...t, latest_comment: response.data.comment };
             }
             return t;
@@ -528,14 +566,7 @@ const Tasks = () => {
   // Status popover state for inline table status change
   const [statusPopover, setStatusPopover] = useState(null); // { taskId, anchorRect }
 
-  // Derived pagination values — reset to page 1 whenever filters / rowsPerPage change
-  const totalPages = Math.max(1, Math.ceil(filteredTasks.length / rowsPerPage));
-  const safeCurrentPage = Math.min(currentPage, totalPages);
-  const paginatedTasks = filteredTasks.slice(
-    (safeCurrentPage - 1) * rowsPerPage,
-    safeCurrentPage * rowsPerPage
-  );
-
+  // ── Apply filters and search ──────────────────────────────────────────────
   const activeFilterCount = [
     filters.status,
     filters.priority,
@@ -561,7 +592,7 @@ const Tasks = () => {
         title="Tasks"
         actions={
           <button
-            onClick={() => setShowCreateModal(true)}
+            onClick={openCreateModal}
             className="flex items-center gap-2 h-11 bg-[#C4713A] hover:bg-[#A35C28] text-white text-sm font-semibold px-4 rounded-lg transition-colors shadow-md shadow-[#C4713A]/25 focus:ring-2 focus:ring-[#C4713A] focus:ring-offset-2"
           >
             <Plus size={18} />
@@ -701,7 +732,7 @@ const Tasks = () => {
               <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-1">No tasks found</h3>
               <p className="text-xs text-[var(--text-muted)] mb-4 max-w-[240px]">Adjust your filters or create a new task to get started.</p>
               <button
-                onClick={() => setShowCreateModal(true)}
+                onClick={openCreateModal}
                 className="inline-flex items-center gap-2 h-10 px-4 bg-[#C4713A] hover:bg-[#A35C28] text-white text-sm font-semibold rounded-lg transition-colors focus:ring-2 focus:ring-[#C4713A] focus:ring-offset-0"
               >
                 <Plus size={15} />
@@ -712,12 +743,12 @@ const Tasks = () => {
             <div className="grid grid-cols-1 gap-4 pb-20">
               {filteredTasks.map((task) => (
                 <TaskCard
-                  key={task._id}
+                  key={getTaskId(task)}
                   task={task}
                   onClick={() => viewTaskDetails(task)}
                   onEdit={() => openEditModal(task)}
-                  onDelete={() => handleDeleteTask(task._id)}
-                  onStatusChange={(status) => handleUpdateTask(task._id, { status })}
+                  onDelete={() => handleDeleteTask(getTaskId(task))}
+                  onStatusChange={(status) => handleUpdateTask(getTaskId(task), { status })}
                   canEdit={canEditTask(task)}
                   canDelete={canDeleteTask(task)}
                   getUserInitials={getUserInitials}
@@ -728,8 +759,8 @@ const Tasks = () => {
           )}
         </div>
 
-        {/* Desktop Table (>= 1025px) */}
-        <div style={{ display: !isMobile ? 'block' : 'none' }}>
+        {/* Desktop Grid (>= 1025px) */}
+        <div style={{ display: !isMobile ? 'block' : 'none' }} className="w-full">
           {filteredTasks.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-center rounded-xl border border-dashed border-[var(--border-soft)] bg-[var(--bg-base)]">
               <div className="w-16 h-16 rounded-full bg-[var(--bg-raised)] flex items-center justify-center mb-4">
@@ -738,7 +769,7 @@ const Tasks = () => {
               <h3 className="text-base font-semibold text-[var(--text-primary)] mb-1">No tasks found</h3>
               <p className="text-sm text-[var(--text-muted)] mb-5 max-w-xs">Your filter returned no results, or no tasks have been created yet.</p>
               <button
-                onClick={() => setShowCreateModal(true)}
+                onClick={openCreateModal}
                 className="inline-flex items-center gap-2 h-10 px-5 bg-[#C4713A] hover:bg-[#A35C28] text-white text-sm font-semibold rounded-lg transition-colors shadow-md shadow-[#C4713A]/25 focus:ring-2 focus:ring-[#C4713A] focus:ring-offset-0"
               >
                 <Plus size={16} />
@@ -746,228 +777,25 @@ const Tasks = () => {
               </button>
             </div>
           ) : (
-            <div className="overflow-x-auto rounded-xl border border-[var(--border-soft)] bg-[var(--bg-base)]">
-              <table className="w-full text-left border-collapse">
-                <thead className="sticky top-0 z-10 bg-[var(--bg-raised)] shadow-[0_1px_0_var(--border-soft)]">
-                  <tr>
-                    <th className="py-3 pl-5 pr-3 w-10">
-                      <input
-                        type="checkbox"
-                        className="size-4 rounded border-[var(--border-soft)] bg-transparent text-[#C4713A] focus:ring-2 focus:ring-[#C4713A] focus:ring-offset-0 cursor-pointer"
-                      />
-                    </th>
-                    <th className="py-3 px-4 text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider cursor-pointer group hover:text-[var(--text-primary)] transition-colors">
-                      <div className="flex items-center gap-1">
-                        Task
-                        <ChevronDown size={13} className="opacity-0 group-hover:opacity-60 transition-opacity" />
-                      </div>
-                    </th>
-                    <th className="py-3 px-4 text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider w-28">Project</th>
-                    <th className="py-3 px-4 text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider w-28">Team</th>
-                    <th className="py-3 px-4 text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider w-28">Sprint</th>
-                    <th className="py-3 px-4 text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider w-24">Priority</th>
-                    <th className="py-3 px-4 text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider w-32">Status</th>
-                    <th className="py-3 px-4 text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider w-36">Progress</th>
-                    <th className="py-3 px-4 text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider w-36">Assignee</th>
-                    <th className="py-3 px-4 text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider w-28">Due Date</th>
-                    <th className="py-3 px-4 text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider w-16 text-center">
-                      <MessageSquare size={13} className="inline" />
-                    </th>
-                    <th className="py-3 px-4 w-20"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {paginatedTasks.map((task, index) => (
-                    <tr
-                      key={task._id}
-                      className={`group transition-colors cursor-pointer hover:bg-[var(--bg-surface)] ${
-                        index % 2 === 1 ? 'bg-[var(--bg-sunken)]/30' : 'bg-transparent'
-                      }`}
-                      onClick={() => viewTaskDetails(task)}
-                    >
-                      <td className="py-0 pl-5 pr-3 h-12" onClick={(e) => e.stopPropagation()}>
-                        <input
-                          type="checkbox"
-                          className="size-4 rounded border-[var(--border-soft)] bg-transparent text-[#C4713A] focus:ring-2 focus:ring-[#C4713A] focus:ring-offset-0 cursor-pointer"
-                        />
-                      </td>
-                      <td className="py-0 px-4 h-12">
-                        <div className="flex flex-col gap-0.5">
-                          <span className="text-sm font-medium text-[var(--text-primary)] leading-snug">{task.title}</span>
-                          {task.description && (
-                            <span className="text-xs text-[var(--text-muted)] line-clamp-1 leading-snug">{task.description}</span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="py-0 px-4 h-12">
-                        {task.project_id
-                          ? <ProjectLabel project={task.project_id} size="sm" showIcon={false} />
-                          : <span className="text-xs text-[var(--text-muted)]">—</span>}
-                      </td>
-                      <td className="py-0 px-4 h-12">
-                        {task.team_id
-                          ? <TeamLabel team={task.team_id} size="sm" showIcon={false} />
-                          : <span className="text-xs text-[var(--text-muted)]">—</span>}
-                      </td>
-                      <td className="py-0 px-4 h-12">
-                        {task.sprint_id
-                          ? <SprintLabel sprint={task.sprint_id} size="sm" showIcon={false} />
-                          : <span className="text-xs text-[var(--text-muted)]">—</span>}
-                      </td>
-                      <td className="py-0 px-4 h-12">
-                        <div className="flex items-center gap-1.5">
-                          <div className={`size-2 rounded-full flex-shrink-0 ${getPriorityDot(task.priority)}`} />
-                          <span className="text-xs text-[var(--text-secondary)]">{getPriorityLabel(task.priority)}</span>
-                        </div>
-                      </td>
-                      {/* Status pill — click opens a small popover overlay */}
-                      <td className="py-0 px-4 h-12" onClick={(e) => e.stopPropagation()}>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            const rect = e.currentTarget.getBoundingClientRect();
-                            setStatusPopover(statusPopover?.taskId === task._id ? null : { taskId: task._id, rect });
-                          }}
-                          className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border transition-all focus:ring-2 focus:ring-[#C4713A] focus:ring-offset-0 ${getStatusBadge(task.status)}`}
-                        >
-                          {getStatusLabel(task.status)}
-                          <ChevronDown size={11} className="opacity-60" />
-                        </button>
-                      </td>
-                      <td className="py-0 px-4 h-12">
-                        <div className="w-full min-w-[100px]">
-                          <ProgressBar progress={task.progress || 0} size="sm" showPercentage={false} animated={false} />
-                        </div>
-                      </td>
-                      <td className="py-0 px-4 h-12">
-                        {task.assigned_to && task.assigned_to.length > 0 ? (
-                          <div className="flex items-center">
-                            <div className="flex -space-x-1.5">
-                              {task.assigned_to.slice(0, 3).map((assignee, i) => (
-                                <div
-                                  key={assignee._id || i}
-                                  title={assignee.full_name}
-                                  className="size-7 rounded-full bg-gradient-to-br from-purple-500 to-indigo-500 border-2 border-[var(--bg-base)] flex items-center justify-center text-[10px] text-white font-bold flex-shrink-0"
-                                >
-                                  {getUserInitials(assignee.full_name)}
-                                </div>
-                              ))}
-                            </div>
-                            {task.assigned_to.length > 3 && (
-                              <span className="ml-1.5 text-[10px] text-[var(--text-muted)] font-medium">+{task.assigned_to.length - 3}</span>
-                            )}
-                          </div>
-                        ) : (
-                          <span className="text-xs text-[var(--text-muted)]">Unassigned</span>
-                        )}
-                      </td>
-                      <td className="py-0 px-4 h-12">
-                        <span className={`text-xs ${
-                          task.due_date && new Date(task.due_date) < new Date()
-                            ? 'text-red-400 font-medium'
-                            : 'text-[var(--text-muted)]'
-                        }`}>
-                          {task.due_date
-                            ? new Date(task.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-                            : 'No date'}
-                        </span>
-                      </td>
-                      <td className="py-0 px-4 h-12 text-center">
-                        {task.latest_comment ? (
-                          <div
-                            className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-[var(--bg-raised)] text-[var(--text-secondary)]"
-                            title={`Latest: ${task.latest_comment.content.slice(0, 60)}`}
-                          >
-                            <MessageSquare size={11} />
-                            <span className="text-[10px] font-semibold">1</span>
-                          </div>
-                        ) : (
-                          <span className="text-xs text-[var(--text-muted)]">—</span>
-                        )}
-                      </td>
-                      <td className="py-0 px-4 h-12" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex items-center justify-end gap-0.5 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-150">
-                          {canEditTask(task) && (
-                            <button
-                              onClick={() => openEditModal(task)}
-                              className="w-11 h-11 flex items-center justify-center rounded text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-raised)] transition-colors focus:ring-2 focus:ring-[#C4713A] focus:ring-offset-0"
-                              title="Edit"
-                            >
-                              <Edit2 size={14} />
-                            </button>
-                          )}
-                          {canDeleteTask(task) && (
-                            <button
-                              onClick={() => handleDeleteTask(task._id)}
-                              className="w-11 h-11 flex items-center justify-center rounded text-[var(--text-muted)] hover:text-red-400 hover:bg-red-500/10 transition-colors focus:ring-2 focus:ring-[#C4713A] focus:ring-offset-0"
-                              title="Delete"
-                            >
-                              <Trash2 size={14} />
-                            </button>
-                          )}
-                          <button
-                            onClick={() => viewTaskDetails(task)}
-                            className="w-11 h-11 flex items-center justify-center rounded text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-raised)] transition-colors focus:ring-2 focus:ring-[#C4713A] focus:ring-offset-0"
-                            title="More"
-                          >
-                            <MoreHorizontal size={15} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 pb-20">
+              {filteredTasks.map((task) => (
+                <TaskCard
+                  key={getTaskId(task)}
+                  task={task}
+                  onClick={() => viewTaskDetails(task)}
+                  onEdit={() => openEditModal(task)}
+                  onDelete={() => handleDeleteTask(getTaskId(task))}
+                  onStatusChange={(status) => handleUpdateTask(getTaskId(task), { status })}
+                  canEdit={canEditTask(task)}
+                  canDelete={canDeleteTask(task)}
+                  getUserInitials={getUserInitials}
+                />
+              ))}
             </div>
           )}
         </div>
 
-        {/* Pagination */}
-        <div className="mt-6 flex items-center justify-between text-sm text-[var(--text-muted)] flex-wrap gap-3">
-          <span className="text-xs">
-            Showing{' '}
-            <span className="font-medium text-[var(--text-primary)]">
-              {filteredTasks.length === 0 ? 0 : (safeCurrentPage - 1) * rowsPerPage + 1}–{Math.min(safeCurrentPage * rowsPerPage, filteredTasks.length)}
-            </span>{' '}
-            of{' '}
-            <span className="font-medium text-[var(--text-primary)]">{filteredTasks.length}</span>{' '}
-            task{filteredTasks.length !== 1 ? 's' : ''}
-          </span>
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              <span className="text-xs">Rows per page:</span>
-              <select
-                value={rowsPerPage}
-                onChange={(e) => { setRowsPerPage(Number(e.target.value)); setCurrentPage(1); }}
-                className="h-8 px-2 text-xs bg-[var(--bg-raised)] border border-[var(--border-soft)] text-[var(--text-primary)] rounded-lg focus:ring-2 focus:ring-[#C4713A] focus:ring-offset-0 focus:border-transparent"
-              >
-                <option value={10}>10</option>
-                <option value={25}>25</option>
-                <option value={50}>50</option>
-                <option value={100}>100</option>
-              </select>
-            </div>
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                disabled={safeCurrentPage <= 1}
-                className="w-8 h-8 flex items-center justify-center rounded-lg border border-[var(--border-soft)] text-[var(--text-muted)] disabled:opacity-40 disabled:cursor-not-allowed hover:enabled:bg-[var(--bg-raised)] transition-colors"
-                aria-label="Previous page"
-              >
-                <ChevronDown size={14} className="rotate-90" />
-              </button>
-              <span className="text-xs px-2">{safeCurrentPage} / {totalPages}</span>
-              <button
-                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                disabled={safeCurrentPage >= totalPages}
-                className="w-8 h-8 flex items-center justify-center rounded-lg border border-[var(--border-soft)] text-[var(--text-muted)] disabled:opacity-40 disabled:cursor-not-allowed hover:enabled:bg-[var(--bg-raised)] transition-colors"
-                aria-label="Next page"
-              >
-                <ChevronDown size={14} className="-rotate-90" />
-              </button>
-            </div>
-          </div>
-        </div>
+
       </ResponsivePageLayout>
 
       {/* Status popover */}
@@ -1193,7 +1021,7 @@ const Tasks = () => {
               <label className="block text-sm font-medium text-[var(--text-primary)] mb-1.5">Status</label>
               <select
                 value={formData.status}
-                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                onChange={(e) => setFormData({ ...formData, status: e.target.value, progress: e.target.value === 'in_progress' ? formData.progress : 0 })}
                 className="w-full h-10 px-3 bg-[var(--bg-base)] border border-[var(--border-soft)] text-[var(--text-primary)] rounded-lg text-sm focus:ring-2 focus:ring-[#C4713A] focus:ring-offset-0 focus:border-transparent transition-[border-color,box-shadow]"
               >
                 <option value="todo">To Do</option>
@@ -1244,9 +1072,10 @@ const Tasks = () => {
             </select>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-[var(--text-primary)] mb-1.5">Progress: {formData.progress}%</label>
-            <input
+          {formData.status === 'in_progress' && (
+            <div>
+              <label className="block text-sm font-medium text-[var(--text-primary)] mb-1.5">Progress: {formData.progress}%</label>
+              <input
               type="range"
               min="0"
               max="100"
@@ -1256,6 +1085,7 @@ const Tasks = () => {
               className="w-full h-2 rounded-lg appearance-none cursor-pointer accent-[#C4713A]"
             />
           </div>
+          )}
 
           {['admin', 'hr', 'team_lead'].includes(user?.role) && (
             <>
@@ -1327,7 +1157,7 @@ const Tasks = () => {
             </>
           )}
 
-        </form>
+            </form>
         <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 sm:gap-3 pt-4 mt-4 border-t border-[var(--border-soft)]">
           <button
             type="button"
@@ -1337,7 +1167,7 @@ const Tasks = () => {
             Cancel
           </button>
           <button
-            type="submit"
+            type="button"
             onClick={handleCreateTask}
             className="w-full sm:w-auto h-10 px-6 bg-[#C4713A] hover:bg-[#A35C28] text-white text-sm font-semibold rounded-lg transition-colors shadow-md shadow-[#C4713A]/25 focus:ring-2 focus:ring-[#C4713A] focus:ring-offset-0"
           >
@@ -1357,7 +1187,8 @@ const Tasks = () => {
         size="large"
       >
         {editingTask && (
-          <form onSubmit={handleEditTask} className="space-y-4">
+          <>
+            <form onSubmit={handleEditTask} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-[var(--text-primary)] mb-1.5">Title *</label>
               <input
@@ -1476,23 +1307,25 @@ const Tasks = () => {
               </>
             )}
           </form>
+
+            <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 sm:gap-3 pt-4 mt-4 border-t border-[var(--border-soft)]">
+              <button
+                type="button"
+                onClick={() => { setShowEditModal(false); setEditingTask(null); }}
+                className="w-full sm:w-auto h-10 px-6 bg-[var(--bg-surface)] hover:bg-[var(--bg-raised)] border border-[var(--border-soft)] text-[var(--text-primary)] text-sm font-medium rounded-lg transition-colors focus:ring-2 focus:ring-[#C4713A] focus:ring-offset-0"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleEditTask}
+                className="w-full sm:w-auto h-10 px-6 bg-[#C4713A] hover:bg-[#A35C28] text-white text-sm font-semibold rounded-lg transition-colors shadow-md shadow-[#C4713A]/25 focus:ring-2 focus:ring-[#C4713A] focus:ring-offset-0"
+              >
+                Update Task
+              </button>
+            </div>
+          </>
         )}
-        <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 sm:gap-3 pt-4 mt-4 border-t border-[var(--border-soft)]">
-          <button
-            type="button"
-            onClick={() => { setShowEditModal(false); setEditingTask(null); }}
-            className="w-full sm:w-auto h-10 px-6 bg-[var(--bg-surface)] hover:bg-[var(--bg-raised)] border border-[var(--border-soft)] text-[var(--text-primary)] text-sm font-medium rounded-lg transition-colors focus:ring-2 focus:ring-[#C4713A] focus:ring-offset-0"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            onClick={handleEditTask}
-            className="w-full sm:w-auto h-10 px-6 bg-[#C4713A] hover:bg-[#A35C28] text-white text-sm font-semibold rounded-lg transition-colors shadow-md shadow-[#C4713A]/25 focus:ring-2 focus:ring-[#C4713A] focus:ring-offset-0"
-          >
-            Update Task
-          </button>
-        </div>
       </ResponsiveModal>
 
       {/* Task Detail Modal */}
@@ -1521,7 +1354,7 @@ const Tasks = () => {
                 {canEditTask(selectedTask) ? (
                   <select
                     value={selectedTask.status}
-                    onChange={(e) => handleUpdateTask(selectedTask._id, { status: e.target.value })}
+                    onChange={(e) => handleUpdateTask(getTaskId(selectedTask), { status: e.target.value })}
                     className="w-full h-10 px-3 bg-[var(--bg-base)] border border-[var(--border-soft)] text-[var(--text-primary)] rounded-lg text-sm focus:ring-2 focus:ring-[#C4713A] focus:ring-offset-0 focus:border-transparent transition-[border-color,box-shadow]"
                   >
                     <option value="todo">To Do</option>

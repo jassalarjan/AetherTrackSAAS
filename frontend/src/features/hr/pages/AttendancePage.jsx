@@ -929,7 +929,7 @@ export default function AttendancePage() {
 
           {/* Date Detail Modal */}
           {showDateModal && selectedDate && (
-            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[var(--z-modal)] p-4">
               <div className={`${currentTheme.surface} rounded-xl shadow-2xl w-full max-w-3xl max-h-[80vh] overflow-hidden`}>
                 <div className={`flex items-center justify-between p-6 border-b ${currentTheme.border}`}>
                   <div>

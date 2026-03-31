@@ -136,7 +136,8 @@ const Drawer = ({
 
   return createPortal(
     <div 
-      className="fixed inset-0 z-[var(--z-modal)] flex"
+      className="fixed inset-0 flex"
+      style={{ zIndex: 9999 }}
       role="presentation"
     >
       {/* Overlay */}

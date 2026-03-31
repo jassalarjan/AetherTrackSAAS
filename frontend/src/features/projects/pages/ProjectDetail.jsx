@@ -1128,7 +1128,7 @@ const ProjectDetail = () => {
 
       {/* Add Member Modal */}
       {showMemberModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[var(--z-modal)]">
           <div className="bg-white dark:bg-[#1a2234] rounded-xl border border-gray-200 dark:border-gray-800 w-full max-w-md shadow-2xl">
             <div className="border-b border-gray-200 dark:border-gray-800 p-6 flex items-center justify-between">
               <h3 className="text-xl font-bold text-gray-900 dark:text-white">Add Team Member</h3>
@@ -1170,7 +1170,7 @@ const ProjectDetail = () => {
 
       {/* Upload Document Modal */}
       {showDocumentModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[var(--z-modal)]">
           <div className="bg-white dark:bg-[#1a2234] rounded-xl border border-gray-200 dark:border-gray-800 w-full max-w-md shadow-2xl">
             <div className="border-b border-gray-200 dark:border-gray-800 p-6 flex items-center justify-between">
               <h3 className="text-xl font-bold text-gray-900 dark:text-white">Upload Document</h3>
@@ -1234,7 +1234,7 @@ const ProjectDetail = () => {
 
       {/* Milestone Modal */}
       {showMilestoneModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[var(--z-modal)]">
           <div className="bg-white dark:bg-[#1a2234] rounded-xl border border-gray-200 dark:border-gray-800 w-full max-w-md shadow-2xl">
             <div className="border-b border-gray-200 dark:border-gray-800 p-6 flex items-center justify-between">
               <h3 className="text-xl font-bold text-gray-900 dark:text-white">

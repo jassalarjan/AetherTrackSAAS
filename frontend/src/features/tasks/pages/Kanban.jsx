@@ -10,6 +10,7 @@ import { usePageShortcuts } from '@/shared/hooks/usePageShortcuts';
 import ShortcutsOverlay from '@/features/tasks/components/ShortcutsOverlay';
 import { PageLoader } from '@/shared/components/ui/Spinner';
 import ResponsivePageLayout from '@/shared/components/responsive/ResponsivePageLayout';
+import ResponsiveModal from '@/shared/components/responsive/ResponsiveModal';
 import ConfirmModal from '@/shared/components/ui/ConfirmModal';
 import ProjectLabel from '@/features/projects/components/ProjectLabel';
 import TeamLabel from '@/shared/components/layout/TeamLabel';
@@ -473,8 +474,7 @@ const Kanban = () => {
   if (loading) return <PageLoader />;
 
   return (
-    <>
-      <ResponsivePageLayout title="Kanban Board" icon={MoreHorizontal} noPadding>
+    <ResponsivePageLayout title="Kanban Board" icon={MoreHorizontal} noPadding>
         {/* Header Section */}
         <header className={`border-b border-[var(--border-soft)] bg-[var(--bg-base)] shrink-0`}>
           {/* Top Row: Title and Actions */}
@@ -632,9 +632,12 @@ const Kanban = () => {
                           draggable={canEditTask(task)}
                           onDragStart={(e) => handleDragStart(e, task)}
                           onDragEnd={handleDragEnd}
-                          className={`group bg-[var(--bg-canvas)] p-3 sm:p-4 rounded-lg border border-[var(--border-soft)] hover:border-[#C4713A]/50 cursor-grab active:cursor-grabbing shadow-sm hover:shadow-lg transition-all duration-200 hover:-translate-y-0.5 ${isDone ? 'opacity-70 hover:opacity-100' : ''
-                            }`}
-                          onClick={() => setSelectedTask(task)}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setSelectedTask(task);
+                          }}
+                          className={`group bg-[var(--bg-canvas)] p-3 sm:p-4 rounded-lg border border-[var(--border-soft)] hover:border-[#C4713A]/50 cursor-pointer shadow-sm hover:shadow-lg transition-all duration-200 hover:-translate-y-0.5 ${isDone ? 'opacity-70 hover:opacity-100' : ''}`}
                         >
                           <div className="flex justify-between items-start mb-2">
                             <span className={`text-[11px] font-mono text-[#6b7280] ${isDone ? 'line-through' : ''}`}>
@@ -727,309 +730,297 @@ const Kanban = () => {
         </div>
 
       {/* Create Task Modal */}
-      {showCreateModal && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-          <div className={`bg-[var(--bg-raised)] rounded-lg p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-[var(--border-soft)]`}>
-            <div className="flex justify-between items-center mb-6">
-              <h2 className={`text-2xl font-bold text-[var(--text-primary)]`}>Create New Task</h2>
-              <button
-                onClick={() => setShowCreateModal(false)}
-                className={`text-[var(--text-muted)] hover:text-[var(--text-primary)]`}
-              >
-                <X size={24} />
-              </button>
-            </div>
+      <ResponsiveModal
+        isOpen={showCreateModal}
+        onClose={() => {
+          setShowCreateModal(false);
+          setSelectedTeamMembers([]);
+        }}
+        title="Create New Task"
+        size="large"
+      >
+        <form onSubmit={handleCreateTask} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">Title *</label>
+            <input
+              type="text"
+              value={formData.title}
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              className="w-full px-4 py-2 bg-[var(--bg-base)] border border-[var(--border-soft)] rounded-[var(--r-md)] text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--brand)] focus:border-transparent"
+              required
+              placeholder="Enter task title"
+            />
+          </div>
 
-            <form onSubmit={handleCreateTask} className="space-y-4">
-              <div>
-                <label className={`block text-sm font-medium text-[var(--text-primary)] mb-2`}>Title *</label>
-                <input
-                  type="text"
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  className={`w-full px-4 py-2 bg-[var(--bg-base)] border border-[var(--border-soft)] rounded text-[var(--text-primary)] focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
-                  required
-                />
-              </div>
-
-              <div>
-                <label className={`block text-sm font-medium text-[var(--text-primary)] mb-2`}>Description</label>
-                <textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className={`w-full px-4 py-2 bg-[var(--bg-base)] border border-[var(--border-soft)] rounded text-[var(--text-primary)] focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
-                  rows="4"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className={`block text-sm font-medium text-[var(--text-primary)] mb-2`}>Priority</label>
-                  <select
-                    value={formData.priority}
-                    onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
-                    className={`w-full px-4 py-2 bg-[var(--bg-base)] border border-[var(--border-soft)] rounded text-[var(--text-primary)] focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
-                  >
-                    <option value="low">Low</option>
-                    <option value="medium">Medium</option>
-                    <option value="high">High</option>
-                    <option value="urgent">Urgent</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className={`block text-sm font-medium text-[var(--text-primary)] mb-2`}>Status</label>
-                  <select
-                    value={formData.status}
-                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                    className={`w-full px-4 py-2 bg-[var(--bg-base)] border border-[var(--border-soft)] rounded text-[var(--text-primary)] focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
-                  >
-                    <option value="todo">To Do</option>
-                    <option value="in_progress">In Progress</option>
-                    <option value="review">Review</option>
-                    <option value="done">Done</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className={`block text-sm font-medium text-[var(--text-primary)] mb-2`}>Project *</label>
-                <select
-                  value={formData.project_id}
-                  onChange={(e) => setFormData({ ...formData, project_id: e.target.value })}
-                  className={`w-full px-4 py-2 bg-[var(--bg-base)] border border-[var(--border-soft)] rounded text-[var(--text-primary)] focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
-                  required
-                >
-                  <option value="">Select a project</option>
-                  {projects.map((project) => (
-                    <option key={project._id} value={project._id}>
-                      {project.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className={`block text-sm font-medium text-[var(--text-primary)] mb-2`}>Sprint (Optional)</label>
-                <select
-                  value={formData.sprint_id}
-                  onChange={(e) => setFormData({ ...formData, sprint_id: e.target.value })}
-                  className={`w-full px-4 py-2 bg-[var(--bg-base)] border border-[var(--border-soft)] rounded text-[var(--text-primary)] focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
-                >
-                  <option value="">No Sprint</option>
-                  {sprints.map((sprint) => (
-                    <option key={sprint._id} value={sprint._id}>
-                      {sprint.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className={`block text-sm font-medium text-[var(--text-primary)] mb-2`}>Progress: {formData.progress}%</label>
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  step="5"
-                  value={formData.progress}
-                  onChange={(e) => setFormData({ ...formData, progress: parseInt(e.target.value) })}
-                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#C4713A]"
-                />
-              </div>
-
-              <div>
-                <label className={`block text-sm font-medium text-[var(--text-primary)] mb-2`}>Due Date *</label>
-                <input
-                  type="date"
-                  value={formData.due_date}
-                  onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
-                  className={`w-full px-4 py-2 bg-[var(--bg-base)] border border-[var(--border-soft)] rounded text-[var(--text-primary)] focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
-                  required
-                />
-              </div>
-
-              {['admin', 'hr', 'team_lead'].includes(user?.role) && (
-                <>
                   <div>
-                    <label className={`block text-sm font-medium text-[var(--text-primary)] mb-2`}>Select Team</label>
+                    <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">Description</label>
+                    <textarea
+                      value={formData.description}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      className="w-full px-4 py-2 bg-[var(--bg-base)] border border-[var(--border-soft)] rounded-[var(--r-md)] text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--brand)] focus:border-transparent"
+                      rows="4"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">Priority</label>
+                      <select
+                        value={formData.priority}
+                        onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
+                        className="w-full px-4 py-2 bg-[var(--bg-base)] border border-[var(--border-soft)] rounded-[var(--r-md)] text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--brand)] focus:border-transparent"
+                      >
+                        <option value="low">Low</option>
+                        <option value="medium">Medium</option>
+                        <option value="high">High</option>
+                        <option value="urgent">Urgent</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">Status</label>
+                      <select
+                        value={formData.status}
+                        onChange={(e) => setFormData({ ...formData, status: e.target.value, progress: e.target.value === 'in_progress' ? formData.progress : 0 })}
+                        className="w-full px-4 py-2 bg-[var(--bg-base)] border border-[var(--border-soft)] rounded-[var(--r-md)] text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--brand)] focus:border-transparent"
+                      >
+                        <option value="todo">To Do</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="review">Review</option>
+                        <option value="done">Done</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">Project *</label>
                     <select
-                      value={formData.team_id}
-                      onChange={(e) => handleTeamChange(e.target.value)}
-                      className={`w-full px-4 py-2 bg-[var(--bg-base)] border border-[var(--border-soft)] rounded text-[var(--text-primary)] focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
+                      value={formData.project_id}
+                      onChange={(e) => setFormData({ ...formData, project_id: e.target.value })}
+                      className="w-full px-4 py-2 bg-[var(--bg-base)] border border-[var(--border-soft)] rounded-[var(--r-md)] text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--brand)] focus:border-transparent"
+                      required
                     >
-                      <option value="">No Team</option>
-                      {teams.map((team) => (
-                        <option key={team._id} value={team._id}>
-                          {team.name}
+                      <option value="">Select a project</option>
+                      {projects.map((project) => (
+                        <option key={project._id} value={project._id}>
+                          {project.name}
                         </option>
                       ))}
                     </select>
                   </div>
 
-                  {formData.team_id && selectedTeamMembers.length > 0 && (
+                  <div>
+                    <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">Sprint (Optional)</label>
+                    <select
+                      value={formData.sprint_id}
+                      onChange={(e) => setFormData({ ...formData, sprint_id: e.target.value })}
+                      className="w-full px-4 py-2 bg-[var(--bg-base)] border border-[var(--border-soft)] rounded-[var(--r-md)] text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--brand)] focus:border-transparent"
+                    >
+                      <option value="">No Sprint</option>
+                      {sprints.map((sprint) => (
+                        <option key={sprint._id} value={sprint._id}>
+                          {sprint.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {formData.status === 'in_progress' && (
                     <div>
-                      <label className={`block text-sm font-medium text-[var(--text-primary)] mb-2`}>Assign Team Members</label>
-                      <div className={`space-y-2 max-h-40 overflow-y-auto border border-[var(--border-soft)] rounded-lg p-3 bg-[var(--bg-base)]`}>
-                        {selectedTeamMembers.map((member) => (
-                          <label key={member._id} className="flex items-center space-x-2">
-                            <input
-                              type="checkbox"
-                              checked={formData.assigned_to.includes(member._id)}
-                              onChange={() => handleMemberToggle(member._id)}
-                              className="rounded border-[#4b5563] text-[#C4713A] focus:ring-[#C4713A]"
-                            />
-                            <span className={`text-sm text-[var(--text-primary)]`}>
-                              {member.full_name} ({member.role})
-                              {member._id === currentUserId && <span className="text-[#C4713A] font-medium"> (You)</span>}
-                            </span>
-                          </label>
-                        ))}
-                      </div>
+                      <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">Progress: {formData.progress}%</label>
+                      <input
+                        type="range"
+                        min="0"
+                        max="100"
+                        step="5"
+                        value={formData.progress}
+                        onChange={(e) => setFormData({ ...formData, progress: parseInt(e.target.value) })}
+                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[var(--brand)]"
+                      />
                     </div>
                   )}
-                </>
-              )}
 
-              <div className="flex justify-end space-x-4 pt-4">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowCreateModal(false);
-                    setSelectedTeamMembers([]);
-                  }}
-                  className={`px-6 py-2 bg-[var(--bg-surface)] text-[var(--text-primary)] rounded hover:bg-[var(--bg-raised)] transition-colors`}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-6 py-2 bg-[#C4713A] text-white rounded hover:bg-[#A35C28] transition-colors font-semibold"
-                >
-                  Create Task
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+                  <div>
+                    <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">Due Date *</label>
+                    <input
+                      type="date"
+                      value={formData.due_date}
+                      onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
+                      className="w-full px-4 py-2 bg-[var(--bg-base)] border border-[var(--border-soft)] rounded-[var(--r-md)] text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--brand)] focus:border-transparent"
+                      required
+                    />
+                  </div>
+
+                  {['admin', 'hr', 'team_lead'].includes(user?.role) && (
+                    <>
+                      <div>
+                        <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">Select Team</label>
+                        <select
+                          value={formData.team_id}
+                          onChange={(e) => handleTeamChange(e.target.value)}
+                          className="w-full px-4 py-2 bg-[var(--bg-base)] border border-[var(--border-soft)] rounded-[var(--r-md)] text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--brand)] focus:border-transparent"
+                        >
+                          <option value="">No Team</option>
+                          {teams.map((team) => (
+                            <option key={team._id} value={team._id}>
+                              {team.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {formData.team_id && selectedTeamMembers.length > 0 && (
+                        <div>
+                          <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">Assign Team Members</label>
+                          <div className="space-y-2 max-h-40 overflow-y-auto border border-[var(--border-soft)] rounded-[var(--r-lg)] p-3 bg-[var(--bg-base)]">
+                            {selectedTeamMembers.map((member) => (
+                              <label key={member._id} className="flex items-center space-x-2">
+                                <input
+                                  type="checkbox"
+                                  checked={formData.assigned_to.includes(member._id)}
+                                  onChange={() => handleMemberToggle(member._id)}
+                                  className="rounded border-[var(--border-soft)] text-[var(--brand)] focus:ring-[var(--brand)]"
+                                />
+                                <span className="text-sm text-[var(--text-primary)]">
+                                  {member.full_name} ({member.role})
+                                  {member._id === currentUserId && <span className="text-[var(--brand)] font-medium"> (You)</span>}
+                                </span>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  <div className="flex justify-end space-x-4 pt-4">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowCreateModal(false);
+                        setSelectedTeamMembers([]);
+                      }}
+                      className="px-6 py-2 bg-[var(--bg-surface)] text-[var(--text-primary)] rounded-[var(--r-md)] hover:bg-[var(--bg-raised)] transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-6 py-2 bg-[var(--brand)] text-white rounded-[var(--r-md)] hover:opacity-90 transition-colors font-semibold"
+                    >
+                      Create Task
+                    </button>
+                  </div>
+                </form>
+      </ResponsiveModal>
 
       {/* Task Detail Modal */}
-      {selectedTask && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-          <div className={`bg-[var(--bg-raised)] rounded-lg p-8 max-w-3xl w-full max-h-[90vh] overflow-y-auto border border-[var(--border-soft)]`}>
-            <div className="flex justify-between items-center mb-6">
-              <h2 className={`text-2xl font-bold text-[var(--text-primary)]`}>{selectedTask.title}</h2>
-              <button
-                onClick={() => setSelectedTask(null)}
-                className={`text-[var(--text-muted)] hover:text-[var(--text-primary)]`}
-              >
-                <X size={24} />
-              </button>
-            </div>
-
-            <div className="space-y-6">
-              <div>
-                <p className={`text-[var(--text-secondary)]`}>{selectedTask.description || 'No description'}</p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className={`block text-sm font-medium text-[var(--text-primary)] mb-2`}>Status</label>
-                  <select
-                    value={selectedTask.status}
-                    onChange={(e) => {
-                      handleUpdateTask(selectedTask._id, { status: e.target.value });
-                      setSelectedTask({ ...selectedTask, status: e.target.value });
-                    }}
-                    className={`w-full px-4 py-2 bg-[var(--bg-base)] border border-[var(--border-soft)] rounded text-[var(--text-primary)] focus:ring-2 focus:ring-[#C4713A] focus:border-transparent`}
-                  >
-                    <option value="todo">To Do</option>
-                    <option value="in_progress">In Progress</option>
-                    <option value="review">Review</option>
-                    <option value="done">Done</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className={`block text-sm font-medium text-[var(--text-primary)] mb-2`}>Priority</label>
-                  <div className="flex items-center gap-2">
-                    {(() => {
-                      const badge = getPriorityBadge(selectedTask.priority);
-                      return (
-                        <span className={`inline-block px-3 py-1 rounded text-sm ${badge.bg} ${badge.text} font-medium`}>
-                          {badge.label}
-                        </span>
-                      );
-                    })()}
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <p className={`text-sm text-[var(--text-muted)]`}>
-                      <span className="font-medium">Created by:</span> {selectedTask.created_by?.full_name || 'Unknown'}
-                    </p>
-                    {selectedTask.team_id && (
-                      <p className={`text-sm text-[var(--text-muted)]`}>
-                        <span className="font-medium">Team:</span> {selectedTask.team_id.name}
-                      </p>
-                    )}
-                  </div>
-                  <div>
-                    {selectedTask.assigned_to && selectedTask.assigned_to.length > 0 && (
-                      <div className={`text-sm text-[var(--text-muted)]`}>
-                        <span className="font-medium">Assigned to:</span>
-                        <div className="mt-1 flex flex-wrap gap-1">
-                          {selectedTask.assigned_to.map((user) => (
-                            <span key={user._id} className="inline-block bg-blue-500/10 text-blue-400 text-xs px-2 py-1 rounded border border-blue-500/20">
-                              {user.full_name}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <p className={`text-sm text-[var(--text-muted)]`}>
-                      <span className="font-medium">Created:</span> {new Date(selectedTask.created_at).toLocaleString()}
-                    </p>
-                  </div>
-                  <div>
-                    {selectedTask.due_date && (
-                      <p className={`text-sm text-[var(--text-muted)]`}>
-                        <span className="font-medium">Due:</span>
-                        <span className={`font-medium ml-1 ${new Date(selectedTask.due_date) < new Date() ? 'text-red-400' : 'text-orange-400'}`}>
-                          {new Date(selectedTask.due_date).toLocaleString()}
-                        </span>
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {canDeleteTask(selectedTask) && (
-                <div className={`pt-4 border-t border-[var(--border-soft)]`}>
-                  <button
-                    onClick={() => {
-                      handleDeleteTask(selectedTask._id);
-                      setSelectedTask(null);
-                    }}
-                    className="px-4 py-2 bg-red-500/10 text-red-400 rounded hover:bg-red-500/20 transition-colors border border-red-500/20"
-                  >
-                    Delete Task
-                  </button>
-                </div>
-              )}
-            </div>
+      <ResponsiveModal
+        isOpen={!!selectedTask}
+        onClose={() => setSelectedTask(null)}
+        title={selectedTask?.title || 'Task Details'}
+        size="large"
+      >
+        <div className="space-y-4">
+          <div>
+            <p className="text-[var(--text-secondary)]">{selectedTask?.description || 'No description'}</p>
           </div>
-        </div>
-      )}
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">Status</label>
+              <select
+                value={selectedTask?.status}
+                onChange={(e) => {
+                  handleUpdateTask(selectedTask?._id, { status: e.target.value, progress: e.target.value === 'in_progress' ? (selectedTask?.progress || 0) : 0 });
+                  setSelectedTask({ ...selectedTask, status: e.target.value, progress: e.target.value === 'in_progress' ? selectedTask?.progress : 0 });
+                }}
+                className="w-full px-4 py-2 bg-[var(--bg-base)] border border-[var(--border-soft)] rounded-[var(--r-md)] text-[var(--text-primary)] focus:ring-2 focus:ring-[var(--brand)] focus:border-transparent"
+              >
+                <option value="todo">To Do</option>
+                <option value="in_progress">In Progress</option>
+                <option value="review">Review</option>
+                <option value="done">Done</option>
+              </select>
+            </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-[var(--text-primary)] mb-2">Priority</label>
+                      <div className="flex items-center gap-2">
+                        {selectedTask?.priority && (() => {
+                          const badge = getPriorityBadge(selectedTask.priority);
+                          return (
+                            <span className={`inline-block px-3 py-1 rounded-[var(--r-md)] text-sm ${badge.bg} ${badge.text} font-medium`}>
+                              {badge.label}
+                            </span>
+                          );
+                        })()}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm text-[var(--text-muted)]">
+                          <span className="font-medium">Created by:</span> {selectedTask?.created_by?.full_name || 'Unknown'}
+                        </p>
+                        {selectedTask?.team_id && (
+                          <p className="text-sm text-[var(--text-muted)]">
+                            <span className="font-medium">Team:</span> {selectedTask?.team_id?.name}
+                          </p>
+                        )}
+                      </div>
+                      <div>
+                        {selectedTask?.assigned_to && selectedTask?.assigned_to.length > 0 && (
+                          <div className="text-sm text-[var(--text-muted)]">
+                            <span className="font-medium">Assigned to:</span>
+                            <div className="mt-1 flex flex-wrap gap-1">
+                              {selectedTask?.assigned_to.map((user) => (
+                                <span key={user._id} className="inline-block bg-blue-500/10 text-blue-400 text-xs px-2 py-1 rounded-[var(--r-md)] border border-blue-500/20">
+                                  {user.full_name}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm text-[var(--text-muted)]">
+                          <span className="font-medium">Created:</span> {selectedTask ? new Date(selectedTask.created_at).toLocaleString() : ''}
+                        </p>
+                      </div>
+                      <div>
+                        {selectedTask?.due_date && (
+                          <p className="text-sm text-[var(--text-muted)]">
+                            <span className="font-medium">Due:</span>
+                            <span className={`font-medium ml-1 ${selectedTask && new Date(selectedTask.due_date) < new Date() ? 'text-red-400' : 'text-orange-400'}`}>
+                              {selectedTask ? new Date(selectedTask.due_date).toLocaleString() : ''}
+                            </span>
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {canDeleteTask(selectedTask) && (
+                    <div className="pt-4 border-t border-[var(--border-soft)]">
+                      <button
+                        onClick={() => {
+                          handleDeleteTask(selectedTask._id);
+                          setSelectedTask(null);
+                        }}
+                        className="px-4 py-2 bg-red-500/10 text-red-400 rounded-[var(--r-md)] hover:bg-red-500/20 transition-colors border border-red-500/20"
+                      >
+                        Delete Task
+                      </button>
+                    </div>
+                  )}
+                </div>
+      </ResponsiveModal>
 
       {/* Confirm Modal */}
       <ConfirmModal
@@ -1043,7 +1034,6 @@ const Kanban = () => {
         variant={confirmModal.variant}
         isLoading={confirmModal.isLoading}
       />
-    </ResponsivePageLayout>
 
       {/* Keyboard shortcuts help overlay */}
       <ShortcutsOverlay
@@ -1052,7 +1042,7 @@ const Kanban = () => {
         shortcuts={kanbanShortcuts}
         pageName="Kanban Board"
       />
-    </>
+    </ResponsivePageLayout>
   );
 };
 

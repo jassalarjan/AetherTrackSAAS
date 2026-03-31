@@ -367,7 +367,11 @@ export default function HRCalendar({ embedded = false }) {
 
       {/* Day detail modal */}
       {selectedDay && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[var(--z-modal)] p-4" onClick={() => setSelectedDay(null)}>
+        <div 
+          className="fixed inset-0 bg-black/70 flex items-center justify-center p-4"
+          style={{ zIndex: 9999 }}
+          onClick={() => setSelectedDay(null)}
+        >
           <div
             className={`${currentTheme.surface} rounded-xl p-7 max-w-lg w-full border ${currentTheme.border} shadow-2xl max-h-[85vh] overflow-y-auto`}
             onClick={(e) => e.stopPropagation()}
