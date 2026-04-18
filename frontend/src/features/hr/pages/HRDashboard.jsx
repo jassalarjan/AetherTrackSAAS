@@ -326,7 +326,7 @@ export default function HRDashboard() {
   };
 
   // Export HR Report
-  const exportHRReport = () => {
+  const exportHRReport = async () => {
     try {
       // Create CSV content
       let csvContent = 'HR Report - ' + new Date().toLocaleDateString() + '\n\n';
@@ -364,6 +364,21 @@ export default function HRDashboard() {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+
+      await api.post('/changelog/client-event', {
+        event_type: 'report_downloaded',
+        action: 'HR_REPORT_CSV_EXPORTED',
+        target_type: 'report',
+        target_id: 'hr-dashboard-csv',
+        target_name: 'HR Dashboard CSV Report',
+        description: `HR dashboard report exported for ${currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`,
+        metadata: {
+          format: 'csv',
+          module: 'hr_dashboard',
+          attendanceRows: todayAttendance.length,
+          leaveRows: leaveRequests.length
+        }
+      }).catch(() => {});
 
       alert('HR Report exported successfully!');
     } catch (error) {
@@ -558,6 +573,21 @@ export default function HRDashboard() {
       let successCount = 0;
       let errorCount = 0;
 
+      const resolvedVariables = {};
+      (selectedTemplate?.variables || []).forEach((variable) => {
+        const key = variable?.name;
+        if (!key) return;
+        const rawValue = emailData.variables?.[key];
+        const normalized = typeof rawValue === 'string' ? rawValue.trim() : rawValue;
+        if (normalized) {
+          resolvedVariables[key] = normalized;
+          return;
+        }
+        if (variable?.example) {
+          resolvedVariables[key] = variable.example;
+        }
+      });
+
       // Send personalized email to each recipient
       for (const recipientData of emailRecipients) {
         let recipientObj;
@@ -565,7 +595,7 @@ export default function HRDashboard() {
         if (recipientMode === 'INTERNAL') {
           const user = users.find(u => u._id === recipientData);
           if (!user?.email) {
-            console.warn(`Skipping user ${recipientData}: no email address`);
+            console.warn('Skipping recipient with missing email address');
             errorCount++;
             continue;
           }
@@ -579,7 +609,7 @@ export default function HRDashboard() {
         let personalizedSubject = emailData.subject;
 
         // Replace user-specific variables
-        Object.entries(emailData.variables).forEach(([key, value]) => {
+        Object.entries(resolvedVariables).forEach(([key, value]) => {
           const regex = new RegExp(`{{${key}}}`, 'g');
           personalizedContent = personalizedContent.replace(regex, value);
           personalizedSubject = personalizedSubject.replace(regex, value);
@@ -588,8 +618,12 @@ export default function HRDashboard() {
         // Replace recipient-specific variables
         personalizedContent = personalizedContent.replace(/{{fullName}}/g, recipientObj.name);
         personalizedContent = personalizedContent.replace(/{{email}}/g, recipientObj.email);
+        personalizedContent = personalizedContent.replace(/{{recipientName}}/g, recipientObj.name);
+        personalizedContent = personalizedContent.replace(/{{name}}/g, recipientObj.name);
         personalizedSubject = personalizedSubject.replace(/{{fullName}}/g, recipientObj.name);
         personalizedSubject = personalizedSubject.replace(/{{email}}/g, recipientObj.email);
+        personalizedSubject = personalizedSubject.replace(/{{recipientName}}/g, recipientObj.name);
+        personalizedSubject = personalizedSubject.replace(/{{name}}/g, recipientObj.name);
 
         try {
           const response = await api.post('/hr/email-templates/send', {
@@ -600,9 +634,9 @@ export default function HRDashboard() {
           });
 
           successCount++;
-          console.log(`Email sent to ${recipientObj.email}`);
+          console.log('Email sent to recipient');
         } catch (emailError) {
-          console.error(`Failed to send email to ${recipientObj.email}:`, emailError);
+          console.error('Failed to send email to recipient:', emailError?.message || 'Unknown error');
           errorCount++;
         }
       }
@@ -617,7 +651,7 @@ export default function HRDashboard() {
       } else {
         await confirmModal.show({
           title: 'Email Send Failed',
-          message: 'Failed to send any emails. Please check the console for details.',
+          message: 'Failed to send any emails. Please review your email settings and try again.',
           variant: 'danger'
         });
       }
@@ -649,7 +683,7 @@ export default function HRDashboard() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {selectedTemplate.variables.map((variable, index) => {
             const isAutoPopulated = autoPopulatedVars.includes(variable.name);
-            const isRecipientVar = ['fullName', 'email'].includes(variable.name);
+            const isRecipientVar = ['fullName', 'email', 'recipientName', 'name'].includes(variable.name);
 
             return (
               <div key={index}>
@@ -703,13 +737,26 @@ export default function HRDashboard() {
       let previewHtml = emailData.htmlContent;
       let previewSubject = emailData.subject;
 
-      // Replace system variables
-      Object.entries(emailData.variables).forEach(([key, value]) => {
-        if (value) {
-          const regex = new RegExp(`{{${key}}}`, 'g');
-          previewHtml = previewHtml.replace(regex, value);
-          previewSubject = previewSubject.replace(regex, value);
+      const resolvedVariables = {};
+      (selectedTemplate?.variables || []).forEach((variable) => {
+        const key = variable?.name;
+        if (!key) return;
+        const rawValue = emailData.variables?.[key];
+        const normalized = typeof rawValue === 'string' ? rawValue.trim() : rawValue;
+        if (normalized) {
+          resolvedVariables[key] = normalized;
+          return;
         }
+        if (variable?.example) {
+          resolvedVariables[key] = variable.example;
+        }
+      });
+
+      // Replace system variables
+      Object.entries(resolvedVariables).forEach(([key, value]) => {
+        const regex = new RegExp(`{{${key}}}`, 'g');
+        previewHtml = previewHtml.replace(regex, value);
+        previewSubject = previewSubject.replace(regex, value);
       });
 
       // Use first selected recipient for personalization preview
@@ -726,8 +773,12 @@ export default function HRDashboard() {
           const email = recipientMode === 'INTERNAL' ? firstRecipient.email : firstRecipient.email;
           previewHtml = previewHtml.replace(/{{fullName}}/g, name);
           previewHtml = previewHtml.replace(/{{email}}/g, email);
+          previewHtml = previewHtml.replace(/{{recipientName}}/g, name);
+          previewHtml = previewHtml.replace(/{{name}}/g, name);
           previewSubject = previewSubject.replace(/{{fullName}}/g, name);
           previewSubject = previewSubject.replace(/{{email}}/g, email);
+          previewSubject = previewSubject.replace(/{{recipientName}}/g, name);
+          previewSubject = previewSubject.replace(/{{name}}/g, name);
         }
       }
 

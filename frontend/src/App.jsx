@@ -3,7 +3,7 @@ import { lazy, Suspense, useEffect } from 'react';
 import { AppProviders } from '@/app/providers/AppProviders';
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { ProtectedRoute } from '@/app/routes/ProtectedRoute';
-import useNotifications from '@/features/notifications/hooks/useNotifications';
+import { NotificationToasts } from '@/features/notifications/components/NotificationToasts';
 import { useMobileCapabilities } from '@/shared/hooks/useMobileCapabilities';
 import { usePushNotifications } from '@/features/notifications/hooks/usePushNotifications';
 import { useAppAutoUpdate } from '@/shared/hooks/useAppAutoUpdate';
@@ -49,6 +49,7 @@ const ProjectGantt         = lazy(() => import('@/features/projects/pages/Projec
 const SprintManagement     = lazy(() => import('@/features/projects/pages/SprintManagement'));
 const ResourceWorkload     = lazy(() => import('@/features/projects/pages/ResourceWorkload'));
 const ReallocationDashboard = lazy(() => import('@/features/projects/pages/ReallocationDashboard'));
+const SystemAutomationsPage = lazy(() => import('@/features/email-automation/pages/SystemAutomationsPage'));
 const FeatureMatrix        = lazy(() => import('@/features/admin/pages/FeatureMatrix'));
 const MobileAppDownload    = lazy(() => import('@/features/admin/pages/MobileAppDownload'));
 const NotFound             = lazy(() => import('@/app/pages/NotFound'));
@@ -62,9 +63,6 @@ function AppContent() {
     const timer = setTimeout(() => el.remove(), 420);
     return () => clearTimeout(timer);
   }, []);
-
-  // Initialize notifications
-  useNotifications();
 
   // Initialize mobile capabilities (safe no-op on web)
   useMobileCapabilities();
@@ -365,11 +363,21 @@ function AppContent() {
         }
       />
 
+      <Route
+        path="/system/automations"
+        element={
+          <ProtectedRoute allowedRoles={['admin', 'hr', 'super_admin']}>
+            <SystemAutomationsPage />
+          </ProtectedRoute>
+        }
+      />
+
       {/* Legacy aliases kept for older quick links/bookmarks */}
       <Route path="/hr/self-attendance" element={<Navigate to="/self-attendance" replace />} />
       <Route path="/audit" element={<Navigate to="/audit-log" replace />} />
       <Route path="/geofence" element={<Navigate to="/geofence-management" replace />} />
       <Route path="/email-center" element={<Navigate to="/hr/email-center" replace />} />
+      <Route path="/email/automations" element={<Navigate to="/system/automations" replace />} />
       <Route path="/features" element={<Navigate to="/feature-matrix" replace />} />
       <Route path="/verification" element={<Navigate to="/verification-settings" replace />} />
 
@@ -377,6 +385,7 @@ function AppContent() {
       <Route path="*" element={<NotFound />} />
     </Routes>
     </Suspense>
+    <NotificationToasts />
     {/* Global version / update indicator — fixed floating badge */}
     <AppVersionIndicator />
     </>

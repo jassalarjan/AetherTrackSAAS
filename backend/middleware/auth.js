@@ -22,7 +22,7 @@ export const authenticate = async (req, res, next) => {
     }
 
     // Reject tokens that have been explicitly invalidated (logout)
-    if (isBlacklisted(token)) {
+    if (await isBlacklisted(token)) {
       return res.status(401).json({ message: 'Token has been invalidated' });
     }
 
@@ -44,11 +44,9 @@ export const authenticate = async (req, res, next) => {
 
     // Attach user and raw token to request (raw token needed for blacklisting on logout)
     req.user = user;
-    // Keep legacy role checks working while introducing super_admin as first-class role.
+    // Preserve canonical role for authorization middleware and expose optional legacy alias.
     req.user.systemRole = user.role;
-    if (user.role === 'super_admin') {
-      req.user.role = 'admin';
-    }
+    req.user.legacyRole = user.role === 'super_admin' ? 'admin' : user.role;
     req.token = token;
     next();
   } catch (error) {

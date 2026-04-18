@@ -70,7 +70,39 @@ router.post('/', authenticate, async (req, res) => {
         }));
 
       if (notifications.length > 0) {
-        await Notification.insertMany(notifications);
+        const createdNotifications = await Notification.insertMany(notifications);
+
+        const recipientIds = notifications.map((entry) => entry.user_id.toString());
+
+        await logChange({
+          event_type: 'task_assigned',
+          user: req.user,
+          user_ip: getClientIP(req),
+          target_type: 'task',
+          target_id: task._id.toString(),
+          target_name: task.title,
+          action: 'TASK_ASSIGNED',
+          description: `${req.user.full_name} assigned task "${task.title}" to ${recipientIds.length} user(s)`,
+          metadata: {
+            recipient_user_ids: recipientIds
+          }
+        });
+
+        await logChange({
+          event_type: 'notification_sent',
+          user: req.user,
+          user_ip: getClientIP(req),
+          target_type: 'notification',
+          target_id: task._id.toString(),
+          target_name: 'Task Assignment Notification',
+          action: 'TASK_ASSIGNMENT_NOTIFICATION_SENT',
+          description: `${req.user.full_name} sent ${createdNotifications.length} assignment notification(s) for task "${task.title}"`,
+          metadata: {
+            task_id: task._id.toString(),
+            notification_count: createdNotifications.length,
+            recipient_user_ids: recipientIds
+          }
+        });
 
         // Emit socket events for both notification and task assignment
         if (req.app.get('io')) {
@@ -381,7 +413,25 @@ router.patch('/:id', authenticate, validateIdParam(), sanitizeBody(['title', 'de
         }));
 
       if (notifications.length > 0) {
-        await Notification.insertMany(notifications);
+        const createdNotifications = await Notification.insertMany(notifications);
+
+        await logChange({
+          event_type: 'notification_sent',
+          user: req.user,
+          user_ip: getClientIP(req),
+          target_type: 'notification',
+          target_id: task._id.toString(),
+          target_name: 'Task Status Notification',
+          action: 'TASK_STATUS_NOTIFICATION_SENT',
+          description: `${req.user.full_name} sent ${createdNotifications.length} status notification(s) for task "${task.title}"`,
+          metadata: {
+            task_id: task._id.toString(),
+            old_status: oldStatus,
+            new_status: status,
+            notification_count: createdNotifications.length,
+            recipient_user_ids: notifications.map((entry) => entry.user_id.toString())
+          }
+        });
 
         // Emit socket notification for status change
         if (req.app.get('io')) {
@@ -423,7 +473,37 @@ router.patch('/:id', authenticate, validateIdParam(), sanitizeBody(['title', 'de
           }
         }));
 
-        await Notification.insertMany(notifications);
+        const createdNotifications = await Notification.insertMany(notifications);
+
+        await logChange({
+          event_type: 'task_assigned',
+          user: req.user,
+          user_ip: getClientIP(req),
+          target_type: 'task',
+          target_id: task._id.toString(),
+          target_name: task.title,
+          action: 'TASK_ASSIGNED',
+          description: `${req.user.full_name} assigned task "${task.title}" to ${newlyAssigned.length} user(s)`,
+          metadata: {
+            recipient_user_ids: newlyAssigned
+          }
+        });
+
+        await logChange({
+          event_type: 'notification_sent',
+          user: req.user,
+          user_ip: getClientIP(req),
+          target_type: 'notification',
+          target_id: task._id.toString(),
+          target_name: 'Task Reassignment Notification',
+          action: 'TASK_REASSIGNMENT_NOTIFICATION_SENT',
+          description: `${req.user.full_name} sent ${createdNotifications.length} reassignment notification(s) for task "${task.title}"`,
+          metadata: {
+            task_id: task._id.toString(),
+            notification_count: createdNotifications.length,
+            recipient_user_ids: newlyAssigned
+          }
+        });
 
         // Emit socket notification for new assignments
         if (req.app.get('io')) {
@@ -510,6 +590,23 @@ router.patch('/:id', authenticate, validateIdParam(), sanitizeBody(['title', 'de
       },
       changes
     });
+
+    if (changes.assigned_to?.removed?.length) {
+      await logChange({
+        event_type: 'task_unassigned',
+        user: req.user,
+        user_ip,
+        target_type: 'task',
+        target_id: task._id.toString(),
+        target_name: task.title,
+        action: 'TASK_UNASSIGNED',
+        description: `${req.user.full_name} unassigned ${changes.assigned_to.removed.length} user(s) from task "${task.title}"`,
+        metadata: {
+          removed_user_ids: changes.assigned_to.removed,
+          added_user_ids: changes.assigned_to.added || []
+        }
+      });
+    }
 
     // Emit socket event
     if (req.app.get('io')) {

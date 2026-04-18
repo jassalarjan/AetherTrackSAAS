@@ -23,8 +23,13 @@ const changeLogSchema = new mongoose.Schema({
       'team_member_added',
       'team_member_removed',
       'report_generated',
+      'report_automation_triggered',
+      'report_downloaded',
       'automation_triggered',
+      'email_automation_triggered',
       'notification_sent',
+      'email_sent',
+      'email_failed',
       'comment_added',
       'comment_updated',
       'comment_deleted',
@@ -61,12 +66,6 @@ const changeLogSchema = new mongoose.Schema({
   },
   target_type: {
     type: String,
-    enum: [
-      'task', 'user', 'team', 'report', 'comment', 'system',
-      'notification', 'automation', 'email',
-      'attendance', 'exception', 'leave_request', 'leave_type',
-      'holiday', 'email_template', 'policy'
-    ],
     required: false
   },
   target_id: {
@@ -93,6 +92,12 @@ const changeLogSchema = new mongoose.Schema({
     type: Object,
     default: {}
   },
+  workspaceId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Workspace',
+    required: false,
+    index: true
+  },
   created_at: {
     type: Date,
     default: Date.now
@@ -103,6 +108,7 @@ const changeLogSchema = new mongoose.Schema({
 
 // Index for faster queries
 changeLogSchema.index({ created_at: -1 });
+changeLogSchema.index({ workspaceId: 1, created_at: -1 });
 changeLogSchema.index({ event_type: 1 });
 changeLogSchema.index({ user_id: 1 });
 changeLogSchema.index({ target_type: 1, target_id: 1 });

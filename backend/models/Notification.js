@@ -4,11 +4,13 @@ const notificationSchema = new mongoose.Schema({
   user_id: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: [true, 'User ID is required']
+    required: [true, 'User ID is required'],
+    alias: 'userId'
   },
   type: {
     type: String,
     enum: [
+      'success', 'error', 'warning', 'info',
       'task_assigned', 'task_updated', 'task_completed', 'task_overdue',
       'comment_added', 'status_changed', 'task_due',
       // Meeting notifications
@@ -20,9 +22,18 @@ const notificationSchema = new mongoose.Schema({
     ],
     required: true
   },
+  title: {
+    type: String,
+    trim: true,
+    default: ''
+  },
   message: {
     type: String,
     required: true
+  },
+  link: {
+    type: String,
+    default: null
   },
   task_id: {
     type: mongoose.Schema.Types.ObjectId,
@@ -46,5 +57,6 @@ const notificationSchema = new mongoose.Schema({
 // Indexes for queries
 notificationSchema.index({ user_id: 1, read_at: 1 });
 notificationSchema.index({ created_at: -1 });
+notificationSchema.index({ user_id: 1, created_at: -1 });
 
 export default mongoose.model('Notification', notificationSchema);

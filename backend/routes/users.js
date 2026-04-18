@@ -690,6 +690,12 @@ router.delete('/:id', authenticate, checkRole(['admin', 'hr', 'super_admin']), v
       );
     }
 
+    // Remove user from all projects they're assigned to
+    await Project.updateMany(
+      { 'team_members.user': user._id },
+      { $pull: { team_members: { user: user._id } } }
+    );
+
     await User.findByIdAndDelete(id);
 
     // Emit socket event for user deletion
@@ -798,6 +804,25 @@ router.post('/bulk-import/json', authenticate, checkRole(['admin', 'hr']), uploa
     }
 
     const results = await processBulkUsers(usersData, req.user);
+
+    await logChange({
+      event_type: 'bulk_import',
+      user: req.user,
+      user_ip: getClientIP(req),
+      target_type: 'user',
+      target_id: 'bulk-import-json',
+      target_name: 'Bulk User Import (JSON)',
+      action: 'BULK_IMPORT_JSON',
+      description: `${req.user.full_name} ran JSON bulk import (${results.successful.length}/${results.total} successful)`,
+      metadata: {
+        format: 'json',
+        total: results.total,
+        successful: results.successful.length,
+        failed: results.failed.length,
+        teamsCreated: results.teamsCreated.length
+      }
+    });
+    res.locals.auditLogged = true;
     
     res.json({
       message: 'Bulk import completed',
@@ -829,6 +854,25 @@ router.post('/bulk-import/excel', authenticate, checkRole(['admin', 'hr']), uplo
     }
 
     const results = await processBulkUsers(usersData, req.user);
+
+    await logChange({
+      event_type: 'bulk_import',
+      user: req.user,
+      user_ip: getClientIP(req),
+      target_type: 'user',
+      target_id: 'bulk-import-excel',
+      target_name: 'Bulk User Import (Excel)',
+      action: 'BULK_IMPORT_EXCEL',
+      description: `${req.user.full_name} ran Excel bulk import (${results.successful.length}/${results.total} successful)`,
+      metadata: {
+        format: 'excel',
+        total: results.total,
+        successful: results.successful.length,
+        failed: results.failed.length,
+        teamsCreated: results.teamsCreated.length
+      }
+    });
+    res.locals.auditLogged = true;
     
     res.json({
       message: 'Bulk import completed',
@@ -1100,6 +1144,23 @@ router.get('/bulk-import/template', authenticate, checkRole(['admin', 'hr']), as
     // Generate buffer
     const excelBuffer = await workbook.xlsx.writeBuffer();
 
+    await logChange({
+      event_type: 'report_downloaded',
+      user: req.user,
+      user_ip: getClientIP(req),
+      action: 'USER_IMPORT_TEMPLATE_XLSX_DOWNLOADED',
+      target_type: 'report',
+      target_id: 'user-import-template-xlsx',
+      target_name: 'User Import Template (XLSX)',
+      description: `${req.user?.full_name || req.user?.email || 'User'} downloaded user import XLSX template`,
+      workspaceId: req.user?.workspaceId || null,
+      metadata: {
+        format: 'xlsx',
+        sampleRows: sampleData.length
+      }
+    });
+    res.locals.auditLogged = true;
+
     // Send file
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     res.setHeader('Content-Disposition', 'attachment; filename=user_import_template.xlsx');
@@ -1111,7 +1172,7 @@ router.get('/bulk-import/template', authenticate, checkRole(['admin', 'hr']), as
 });
 
 // Download sample JSON template
-router.get('/bulk-import/template-json', authenticate, checkRole(['admin', 'hr']), (req, res) => {
+router.get('/bulk-import/template-json', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
   try {
     const sampleData = [
       {
@@ -1142,6 +1203,23 @@ router.get('/bulk-import/template-json', authenticate, checkRole(['admin', 'hr']
         employment_status: 'ACTIVE'
       }
     ];
+
+    await logChange({
+      event_type: 'report_downloaded',
+      user: req.user,
+      user_ip: getClientIP(req),
+      action: 'USER_IMPORT_TEMPLATE_JSON_DOWNLOADED',
+      target_type: 'report',
+      target_id: 'user-import-template-json',
+      target_name: 'User Import Template (JSON)',
+      description: `${req.user?.full_name || req.user?.email || 'User'} downloaded user import JSON template`,
+      workspaceId: req.user?.workspaceId || null,
+      metadata: {
+        format: 'json',
+        sampleRows: sampleData.length
+      }
+    });
+    res.locals.auditLogged = true;
 
     res.setHeader('Content-Type', 'application/json');
     res.setHeader('Content-Disposition', 'attachment; filename=user_import_template.json');

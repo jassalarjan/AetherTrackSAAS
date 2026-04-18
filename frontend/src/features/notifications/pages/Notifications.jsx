@@ -19,7 +19,7 @@ const Notifications = () => {
   const fetchNotifications = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/notifications');
+      const response = await api.get('/notifications', { suppressAuthRedirect: true });
       setNotifications(response.data.notifications || []);
       setUnreadCount(response.data.unreadCount || 0);
       setLoading(false);
@@ -38,7 +38,7 @@ const Notifications = () => {
     setUnreadCount(prev => Math.max(0, prev - unreadToMark));
 
     try {
-      await api.patch('/notifications/mark-read', { notificationIds: ids });
+      await api.patch('/notifications/mark-read', { notificationIds: ids }, { suppressAuthRedirect: true });
     } catch {
       await fetchNotifications();
     }
@@ -52,7 +52,7 @@ const Notifications = () => {
     setUnreadCount(0);
 
     try {
-      await api.patch('/notifications/mark-read', {});
+      await api.patch('/notifications/mark-read', {}, { suppressAuthRedirect: true });
     } catch {
       setNotifications(previous);
       setUnreadCount(previous.filter(n => !n.read_at).length);

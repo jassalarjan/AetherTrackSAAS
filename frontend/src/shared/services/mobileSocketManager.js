@@ -124,12 +124,12 @@ export function registerSocketLifecycleHandlers() {
 // ─── Internal ─────────────────────────────────────────────────────────────
 function _bindSocketEvents(socket) {
   socket.on('connect', () => {
-    console.log('[Socket] Connected:', socket.id);
+    console.log('[Socket] Connected');
     window.dispatchEvent(new CustomEvent('aether:socketConnected', { detail: { id: socket.id } }));
   });
 
   socket.on('disconnect', (reason) => {
-    console.warn('[Socket] Disconnected:', reason);
+    console.warn('[Socket] Disconnected');
     window.dispatchEvent(new CustomEvent('aether:socketDisconnected', { detail: { reason } }));
   });
 

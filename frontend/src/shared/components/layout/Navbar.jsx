@@ -27,7 +27,7 @@ const Navbar = () => {
     if (!user) return;
     
     try {
-      const response = await api.get('/notifications');
+      const response = await api.get('/notifications', { suppressAuthRedirect: true });
       setNotifications(response.data.notifications);
       setUnreadCount(response.data.unreadCount);
     } catch (error) {
@@ -40,7 +40,7 @@ const Navbar = () => {
 
   const markAsRead = async () => {
     try {
-      await api.patch('/notifications/mark-read');
+      await api.patch('/notifications/mark-read', {}, { suppressAuthRedirect: true });
       setUnreadCount(0);
       fetchNotifications();
     } catch (error) {

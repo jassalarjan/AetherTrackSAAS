@@ -9,6 +9,7 @@
     "dev": "nodemon server.js",
     "test:email": "node test-email.js",
     "test:cloudinary": "node test-cloudinary-connection.js",
+    "seed:notifications": "node scripts/create-sample-notifications.js",
     "seed:admin": "node scripts/seedAdmin.js",
     "make:super-admin": "node scripts/makeSuperAdmin.js",
     "cleanup:admins": "node scripts/cleanupAdminUsers.js",

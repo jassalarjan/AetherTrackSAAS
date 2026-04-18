@@ -6,7 +6,7 @@ const ACTIVITY_TIMEOUT = 30 * 60 * 1000; // 30 minutes
 export const useActivityTracker = () => {
   useEffect(() => {
     const updateActivity = () => {
-      localStorage.setItem('lastActivityTime', Date.now().toString());
+      sessionStorage.setItem('lastActivityTime', Date.now().toString());
     };
 
     // Track user activity
@@ -17,16 +17,16 @@ export const useActivityTracker = () => {
 
     // Check for inactivity periodically
     const checkInactivity = setInterval(() => {
-      const lastActivity = localStorage.getItem('lastActivityTime');
+      const lastActivity = sessionStorage.getItem('lastActivityTime');
       const token = getAccessToken();
       
       if (lastActivity && token) {
         const timeSinceActivity = Date.now() - parseInt(lastActivity, 10);
         
         if (timeSinceActivity > ACTIVITY_TIMEOUT) {
-          // Clear user data from localStorage
+          // Cleanup any legacy persisted auth profile from older builds.
           localStorage.removeItem('user');
-          localStorage.removeItem('lastActivityTime');
+          sessionStorage.removeItem('lastActivityTime');
           // Dispatch logout event
           window.dispatchEvent(new CustomEvent('auth:logout', { detail: { reason: 'inactivity' } }));
           window.location.href = '/login';

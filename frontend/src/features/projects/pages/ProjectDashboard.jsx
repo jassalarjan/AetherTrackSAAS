@@ -5,6 +5,7 @@ import ResponsivePageLayout from '@/shared/components/responsive/ResponsivePageL
 import { Filter, Share2, FolderOpen, DollarSign, Users as UsersIcon, AlertTriangle, PieChart, TrendingUp, ArrowRight, MoreHorizontal, Mail, Plus, X, Edit, Trash2, Download, FileSpreadsheet, Search, UserPlus } from 'lucide-react';
 import { createWorkbook, addWorksheetFromRows, downloadWorkbook } from '@/shared/utils/spreadsheetExport';
 import api from '@/shared/services/axios';
+import { useAuth } from '@/features/auth/context/AuthContext';
 
 const ProjectDashboard = () => {
   const navigate = useNavigate();
@@ -20,7 +21,8 @@ const ProjectDashboard = () => {
   const [users, setUsers] = useState([]);
   const [selectedUserId, setSelectedUserId] = useState('');
   const [editingProject, setEditingProject] = useState(null);
-  const [userRole, setUserRole] = useState('member');
+  const { user } = useAuth();
+  const userRole = user?.role || 'member';
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -33,12 +35,6 @@ const ProjectDashboard = () => {
   });
 
   useEffect(() => {
-    // Get user role from localStorage
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      const user = JSON.parse(storedUser);
-      setUserRole(user.role || 'member');
-    }
     fetchDashboardData();
     fetchUsers();
   }, [filters]);

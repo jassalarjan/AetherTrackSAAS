@@ -20,6 +20,45 @@ const normalizeAuthUser = (rawUser) => {
   };
 };
 
+const resolveSocketUrl = () => {
+  const explicit = import.meta.env.VITE_SOCKET_URL;
+  if (explicit) return explicit;
+
+  const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+  try {
+    const parsed = new URL(apiBase, window.location.origin);
+    return `${parsed.protocol}//${parsed.host}`;
+  } catch {
+    return 'http://localhost:5000';
+  }
+};
+
+const LAST_ACTIVITY_KEY = 'lastActivityTime';
+
+const setLastActivityTime = () => {
+  try {
+    sessionStorage.setItem(LAST_ACTIVITY_KEY, Date.now().toString());
+  } catch {
+    // Ignore storage failures (private mode, quota, etc).
+  }
+};
+
+const getLastActivityTime = () => {
+  try {
+    return sessionStorage.getItem(LAST_ACTIVITY_KEY);
+  } catch {
+    return null;
+  }
+};
+
+const clearLastActivityTime = () => {
+  try {
+    sessionStorage.removeItem(LAST_ACTIVITY_KEY);
+  } catch {
+    // Ignore storage failures.
+  }
+};
+
 const requestBootstrapRefresh = async () => {
   if (Date.now() < refreshBlockedUntil) {
     const error = new Error('Refresh temporarily rate limited');
@@ -54,32 +93,30 @@ export const AuthProvider = ({ children }) => {
     // call will 401 and we stay logged-out.
     const initAuth = async () => {
       try {
+        // Cleanup legacy persisted profile storage from older builds.
+        localStorage.removeItem('user');
+
         const response = await requestBootstrapRefresh();
         const { accessToken, user: refreshedUser } = response.data;
 
         setAccessToken(accessToken);
 
-        // Prefer the user payload that comes with the refresh response;
-        // fall back to whatever is cached in localStorage.
-        const storedUser = localStorage.getItem('user');
-          const baseUser = normalizeAuthUser(refreshedUser) ||
-          (storedUser ? JSON.parse(storedUser) : null);
+        const baseUser = normalizeAuthUser(refreshedUser);
+        let resolvedUser = baseUser;
 
-        if (baseUser) {
-          // Fetch latest profile so UI always shows up-to-date data.
-          try {
-            const verifyResponse = await api.get('/auth/verify');
-            const validatedUser = verifyResponse.data.user;
-            const userWithWorkspace = normalizeAuthUser({ ...validatedUser, workspace: validatedUser.workspace });
-            localStorage.setItem('user', JSON.stringify(userWithWorkspace));
-            setUser(userWithWorkspace);
-            initializeSocket(validatedUser.id);
-          } catch {
-            const normalizedBaseUser = normalizeAuthUser(baseUser);
-            localStorage.setItem('user', JSON.stringify(normalizedBaseUser));
-            setUser(normalizedBaseUser);
-            initializeSocket(normalizedBaseUser.id);
-          }
+        // Fetch latest profile so UI always shows up-to-date data.
+        try {
+          const verifyResponse = await api.get('/auth/verify');
+          const validatedUser = verifyResponse.data.user;
+          resolvedUser = normalizeAuthUser({ ...validatedUser, workspace: validatedUser.workspace });
+        } catch {
+          // Keep refresh payload as fallback.
+        }
+
+        if (resolvedUser) {
+          setUser(resolvedUser);
+          setLastActivityTime();
+          initializeSocket(resolvedUser.id || resolvedUser._id);
         }
       } catch (error) {
         if (error?.isRateLimit || error?.response?.status === 429) {
@@ -91,7 +128,7 @@ export const AuthProvider = ({ children }) => {
         // No valid refresh-token cookie — user is not logged in.
         clearAccessToken();
         localStorage.removeItem('user');
-        localStorage.removeItem('lastActivityTime');
+        clearLastActivityTime();
         setUser(null);
       }
       setLoading(false);
@@ -122,7 +159,7 @@ export const AuthProvider = ({ children }) => {
     const ACTIVITY_TIMEOUT = 30 * 60 * 1000; // 30 minutes
 
     const updateActivity = () => {
-      localStorage.setItem('lastActivityTime', Date.now().toString());
+      setLastActivityTime();
     };
 
     // Track user activity
@@ -133,7 +170,7 @@ export const AuthProvider = ({ children }) => {
 
     // Check for inactivity periodically
     const checkInactivity = setInterval(() => {
-      const lastActivity = localStorage.getItem('lastActivityTime');
+      const lastActivity = getLastActivityTime();
       const token = getAccessToken();
       
       if (lastActivity && token) {
@@ -155,7 +192,7 @@ export const AuthProvider = ({ children }) => {
   }, [user]);
 
   const initializeSocket = (userId) => {
-    const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
+    const SOCKET_URL = resolveSocketUrl();
     const accessToken = getAccessToken();
 
     if (!accessToken || !userId) return;
@@ -216,7 +253,7 @@ export const AuthProvider = ({ children }) => {
 
       clearAccessToken();
       localStorage.removeItem('user');
-      localStorage.removeItem('lastActivityTime');
+      clearLastActivityTime();
       setUser(null);
       newSocket.disconnect();
       setSocket(null);
@@ -244,8 +281,7 @@ export const AuthProvider = ({ children }) => {
         workspace: workspace
       });
 
-      localStorage.setItem('user', JSON.stringify(userWithWorkspace));
-      localStorage.setItem('lastActivityTime', Date.now().toString());
+      setLastActivityTime();
       setAccessToken(accessToken);
 
       setUser(userWithWorkspace);
@@ -274,8 +310,7 @@ export const AuthProvider = ({ children }) => {
       const { user, accessToken } = response.data;
 
       const normalizedUser = normalizeAuthUser(user);
-      localStorage.setItem('user', JSON.stringify(normalizedUser));
-      localStorage.setItem('lastActivityTime', Date.now().toString());
+      setLastActivityTime();
       setAccessToken(accessToken);
 
       setUser(normalizedUser);
@@ -294,7 +329,7 @@ export const AuthProvider = ({ children }) => {
     try { await api.post('/auth/logout'); } catch { /* best-effort */ }
     clearAccessToken();
     localStorage.removeItem('user');
-    localStorage.removeItem('lastActivityTime');
+    clearLastActivityTime();
     setUser(null);
     if (socket) {
       socket.disconnect();
@@ -306,7 +341,6 @@ export const AuthProvider = ({ children }) => {
   const updateUser = (updatedUserData) => {
     const newUser = normalizeAuthUser({ ...user, ...updatedUserData });
     setUser(newUser);
-    localStorage.setItem('user', JSON.stringify(newUser));
   };
 
   const value = {

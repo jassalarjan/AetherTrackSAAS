@@ -214,8 +214,12 @@ router.post('/login', loginLimiter, validateLogin, async (req, res) => {
       event_type: 'user_login',
       user: user,
       user_ip,
-      action: 'User logged in',
+      target_type: 'auth',
+      target_id: user._id,
+      target_name: user.full_name,
+      action: 'login',
       description: `${user.full_name} (${user.email}) logged in successfully`,
+      workspaceId: user.workspaceId || null,
       metadata: {
         role: user.role,
         team_id: user.team_id
@@ -426,7 +430,7 @@ router.post('/logout', authenticate, async (req, res) => {
   if (token) {
     const decoded = decodeToken(token);
     const expiresAt = decoded?.exp ? decoded.exp * 1000 : Date.now() + 15 * 60 * 1000;
-    addToBlacklist(token, expiresAt);
+    await addToBlacklist(token, expiresAt);
   }
 
   // Clear httpOnly cookies
@@ -440,8 +444,12 @@ router.post('/logout', authenticate, async (req, res) => {
       event_type: 'user_logout',
       user: req.user,
       user_ip,
-      action: 'User logged out',
-      description: `${req.user.full_name} (${req.user.email}) logged out`
+      target_type: 'auth',
+      target_id: req.user._id,
+      target_name: req.user.full_name,
+      action: 'logout',
+      description: `${req.user.full_name} (${req.user.email}) logged out`,
+      workspaceId: req.user.workspaceId || null
     });
   } catch (logErr) {
     console.error('Logout audit log error:', logErr);

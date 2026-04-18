@@ -6,6 +6,7 @@ import '@/styles/animations.css';
 import '@/styles/mobile-layout.css';
 import '@/styles/mobile-responsive.css';
 import { registerSW } from 'virtual:pwa-register';
+import { installFrontendTelemetry } from '@/shared/services/telemetry';
 
 const updateViewportUnits = () => {
   if (typeof window === 'undefined' || typeof document === 'undefined') return;
@@ -23,6 +24,7 @@ updateViewportUnits();
 window.addEventListener('resize', updateViewportUnits, { passive: true });
 window.addEventListener('orientationchange', updateViewportUnits, { passive: true });
 window.visualViewport?.addEventListener('resize', updateViewportUnits, { passive: true });
+installFrontendTelemetry();
 
 // CONSOLE DISABLED FOR PRODUCTION - Enable for development/debugging
 // Uncomment the code below to enable console in production

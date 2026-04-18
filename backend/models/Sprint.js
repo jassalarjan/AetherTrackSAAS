@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { attachAutomationChangelogHooks } from './plugins/automationChangelogHooks.js';
 
 const sprintSchema = new mongoose.Schema({
   workspace: {
@@ -57,6 +58,11 @@ const sprintSchema = new mongoose.Schema({
 // Index for faster queries
 sprintSchema.index({ workspace: 1, status: 1 });
 sprintSchema.index({ project: 1 });
+
+attachAutomationChangelogHooks(sprintSchema, {
+  entityType: 'sprint',
+  nameField: 'name'
+});
 
 const Sprint = mongoose.model('Sprint', sprintSchema);
 

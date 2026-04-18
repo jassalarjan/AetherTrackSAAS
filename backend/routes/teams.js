@@ -3,6 +3,8 @@ import { authenticate } from '../middleware/auth.js';
 import { checkRole } from '../middleware/roleCheck.js';
 import Team from '../models/Team.js';
 import User from '../models/User.js';
+import { logChange } from '../utils/changeLogService.js';
+import getClientIP from '../utils/getClientIP.js';
 import { validateIdParam, sanitizeBody } from '../utils/validation.js';
 
 const router = express.Router();
@@ -298,6 +300,21 @@ router.post('/:id/members', authenticate, checkRole(['admin', 'hr']), validateId
     const updatedTeam = await Team.findOne({ _id: teamId })
       .populate('hr_id lead_id members');
 
+    await logChange({
+      event_type: 'team_member_added',
+      user: req.user,
+      user_ip: getClientIP(req),
+      target_type: 'team',
+      target_id: teamId,
+      target_name: team.name,
+      action: 'TEAM_MEMBER_ADDED',
+      description: `${req.user.full_name} added ${user.full_name} to team "${team.name}"`,
+      metadata: {
+        added_user_id: userId,
+        added_user_name: user.full_name
+      }
+    });
+
     res.json({ message: 'Member added to team', team: updatedTeam });
   } catch (error) {
     console.error('Add member error:', error);
@@ -357,6 +374,22 @@ router.post('/:id/members/bulk', authenticate, checkRole(['admin', 'hr']), valid
     const updatedTeam = await Team.findOne({ _id: teamId })
       .populate('hr_id lead_id members');
 
+    if (results.added.length > 0) {
+      await logChange({
+        event_type: 'team_member_added',
+        user: req.user,
+        user_ip: getClientIP(req),
+        target_type: 'team',
+        target_id: teamId,
+        target_name: team.name,
+        action: 'TEAM_MEMBER_ADDED_BULK',
+        description: `${req.user.full_name} added ${results.added.length} member(s) to team "${team.name}"`,
+        metadata: {
+          added_user_ids: results.added.map((entry) => entry.userId)
+        }
+      });
+    }
+
     res.json({ 
       message: `Added ${results.added.length} member(s) to team`,
       results,
@@ -383,6 +416,7 @@ router.delete('/:id/members/:userId', authenticate, checkRole(['admin', 'hr']), 
     await team.save();
 
     const user = await User.findOne({ _id: userId });
+    const removedUserName = user?.full_name || 'Unknown User';
     
     if (user) {
       await User.findOneAndUpdate(
@@ -403,6 +437,21 @@ router.delete('/:id/members/:userId', authenticate, checkRole(['admin', 'hr']), 
 
     const updatedTeam = await Team.findOne({ _id: id })
       .populate('hr_id lead_id members');
+
+    await logChange({
+      event_type: 'team_member_removed',
+      user: req.user,
+      user_ip: getClientIP(req),
+      target_type: 'team',
+      target_id: id,
+      target_name: team.name,
+      action: 'TEAM_MEMBER_REMOVED',
+      description: `${req.user.full_name} removed ${removedUserName} from team "${team.name}"`,
+      metadata: {
+        removed_user_id: userId,
+        removed_user_name: removedUserName
+      }
+    });
 
     res.json({ message: 'Member removed from team', team: updatedTeam });
   } catch (error) {

@@ -42,6 +42,7 @@ import {
   ChevronDown,
   ChevronUp,
   Palette,
+  Mail,
 } from 'lucide-react';
 
 // ─── Panel content definition per role ─────────────────────────────────────
@@ -51,11 +52,46 @@ const getPanelContent = (role, signals) => {
       dashboard: [
         { group: 'OVERVIEW', items: [
           { path: '/dashboard',  icon: LayoutDashboard, label: 'Operations Dashboard' },
-          { path: '/feature-matrix', icon: TableProperties, label: 'Feature Matrix' },
         ]},
         { group: 'MANAGE', items: [
           { path: '/users',    icon: UserCog, label: 'Manage People' },
           { path: '/settings', icon: Settings, label: 'System Settings' },
+        ]},
+      ],
+      system: [
+        { group: 'SYSTEM', items: [
+          { path: '/settings', icon: Settings, label: 'System Settings' },
+          { path: '/system/automations', icon: Mail, label: 'Automations' },
+        ]},
+      ],
+      tasks: [
+        { group: 'QUICK ACTIONS', items: [
+          { path: '/self-attendance?tab=checkin', icon: AlarmCheck, label: 'Check In / Out' },
+          { path: '/tasks',                       icon: Play,       label: 'Create Task' },
+          { path: '/hr/leaves',                   icon: Plane,      label: 'Request Leave' },
+        ]},
+        { group: 'APPROVALS', items: [
+          { path: '/hr/leaves?status=pending', icon: CheckCircle, label: 'Approve Requests', badge: signals.pendingApprovals },
+        ]},
+      ],
+      projects: [
+        { group: 'TIMELINE', items: [
+          { path: '/sprints',        icon: Briefcase,  label: 'Sprints' },
+          { path: '/projects/gantt', icon: GitBranch,  label: 'Gantt Chart' },
+        ]},
+        { group: 'CAPACITY', items: [
+          { path: '/resources', icon: UserCircle, label: 'Resources' },
+        ]},
+      ],
+      people: [
+        { group: 'TEAM', items: [
+          { path: '/users',           icon: UserCog,        label: 'Manage People' },
+          { path: '/teams',           icon: Users,          label: 'Teams' },
+          { path: '/hr/reallocation', icon: ArrowLeftRight, label: 'Task Reallocation' },
+        ]},
+{ group: 'COMMUNICATION', items: [
+          { path: '/hr/email-center', icon: FileText, label: 'Email Center' },
+          { path: '/email',           icon: Mail,    label: 'Email Hub' },
         ]},
       ],
       tasks: [
@@ -98,12 +134,13 @@ const getPanelContent = (role, signals) => {
           { path: '/analytics',  icon: TrendingUp, label: 'Business Analytics' },
           { path: '/hr/reallocation', icon: BarChart3, label: 'HR Reports' },
         ]},
+      ],
+      governance: [
         { group: 'LOGS', items: [
           { path: '/audit-log', icon: FileText, label: 'Audit Logs' },
+          { path: '/api-logs', icon: FileText, label: 'API Logs' },
           { path: '/changelog', icon: FileText, label: 'Change Log' },
         ]},
-      ],
-      features: [
         { group: 'FEATURE CONTROL', items: [
           { path: '/feature-matrix', icon: TableProperties, label: 'Feature Matrix' },
         ]},
@@ -151,6 +188,12 @@ const getPanelContent = (role, signals) => {
         { group: 'ANALYTICS', items: [
           { path: '/analytics',       icon: BarChart3,      label: 'HR Analytics' },
           { path: '/hr/reallocation', icon: ArrowLeftRight, label: 'Task Reallocation' },
+        ]},
+      ],
+      system: [
+        { group: 'SYSTEM', items: [
+          { path: '/settings', icon: Settings, label: 'System Settings' },
+          { path: '/system/automations', icon: Mail, label: 'Automations' },
         ]},
       ],
     },
@@ -238,7 +281,8 @@ const RAIL_ITEMS = [
   { id: 'people',    icon: Users,           label: 'People',     roles: ['admin', 'hr'] },
   { id: 'calendar',  icon: Calendar,        label: 'Calendar',   roles: null },
   { id: 'reports',   icon: BarChart3,       label: 'Reports',    roles: ['admin', 'hr', 'team_lead'] },
-  { id: 'features',  icon: TableProperties, label: 'Features',   roles: ['admin', 'super_admin'] },
+  { id: 'system',    icon: Settings,        label: 'System',     roles: ['admin', 'hr'] },
+  { id: 'governance', icon: TableProperties, label: 'Governance', roles: ['super_admin'] },
 ];
 
 // ─── Panel accent colors per section ───────────────────────────────────────
@@ -250,7 +294,8 @@ const PANEL_ACCENTS = {
   people:    { color: '#C49A3A', bg: 'rgba(196,154,58,0.14)',  text: '#C49A3A' },
   calendar:  { color: '#D4905A', bg: 'rgba(196,113,58,0.14)',  text: '#D4905A' },
   reports:   { color: '#C49A3A', bg: 'rgba(196,154,58,0.14)',  text: '#C49A3A' },
-  features:  { color: '#C5811D', bg: 'rgba(197,129,29,0.14)',  text: '#C5811D' },
+  system:    { color: '#D4905A', bg: 'rgba(196,113,58,0.14)',  text: '#D4905A' },
+  governance:{ color: '#C5811D', bg: 'rgba(197,129,29,0.14)',  text: '#C5811D' },
   signals:   { color: '#C49A3A', bg: 'rgba(196,154,58,0.14)',  text: '#C49A3A' },
 };
 
@@ -367,7 +412,9 @@ const Sidebar = () => {
     signals.lateCheckIns    > 0 || signals.pendingLeaveReviews > 0 || signals.taskDueToday > 0;
 
   // Get all nav items across all panels for search
-  const normalizedRole = user?.role === 'super_admin' ? 'admin' : user?.role;
+  const rawRole = String(user?.systemRole || user?.role || '').toLowerCase();
+  const canonicalRole = rawRole === 'system_admin' || rawRole === 'system-admin' ? 'super_admin' : rawRole;
+  const normalizedRole = canonicalRole === 'super_admin' ? 'admin' : canonicalRole;
   const panelContent = getPanelContent(normalizedRole, signals);
   const filterGroupsByFeature = (groups = []) => (
     groups
@@ -375,6 +422,7 @@ const Sidebar = () => {
         ...group,
         items: (group.items || []).filter((item) => {
           if (item.path === '/feature-matrix') return true;
+          if (item.path === '/system/automations') return true;
           return isFeatureEnabledForPath(item.path);
         }),
       }))
@@ -385,12 +433,31 @@ const Sidebar = () => {
     Object.entries(panelContent).map(([panelId, groups]) => [panelId, filterGroupsByFeature(groups)])
   );
 
+  const hasSystemAccess = ['admin', 'hr', 'super_admin'].includes(canonicalRole) || ['admin', 'hr'].includes(normalizedRole);
+  const effectivePanelContent = hasSystemAccess && (!filteredPanelContent.system || filteredPanelContent.system.length === 0)
+    ? {
+      ...filteredPanelContent,
+      system: [
+        {
+          group: 'SYSTEM',
+          items: [
+            { path: '/system/automations', icon: Mail, label: 'Automations' },
+          ],
+        },
+      ],
+    }
+    : filteredPanelContent;
+
   // Visible rail items (role + feature-gated)
   const visibleRailItems = RAIL_ITEMS.filter((ri) => {
-    const roleAllowed = ri.roles === null || ri.roles.includes(user?.role);
+    const roleAllowed =
+      ri.roles === null ||
+      ri.roles.includes(canonicalRole) ||
+      ri.roles.includes(normalizedRole) ||
+      (canonicalRole === 'super_admin' && ri.roles.includes('admin'));
     if (!roleAllowed) return false;
 
-    const groups = filteredPanelContent[ri.id] || [];
+    const groups = effectivePanelContent[ri.id] || [];
     const hasVisibleItems = groups.some((group) => (group.items || []).length > 0);
     return hasVisibleItems;
   });
@@ -405,7 +472,7 @@ const Sidebar = () => {
     }
   }, [visibleRailItems, activePanel]);
 
-  const allNavItems  = Object.values(filteredPanelContent)
+  const allNavItems  = Object.values(effectivePanelContent)
     .flat()
     .flatMap((g) => (Array.isArray(g.items) ? g.items : []));
 
@@ -758,7 +825,7 @@ const Sidebar = () => {
 
   const currentPanelGroups = activePanel === 'signals'
     ? null
-    : (filteredPanelContent[activePanel] || []);
+    : (effectivePanelContent[activePanel] || []);
 
   return (
     <>

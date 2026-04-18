@@ -103,7 +103,7 @@ class HrEventService {
 
       // Log delivery result
       await logChange({
-        event_type: 'hr_email_sent',
+        event_type: 'email_sent',
         target_type: data.source === 'EXTERNAL' ? 'external_recipient' : 'user',
         target_id: data.employeeId || null,
         action: 'send',
@@ -134,7 +134,7 @@ class HrEventService {
 
       // Log error
       await logChange({
-        event_type: 'hr_email_error',
+        event_type: 'email_failed',
         target_type: 'user',
         target_id: data.employeeId,
         action: 'error',

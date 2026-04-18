@@ -49,7 +49,7 @@ const MobileBottomNav = () => {
           -webkit-tap-highlight-color: transparent;
           position: relative;
           transition: transform 90ms ease;
-          font-family: var(--font-body, sans-serif);
+          font-family: var(--font-body);
         }
         .bnav-btn:active {
           transform: scale(0.88);
@@ -61,7 +61,7 @@ const MobileBottomNav = () => {
           transform: translateX(-50%) scaleX(0);
           width: clamp(30px, 8vw, 42px);
           height: 28px;
-          border-radius: 14px;
+          border-radius: var(--radius-lg);
           background: var(--brand-dim, rgba(var(--brand-rgb, 99,102,241),0.12));
           transition: transform 200ms cubic-bezier(0.34,1.56,0.64,1);
           pointer-events: none;
@@ -103,7 +103,7 @@ const MobileBottomNav = () => {
           transform: translateX(-50%) scaleX(0);
           width: clamp(16px, 5vw, 24px);
           height: 2.5px;
-          border-radius: 0 0 3px 3px;
+          border-radius: 0 0 var(--r-xs) var(--r-xs);
           background: var(--brand);
           transition: transform 220ms cubic-bezier(0.34,1.56,0.64,1);
         }
@@ -253,7 +253,8 @@ const ResponsivePageLayout = ({
           data-page-content
           tabIndex={-1}
           style={{
-            paddingBottom: isMobile ? '0px' : bottomNavOffset,
+            // Reserve space for fixed mobile bottom nav so page actions remain clickable.
+            paddingBottom: isMobile ? bottomNavOffset : '0px',
             overflowX: 'hidden',
           }}
         >

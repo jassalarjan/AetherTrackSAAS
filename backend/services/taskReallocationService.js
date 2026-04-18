@@ -82,6 +82,21 @@ async function pushNotification(app, userId, type, message, payload = {}) {
     payload
   });
 
+  await logChange({
+    event_type: 'notification_sent',
+    user_id: userId,
+    target_type: 'notification',
+    target_id: notif._id.toString(),
+    target_name: type,
+    action: 'NOTIFICATION_SENT',
+    description: `Notification (${type}) sent to user ${userId.toString()}`,
+    metadata: {
+      notification_type: type,
+      message,
+      payload
+    }
+  });
+
   // Real-time delivery via Socket.IO if available
   if (app) {
     const io = app.get('io');

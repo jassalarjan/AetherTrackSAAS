@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { attachAutomationChangelogHooks } from './plugins/automationChangelogHooks.js';
 
 const projectSchema = new mongoose.Schema({
   name: {
@@ -114,6 +115,11 @@ projectSchema.index({ 'team_members.user': 1 });
 projectSchema.pre('save', function(next) {
   this.updated_at = Date.now();
   next();
+});
+
+attachAutomationChangelogHooks(projectSchema, {
+  entityType: 'project',
+  nameField: 'name'
 });
 
 export default mongoose.model('Project', projectSchema);

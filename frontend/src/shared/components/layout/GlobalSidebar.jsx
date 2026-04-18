@@ -79,6 +79,7 @@ const SECTION_META = {
           { icon: String.fromCodePoint(0x25A3),  label: 'HR Calendar',  path: '/hr/calendar',         desc: 'Events & meetings'    },
           { icon: String.fromCodePoint(0x21C4),  label: 'Reallocation', path: '/hr/reallocation',     desc: 'Task handoffs'        },
           { icon: String.fromCodePoint(0x2709),  label: 'Email Center', path: '/hr/email-center',     desc: 'HR communications',   adminOnly: true },
+          { icon: String.fromCodePoint(0x2708),  label: 'Email Hub',    path: '/email',               desc: 'Send, sequence & automate',      adminOnly: true },
         ],
       },
       {
@@ -101,8 +102,7 @@ const SECTION_META = {
         label: 'Configuration',
         items: [
           { icon: String.fromCodePoint(0x2699),  label: 'Settings',     path: '/settings',            desc: 'App preferences'      },
-          { icon: String.fromCodePoint(0x25E7),  label: 'Audit Log',    path: '/audit-log',           desc: 'Action history'       },
-          { icon: String.fromCodePoint(0x25D4),  label: 'Changelog',    path: '/changelog',           desc: 'Release notes'        },
+          { icon: String.fromCodePoint(0x26A1),  label: 'Automations',  path: '/system/automations',  desc: 'Rules & workflows'    },
         ],
       },
       {
@@ -110,7 +110,6 @@ const SECTION_META = {
         items: [
           { icon: String.fromCodePoint(0x229B),  label: 'Geofencing',   path: '/geofence-management', desc: 'Location rules',      adminOnly: true },
           { icon: String.fromCodePoint(0x25CE),  label: 'Verification', path: '/verification-settings',desc: 'Auth & 2FA',         adminOnly: true },
-          { icon: String.fromCodePoint(0x25A7),  label: 'Features',     path: '/feature-matrix',      desc: 'Module access',       adminOnly: true },
         ],
       },
       {
@@ -122,16 +121,24 @@ const SECTION_META = {
     ],
   },
 
-  features: {
+  governance: {
     icon: String.fromCodePoint(0x25A7),
-    label: 'Features',
-    tagline: 'Direct module controls',
+    label: 'Governance',
+    tagline: 'Audit trails and controls',
     accent: '#C5811D',
     groups: [
       {
-        label: 'Matrix',
+        label: 'Logs',
         items: [
-          { icon: String.fromCodePoint(0x25A7), label: 'Feature Matrix', path: '/feature-matrix', desc: 'Enable/disable modules', adminOnly: true },
+          { icon: String.fromCodePoint(0x25E7), label: 'Audit Log',  path: '/audit-log',   desc: 'System failures and errors', adminOnly: true },
+          { icon: String.fromCodePoint(0x223F), label: 'API Logs',   path: '/api-logs',    desc: 'Dedicated request stream',   adminOnly: true },
+          { icon: String.fromCodePoint(0x25D4), label: 'Change Log', path: '/changelog',   desc: 'Frontend/backend activity',  adminOnly: true },
+        ],
+      },
+      {
+        label: 'Controls',
+        items: [
+          { icon: String.fromCodePoint(0x25A7), label: 'Feature Matrix', path: '/feature-matrix', desc: 'Enable/disable modules',   adminOnly: true },
         ],
       },
     ],
@@ -140,7 +147,9 @@ const SECTION_META = {
 
 /* --- Section detection ---------------------------------------------------- */
 function detectSection(pathname) {
-  if (pathname.startsWith('/feature-matrix') || pathname.startsWith('/mobile-app-download')) return 'system';
+  if (pathname.startsWith('/mobile-app-download')) return 'system';
+  if (pathname.startsWith('/system/automations')) return 'system';
+  if (pathname.startsWith('/audit-log') || pathname.startsWith('/api-logs') || pathname.startsWith('/changelog') || pathname.startsWith('/feature-matrix')) return 'governance';
   if (
     pathname.startsWith('/hr') ||
     pathname === '/teams' ||
@@ -157,9 +166,8 @@ function detectSection(pathname) {
   ) return 'projects';
   if (
     pathname.startsWith('/settings') ||
-    pathname.startsWith('/audit-log') ||
-    pathname.startsWith('/changelog') ||
-    pathname.startsWith('/feature-matrix')
+    pathname.startsWith('/system/automations') ||
+    pathname.startsWith('/mobile-app-download')
   ) return 'system';
   return 'overview';
 }
@@ -191,13 +199,14 @@ const GlobalSidebar = () => {
     setActiveSection(detectSection(location.pathname));
   }, [location.pathname]);
 
-  const role         = user?.role || 'member';
+  const role         = user?.systemRole || user?.role || 'member';
   const displayName  = user?.full_name || user?.name || 'User';
   const userInitials = displayName.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
 
   const isAdmin     = ['admin', 'super_admin'].includes(role);
   const isHROrAbove = ['admin', 'super_admin', 'hr', 'team_lead'].includes(role);
-  const showSystem  = ['admin', 'super_admin'].includes(role);
+  const showSystem  = ['admin', 'super_admin', 'hr'].includes(role);
+  const showGovernance = role === 'super_admin';
 
   const sectionHasVisibleItems = useCallback((sectionKey) => {
     const section = SECTION_META[sectionKey];
@@ -207,7 +216,7 @@ const GlobalSidebar = () => {
       group.items.some((item) => {
         if (item.adminOnly && !isAdmin) return false;
         if (item.hrOnly && !isHROrAbove) return false;
-        if (item.path !== '/feature-matrix' && !isFeatureEnabledForPath(item.path)) return false;
+        if (item.path !== '/feature-matrix' && item.path !== '/system/automations' && !isFeatureEnabledForPath(item.path)) return false;
         return true;
       })
     );
@@ -216,7 +225,7 @@ const GlobalSidebar = () => {
   const visibleRail = ['overview', 'projects'];
   if (isHROrAbove) visibleRail.push('hr');
   if (showSystem)  visibleRail.push('system');
-  if (showSystem)  visibleRail.push('features');
+  if (showGovernance) visibleRail.push('governance');
 
   const filteredVisibleRail = visibleRail.filter((sectionKey) => sectionHasVisibleItems(sectionKey));
 
@@ -243,7 +252,7 @@ const GlobalSidebar = () => {
     const first = meta.groups.flatMap(g => g.items).find(item => {
       if (item.adminOnly && !isAdmin)    return false;
       if (item.hrOnly   && !isHROrAbove) return false;
-      if (item.path !== '/feature-matrix' && !isFeatureEnabledForPath(item.path)) return false;
+      if (item.path !== '/feature-matrix' && item.path !== '/system/automations' && !isFeatureEnabledForPath(item.path)) return false;
       return true;
     });
     if (first) {
@@ -347,7 +356,7 @@ const GlobalSidebar = () => {
             const visibleItems = group.items.filter(item => {
               if (item.adminOnly && !isAdmin)    return false;
               if (item.hrOnly   && !isHROrAbove) return false;
-              if (item.path !== '/feature-matrix' && !isFeatureEnabledForPath(item.path)) return false;
+              if (item.path !== '/feature-matrix' && item.path !== '/system/automations' && !isFeatureEnabledForPath(item.path)) return false;
               return true;
             });
             if (!visibleItems.length) return null;

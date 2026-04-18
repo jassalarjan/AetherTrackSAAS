@@ -7,6 +7,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import connectDB from './config/db.js';
 
 // Import JWT utilities for Socket.IO authentication
@@ -21,6 +22,8 @@ import taskRoutes from './routes/tasks.js';
 import commentRoutes from './routes/comments.js';
 import notificationRoutes from './routes/notifications.js';
 import changelogRoutes from './routes/changelog.js';
+import auditRoutes from './routes/audit.js';
+import apiLogsRoutes from './routes/apiLogs.js';
 import projectRoutes from './routes/projects.js';
 import sprintRoutes from './routes/sprints.js';
 // HR Module routes
@@ -31,6 +34,9 @@ import leaveTypesRoutes from './routes/leaveTypes.js';
 import holidaysRoutes from './routes/holidays.js';
 import hrCalendarRoutes from './routes/hrCalendar.js';
 import emailTemplatesRoutes from './routes/emailTemplates.js';
+import emailHubRoutes from './routes/emailHub.js';
+import automationsRoutes from './routes/automations.js';
+import reportAutomationsRoutes from './routes/reportAutomations.js';
 import meetingRoutes from './routes/meetings.js';
 import shiftsRoutes from './routes/shifts.js';
 import reallocationRoutes from './routes/reallocation.js';
@@ -38,14 +44,31 @@ import settingsRoutes from './routes/settings.js';
 
 // Import middleware
 import { authenticate } from './middleware/auth.js';
+import { requireTenant } from './middleware/tenantIsolation.js';
+import { apiAuditLogger } from './middleware/apiAuditLogger.js';
+import { logSystemAuditIssue } from './services/systemAuditService.js';
 
 // Import scheduler
 import { initializeScheduler } from './utils/scheduler.js';
+import { initializeAutomationRunner, primeAutomationNextRuns } from './services/automationRunner.js';
+import reportRunner from './services/reportRunner.js';
 
 // Load environment variables (ensure we read backend/.env even if CWD is project root)
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 dotenv.config({ path: path.join(__dirname, '.env') });
+
+const MIN_JWT_SECRET_LENGTH = Number(process.env.MIN_JWT_SECRET_LENGTH || 32);
+const DISALLOWED_JWT_SECRETS = new Set([
+  'changeme',
+  'change-me',
+  'secret',
+  'jwt-secret',
+  'jwtsecret',
+  'password',
+  'test',
+  'development'
+]);
 
 // ============================================================================
 // SECURITY: Critical Environment Variables Validation
@@ -73,16 +96,41 @@ function validateCriticalEnvVars() {
     process.exit(1);
   }
   
-  // SECURITY: Warn if using weak JWT secrets (less than 32 characters)
+  // SECURITY: Reject weak/default JWT secrets in production to prevent token forgery
   const jwtSecret = process.env.JWT_SECRET;
   const jwtRefreshSecret = process.env.JWT_REFRESH_SECRET || process.env.REFRESH_SECRET;
-  
-  if (jwtSecret && jwtSecret.length < 32) {
-    console.warn('[SECURITY WARNING] JWT_SECRET is less than 32 characters. Consider using a stronger secret.');
-  }
-  
-  if (jwtRefreshSecret && jwtRefreshSecret.length < 32) {
-    console.warn('[SECURITY WARNING] JWT_REFRESH_SECRET is less than 32 characters. Consider using a stronger secret.');
+
+  const weakSecretIssues = [];
+  const checkSecretStrength = (value, key) => {
+    if (!value) {
+      return;
+    }
+
+    const trimmedValue = String(value).trim();
+
+    if (trimmedValue.length < MIN_JWT_SECRET_LENGTH) {
+      weakSecretIssues.push(`${key} must be at least ${MIN_JWT_SECRET_LENGTH} characters`);
+      return;
+    }
+
+    if (DISALLOWED_JWT_SECRETS.has(trimmedValue.toLowerCase())) {
+      weakSecretIssues.push(`${key} uses a disallowed default value`);
+    }
+  };
+
+  checkSecretStrength(jwtSecret, 'JWT_SECRET');
+  checkSecretStrength(jwtRefreshSecret, 'JWT_REFRESH_SECRET');
+
+  if (weakSecretIssues.length > 0) {
+    const message = `[SECURITY] Weak JWT secret configuration detected: ${weakSecretIssues.join('; ')}`;
+
+    if (isProduction) {
+      console.error(`[CRITICAL] ${message}`);
+      console.error('[CRITICAL] Refusing to start in production with weak JWT secrets');
+      process.exit(1);
+    }
+
+    console.warn(`[SECURITY WARNING] ${message}`);
   }
   
   console.log('✅ All critical environment variables validated');
@@ -95,33 +143,108 @@ validateCriticalEnvVars();
 const app = express();
 const httpServer = createServer(app);
 
-// Security: Build allowed origins from environment variable (comma-separated)
-// This is defined early so it can be used for both Socket.IO and Express CORS
+// Security: Build allowed origins from ALLOWED_ORIGINS across all environments.
+// Development mode appends localhost defaults rather than replacing configured origins.
+const DEFAULT_DEV_ORIGINS = [
+  'http://localhost:3000',
+  'http://localhost:3001',
+  'http://localhost:5173',
+  'http://127.0.0.1:3000',
+  'http://127.0.0.1:3001',
+  'http://127.0.0.1:5173'
+];
+
+const normalizeOrigin = (origin) => String(origin || '').trim().replace(/\/$/, '');
+
+const parseAllowedOriginsFromEnv = () => (
+  process.env.ALLOWED_ORIGINS
+    ? process.env.ALLOWED_ORIGINS
+        .split(',')
+        .map(origin => normalizeOrigin(origin))
+        .filter(Boolean)
+    : []
+);
+
 const getAllowedOrigins = () => {
-  // In development, always allow localhost origins regardless of ALLOWED_ORIGINS setting
-  // This ensures local development works even if .env has incorrect values
-  const nodeEnv = process.env.NODE_ENV || 'development';
-  
-  if (nodeEnv === 'development') {
-    console.log('🛠️  Development mode: Allowing all localhost origins');
-    return [
-      'http://localhost:3000',
-      'http://localhost:5173',
-      'http://127.0.0.1:3000',
-      'http://127.0.0.1:5173',
-      'https://aethertrack.arjansinghjassal.xyz',
-    ];
+  const configuredOrigins = parseAllowedOriginsFromEnv();
+  const normalizedOrigins = new Set(configuredOrigins);
+
+  if ((process.env.NODE_ENV || 'development') !== 'production') {
+    DEFAULT_DEV_ORIGINS.forEach((origin) => normalizedOrigins.add(normalizeOrigin(origin)));
   }
-  
-  // Production: require ALLOWED_ORIGINS to be set
-  const envOrigins = process.env.ALLOWED_ORIGINS 
-    ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim()).filter(o => o)
-    : [];
-  
-  return envOrigins;
+
+  return Array.from(normalizedOrigins);
 };
 
 const allowedOrigins = getAllowedOrigins();
+const SOCKET_RATE_LIMIT_WINDOW_MS = Number(process.env.SOCKET_RATE_LIMIT_WINDOW_MS || 60 * 1000);
+const SOCKET_RATE_LIMIT_MAX = Number(process.env.SOCKET_RATE_LIMIT_MAX || 30);
+const socketConnectionAttempts = new Map();
+const isProduction = process.env.NODE_ENV === 'production';
+
+const socketLogContext = ({ socketId, clientIp } = {}) => {
+  if (isProduction) {
+    return '';
+  }
+
+  const context = [];
+  if (socketId) context.push(`socket=${socketId}`);
+  if (clientIp) context.push(`ip=${clientIp}`);
+
+  return context.length > 0 ? ` (${context.join(', ')})` : '';
+};
+
+const describeSocketRoom = (room) => {
+  const roomValue = String(room || '');
+  if (!roomValue) return 'unknown-room';
+  if (roomValue.startsWith('project-')) return 'project-room';
+  if (roomValue.startsWith('team-')) return 'team-room';
+  if (/^[a-f\d]{24}$/i.test(roomValue)) return 'id-room';
+  return isProduction ? 'custom-room' : roomValue;
+};
+
+const isOriginAllowed = (origin) => {
+  if (!origin) {
+    return false;
+  }
+
+  const normalizedOrigin = normalizeOrigin(origin);
+  return allowedOrigins.some((allowed) => normalizedOrigin === normalizeOrigin(allowed));
+};
+
+const getSocketClientIp = (socket) => {
+  const forwardedFor = socket.handshake.headers?.['x-forwarded-for'];
+  const rawForwarded = Array.isArray(forwardedFor) ? forwardedFor[0] : forwardedFor;
+  if (rawForwarded) {
+    return String(rawForwarded).split(',')[0].trim();
+  }
+
+  return socket.handshake.address || socket.conn?.remoteAddress || 'unknown';
+};
+
+const isSocketRateLimited = (ip) => {
+  const now = Date.now();
+  const windowStart = now - SOCKET_RATE_LIMIT_WINDOW_MS;
+  const existingAttempts = socketConnectionAttempts.get(ip) || [];
+  const activeAttempts = existingAttempts.filter((attemptTs) => attemptTs > windowStart);
+
+  activeAttempts.push(now);
+  socketConnectionAttempts.set(ip, activeAttempts);
+
+  return activeAttempts.length > SOCKET_RATE_LIMIT_MAX;
+};
+
+setInterval(() => {
+  const cutoff = Date.now() - SOCKET_RATE_LIMIT_WINDOW_MS;
+  for (const [ip, attempts] of socketConnectionAttempts.entries()) {
+    const activeAttempts = attempts.filter((attemptTs) => attemptTs > cutoff);
+    if (activeAttempts.length === 0) {
+      socketConnectionAttempts.delete(ip);
+    } else {
+      socketConnectionAttempts.set(ip, activeAttempts);
+    }
+  }
+}, Math.max(10 * 1000, SOCKET_RATE_LIMIT_WINDOW_MS)).unref();
 
 const APP_VERSION = process.env.APP_VERSION || '1.0.0';
 const BUILD_TIME = process.env.BUILD_TIME || new Date().toISOString();
@@ -231,13 +354,8 @@ const io = new Server(httpServer, {
       if (!origin) {
         return callback(null, false);
       }
-      // Trailing-slash normalisation only – never strip scheme (http ≠ https)
-      const normalizedOrigin = origin.replace(/\/$/, '');
-      const isAllowed = allowedOrigins.some(
-        allowed => normalizedOrigin === allowed.replace(/\/$/, '')
-      );
-      
-      if (isAllowed) {
+
+      if (isOriginAllowed(origin)) {
         callback(null, true);
       } else {
         console.warn(`🚫 Socket.IO CORS rejected origin: ${origin}`);
@@ -257,6 +375,9 @@ connectDB();
 
 // Initialize scheduler for automated tasks
 initializeScheduler();
+initializeAutomationRunner({ io });
+reportRunner.init(io).catch(() => {});
+primeAutomationNextRuns().catch(() => {});
 
 // Trust proxy - required to get real client IP behind reverse proxies (Render, Vercel, Nginx, etc.)
 // Use 1 instead of true to trust only the first proxy hop, satisfying express-rate-limit's
@@ -339,14 +460,7 @@ app.use(cors({
       return callback(null, false);
     }
     
-    // Strict whitelist check - only allow explicitly listed origins
-    // Trailing-slash normalisation only – never strip scheme (http ≠ https).
-    const normalizedOrigin = origin.replace(/\/$/, '');
-    const isAllowed = allowedOrigins.some(
-      allowed => normalizedOrigin === allowed.replace(/\/$/, '')
-    );
-    
-    if (isAllowed) {
+    if (isOriginAllowed(origin)) {
       callback(null, true);
     } else {
       // FAIL CLOSED: Reject non-whitelisted origins
@@ -363,6 +477,16 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+
+const globalApiLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: Number(process.env.GLOBAL_RATE_LIMIT_MAX || 100),
+  message: { error: 'Too many requests, please slow down' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+app.use('/api', globalApiLimiter);
 
 // ============================================================================
 // SECURITY: Enforce JSON Content-Type for API Responses
@@ -401,12 +525,19 @@ app.set('io', io);
 // SECURITY: All socket connections must be authenticated with a valid JWT token
 // This prevents unauthorized clients from connecting to the WebSocket server
 io.use(async (socket, next) => {
+  const clientIp = getSocketClientIp(socket);
+
+  if (isSocketRateLimited(clientIp)) {
+    console.warn(`[SECURITY] Socket connection rejected: rate limit exceeded${socketLogContext({ socketId: socket.id, clientIp })}`);
+    return next(new Error('Rate limit exceeded'));
+  }
+
   // Extract token from handshake auth or Authorization header
   const token = socket.handshake.auth?.token || 
                 socket.handshake.headers?.authorization?.replace('Bearer ', '');
   
   if (!token) {
-    console.warn(`[SECURITY] Socket ${socket.id} rejected: No token provided`);
+    console.warn(`[SECURITY] Socket connection rejected: No token provided${socketLogContext({ socketId: socket.id, clientIp })}`);
     return next(new Error('Authentication error: No token provided'));
   }
   
@@ -415,7 +546,7 @@ io.use(async (socket, next) => {
     const decoded = verifyAccessToken(token);
     
     if (!decoded || !decoded.userId) {
-      console.warn(`[SECURITY] Socket ${socket.id} rejected: Invalid token payload`);
+      console.warn(`[SECURITY] Socket connection rejected: Invalid token payload${socketLogContext({ socketId: socket.id, clientIp })}`);
       return next(new Error('Authentication error: Invalid token'));
     }
     
@@ -423,7 +554,7 @@ io.use(async (socket, next) => {
     const user = await User.findById(decoded.userId).select('-password_hash');
     
     if (!user) {
-      console.warn(`[SECURITY] Socket ${socket.id} rejected: User not found (userId: ${decoded.userId})`);
+      console.warn(`[SECURITY] Socket connection rejected: User not found${socketLogContext({ socketId: socket.id, clientIp })}`);
       return next(new Error('Authentication error: User not found'));
     }
     
@@ -432,10 +563,10 @@ io.use(async (socket, next) => {
     socket.userRole = decoded.role;
     socket.user = user;
     
-    console.log(`🔐 Socket ${socket.id} authenticated for user: ${decoded.userId} (role: ${decoded.role})`);
+    console.log(`[SOCKET] Client authenticated${socketLogContext({ socketId: socket.id })}`);
     next();
   } catch (err) {
-    console.warn(`[SECURITY] Socket ${socket.id} rejected: Token verification failed - ${err.message}`);
+    console.warn(`[SECURITY] Socket connection rejected: Token verification failed (${err.message})${socketLogContext({ socketId: socket.id, clientIp })}`);
     return next(new Error('Authentication error: Invalid token'));
   }
 });
@@ -444,14 +575,14 @@ io.use(async (socket, next) => {
 // Socket.IO Connection Handling with Room Isolation
 // ============================================================================
 io.on('connection', (socket) => {
-  console.log(`✅ Client connected: ${socket.id} (User: ${socket.userId})`);
+  console.log(`[SOCKET] Client connected${socketLogContext({ socketId: socket.id })}`);
 
   // SECURITY: Auto-join user to their own notification room
   // Room name is the userId string (matching existing convention in routes)
   // e.g., io.to(userId.toString()).emit() targets this room
   const userRoom = socket.userId.toString();
   socket.join(userRoom);
-  console.log(`📢 User ${socket.userId} auto-joined their notification room: ${userRoom}`);
+  console.log(`[SOCKET] Client auto-joined notification room (${describeSocketRoom(userRoom)})${socketLogContext({ socketId: socket.id })}`);
 
   // ============================================================================
   // Room Join Handler with Authorization
@@ -469,12 +600,12 @@ io.on('connection', (socket) => {
     if (isUserRoom) {
       // User can always join their own notification room
       socket.join(room);
-      console.log(`📢 User ${socket.userId} joined room: ${room}`);
+      console.log(`[SOCKET] Room join allowed (${describeSocketRoom(room)})${socketLogContext({ socketId: socket.id })}`);
       if (callback) callback({ success: true, room });
     } else if (isTeamRoom) {
       // User can join their team's room
       socket.join(room);
-      console.log(`📢 User ${socket.userId} joined team room: ${room}`);
+      console.log(`[SOCKET] Team room join allowed (${describeSocketRoom(room)})${socketLogContext({ socketId: socket.id })}`);
       if (callback) callback({ success: true, room });
     } else if (isProjectRoom) {
       // SECURITY: Verify the user is actually a member of this project before
@@ -485,7 +616,7 @@ io.on('connection', (socket) => {
         const ProjectModel = (await import('./models/Project.js')).default;
         const project = await ProjectModel.findById(projectId, 'team_members created_by');
         if (!project) {
-          console.warn(`[SECURITY] User ${socket.userId} tried to join non-existent project room: ${room}`);
+          console.warn(`[SECURITY] Socket join rejected: Project room not found (${describeSocketRoom(room)})${socketLogContext({ socketId: socket.id })}`);
           if (callback) callback({ success: false, error: 'Project not found' });
           return;
         }
@@ -496,20 +627,20 @@ io.on('connection', (socket) => {
         const isCreator = project.created_by?.toString() === userIdStr;
         const isAdminOrHr = ['super_admin', 'admin', 'hr'].includes(socket.userRole);
         if (!isMember && !isCreator && !isAdminOrHr) {
-          console.warn(`[SECURITY] User ${socket.userId} unauthorised join attempt for project room: ${room}`);
+          console.warn(`[SECURITY] Socket join rejected: Unauthorized project room access (${describeSocketRoom(room)})${socketLogContext({ socketId: socket.id })}`);
           if (callback) callback({ success: false, error: 'Not authorized to join this room' });
           return;
         }
         socket.join(room);
-        console.log(`📢 User ${socket.userId} joined project room: ${room}`);
+        console.log(`[SOCKET] Project room join allowed (${describeSocketRoom(room)})${socketLogContext({ socketId: socket.id })}`);
         if (callback) callback({ success: true, room });
       } catch (err) {
-        console.error(`[SOCKET] Error verifying project membership for room ${room}:`, err);
+        console.error(`[SOCKET] Error verifying project membership (${describeSocketRoom(room)}):`, err?.message || 'Unknown error');
         if (callback) callback({ success: false, error: 'Authorization check failed' });
       }
     } else {
       // SECURITY: Log unauthorized room join attempts
-      console.warn(`[SECURITY] User ${socket.userId} attempted to join unauthorized room: ${room}`);
+      console.warn(`[SECURITY] Socket join rejected: Unauthorized room (${describeSocketRoom(room)})${socketLogContext({ socketId: socket.id })}`);
       if (callback) callback({ success: false, error: 'Not authorized to join this room' });
     }
   });
@@ -519,7 +650,7 @@ io.on('connection', (socket) => {
   // ============================================================================
   socket.on('leave', (room, callback) => {
     socket.leave(room);
-    console.log(`📤 User ${socket.userId} left room: ${room}`);
+    console.log(`[SOCKET] Client left room (${describeSocketRoom(room)})${socketLogContext({ socketId: socket.id })}`);
     if (callback) callback({ success: true, room });
   });
 
@@ -527,14 +658,14 @@ io.on('connection', (socket) => {
   // Disconnect Handler
   // ============================================================================
   socket.on('disconnect', () => {
-    console.log(`❌ Client disconnected: ${socket.id} (User: ${socket.userId})`);
+    console.log(`[SOCKET] Client disconnected${socketLogContext({ socketId: socket.id })}`);
   });
 
   // ============================================================================
   // Error Handler
   // ============================================================================
   socket.on('error', (error) => {
-    console.error(`[SOCKET ERROR] Socket ${socket.id} (User: ${socket.userId}):`, error);
+    console.error(`[SOCKET ERROR] Client error${socketLogContext({ socketId: socket.id })}:`, error?.message || 'Unknown error');
   });
 });
 
@@ -543,26 +674,31 @@ io.on('connection', (socket) => {
 app.use('/api/auth', authRoutes);
 
 // Protected routes with authentication
-app.use('/api/users', authenticate, userRoutes);
-app.use('/api/teams', authenticate, teamRoutes);
-app.use('/api/tasks', authenticate, taskRoutes);
-app.use('/api/projects', authenticate, projectRoutes);
-app.use('/api/sprints', authenticate, sprintRoutes);
-app.use('/api/comments', authenticate, commentRoutes);
-app.use('/api/notifications', authenticate, notificationRoutes);
-app.use('/api/changelog', authenticate, changelogRoutes);
+app.use('/api/users', authenticate, requireTenant, apiAuditLogger(), userRoutes);
+app.use('/api/teams', authenticate, requireTenant, apiAuditLogger(), teamRoutes);
+app.use('/api/tasks', authenticate, requireTenant, apiAuditLogger(), taskRoutes);
+app.use('/api/projects', authenticate, requireTenant, apiAuditLogger(), projectRoutes);
+app.use('/api/sprints', authenticate, requireTenant, apiAuditLogger(), sprintRoutes);
+app.use('/api/comments', authenticate, requireTenant, apiAuditLogger(), commentRoutes);
+app.use('/api/notifications', authenticate, requireTenant, apiAuditLogger(), notificationRoutes);
+app.use('/api/changelog', authenticate, requireTenant, apiAuditLogger(), changelogRoutes);
+app.use('/api/audit', authenticate, requireTenant, apiAuditLogger(), auditRoutes);
+app.use('/api/api-logs', authenticate, requireTenant, apiLogsRoutes);
+app.use('/api/automations', authenticate, requireTenant, apiAuditLogger(), automationsRoutes);
+app.use('/api/report-automations', authenticate, requireTenant, apiAuditLogger(), reportAutomationsRoutes);
 // HR Module routes with authentication
-app.use('/api/hr/attendance', authenticate, attendanceRoutes);
-app.use('/api/geofences', authenticate, verificationRoutes);
-app.use('/api/hr/leaves', authenticate, leavesRoutes);
-app.use('/api/hr/leave-types', authenticate, leaveTypesRoutes);
-app.use('/api/hr/holidays', authenticate, holidaysRoutes);
-app.use('/api/hr/calendar', authenticate, hrCalendarRoutes);
-app.use('/api/hr/email-templates', authenticate, emailTemplatesRoutes);
-app.use('/api/hr/meetings', authenticate, meetingRoutes);
-app.use('/api/hr/shifts', authenticate, shiftsRoutes);
-app.use('/api/hr/reallocation', authenticate, reallocationRoutes);
-app.use('/api/settings', settingsRoutes);
+app.use('/api/hr/attendance', authenticate, requireTenant, apiAuditLogger(), attendanceRoutes);
+app.use('/api/geofences', authenticate, requireTenant, apiAuditLogger(), verificationRoutes);
+app.use('/api/hr/leaves', authenticate, requireTenant, apiAuditLogger(), leavesRoutes);
+app.use('/api/hr/leave-types', authenticate, requireTenant, apiAuditLogger(), leaveTypesRoutes);
+app.use('/api/hr/holidays', authenticate, requireTenant, apiAuditLogger(), holidaysRoutes);
+app.use('/api/hr/calendar', authenticate, requireTenant, apiAuditLogger(), hrCalendarRoutes);
+app.use('/api/hr/email-templates', authenticate, requireTenant, apiAuditLogger(), emailTemplatesRoutes);
+app.use('/api/email-hub', authenticate, requireTenant, apiAuditLogger(), emailHubRoutes);
+app.use('/api/hr/meetings', authenticate, requireTenant, apiAuditLogger(), meetingRoutes);
+app.use('/api/hr/shifts', authenticate, requireTenant, apiAuditLogger(), shiftsRoutes);
+app.use('/api/hr/reallocation', authenticate, requireTenant, apiAuditLogger(), reallocationRoutes);
+app.use('/api/settings', authenticate, requireTenant, apiAuditLogger(), settingsRoutes);
 
 // Mobile/Web wrapper version endpoint (polled by app for auto-refresh)
 app.get('/api/app-version', (req, res) => {
@@ -575,11 +711,16 @@ app.get('/api/app-version', (req, res) => {
 
 // Deployment hook to broadcast a new app version event over Socket.IO
 app.post('/api/app-version/notify', (req, res) => {
-  const expected = process.env.APP_VERSION_NOTIFY_TOKEN;
+  const expected = String(process.env.APP_VERSION_NOTIFY_TOKEN || '').trim();
+
+  if (!expected) {
+    return res.status(503).json({ message: 'Version notify not configured' });
+  }
+
   const provided = req.header('x-app-version-token');
 
-  if (expected && provided !== expected) {
-    return res.status(401).json({ message: 'Unauthorized version notify token' });
+  if (provided !== expected) {
+    return res.status(401).json({ message: 'Invalid version notify token' });
   }
 
   const payload = {
@@ -604,6 +745,28 @@ app.use((req, res) => {
 // Error handler
 app.use((err, req, res, next) => {
   console.error('Error:', err);
+  void logSystemAuditIssue({
+    source: 'backend',
+    level: 'critical',
+    category: 'unhandled_exception',
+    message: err?.message || 'Unhandled backend exception',
+    request: {
+      method: req?.method,
+      path: req?.originalUrl,
+      status_code: err?.status || 500,
+      ip: req?.ip
+    },
+    error: {
+      name: err?.name,
+      stack: err?.stack
+    },
+    metadata: {
+      route: req?.route?.path,
+      params: req?.params,
+      query: req?.query
+    },
+    user: req?.user
+  });
   // Never leak internal error details to clients in production
   res.status(err.status || 500).json({
     message: process.env.NODE_ENV === 'production' ? 'Internal server error' : (err.message || 'Internal server error'),

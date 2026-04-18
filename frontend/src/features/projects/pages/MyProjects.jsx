@@ -6,6 +6,7 @@ import api from '@/shared/services/axios';
 import { projectsApi } from '@/features/projects/services/projectsApi';
 import { usePageShortcuts } from '@/shared/hooks/usePageShortcuts';
 import ShortcutsOverlay from '@/features/tasks/components/ShortcutsOverlay';
+import { useAuth } from '@/features/auth/context/AuthContext';
 import { 
   FolderOpen, Calendar, Users, TrendingUp, 
   Filter, Search, ChevronRight, Circle, CheckCircle2,
@@ -19,8 +20,8 @@ const MyProjects = () => {
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({ status: '', priority: '', search: '' });
   const [showFilters, setShowFilters] = useState(false);
-  const [userRole, setUserRole] = useState('member');
-  const [userName, setUserName] = useState('');
+  const { user } = useAuth();
+  const userRole = user?.role || 'member';
   const [showCreateModal, setShowCreateModal] = useState(false);
   const searchInputRef = useRef(null);
 
@@ -44,13 +45,6 @@ const MyProjects = () => {
   });
 
   useEffect(() => {
-    // Get user info from localStorage
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      const user = JSON.parse(storedUser);
-      setUserRole(user.role || 'member');
-      setUserName(user.name || user.full_name || 'User');
-    }
     fetchMyProjects();
   }, [filters]);
 

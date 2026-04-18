@@ -1,0 +1,80 @@
+:root {
+  --aether-notif-font: 'Inter', system-ui;
+  --aether-notif-surface: #f5efe6;
+  --aether-notif-surface-raised: #fcf7ee;
+  --aether-notif-border: #d6c3ab;
+  --aether-notif-text: #2c1810;
+  --aether-notif-text-muted: #6d5547;
+  --aether-notif-sidebar: #2c1810;
+  --aether-notif-primary: #c4622d;
+  --aether-notif-secondary: #e8a020;
+  --aether-notif-success: #5f8a4d;
+  --aether-notif-error: #8f2d2d;
+  --aether-notif-warning: var(--aether-notif-secondary);
+  --aether-notif-info: var(--aether-notif-primary);
+}
+
+.aether-toast-enter {
+  animation: aether-toast-slide-in 0.22s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.aether-toast-exit {
+  animation: aether-toast-fade-out 0.2s ease both;
+}
+
+.aether-toast-progress {
+  animation: aether-toast-progress 4s linear forwards;
+}
+
+.aether-notification-drawer {
+  transform: translateX(100%);
+  opacity: 0;
+  transition: transform 0.24s ease, opacity 0.24s ease;
+}
+
+.aether-notification-drawer.open {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+@keyframes aether-toast-slide-in {
+  from {
+    transform: translateX(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes aether-toast-fade-out {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(12px);
+    opacity: 0;
+  }
+}
+
+@keyframes aether-toast-progress {
+  from {
+    width: 100%;
+  }
+  to {
+    width: 0%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aether-toast-enter,
+  .aether-toast-exit,
+  .aether-toast-progress,
+  .aether-notification-drawer,
+  .aether-notification-drawer.open {
+    animation: none !important;
+    transition: none !important;
+  }
+}

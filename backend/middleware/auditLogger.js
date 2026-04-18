@@ -54,6 +54,7 @@ export const auditLogger = (options = {}) => {
         }
 
         // Log asynchronously without blocking response
+        res.locals.auditLogged = true;
         logChange(logData).catch(err => {
           console.error('Audit logging failed:', err);
         });

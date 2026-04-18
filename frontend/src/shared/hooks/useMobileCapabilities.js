@@ -113,7 +113,7 @@ export function useMobileCapabilities() {
         : '/' + parsed.hostname + parsed.pathname; // custom scheme
       navigate(path + parsed.search);
     } catch (err) {
-      console.warn('[DeepLink] Invalid URL:', url, err);
+      console.warn('[DeepLink] Invalid URL');
     }
   }, [navigate]);
 

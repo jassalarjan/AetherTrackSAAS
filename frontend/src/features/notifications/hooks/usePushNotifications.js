@@ -42,19 +42,19 @@ export function usePushNotifications({ userId, authToken } = {}) {
 
       // 3. Receive token
       const regListener = await PushNotifications.addListener('registration', async ({ value: token }) => {
-        console.log('[Push] FCM token:', token);
+        console.log('[Push] FCM token received');
         await saveFCMToken(token);
         await registerTokenWithBackend(token, userId, authToken);
       });
 
       // 4. Registration error
       const regErrListener = await PushNotifications.addListener('registrationError', (err) => {
-        console.error('[Push] Registration error:', err);
+        console.error('[Push] Registration error:', err?.message || 'Unknown error');
       });
 
       // 5. Foreground notification received
       const rxListener = await PushNotifications.addListener('pushNotificationReceived', (notification) => {
-        console.log('[Push] Foreground notification:', notification);
+        console.log('[Push] Foreground notification received');
         // Dispatch to app-level notification handler
         window.dispatchEvent(new CustomEvent('aether:notification', {
           detail: {
@@ -69,7 +69,7 @@ export function usePushNotifications({ userId, authToken } = {}) {
       // 6. User tapped notification
       const actionListener = await PushNotifications.addListener('pushNotificationActionPerformed', (action) => {
         const { data } = action.notification;
-        console.log('[Push] Tapped notification, data:', data);
+        console.log('[Push] Notification action handled');
         if (data?.deepLink) {
           handleDeepLinkNavigate(data.deepLink, navigate);
         } else if (data?.route) {
@@ -111,7 +111,7 @@ async function registerTokenWithBackend(token, userId, authToken) {
       }),
     });
   } catch (err) {
-    console.error('[Push] Failed to register token with backend:', err);
+    console.error('[Push] Failed to register token with backend:', err?.message || 'Unknown error');
   }
 }
 
@@ -133,6 +133,6 @@ function handleDeepLinkNavigate(url, navigate) {
       : '/' + parsed.hostname + parsed.pathname;
     navigate(path + parsed.search);
   } catch {
-    console.warn('[Push] Invalid deep link:', url);
+    console.warn('[Push] Invalid deep link');
   }
 }

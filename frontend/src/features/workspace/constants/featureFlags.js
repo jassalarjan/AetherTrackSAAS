@@ -21,10 +21,12 @@ export const DEFAULT_FEATURE_FLAGS = {
   users: true,
   settings: true,
   audit_log: true,
+  api_logs: true,
   changelog: true,
   geofencing: true,
   verification: true,
   feature_matrix: true,
+  system_automations: true,
 };
 
 export const FEATURE_KEY_BY_PATH = {
@@ -50,10 +52,13 @@ export const FEATURE_KEY_BY_PATH = {
   '/users': 'users',
   '/settings': 'settings',
   '/audit-log': 'audit_log',
+  '/api-logs': 'api_logs',
   '/changelog': 'changelog',
   '/geofence-management': 'geofencing',
   '/verification-settings': 'verification',
   '/feature-matrix': 'feature_matrix',
+  '/system/automations': 'system_automations',
+  '/email/automations': 'system_automations',
 };
 
 export const FEATURE_FLAG_SECTIONS = [
@@ -91,6 +96,7 @@ export const FEATURE_FLAG_SECTIONS = [
       { key: 'hr_calendar', label: 'HR Calendar', path: '/hr/calendar' },
       { key: 'reallocation', label: 'Reallocation', path: '/hr/reallocation' },
       { key: 'email_center', label: 'Email Center', path: '/hr/email-center' },
+      { key: 'email_hub', label: 'Email Hub', path: '/email' },
       { key: 'teams', label: 'Teams', path: '/teams' },
       { key: 'users', label: 'Users', path: '/users' },
     ],
@@ -101,10 +107,12 @@ export const FEATURE_FLAG_SECTIONS = [
     items: [
       { key: 'settings', label: 'Settings', path: '/settings' },
       { key: 'audit_log', label: 'Audit Log', path: '/audit-log' },
+      { key: 'api_logs', label: 'API Logs', path: '/api-logs' },
       { key: 'changelog', label: 'Change Log', path: '/changelog' },
       { key: 'geofencing', label: 'Geofencing', path: '/geofence-management' },
       { key: 'verification', label: 'Verification', path: '/verification-settings' },
       { key: 'feature_matrix', label: 'Feature Matrix', path: '/feature-matrix' },
+      { key: 'system_automations', label: 'Automations', path: '/system/automations' },
     ],
   },
 ];

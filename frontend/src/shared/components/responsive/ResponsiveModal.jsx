@@ -64,12 +64,15 @@ const ResponsiveModal = ({
 
   // Render at document body level using Portal
   // Using inline styles for reliability - ensures modal visibility
+  // Using design system z-index value from CSS custom property
+  const zIndexValue = getComputedStyle(document.documentElement).getPropertyValue('--z-modal').trim() || '2147483400';
+  
   return createPortal(
     <div 
       style={{
         position: 'fixed',
         inset: 0,
-        zIndex: 9999,
+        zIndex: parseInt(zIndexValue),
         backgroundColor: 'rgba(0,0,0,0.5)',
         display: 'flex',
         alignItems: 'center',
@@ -85,7 +88,7 @@ const ResponsiveModal = ({
     >
       <div style={{
         background: 'var(--bg-raised)',
-        borderRadius: '12px',
+        borderRadius: 'var(--radius-lg)',
         maxWidth: sizeMaxWidths[size] || sizeMaxWidths.default,
         width: '100%',
         maxHeight: 'calc(100dvh - 2rem)',
@@ -104,7 +107,7 @@ const ResponsiveModal = ({
           padding: '12px 16px',
           borderBottom: '1px solid var(--border-soft)',
           background: 'var(--bg-raised)',
-          borderRadius: '12px 12px 0 0',
+          borderRadius: 'var(--radius-lg) var(--radius-lg) 0 0',
           flex: 'none'
         }}>
           <h2 style={{
@@ -124,7 +127,7 @@ const ResponsiveModal = ({
             onClick={onClose}
             style={{
               padding: '8px',
-              borderRadius: '8px',
+              borderRadius: 'var(--radius-md)',
               background: 'transparent',
               border: 'none',
               cursor: 'pointer',
@@ -158,7 +161,7 @@ const ResponsiveModal = ({
             padding: noPadding ? '0' : '12px 16px',
             borderTop: '1px solid var(--border-soft)',
             background: 'var(--bg-raised)',
-            borderRadius: '0 0 12px 12px'
+            borderRadius: '0 0 var(--radius-lg) var(--radius-lg)'
           }}>
             {footer}
           </div>

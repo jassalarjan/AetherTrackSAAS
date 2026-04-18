@@ -16,6 +16,76 @@ const isValidEmail = (value) => {
   return EMAIL_REGEX.test(value.trim());
 };
 
+const hasTemplateValue = (value) => {
+  if (value === null || value === undefined) return false;
+  if (typeof value === 'number' || typeof value === 'boolean') return true;
+  return String(value).trim().length > 0;
+};
+
+const buildTemplateVariables = ({ template, variables = {}, recipient = null } = {}) => {
+  const input = variables && typeof variables === 'object' ? variables : {};
+  const resolved = {};
+
+  const fallbackUrl = process.env.CLIENT_URL || 'https://AetherTrack-nine-phi.vercel.app';
+  const defaultMap = {
+    workspaceName: 'AetherTrack',
+    appUrl: fallbackUrl,
+    currentDate: new Date().toLocaleDateString()
+  };
+
+  const descriptors = Array.isArray(template?.variables) ? template.variables : [];
+  descriptors.forEach((descriptor) => {
+    const key = String(descriptor?.name || '').trim();
+    if (!key) return;
+
+    const provided = input[key];
+    if (hasTemplateValue(provided)) {
+      resolved[key] = provided;
+      return;
+    }
+
+    if ((key === 'recipientName' || key === 'fullName' || key === 'name') && hasTemplateValue(recipient?.name)) {
+      resolved[key] = recipient.name;
+      return;
+    }
+
+    if (key === 'email' && hasTemplateValue(recipient?.email)) {
+      resolved[key] = recipient.email;
+      return;
+    }
+
+    if (hasTemplateValue(defaultMap[key])) {
+      resolved[key] = defaultMap[key];
+      return;
+    }
+
+    if (hasTemplateValue(descriptor?.example)) {
+      resolved[key] = descriptor.example;
+      return;
+    }
+
+    resolved[key] = '';
+  });
+
+  Object.entries(input).forEach(([key, value]) => {
+    if (!Object.prototype.hasOwnProperty.call(resolved, key) && hasTemplateValue(value)) {
+      resolved[key] = value;
+    }
+  });
+
+  if (hasTemplateValue(recipient?.name)) {
+    if (!hasTemplateValue(resolved.recipientName)) resolved.recipientName = recipient.name;
+    if (!hasTemplateValue(resolved.fullName)) resolved.fullName = recipient.name;
+    if (!hasTemplateValue(resolved.name)) resolved.name = recipient.name;
+  }
+
+  if (hasTemplateValue(recipient?.email) && !hasTemplateValue(resolved.email)) {
+    resolved.email = recipient.email;
+  }
+
+  return resolved;
+};
+
 // =============================================================================
 // SECURITY: Generic Error Response Helper
 // =============================================================================
@@ -163,15 +233,22 @@ router.delete('/:id', authenticate, checkRole(['admin', 'hr']), async (req, res)
 // Send test email
 router.post('/test', authenticate, checkRole(['admin', 'hr']), async (req, res) => {
   try {
-    const { to, subject, htmlContent, variables = {} } = req.body;
+    const { to, subject, htmlContent, variables = {}, templateId } = req.body;
 
     if (!to || !subject || !htmlContent) {
       return res.status(400).json({ message: 'Recipient, subject, and content are required' });
     }
 
+    const template = templateId ? await EmailTemplate.findById(templateId).lean() : null;
+    const effectiveVariables = buildTemplateVariables({
+      template,
+      variables,
+      recipient: { email: to }
+    });
+
     // Interpolate variables in subject and content
-    const interpolatedSubject = brevoService.interpolateVariables(subject, variables);
-    const interpolatedHtml = brevoService.interpolateVariables(htmlContent, variables);
+    const interpolatedSubject = brevoService.interpolateVariables(subject, effectiveVariables);
+    const interpolatedHtml = brevoService.interpolateVariables(htmlContent, effectiveVariables);
 
     const result = await sendEmail(to, interpolatedSubject, interpolatedHtml);
 
@@ -254,9 +331,15 @@ router.post('/send', authenticate, checkRole(['admin', 'hr']), async (req, res) 
       });
     }
 
+    const effectiveVariables = buildTemplateVariables({
+      template,
+      variables,
+      recipient: recipientEmails.length === 1 ? recipientEmails[0] : null
+    });
+
     // Interpolate variables in content and subject
-    const interpolatedSubject = brevoService.interpolateVariables(subject, variables);
-    const interpolatedHtml = brevoService.interpolateVariables(htmlContent, variables);
+    const interpolatedSubject = brevoService.interpolateVariables(subject, effectiveVariables);
+    const interpolatedHtml = brevoService.interpolateVariables(htmlContent, effectiveVariables);
 
     // Use brevoService for sending
     const result = await brevoService.send({

@@ -162,7 +162,7 @@ router.get('/user', async (req, res) => {
 // PATCH /settings/user  — update notifications and/or privacy
 router.patch(
   '/user',
-  auditLogger({ event_type: 'SETTINGS_UPDATE', target_type: 'UserSettings', action: 'Update user settings' }),
+  auditLogger({ event_type: 'system_event', target_type: 'UserSettings', action: 'Update user settings' }),
   async (req, res) => {
     try {
       const allowed = ['notifications', 'privacy'];
@@ -195,7 +195,7 @@ router.patch(
 router.post(
   '/user/api-keys',
   checkRole(['admin']),
-  auditLogger({ event_type: 'API_KEY_CREATED', target_type: 'ApiKey', action: 'Generate API key' }),
+  auditLogger({ event_type: 'system_event', target_type: 'ApiKey', action: 'Generate API key' }),
   async (req, res) => {
     try {
       const { name, scopes = ['read'], expires_at } = req.body;
@@ -250,7 +250,7 @@ router.post(
 // DELETE /settings/user/api-keys/:keyId  — revoke an API key
 router.delete(
   '/user/api-keys/:keyId',
-  auditLogger({ event_type: 'API_KEY_REVOKED', target_type: 'ApiKey', action: 'Revoke API key' }),
+  auditLogger({ event_type: 'system_event', target_type: 'ApiKey', action: 'Revoke API key' }),
   async (req, res) => {
     try {
       const settings = await getOrCreateUserSettings(req.user._id);
@@ -295,7 +295,7 @@ router.post('/user/data-export', async (req, res) => {
     const exportRequest = settings.data_exports[settings.data_exports.length - 1];
 
     logChange({
-      event_type: 'DATA_EXPORT_REQUESTED',
+      event_type: 'system_event',
       user: req.user,
       user_ip: getClientIP(req),
       target_type: 'UserSettings',
@@ -363,7 +363,7 @@ router.get('/workspace/feature-matrix', requireSuperAdmin, async (req, res) => {
 router.patch(
   '/workspace/feature-matrix',
   requireSuperAdmin,
-  auditLogger({ event_type: 'WORKSPACE_SETTINGS_UPDATE', target_type: 'WorkspaceSettings', action: 'Update feature matrix' }),
+  auditLogger({ event_type: 'system_event', target_type: 'WorkspaceSettings', action: 'Update feature matrix' }),
   async (req, res) => {
     try {
       const incomingFeatures = req.body?.features;
@@ -389,7 +389,7 @@ router.patch(
 router.patch(
   '/workspace/general',
   checkRole(['admin']),
-  auditLogger({ event_type: 'WORKSPACE_SETTINGS_UPDATE', target_type: 'WorkspaceSettings', action: 'Update workspace general settings' }),
+  auditLogger({ event_type: 'system_event', target_type: 'WorkspaceSettings', action: 'Update workspace general settings' }),
   async (req, res) => {
     try {
       const allowed = ['name', 'description', 'timezone', 'date_format', 'language', 'logo_url'];
@@ -415,7 +415,7 @@ router.patch(
 router.patch(
   '/workspace/security',
   checkRole(['admin']),
-  auditLogger({ event_type: 'WORKSPACE_SETTINGS_UPDATE', target_type: 'WorkspaceSettings', action: 'Update workspace security policy' }),
+  auditLogger({ event_type: 'system_event', target_type: 'WorkspaceSettings', action: 'Update workspace security policy' }),
   async (req, res) => {
     try {
       const allowed = [
@@ -445,7 +445,7 @@ router.patch(
 router.patch(
   '/workspace/integrations',
   checkRole(['admin']),
-  auditLogger({ event_type: 'WORKSPACE_SETTINGS_UPDATE', target_type: 'WorkspaceSettings', action: 'Update workspace integrations' }),
+  auditLogger({ event_type: 'system_event', target_type: 'WorkspaceSettings', action: 'Update workspace integrations' }),
   async (req, res) => {
     try {
       const allowed = [
@@ -479,7 +479,7 @@ router.patch(
 router.patch(
   '/workspace/automation',
   checkRole(['admin']),
-  auditLogger({ event_type: 'WORKSPACE_SETTINGS_UPDATE', target_type: 'WorkspaceSettings', action: 'Update workspace automation rules' }),
+  auditLogger({ event_type: 'system_event', target_type: 'WorkspaceSettings', action: 'Update workspace automation rules' }),
   async (req, res) => {
     try {
       const allowed = [
@@ -509,7 +509,7 @@ router.patch(
 router.patch(
   '/workspace/billing',
   checkRole(['admin']),
-  auditLogger({ event_type: 'BILLING_UPDATE', target_type: 'WorkspaceSettings', action: 'Update billing info' }),
+  auditLogger({ event_type: 'system_event', target_type: 'WorkspaceSettings', action: 'Update billing info' }),
   async (req, res) => {
     try {
       const allowed = ['billing_email', 'billing_cycle'];
@@ -553,7 +553,7 @@ router.get('/workspace/webhooks', checkRole(['admin']), async (req, res) => {
 router.post(
   '/workspace/webhooks',
   checkRole(['admin']),
-  auditLogger({ event_type: 'WEBHOOK_CREATED', target_type: 'Webhook', action: 'Create webhook' }),
+  auditLogger({ event_type: 'system_event', target_type: 'Webhook', action: 'Create webhook' }),
   async (req, res) => {
     try {
       const { name, url, events = [], secret } = req.body;
@@ -584,7 +584,7 @@ router.post(
 router.patch(
   '/workspace/webhooks/:id',
   checkRole(['admin']),
-  auditLogger({ event_type: 'WEBHOOK_UPDATED', target_type: 'Webhook', action: 'Update webhook' }),
+  auditLogger({ event_type: 'system_event', target_type: 'Webhook', action: 'Update webhook' }),
   async (req, res) => {
     try {
       const ws = await getOrCreateWorkspace();
@@ -610,7 +610,7 @@ router.patch(
 router.delete(
   '/workspace/webhooks/:id',
   checkRole(['admin']),
-  auditLogger({ event_type: 'WEBHOOK_DELETED', target_type: 'Webhook', action: 'Delete webhook' }),
+  auditLogger({ event_type: 'system_event', target_type: 'Webhook', action: 'Delete webhook' }),
   async (req, res) => {
     try {
       const ws = await getOrCreateWorkspace();

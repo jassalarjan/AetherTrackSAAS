@@ -5,7 +5,8 @@ export const checkRole = (allowedRoles) => {
     }
 
     const normalizedAllowed = Array.isArray(allowedRoles) ? allowedRoles : [];
-    const currentRole = req.user.role;
+    // Prefer canonical systemRole when present, while preserving legacy role behavior.
+    const currentRole = req.user.systemRole || req.user.role;
     const hasDirectRole = normalizedAllowed.includes(currentRole);
     const hasSuperAdminOverride = currentRole === 'super_admin' && normalizedAllowed.includes('admin');
 

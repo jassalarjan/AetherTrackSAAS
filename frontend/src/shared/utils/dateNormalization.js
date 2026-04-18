@@ -22,7 +22,7 @@ export function normalizeToStartOfDay(dateInput) {
   
   // Check for invalid date
   if (isNaN(date.getTime())) {
-    console.error('Invalid date input:', dateInput);
+    console.error('Invalid date input');
     return null;
   }
   
@@ -49,7 +49,7 @@ export function normalizeToEndOfDay(dateInput) {
   
   // Check for invalid date
   if (isNaN(date.getTime())) {
-    console.error('Invalid date input:', dateInput);
+    console.error('Invalid date input');
     return null;
   }
   

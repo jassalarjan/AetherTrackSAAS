@@ -57,6 +57,27 @@
 </head>
 
 <body>
+  <script>
+    (function () {
+      try {
+        var host = window.location.hostname;
+        var isLocalHost = host === 'localhost' || host === '127.0.0.1' || host === '0.0.0.0';
+
+        if (isLocalHost) {
+          return;
+        }
+
+        var noop = function () { };
+        console.log = noop;
+        console.info = noop;
+        console.warn = noop;
+        console.error = noop;
+        console.debug = noop;
+      } catch (e) {
+      }
+    })();
+  </script>
+
   <!-- Theme init — must run before first paint to prevent flash -->
   <script>
     (function () {

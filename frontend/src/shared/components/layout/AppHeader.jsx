@@ -3,31 +3,18 @@
  * 64 px fixed, warm-paper tokens throughout.
  * Props: title, subtitle, actions, icon (Lucide component), breadcrumbs[]
  */
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth }    from '@/features/auth/context/AuthContext';
-import { getAccessToken } from '@/features/auth/services/tokenStore';
 import { useTheme }   from '@/app/providers/ThemeProvider';
 import { useSidebar } from '@/features/workspace/context/SidebarContext';
-import api from '@/shared/services/axios';
+import { NotificationBell } from '@/features/notifications/components/NotificationBell';
 import { CommandPalette } from '@/features/tasks/components/CommandPalette';
-import Spinner from '@/shared/components/ui/Spinner';
 import {
-  Bell, Search, Sun, Moon, Menu,
-  ChevronRight, X, CheckCheck, ExternalLink,
-  LogOut, User as UserIcon, Settings as SettingsIcon,
+  Search, Sun, Moon, Menu,
+  ChevronRight,
+  LogOut, Settings as SettingsIcon,
 } from 'lucide-react';
-
-// -- Utility: human-readable time-ago ---------------------------------------
-const timeAgo = (iso) => {
-  const diff = Date.now() - new Date(iso).getTime();
-  const m = Math.floor(diff / 60000);
-  if (m < 1)  return 'just now';
-  if (m < 60) return `${m}m ago`;
-  const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h ago`;
-  return `${Math.floor(h / 24)}d ago`;
-};
 
 // -- Compute fixed-position coordinates for a dropdown anchored to btnEl -----
 // Returns { top, right } in pixels (viewport-relative), suitable for position:fixed.
@@ -50,148 +37,6 @@ const computeDropdownPos = (btnEl, dropdownWidth = 208, dropdownHeight = 320) =>
   }
 
   return { top: Math.max(8, top), right: Math.max(8, right) };
-};
-
-// -- Notification panel ------------------------------------------------------
-const NotifPanel = ({ open, onClose, panelRef, pos, canQuery }) => {
-  const [items, setItems]     = useState([]);
-  const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
-
-  const load = useCallback(async () => {
-    if (!canQuery) {
-      setItems([]);
-      setLoading(false);
-      return;
-    }
-
-    try {
-      setLoading(true);
-      const { data } = await api.get('/notifications');
-      setItems(data.notifications || []);
-    } catch (_) { /* silent */ }
-    finally { setLoading(false); }
-  }, [canQuery]);
-
-  const markAll = async () => {
-    if (!canQuery) return;
-    try { await api.patch('/notifications/mark-read'); load(); } catch (_) { /* silent */ }
-  };
-
-  useEffect(() => { if (open) load(); }, [open, load]);
-
-  if (!open) return null;
-
-  return (
-    <div
-      ref={panelRef}
-      className="notif-panel-dropdown rounded-xl overflow-hidden"
-      style={{
-        position:   'fixed',
-        top:        `${pos?.top ?? 72}px`,
-        right:      `${pos?.right ?? 8}px`,
-        width:      '340px',
-        maxWidth:   'calc(100vw - 16px)',
-        zIndex:     9999,
-        background: 'var(--bg-raised)',
-        border:     '1px solid var(--border-soft)',
-        boxShadow:  'var(--shadow-xl)',
-      }}
-    >
-      {/* Header */}
-      <div
-        className="flex items-center justify-between px-4 py-3 border-b"
-        style={{ borderColor: 'var(--border-soft)' }}
-      >
-        <span
-          style={{ fontFamily: 'var(--font-heading)', fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)', letterSpacing: '-0.02em' }}
-        >
-          Notifications
-        </span>
-        <div className="flex items-center gap-1">
-          <button
-            onClick={markAll}
-            className="flex items-center gap-1.5 px-2 py-1 rounded-md text-[12px] transition-colors focus-visible:outline-none"
-            style={{ color: 'var(--brand)', fontFamily: 'var(--font-body)' }}
-            onMouseOver={(e) => { e.currentTarget.style.background = 'var(--brand-dim)'; }}
-            onMouseOut={(e)  => { e.currentTarget.style.background = ''; }}
-            onFocus={(e) => { e.currentTarget.style.boxShadow = 'var(--focus-ring)'; }}
-            onBlur={(e)  => { e.currentTarget.style.boxShadow = ''; }}
-            title="Mark all read"
-          >
-            <CheckCheck size={13} />
-            Mark all read
-          </button>
-          <button
-            onClick={onClose}
-            className="p-1 rounded-md transition-colors focus-visible:outline-none"
-            style={{ color: 'var(--text-muted)' }}
-            onMouseOver={(e) => { e.currentTarget.style.background = 'var(--border-hair)'; e.currentTarget.style.color = 'var(--text-primary)'; }}
-            onMouseOut={(e)  => { e.currentTarget.style.background = ''; e.currentTarget.style.color = 'var(--text-muted)'; }}
-            onFocus={(e) => { e.currentTarget.style.boxShadow = 'var(--focus-ring)'; }}
-            onBlur={(e)  => { e.currentTarget.style.boxShadow = ''; }}
-          >
-            <X size={15} />
-          </button>
-        </div>
-      </div>
-
-      {/* Body */}
-      <div className="max-h-[360px] overflow-y-auto">
-        {loading ? (
-          <div className="py-10 flex items-center justify-center">
-            <Spinner size="sm" color="brand" />
-          </div>
-        ) : items.length === 0 ? (
-          <div className="py-10 text-center">
-            <Bell size={28} style={{ color: 'var(--text-faint)', margin: '0 auto 8px' }} />
-            <p style={{ fontFamily: 'var(--font-body)', fontSize: '13px', color: 'var(--text-muted)' }}>
-              All caught up!
-            </p>
-          </div>
-        ) : (
-          items.map((n) => (
-            <button
-              key={n._id}
-              className="w-full flex items-start gap-3 px-4 py-3 text-left transition-colors border-b focus-visible:outline-none"
-              style={{ borderColor: 'var(--border-hair)' }}
-              onMouseOver={(e) => { e.currentTarget.style.background = 'var(--bg-base)'; }}
-              onMouseOut={(e)  => { e.currentTarget.style.background = ''; }}
-              onFocus={(e) => { e.currentTarget.style.boxShadow = 'var(--focus-ring)'; }}
-              onBlur={(e)  => { e.currentTarget.style.boxShadow = ''; }}
-            >
-              {/* Unread dot */}
-              <span
-                className="mt-1.5 w-2 h-2 rounded-full flex-shrink-0"
-                style={{ background: n.read_at ? 'var(--border-soft)' : 'var(--brand)' }}
-              />
-              <div className="min-w-0 flex-1">
-                <p
-                  style={{
-                    fontFamily: 'var(--font-body)',
-                    fontSize: '13px',
-                    fontWeight: n.read_at ? 400 : 500,
-                    color: n.read_at ? 'var(--text-secondary)' : 'var(--text-primary)',
-                    lineHeight: '1.4',
-                  }}
-                >
-                  {n.type?.replace(/_/g, ' ')}
-                </p>
-                {n.payload?.task_title || n.payload?.message ? (
-                  <p style={{ fontFamily: 'var(--font-body)', fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>
-                    {n.payload.task_title || n.payload.message}
-                  </p>
-                ) : null}
-                <p style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--text-faint)', marginTop: '4px' }}>
-                  {timeAgo(n.created_at)}
-                </p>
-              </div>
-            </button>
-          ))
-        )}
-      </div>
-    </div>
-  );
 };
 
 // -- Breadcrumb segment -----------------------------------------------------
@@ -234,18 +79,12 @@ const AppHeader = ({
   breadcrumbs,         // optional string[] that overrides auto-breadcrumb
   noPadding = false,
 }) => {
-  const { user, logout, loading: authLoading } = useAuth();
+  const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const { toggleMobileSidebar, isMobile, toggleCollapse } = useSidebar();
   const location = useLocation();
   const navigate = useNavigate();
   const isDark   = theme === 'dark';
-
-  // Notification bell state
-  const [bellOpen,  setBellOpen]  = useState(false);
-  const [unread,    setUnread]    = useState(0);
-  const bellRef  = useRef(null);
-  const panelRef = useRef(null);
 
   // Command palette + user menu state
   const [cmdOpen, setCmdOpen] = useState(false);
@@ -254,7 +93,6 @@ const AppHeader = ({
 
   // Fixed-position coordinates for dropdowns
   const [userMenuPos, setUserMenuPos] = useState({ top: 72, right: 8 });
-  const [notifPos,    setNotifPos]    = useState({ top: 72, right: 8 });
 
   // Derive user initials
   const userInitials = (
@@ -263,38 +101,6 @@ const AppHeader = ({
     user?.email?.[0]?.toUpperCase() ||
     'U'
   );
-
-  const userIdentity = user?.id || user?._id;
-  const canQueryNotifications = Boolean(!authLoading && userIdentity && getAccessToken());
-
-  // Fetch unread count
-  useEffect(() => {
-    if (!canQueryNotifications) {
-      setUnread(0);
-      return;
-    }
-
-    let cancelled = false;
-    let unauthorized = false;
-    const fetchCount = async () => {
-      if (unauthorized || cancelled) return;
-
-      try {
-        const { data } = await api.get('/notifications');
-        if (!cancelled) setUnread(data.unreadCount || 0);
-      } catch (error) {
-        if (error?.response?.status === 401) {
-          unauthorized = true;
-          if (!cancelled) setUnread(0);
-        }
-      }
-    };
-    fetchCount();
-    const id = setInterval(() => {
-      if (!unauthorized) fetchCount();
-    }, 60_000);
-    return () => { cancelled = true; clearInterval(id); };
-  }, [canQueryNotifications]);
 
   // ⌘K / Ctrl+K → open command palette
   useEffect(() => {
@@ -323,19 +129,6 @@ const AppHeader = ({
     };
   }, [isMobile, toggleMobileSidebar, toggleCollapse]);
 
-  // Close bell on outside click
-  useEffect(() => {
-    if (!bellOpen) return;
-    const handler = (e) => {
-      if (
-        bellRef.current  && !bellRef.current.contains(e.target) &&
-        panelRef.current && !panelRef.current.contains(e.target)
-      ) setBellOpen(false);
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [bellOpen]);
-
   // Close user menu on outside click
   useEffect(() => {
     if (!userMenuOpen) return;
@@ -350,11 +143,11 @@ const AppHeader = ({
 
   // Close dropdowns on window resize to avoid stale fixed coordinates
   useEffect(() => {
-    if (!bellOpen && !userMenuOpen) return;
-    const handler = () => { setBellOpen(false); setUserMenuOpen(false); };
+    if (!userMenuOpen) return;
+    const handler = () => { setUserMenuOpen(false); };
     window.addEventListener('resize', handler);
     return () => window.removeEventListener('resize', handler);
-  }, [bellOpen, userMenuOpen]);
+  }, [userMenuOpen]);
 
   // Build breadcrumb segments
   const segments = breadcrumbs
@@ -365,7 +158,6 @@ const AppHeader = ({
 
   // Avoid stale overlays intercepting clicks after navigation.
   useEffect(() => {
-    setBellOpen(false);
     setUserMenuOpen(false);
     setCmdOpen(false);
   }, [location.pathname]);
@@ -519,50 +311,7 @@ const AppHeader = ({
             ?
           </button>
 
-          {/* Notifications bell */}
-          <div className="relative" ref={bellRef}>
-            <button
-              onClick={() => {
-                if (!bellOpen && bellRef.current) {
-                  setNotifPos(computeDropdownPos(bellRef.current, 340, 420));
-                }
-                setBellOpen((v) => !v);
-              }}
-              className="relative w-9 h-9 flex items-center justify-center rounded-lg transition-colors focus-visible:outline-none"
-              style={{ color: bellOpen ? 'var(--brand)' : 'var(--text-secondary)' }}
-              aria-label="Notifications"
-              aria-haspopup="true"
-              aria-expanded={bellOpen}
-              onMouseOver={(e) => { e.currentTarget.style.background = 'var(--border-hair)'; e.currentTarget.style.color = 'var(--text-primary)'; }}
-              onMouseOut={(e)  => { e.currentTarget.style.background = ''; e.currentTarget.style.color = bellOpen ? 'var(--brand)' : 'var(--text-secondary)'; }}
-              onFocus={(e) => { e.currentTarget.style.boxShadow = 'var(--focus-ring)'; }}
-              onBlur={(e)  => { e.currentTarget.style.boxShadow = ''; }}
-            >
-              <Bell size={18} />
-              {unread > 0 && (
-                <span
-                  className="absolute top-1.5 right-1.5 min-w-[15px] h-[15px] rounded-full flex items-center justify-center text-white"
-                  style={{
-                    background:  'var(--brand)',
-                    fontFamily:  'var(--font-mono)',
-                    fontSize:    '9px',
-                    fontWeight:  700,
-                    paddingInline: '2px',
-                  }}
-                >
-                  {unread > 9 ? '9+' : unread}
-                </span>
-              )}
-            </button>
-
-            <NotifPanel
-              open={bellOpen}
-              onClose={() => setBellOpen(false)}
-              panelRef={panelRef}
-              pos={notifPos}
-              canQuery={canQueryNotifications}
-            />
-          </div>
+          <NotificationBell />
 
           {/* Theme toggle */}
           <button

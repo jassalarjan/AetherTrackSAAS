@@ -7,7 +7,12 @@ import Workspace from '../models/Workspace.js';
 
 dotenv.config();
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://jassalarjansingh_db_user:waheguru@taskflow.rsodja4.mongodb.net/?appName=TaskFlow';
+const MONGODB_URI = process.env.MONGODB_URI;
+
+if (!MONGODB_URI) {
+  console.error('❌ MONGODB_URI is required to run this script');
+  process.exit(1);
+}
 
 // Default leave types with generous quotas
 const defaultLeaveTypes = [

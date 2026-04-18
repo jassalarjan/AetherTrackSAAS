@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
+import { attachAutomationChangelogHooks } from './plugins/automationChangelogHooks.js';
 
 const userSchema = new mongoose.Schema({
   full_name: {
@@ -84,6 +85,11 @@ userSchema.index({ role: 1 });
 userSchema.index({ workspaceId: 1 });
 
 // Hash password before saving
+
+attachAutomationChangelogHooks(userSchema, {
+  entityType: 'member',
+  nameField: 'full_name'
+});
 userSchema.pre('save', async function(next) {
   if (!this.isModified('password_hash')) return next();
   

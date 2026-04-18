@@ -19,8 +19,11 @@
   { "icon": "⚙", "label": "Settings",              "hint": "System",   "path": "/settings",           "keywords": "settings preferences configuration account" },
   { "icon": "◔", "label": "Notifications",         "hint": "System",   "path": "/notifications",      "keywords": "notifications alerts messages" },
   { "icon": "△", "label": "Audit Log",             "hint": "Admin",    "path": "/audit-log",          "keywords": "audit log history changes admin" },
+  { "icon": "∿", "label": "API Logs",              "hint": "Admin",    "path": "/api-logs",           "keywords": "api logs requests endpoint traffic" },
   { "icon": "◎", "label": "Geofence",              "hint": "Admin",    "path": "/geofence-management", "keywords": "geofence location boundaries zones" },
   { "icon": "✉", "label": "Email Center",          "hint": "Admin",    "path": "/hr/email-center",    "keywords": "email notifications templates center" },
+  { "icon": "☸", "label": "Email Hub",             "hint": "Admin",    "path": "/email",              "keywords": "email hub campaigns sequences outbound" },
+  { "icon": "⚡", "label": "Automations",           "hint": "System",   "path": "/system/automations", "keywords": "system automations workflows triggers reports" },
   { "icon": "△", "label": "Changelog",             "hint": "Admin",    "path": "/changelog",          "keywords": "changelog version history updates" },
   { "icon": "⊞", "label": "Feature Matrix",        "hint": "Admin",    "path": "/feature-matrix",     "keywords": "features permissions matrix roles" },
   { "icon": "◎", "label": "Verification Settings", "hint": "Admin",    "path": "/verification-settings", "keywords": "verification settings attendance validation" }

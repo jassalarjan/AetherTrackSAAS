@@ -256,8 +256,9 @@ class BrevoEmailService {
 
     let result = template;
     for (const [key, value] of Object.entries(params)) {
-      const regex = new RegExp(`{{${key}}}`, 'g');
-      result = result.replace(regex, value || '');
+      const escapedKey = String(key).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regex = new RegExp(`{{\\s*${escapedKey}\\s*}}`, 'g');
+      result = result.replace(regex, value === null || value === undefined ? '' : String(value));
     }
     return result;
   }

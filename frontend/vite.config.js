@@ -152,11 +152,11 @@ export default defineConfig(({ mode }) => {
     ],
     server: {
       host: '0.0.0.0',
-      port: 3000,
+      port: 3001,
       hmr: isDevelopment ? {
         protocol: 'ws',
         host: 'localhost',
-        port: 3001, // Use a separate port for HMR to avoid conflicts
+        port: 3002, // Use a separate port for HMR to avoid conflicts
       } : false,
       proxy: isDevelopment ? {
         '/api': {
@@ -205,7 +205,7 @@ export default defineConfig(({ mode }) => {
       }
     },
     preview: {
-      port: 3000,
+      port: 3001,
       host: true
     }
   };

@@ -57,6 +57,8 @@ export default {
     'hover:bg-rose-600', 'hover:bg-rose-700',
     'hover:bg-cyan-600', 'hover:bg-cyan-700',
     'hover:bg-emerald-600', 'hover:bg-emerald-700',
+    // Z-index scale
+    'z-dropdown', 'z-sticky', 'z-fixed', 'z-modal-backdrop', 'z-modal', 'z-popover', 'z-tooltip', 'z-toast', 'z-command',
   ],
   
   theme: {

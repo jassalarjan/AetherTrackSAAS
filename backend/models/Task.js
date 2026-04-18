@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { attachAutomationChangelogHooks } from './plugins/automationChangelogHooks.js';
 
 const dependencySchema = new mongoose.Schema({
   predecessor_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Task', required: true },
@@ -158,6 +159,11 @@ taskSchema.index({ parent_id: 1 });
 taskSchema.pre('save', function(next) {
   this.updated_at = Date.now();
   next();
+});
+
+attachAutomationChangelogHooks(taskSchema, {
+  entityType: (doc) => (doc?.task_type === 'milestone' ? 'milestone' : 'task'),
+  nameField: 'title'
 });
 
 export default mongoose.model('Task', taskSchema);

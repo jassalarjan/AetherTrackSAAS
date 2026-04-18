@@ -1,4 +1,86 @@
 import ChangeLog from '../models/ChangeLog.js';
+import ChangelogEntry from '../models/ChangelogEntry.js';
+import { getTenantIdFromUser, normalizeObjectId } from './tenantScope.js';
+
+const ALLOWED_EVENT_TYPES = new Set(ChangeLog.schema.path('event_type')?.enumValues || []);
+
+const normalizeEventType = (eventType) => {
+  const value = String(eventType || '').trim().toLowerCase();
+  if (ALLOWED_EVENT_TYPES.has(value)) return value;
+  return 'system_event';
+};
+
+const normalizeEntityType = (entityType) => {
+  const value = String(entityType || '').trim().toLowerCase();
+  const map = {
+    leave_request: 'leave',
+    leave_type: 'leave',
+    email_template: 'email',
+    user: 'member',
+    user_login: 'auth',
+    user_logout: 'auth',
+    report_automation: 'report',
+    settings: 'system',
+    report_download: 'report'
+  };
+  return map[value] || value || 'system';
+};
+
+const normalizeAction = (action) => {
+  const value = String(action || '').trim().toLowerCase().replace(/\s+/g, '_');
+  const map = {
+    create: 'created',
+    add: 'created',
+    invite: 'created',
+    update: 'updated',
+    edit: 'updated',
+    delete: 'deleted',
+    remove: 'deleted',
+    approve: 'approved',
+    reject: 'rejected',
+    checkin: 'check_in',
+    checkout: 'check_out',
+    login: 'login',
+    logout: 'logout',
+    logged_in: 'login',
+    logged_out: 'logout',
+    user_logged_in: 'login',
+    user_logged_out: 'logout'
+  };
+  return map[value] || value || 'updated';
+};
+
+const queueAutomationChangelogBridge = (logData) => {
+  Promise.resolve()
+    .then(async () => {
+      const tenantCandidate = logData.workspaceId || logData.tenantId || logData.user_id || null;
+      const tenantId = normalizeObjectId(tenantCandidate);
+      if (!tenantId) return;
+
+      const entityId = normalizeObjectId(logData.target_id)
+        || normalizeObjectId(logData.user_id)
+        || tenantId;
+
+      const entityType = normalizeEntityType(logData.target_type || logData.event_type || 'system');
+      const action = normalizeAction(logData.action);
+
+      const entry = await ChangelogEntry.create({
+        tenantId,
+        entityType,
+        action,
+        entityId,
+        entityName: logData.target_name || '',
+        changedBy: logData.user_id || null,
+        diff: logData.changes || logData.metadata || {}
+      });
+
+      const { handleChangelogAutomation } = await import('../services/automationRunner.js');
+      await handleChangelogAutomation(entry);
+    })
+    .catch((error) => {
+      console.error('Automation changelog bridge error:', error?.message || error);
+    });
+};
 
 /**
  * Create a change log entry
@@ -11,8 +93,12 @@ export const logChange = async (params) => {
 
     if (params.event_type) {
       // Direct event_type pattern (used in auth.js, users.js, etc.)
+      const rawEventType = String(params.event_type || '').trim();
+      const normalizedEventType = normalizeEventType(rawEventType);
+      const baseMetadata = params.metadata || {};
+
       logData = {
-        event_type: params.event_type,
+        event_type: normalizedEventType,
         user_id: params.user?._id || params.user_id,
         user_email: params.user?.email,
         user_name: params.user?.full_name,
@@ -21,11 +107,16 @@ export const logChange = async (params) => {
         target_type: params.target_type,
         target_id: params.target_id,
         target_name: params.target_name,
-        action: params.action,
-        description: params.description,
-        metadata: params.metadata || {},
+        action: params.action || rawEventType || 'SYSTEM_EVENT',
+        description: params.description || params.action || rawEventType || 'System event logged',
+        metadata: {
+          ...baseMetadata,
+          ...(rawEventType && normalizedEventType !== rawEventType.toLowerCase()
+            ? { original_event_type: rawEventType }
+            : {})
+        },
         changes: params.changes || {},
-        workspaceId: params.workspaceId
+        workspaceId: params.workspaceId || getTenantIdFromUser(params.user) || params.user_id || null
       };
     } else {
       // Alternative pattern (used in attendance.js, leaves.js, etc.)
@@ -55,9 +146,12 @@ export const logChange = async (params) => {
       };
     }
 
+    logData.workspaceId = normalizeObjectId(logData.workspaceId) || null;
+
     const logEntry = new ChangeLog(logData);
 
     await logEntry.save();
+    queueAutomationChangelogBridge(logData);
     return logEntry;
   } catch (error) {
     console.error('Error creating change log:', error);
@@ -85,9 +179,19 @@ export const getChangeLogs = async ({
   try {
     // WORKSPACE SUPPORT: Start with workspace filter (unless viewing all)
     const query = {};
+    const normalizedWorkspaceId = normalizeObjectId(workspaceId);
     
     if (!includeAllWorkspaces) {
-      query.workspaceId = workspaceId;
+      if (!normalizedWorkspaceId) {
+        return {
+          logs: [],
+          total: 0,
+          page,
+          limit,
+          totalPages: 0
+        };
+      }
+      query.workspaceId = normalizedWorkspaceId;
     }
 
     if (event_type) {
